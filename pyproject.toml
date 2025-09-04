@@ -216,6 +216,7 @@ lint.select = [
 # 忽略的規則
 lint.ignore = [
 	"E501", # 行長度限制（已在 line-length 設定）
+	"UP038", # 已預訂於未來版本移除
 ]
 
 [tool.ruff.format]
