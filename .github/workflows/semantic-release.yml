@@ -93,7 +93,7 @@ jobs:
           hatch build
 
       - name: Publish | Upload package to TestPyPI (dev branch)
-        uses: pypa/gh-action-pypi-publish@v1.12.4
+        uses: pypa/gh-action-pypi-publish@v1.13.0
         if: steps.release.outputs.released == 'true' && github.ref_name == 'dev'
         with:
           repository-url: https://test.pypi.org/legacy/
@@ -103,7 +103,7 @@ jobs:
           # 使用 Trusted Publishing
 
       - name: Publish | Upload package to PyPI (main branch)
-        uses: pypa/gh-action-pypi-publish@v1.12.4
+        uses: pypa/gh-action-pypi-publish@v1.13.0
         if: steps.release.outputs.released == 'true' && github.ref_name == 'main'
         with:
           password: ${{ secrets.PYPI_API_TOKEN }}
