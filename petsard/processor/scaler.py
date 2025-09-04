@@ -219,7 +219,7 @@ class ScalerLog(Scaler):
 
 class ScalerLog1p(Scaler):
     """
-    Scale the data by log transformation.
+    Scale the data by log1p transformation (log(1+x)).
     """
 
     def __init__(self) -> None:
