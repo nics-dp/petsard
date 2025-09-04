@@ -227,17 +227,17 @@ class ScalerLog1p(Scaler):
 
     def _fit(self, data: np.ndarray) -> None:
         """
-        Check whether the log transformation can be performed.
+        Check whether the log1p transformation can be performed.
 
         Args:
             data (np.ndarray): The data needed to be transformed.
         """
-        if (data <= 0).any():
-            raise ValueError("Log transformation does not support non-positive values.")
+        if (data < -1).any():
+            raise ValueError("Log1p transformation requires values >= -1")
 
     def _transform(self, data: np.ndarray) -> np.ndarray:
         """
-        Conduct log transformation.
+        Conduct log1p transformation.
 
         Args:
             data (np.ndarray): The data needed to be transformed.
@@ -245,8 +245,8 @@ class ScalerLog1p(Scaler):
         Return:
             (np.ndarray): The transformed data.
         """
-        if (data <= 0).any():
-            raise ValueError("Log transformation does not support non-positive values.")
+        if (data < -1).any():
+            raise ValueError("Log1p transformation requires values >= -1")
         else:
             return np.log1p(np.asarray(data, dtype=float))
 
