@@ -201,7 +201,7 @@ class ScalerLog(Scaler):
         if (data <= 0).any():
             raise ValueError("Log transformation does not support non-positive values.")
         else:
-            return np.log(data)
+            return np.log(np.asarray(data, dtype=float))
 
     def _inverse_transform(self, data: np.ndarray) -> np.ndarray:
         """
@@ -214,7 +214,54 @@ class ScalerLog(Scaler):
             (np.ndarray): The inverse transformed data.
         """
 
-        return np.exp(data)
+        return np.exp(np.asarray(data, dtype=float))
+
+
+class ScalerLog1p(Scaler):
+    """
+    Scale the data by log1p transformation (log(1+x)).
+    """
+
+    def __init__(self) -> None:
+        super().__init__()
+
+    def _fit(self, data: np.ndarray) -> None:
+        """
+        Check whether the log1p transformation can be performed.
+
+        Args:
+            data (np.ndarray): The data needed to be transformed.
+        """
+        if (data < -1).any():
+            raise ValueError("Log1p transformation requires values >= -1")
+
+    def _transform(self, data: np.ndarray) -> np.ndarray:
+        """
+        Conduct log1p transformation.
+
+        Args:
+            data (np.ndarray): The data needed to be transformed.
+
+        Return:
+            (np.ndarray): The transformed data.
+        """
+        if (data < -1).any():
+            raise ValueError("Log1p transformation requires values >= -1")
+        else:
+            return np.log1p(np.asarray(data, dtype=float))
+
+    def _inverse_transform(self, data: np.ndarray) -> np.ndarray:
+        """
+        Inverse the transformed data to the data in the original scale.
+
+        Args:
+            data (np.ndarray): The data needed to be transformed inversely.
+
+        Return:
+            (np.ndarray): The inverse transformed data.
+        """
+
+        return np.expm1(np.asarray(data, dtype=float))
 
 
 class ScalerTimeAnchor(Scaler):
