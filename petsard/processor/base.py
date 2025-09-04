@@ -39,6 +39,7 @@ from petsard.processor.outlier import (
 )
 from petsard.processor.scaler import (
     ScalerLog,
+    ScalerLog1p,
     ScalerMinMax,
     ScalerStandard,
     ScalerTimeAnchor,
@@ -120,6 +121,7 @@ class ProcessorClassMap:
         "outlier_zscore": OutlierZScore,
         # scaler
         "scaler_log": ScalerLog,
+        "scaler_log1p": ScalerLog1p,
         "scaler_minmax": ScalerMinMax,
         "scaler_standard": ScalerStandard,
         "scaler_timeanchor": ScalerTimeAnchor,
@@ -577,7 +579,7 @@ class Processor:
                 break
 
         if is_global_transformation:
-            for col, obj in self._config["outlier"].items():
+            for col, _ in self._config["outlier"].items():
                 self._config["outlier"][col] = replaced_class()
 
     def transform(self, data: pd.DataFrame) -> pd.DataFrame:
@@ -637,6 +639,7 @@ class Processor:
                                 EncoderMinguoDate,
                                 EncoderDateDiff,
                                 ScalerLog,
+                                ScalerLog1p,
                                 ScalerMinMax,
                                 ScalerStandard,
                                 ScalerZeroCenter,
