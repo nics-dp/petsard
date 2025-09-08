@@ -5,17 +5,17 @@ on:
   push:
     branches: [main, dev]
     paths:
-      - 'petsard/**'
-      - 'tests/**'
-      - 'pyproject.toml'
-      - '.github/workflows/test-suite.yml'
+      - "petsard/**"
+      - "tests/**"
+      - "pyproject.toml"
+      - ".github/workflows/test-suite.yml"
   pull_request:
     branches: [main, dev]
     paths:
-      - 'petsard/**'
-      - 'tests/**'
-      - 'pyproject.toml'
-      - '.github/workflows/test-suite.yml'
+      - "petsard/**"
+      - "tests/**"
+      - "pyproject.toml"
+      - ".github/workflows/test-suite.yml"
 
 permissions:
   contents: read
@@ -25,15 +25,15 @@ jobs:
   test:
     name: 🧪 Run Tests
     runs-on: ubuntu-latest
-    continue-on-error: true  # 不強制要求測試通過才能合併
+    continue-on-error: true # 不強制要求測試通過才能合併
 
     strategy:
       matrix:
-        python-version: ['3.10', '3.11']
+        python-version: ["3.10", "3.11"]
 
     steps:
       - name: 📥 Checkout Repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: 🐍 Setup Python ${{ matrix.python-version }}
         uses: actions/setup-python@v5
@@ -125,7 +125,7 @@ jobs:
               echo "" >> ruff_report.md
             fi
           fi
-          
+
           # 添加 Ruff 配置信息
           echo "### ⚙️ Ruff 配置信息 Ruff Configuration" >> ruff_report.md
           echo "" >> ruff_report.md
@@ -134,7 +134,7 @@ jobs:
           echo "**目標 Python 版本**: 3.11" >> ruff_report.md
           echo "**忽略規則**: E501 (行長度，已由 line-length 處理)" >> ruff_report.md
           echo "" >> ruff_report.md
-          
+
           # 完整輸出
           echo "### 📝 完整 Ruff 輸出 Full Ruff Output" >> ruff_report.md
           echo "" >> ruff_report.md
@@ -146,7 +146,7 @@ jobs:
           echo "```" >> ruff_report.md
           echo "</details>" >> ruff_report.md
           echo "" >> ruff_report.md
-          
+
       - name: 🧪 Run Unit Tests with Coverage
         id: unit-tests
         run: |
@@ -155,7 +155,7 @@ jobs:
           echo "**Python 版本**: ${{ matrix.python-version }}" >> test_report.md
           echo "**執行時間**: $(date -u +"%Y-%m-%d %H:%M:%S UTC")" >> test_report.md
           echo "" >> test_report.md
-          
+
           # 運行測試並捕獲結果，包含覆蓋率
           if pytest tests/ --cov=petsard --cov-report=term-missing --cov-report=xml --tb=short -v --disable-warnings --junit-xml=pytest-results.xml > test_output.txt 2>&1; then
             echo "test_status=success" >> $GITHUB_OUTPUT
@@ -220,14 +220,14 @@ jobs:
               echo "" >> test_report.md
             fi
           fi
-          
+
       - name: 📊 Generate Coverage Report
         if: always()
         run: |
           echo "" >> test_report.md
           echo "### 📊 測試覆蓋率 Test Coverage" >> test_report.md
           echo "" >> test_report.md
-          
+
           # 生成覆蓋率報告
           if [ -f coverage.xml ]; then
             # 簡化的覆蓋率提取
@@ -271,7 +271,7 @@ jobs:
               fi
             fi
           fi
-          
+
           echo "" >> test_report.md
           echo "### 📝 完整測試輸出 Full Test Output" >> test_report.md
           echo "" >> test_report.md
@@ -282,14 +282,14 @@ jobs:
           cat test_output.txt >> test_report.md
           echo "```" >> test_report.md
           echo "</details>" >> test_report.md
-          
+
       - name: 🧪 Run Functional Tests
         id: functional-tests
         run: |
           echo "" >> test_report.md
           echo "### 🔄 功能測試 Functional Tests" >> test_report.md
           echo "" >> test_report.md
-          
+
           if pytest tests/test_petsard.py -v --disable-warnings --tb=short > functional_output.txt 2>&1; then
             echo "functional_status=success" >> $GITHUB_OUTPUT
             echo "✅ **功能測試通過** Functional tests passed" >> test_report.md
@@ -324,7 +324,7 @@ jobs:
               echo "" >> test_report.md
             fi
           fi
-          
+
           echo "" >> test_report.md
           echo "<details>" >> test_report.md
           echo "<summary>點擊查看完整功能測試輸出 Click to view full functional test output</summary>" >> test_report.md
@@ -333,7 +333,7 @@ jobs:
           cat functional_output.txt >> test_report.md
           echo "```" >> test_report.md
           echo "</details>" >> test_report.md
-          
+
       - name: 📊 Generate Test Summary
         run: |
           # 合併 Ruff 報告到主報告
@@ -341,15 +341,15 @@ jobs:
             cat ruff_report.md >> test_report.md
             echo "" >> test_report.md
           fi
-          
+
           echo "### 📊 測試摘要 Test Summary" >> test_report.md
           echo "" >> test_report.md
-          
+
           # 檢查所有步驟的狀態
           RUFF_STATUS="${{ steps.ruff-check.outputs.ruff_status }}"
           UNIT_STATUS="${{ steps.unit-tests.outputs.test_status }}"
           FUNC_STATUS="${{ steps.functional-tests.outputs.functional_status }}"
-          
+
           if [[ "$RUFF_STATUS" == "success" && "$UNIT_STATUS" == "success" && "$FUNC_STATUS" == "success" ]]; then
             echo "🎉 **所有檢查都通過！** All checks passed!" >> test_report.md
             echo "- ✅ 程式碼品質檢查通過" >> test_report.md
@@ -363,11 +363,11 @@ jobs:
             echo "- $([ "$FUNC_STATUS" == "success" ] && echo "✅" || echo "❌") 功能測試" >> test_report.md
             echo "test_overall=failed" >> $GITHUB_ENV
           fi
-          
+
           echo "" >> test_report.md
           echo "---" >> test_report.md
           echo "*此報告由測試套件自動生成 | Auto-generated by Test Suite*" >> test_report.md
-          
+
       - name: 💬 Comment Test Results on PR
         if: github.event_name == 'pull_request'
         uses: actions/github-script@v7
@@ -375,21 +375,21 @@ jobs:
           script: |
             const fs = require('fs');
             const report = fs.readFileSync('test_report.md', 'utf8');
-            
+
             // 檢查是否已有測試結果留言
             const comments = await github.rest.issues.listComments({
               owner: context.repo.owner,
               repo: context.repo.repo,
               issue_number: context.issue.number,
             });
-            
+
             const botComment = comments.data.find(comment =>
               comment.user.type === 'Bot' &&
               (comment.body.includes('🧪 測試結果 Test Results') || comment.body.includes('🧪 測試套件報告 Test Suite Report'))
             );
-            
+
             const commentBody = `## 🧪 測試套件報告 Test Suite Report\n\n${report}`;
-            
+
             if (botComment) {
               // 更新現有留言
               await github.rest.issues.updateComment({
@@ -407,7 +407,7 @@ jobs:
                 body: commentBody
               });
             }
-            
+
       - name: 📤 Upload Test Artifacts
         if: always()
         uses: actions/upload-artifact@v4
@@ -428,7 +428,7 @@ jobs:
             failed_functional.txt
             pytest-results.xml
           retention-days: 7
-          
+
       - name: ℹ️ Test Status Summary
         if: always()
         run: |
