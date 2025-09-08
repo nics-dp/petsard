@@ -99,11 +99,10 @@ templates
 scripts/
 tests/
 module_functional_designs/
-requirements.txt
 
 # 保留重要檔案的註解
 # 包含的重要檔案：
 # - petsard/ (主要套件)
 # - demo/ (範例)
-# - pyproject.toml (專案設定)
+# - pyproject.toml (專案設定與依賴)
 # - README.md, LICENSE, CHANGELOG.md (文件)
