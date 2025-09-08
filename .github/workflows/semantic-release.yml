@@ -1,4 +1,4 @@
-name: Semantic Release
+name: 📦 Semantic Release and PyPI Publish
 
 on:
   push:
@@ -63,37 +63,42 @@ jobs:
 
           printf '%s\n' "Verified upstream branch has not changed, continuing with release..."
 
+      # 安裝 uv 工具
+      # Install uv tool
+      - name: Setup | Install uv
+        uses: astral-sh/setup-uv@v4
+        with:
+          enable-cache: true
+
       # 執行語意版本分析，自動決定版本號並建立標籤
       # Execute semantic version analysis, automatically determine version and create tags
       - name: Action | Semantic Version Release
         id: release
-        # Adjust tag with desired version if applicable.
         uses: python-semantic-release/python-semantic-release@v10.3.0
         with:
           github_token: ${{ secrets.WORKFLOW_TOKEN_CLASSICAL }}
           git_committer_name: "Justyn (WORKFLOW_TOKEN)"
           git_committer_email: "matheme.justyn@gmail.com"
 
-      # 版本更新後重新檢出最新程式碼以獲取版本變更
-      # Re-checkout latest code after version update to get version changes
-      - name: Setup | Re-checkout after version update
-        if: steps.release.outputs.released == 'true'
-        uses: actions/checkout@v4
-        with:
-          ref: ${{ github.ref_name }}
-          fetch-depth: 0
-
-      # 使用 Hatch 工具構建 Python 套件發布檔案
-      # Build Python package distribution files using Hatch tool
-      - name: Publish | Build package with Hatch
+      # 刷新本地程式碼狀態（不需要重新 checkout）
+      # Refresh local code state without re-checkout
+      - name: Setup | Refresh local state after version update
         if: steps.release.outputs.released == 'true'
         run: |
-          mkdir -p dist
-          chmod 777 dist
-          python -m pip install --upgrade pip
-          pip install hatch
+          # 確保本地程式碼與遠端同步
+          # Ensure local code is in sync with remote
+          git fetch origin ${{ github.ref_name }}
+          git reset --hard origin/${{ github.ref_name }}
+
+      # 使用 uv 建置 Python 套件發布檔案
+      # Build Python package distribution files using uv
+      - name: Publish | Build package with uv
+        if: steps.release.outputs.released == 'true'
+        run: |
           echo "Building with version: $(grep '^version = ' pyproject.toml)"
-          hatch build
+          # 使用 --no-sources 確保建置時不使用 tool.uv.sources 設定，提升相容性
+          # Use --no-sources to ensure build compatibility without tool.uv.sources
+          uv build --no-sources
 
       # 發布套件到 TestPyPI 測試環境（僅限 dev 分支）
       # Publish package to TestPyPI testing environment (dev branch only)
@@ -105,7 +110,6 @@ jobs:
           password: ${{ secrets.TESTPYPI_API_TOKEN }}
           skip-existing: true
           attestations: true
-          # 使用 Trusted Publishing
 
       # 發布套件到正式 PyPI 環境（僅限 main 分支）
       # Publish package to official PyPI environment (main branch only)
@@ -116,7 +120,6 @@ jobs:
           password: ${{ secrets.PYPI_API_TOKEN }}
           skip-existing: true
           attestations: true
-          # 使用 Trusted Publishing
 
       # 上傳構建檔案到 GitHub Releases 作為發布資產
       # Upload built files to GitHub Releases as release assets
