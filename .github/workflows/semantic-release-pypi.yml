@@ -1,4 +1,4 @@
-name: Semantic Release
+name: 📦 Semantic Release and PyPI Publish
 
 on:
   push:
@@ -15,24 +15,23 @@ jobs:
     name: Semantic Release
     runs-on: ubuntu-latest
     steps:
+      # 檢出指定分支的程式碼並獲取完整歷史記錄
+      # Checkout the repository code with full Git history for semantic analysis
       - name: Setup | Checkout Repository on Release Branch
         uses: actions/checkout@v5
         with:
           ref: ${{ github.ref_name }}
           fetch-depth: 0
 
+      # 強制重設本地分支到觸發工作流程的確切提交
+      # Force reset local branch to the exact commit that triggered the workflow
       - name: Setup | Force release branch to be at workflow sha
         run: |
           git reset --hard ${{ github.sha }}
 
+      # 驗證上游分支在工作流程執行期間沒有新的變更
+      # Verify that upstream branch hasn't changed during workflow execution
       - name: Evaluate | Verify upstream has NOT changed
-        # Last chance to abort before causing an error as another PR/push was applied to
-        # the upstream branch while this workflow was running. This is important
-        # because we are committing a version change (--commit). You may omit this step
-        # if you have 'commit: false' in your configuration.
-        #
-        # You may consider moving this to a repo script and call it from this step instead
-        # of writing it in-line.
         shell: bash
         run: |
           set +o pipefail
@@ -64,34 +63,45 @@ jobs:
 
           printf '%s\n' "Verified upstream branch has not changed, continuing with release..."
 
+      # 安裝 uv 工具
+      # Install uv tool
+      - name: Setup | Install uv
+        uses: astral-sh/setup-uv@v4
+        with:
+          enable-cache: true
+
+      # 執行語意版本分析，自動決定版本號並建立標籤
+      # Execute semantic version analysis, automatically determine version and create tags
       - name: Action | Semantic Version Release
         id: release
-        # Adjust tag with desired version if applicable.
         uses: python-semantic-release/python-semantic-release@v10.3.0
         with:
           github_token: ${{ secrets.WORKFLOW_TOKEN_CLASSICAL }}
           git_committer_name: "Justyn (WORKFLOW_TOKEN)"
           git_committer_email: "matheme.justyn@gmail.com"
 
-      # 確保版本更新後重新 checkout 最新代碼
-      - name: Setup | Re-checkout after version update
-        if: steps.release.outputs.released == 'true'
-        uses: actions/checkout@v5
-        with:
-          ref: ${{ github.ref_name }}
-          fetch-depth: 0
-
-      # 使用 hatch 構建而非 python -m build
-      - name: Publish | Build package with Hatch
+      # 刷新本地程式碼狀態（不需要重新 checkout）
+      # Refresh local code state without re-checkout
+      - name: Setup | Refresh local state after version update
         if: steps.release.outputs.released == 'true'
         run: |
-          mkdir -p dist
-          chmod 777 dist
-          python -m pip install --upgrade pip
-          pip install hatch
-          echo "Building with version: $(grep '^version = ' pyproject.toml)"
-          hatch build
+          # 確保本地程式碼與遠端同步
+          # Ensure local code is in sync with remote
+          git fetch origin ${{ github.ref_name }}
+          git reset --hard origin/${{ github.ref_name }}
 
+      # 使用 uv 建置 Python 套件發布檔案
+      # Build Python package distribution files using uv
+      - name: Publish | Build package with uv
+        if: steps.release.outputs.released == 'true'
+        run: |
+          echo "Building with version: $(grep '^version = ' pyproject.toml)"
+          # 使用 --no-sources 確保建置時不使用 tool.uv.sources 設定，提升相容性
+          # Use --no-sources to ensure build compatibility without tool.uv.sources
+          uv build --no-sources
+
+      # 發布套件到 TestPyPI 測試環境（僅限 dev 分支）
+      # Publish package to TestPyPI testing environment (dev branch only)
       - name: Publish | Upload package to TestPyPI (dev branch)
         uses: pypa/gh-action-pypi-publish@v1.12.4
         if: steps.release.outputs.released == 'true' && github.ref_name == 'dev'
@@ -100,8 +110,9 @@ jobs:
           password: ${{ secrets.TESTPYPI_API_TOKEN }}
           skip-existing: true
           attestations: true
-          # 使用 Trusted Publishing
 
+      # 發布套件到正式 PyPI 環境（僅限 main 分支）
+      # Publish package to official PyPI environment (main branch only)
       - name: Publish | Upload package to PyPI (main branch)
         uses: pypa/gh-action-pypi-publish@v1.12.4
         if: steps.release.outputs.released == 'true' && github.ref_name == 'main'
@@ -109,8 +120,9 @@ jobs:
           password: ${{ secrets.PYPI_API_TOKEN }}
           skip-existing: true
           attestations: true
-          # 使用 Trusted Publishing
 
+      # 上傳構建檔案到 GitHub Releases 作為發布資產
+      # Upload built files to GitHub Releases as release assets
       - name: Publish | Upload to GitHub Release Assets
         uses: python-semantic-release/publish-action@v10.2.0
         if: steps.release.outputs.released == 'true'
