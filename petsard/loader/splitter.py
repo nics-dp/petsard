@@ -108,6 +108,7 @@ class Splitter:
     def split(
         self,
         data: pd.DataFrame = None,
+        metadata: SchemaMetadata = None,
         exist_train_indices: list[set] = None,
     ) -> tuple[dict, dict, list[set]]:
         """
@@ -131,7 +132,7 @@ class Splitter:
         if "method" in self.config:
             # Custom data method - load from files
             ori_data, ori_metadata = self.loader["ori"].load()
-            ctrl_data, _ = self.loader["control"].load()
+            ctrl_data, ctrl_metadata = self.loader["control"].load()
 
             split_data = {
                 1: {
@@ -144,8 +145,8 @@ class Splitter:
             train_metadata = self._update_metadata_with_split_info(
                 ori_metadata, ori_data.shape[0], ctrl_data.shape[0]
             )
-            validation_metadata = self._create_split_metadata(
-                ori_data.shape[0], ctrl_data.shape[0]
+            validation_metadata = self._update_metadata_with_split_info(
+                ctrl_metadata, ori_data.shape[0], ctrl_data.shape[0]
             )
 
             metadata_dict = {
@@ -161,6 +162,10 @@ class Splitter:
             # Normal splitting method
             if data is None:
                 raise ConfigError("Data must be provided for normal splitting method")
+            if metadata is None:
+                raise ConfigError(
+                    "Metadata must be provided for normal splitting method"
+                )
 
             data.reset_index(drop=True, inplace=True)  # avoid unexpected index
 
@@ -179,11 +184,15 @@ class Splitter:
                 }
 
                 # Create metadata for both train and validation
-                train_metadata = self._create_split_metadata(
-                    len(index["train"]), len(index["validation"])
+                train_metadata = self._update_metadata_with_split_info(
+                    metadata,
+                    len(index["train"]),
+                    len(index["validation"]),
                 )
-                validation_metadata = self._create_split_metadata(
-                    len(index["train"]), len(index["validation"])
+                validation_metadata = self._update_metadata_with_split_info(
+                    metadata,
+                    len(index["train"]),
+                    len(index["validation"]),
                 )
 
                 metadata_dict[key] = {
@@ -235,32 +244,6 @@ class Splitter:
             description=metadata.description,
             fields=metadata.fields,
             properties=updated_properties,
-        )
-
-    def _create_split_metadata(
-        self, train_rows: int, validation_rows: int
-    ) -> SchemaMetadata:
-        """
-        Create basic metadata for split data.
-
-        Args:
-            train_rows: Number of training rows
-            validation_rows: Number of validation rows
-
-        Returns:
-            Basic metadata with split information
-        """
-        return SchemaMetadata(
-            schema_id="split_data",
-            name="Split Data Schema",
-            description="Metadata for split data",
-            fields=[],  # Will be populated if needed
-            properties={
-                "row_num_after_split": {
-                    "train": train_rows,
-                    "validation": validation_rows,
-                }
-            },
         )
 
     def _bootstrapping(

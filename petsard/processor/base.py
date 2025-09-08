@@ -841,7 +841,7 @@ class Processor:
                 )
                 self.logger.info(f"{type(processor).__name__} transformation done.")
 
-        return transformed  # self._align_dtypes(transformed)
+        return self._align_dtypes(transformed)  # transformed
 
     # determine whether the processors are not default settings
     def get_changes(self) -> dict:

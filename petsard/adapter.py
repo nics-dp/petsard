@@ -257,6 +257,8 @@ class SplitterAdapter(BaseAdapter):
         for key, value in input.items():
             if key == "data":
                 split_params[key] = value
+            elif key == "metadata":
+                split_params[key] = value
             elif key == "exist_train_indices" and value:  # 只有非空時才傳遞
                 split_params[key] = value
         self.data, self.metadata, self.train_indices = self.splitter.split(
