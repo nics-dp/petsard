@@ -240,7 +240,9 @@ class SplitterAdapter(BaseAdapter):
 
         Args:
             input (dict):
-                Splitter input should contains data (pd.DataFrame) and exclude_index (list[set]).
+                Splitter input should contains
+                    data (pd.DataFrame), metadata (SchemaMetadata),
+                    and exclude_index (list[set]).
 
         Attributes:
             data (Dict[int, Dict[str, pd.DataFrame]]):
@@ -256,6 +258,8 @@ class SplitterAdapter(BaseAdapter):
         split_params = {}
         for key, value in input.items():
             if key == "data":
+                split_params[key] = value
+            elif key == "metadata":
                 split_params[key] = value
             elif key == "exist_train_indices" and value:  # 只有非空時才傳遞
                 split_params[key] = value
