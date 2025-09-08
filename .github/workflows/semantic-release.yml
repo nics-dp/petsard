@@ -15,24 +15,23 @@ jobs:
     name: Semantic Release
     runs-on: ubuntu-latest
     steps:
+      # 檢出指定分支的程式碼並獲取完整歷史記錄
+      # Checkout the repository code with full Git history for semantic analysis
       - name: Setup | Checkout Repository on Release Branch
         uses: actions/checkout@v4
         with:
           ref: ${{ github.ref_name }}
           fetch-depth: 0
 
+      # 強制重設本地分支到觸發工作流程的確切提交
+      # Force reset local branch to the exact commit that triggered the workflow
       - name: Setup | Force release branch to be at workflow sha
         run: |
           git reset --hard ${{ github.sha }}
 
+      # 驗證上游分支在工作流程執行期間沒有新的變更
+      # Verify that upstream branch hasn't changed during workflow execution
       - name: Evaluate | Verify upstream has NOT changed
-        # Last chance to abort before causing an error as another PR/push was applied to
-        # the upstream branch while this workflow was running. This is important
-        # because we are committing a version change (--commit). You may omit this step
-        # if you have 'commit: false' in your configuration.
-        #
-        # You may consider moving this to a repo script and call it from this step instead
-        # of writing it in-line.
         shell: bash
         run: |
           set +o pipefail
@@ -64,6 +63,8 @@ jobs:
 
           printf '%s\n' "Verified upstream branch has not changed, continuing with release..."
 
+      # 執行語意版本分析，自動決定版本號並建立標籤
+      # Execute semantic version analysis, automatically determine version and create tags
       - name: Action | Semantic Version Release
         id: release
         # Adjust tag with desired version if applicable.
@@ -73,7 +74,8 @@ jobs:
           git_committer_name: "Justyn (WORKFLOW_TOKEN)"
           git_committer_email: "matheme.justyn@gmail.com"
 
-      # 確保版本更新後重新 checkout 最新代碼
+      # 版本更新後重新檢出最新程式碼以獲取版本變更
+      # Re-checkout latest code after version update to get version changes
       - name: Setup | Re-checkout after version update
         if: steps.release.outputs.released == 'true'
         uses: actions/checkout@v4
@@ -81,7 +83,8 @@ jobs:
           ref: ${{ github.ref_name }}
           fetch-depth: 0
 
-      # 使用 hatch 構建而非 python -m build
+      # 使用 Hatch 工具構建 Python 套件發布檔案
+      # Build Python package distribution files using Hatch tool
       - name: Publish | Build package with Hatch
         if: steps.release.outputs.released == 'true'
         run: |
@@ -92,6 +95,8 @@ jobs:
           echo "Building with version: $(grep '^version = ' pyproject.toml)"
           hatch build
 
+      # 發布套件到 TestPyPI 測試環境（僅限 dev 分支）
+      # Publish package to TestPyPI testing environment (dev branch only)
       - name: Publish | Upload package to TestPyPI (dev branch)
         uses: pypa/gh-action-pypi-publish@v1.12.4
         if: steps.release.outputs.released == 'true' && github.ref_name == 'dev'
@@ -102,6 +107,8 @@ jobs:
           attestations: true
           # 使用 Trusted Publishing
 
+      # 發布套件到正式 PyPI 環境（僅限 main 分支）
+      # Publish package to official PyPI environment (main branch only)
       - name: Publish | Upload package to PyPI (main branch)
         uses: pypa/gh-action-pypi-publish@v1.12.4
         if: steps.release.outputs.released == 'true' && github.ref_name == 'main'
@@ -111,6 +118,8 @@ jobs:
           attestations: true
           # 使用 Trusted Publishing
 
+      # 上傳構建檔案到 GitHub Releases 作為發布資產
+      # Upload built files to GitHub Releases as release assets
       - name: Publish | Upload to GitHub Release Assets
         uses: python-semantic-release/publish-action@v10.2.0
         if: steps.release.outputs.released == 'true'

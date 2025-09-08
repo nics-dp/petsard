@@ -1,6 +1,6 @@
 [project]
 name = "petsard"
-version = "1.6.0-rc.1"
+version = "1.6.0-rc.2"
 description = "Facilitates data generation algorithm and their evaluation processes"
 authors = [{ name = "matheme-justyn", email = "matheme.justyn@gmail.com" }]
 keywords = [
@@ -11,33 +11,28 @@ keywords = [
 	"synthetic data",
 	"privacy",
 	"privacy enhancing technologies",
-	"PET",
+	"PETS",
 	"anonymization",
 	"differential privacy",
 	"data science",
 	"machine learning",
 ]
-readme = "README.md"  # PyPI 專案頁面顯示的 README 文件 README file displayed on PyPI project page
-
+# PyPI 專案頁面顯示的 README 文件
+# README file displayed on PyPI project page
+readme = "README.md"
 classifiers = [
-	# 專案狀態 Project status：5 產品/穩定 Production/Stable
 	"Development Status :: 5 - Production/Stable",
-	# 自然語言 Natural language：英文與正體中文 English and Traditional Chinese
 	"Natural Language :: English",
 	"Natural Language :: Chinese (Traditional)",
-	# 程式語言 Programming language：Python 3.10 和 3.11
 	"Programming Language :: Python :: 3.10",
 	"Programming Language :: Python :: 3.11",
-	# 目標使用者 Target audience：
-	#   開發者 Developers、
-	#   金融和保險業 Financial and Insurance Industry、
-	#   法律業 Legal Industry
 	"Intended Audience :: Developers",
 	"Intended Audience :: Financial and Insurance Industry",
 	"Intended Audience :: Legal Industry",
 ]
 
-requires-python = ">=3.10,<3.12" # Python 3.12 not supported due to anonymeter dependency conflicts
+# Python 3.12 not supported due to anonymeter dependency conflicts
+requires-python = ">=3.10,<3.12"
 
 [project.urls]
 Repository = "https://github.com/nics-tw/petsard"
@@ -316,8 +311,10 @@ env = "GITHUB_TOKEN"
 
 # 版本設定 Version configuration
 [tool.semantic_release.version]
-source = "tag"  # 版本來源 Version source
-pattern = "version = \"{version}\""  # 版本模式 Version pattern
+source = "commit"  # 從提交訊息自動決定版本
+version_toml = [
+    "pyproject.toml:project.version"  # 自動更新檔案中的版本
+]
 
 # 發布設定 Publishing configuration
 [tool.semantic_release.publish]
