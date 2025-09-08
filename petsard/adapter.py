@@ -240,7 +240,9 @@ class SplitterAdapter(BaseAdapter):
 
         Args:
             input (dict):
-                Splitter input should contains data (pd.DataFrame) and exclude_index (list[set]).
+                Splitter input should contains
+                    data (pd.DataFrame), metadata (SchemaMetadata),
+                    and exclude_index (list[set]).
 
         Attributes:
             data (Dict[int, Dict[str, pd.DataFrame]]):
