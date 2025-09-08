@@ -71,7 +71,7 @@ dev = [
 
 # 執行功能群組 / Execution functionality group
 exec = [
-	"pandas>=2.3.1,<3",   # 資料操作與分析
+	"pandas>=2.3.2,<3",   # 資料操作與分析
 	"pyyaml>=6.0.2,<7",   # YAML 配置檔支援
     ###### Core lib above, SBOM related below ######
 	# pandas dependencies
@@ -85,16 +85,16 @@ exec = [
 # Privacy risk evaluation functionality
 eval = [
 	"anonymeter>=1.0.0,<2",   # 隱私風險評估
-	"sdmetrics>=0.22.0,<1",   # 合成資料品質指標
+	"sdmetrics>=0.23.0,<1",   # 合成資料品質指標
 	###### Core lib above, SBOM related below ######
 	# anonymeter, sdmetrics dependencies
 	"numpy>=1.26.4,<2",
-	"scikit-learn>=1.7.0,<2",
+	"scikit-learn>=1.7.1,<2",
 	# anonymeter dependencies
-	"joblib>=1.5.1,<2",
+	"joblib>=1.5.2,<2",
 	"numba>=0.61.2,<1",
 	# sdmetrics dependencies
-	"plotly>=6.2.0,<7",
+	"plotly>=6.3.0,<7",
 	"scipy>=1.15.3,<2 ; python_full_version < '3.11'",
 	"scipy>=1.16.0,<2 ; python_full_version >= '3.11'",
 ]
@@ -102,7 +102,7 @@ eval = [
 # 合成資料生成功能
 # Synthetic data generation functionality
 syn = [
-	"sdv>=1.25.0,<2",    # 合成資料生成
+	"sdv>=1.26.0,<2",    # 合成資料生成
 	"torch>=2.8.0,<3",   # PyTorch 深度學習模型
 	###### Core lib above, SBOM related below ######
 	# sdv, torch dependencies
@@ -112,21 +112,21 @@ syn = [
 	"scipy>=1.16.0,<2 ; python_full_version >= '3.11'",
 	"tzdata>=2025.2",
 	# sdv dependencies
-	"boto3>=1.40.3,<2",
-	"botocore>=1.39.3,<2",
-	"faker>=37.5.3,<38",
-	"filelock>=3.18.0,<4",
-	"joblib>=1.5.1,<2",
+	"boto3>=1.40.25,<2",
+	"botocore>=1.40.25,<2",
+	"faker>=37.6.0,<38",
+	"filelock>=3.19.1,<4",
+	"joblib>=1.5.2,<2",
 	"narwhals>=1.45.0,<2",
 	"numba>=0.61.2,<1",
-	"platformdirs>=4.3.8,<5",
-	"plotly>=6.2.0,<7",
+	"platformdirs>=4.4.0,<5",
+	"plotly>=6.3.0,<7",
 	"s3transfer>=0.13.1,<1",
 	"threadpoolctl>=3.6.0,<4",
-	"typing-extensions>=4.14.1,<5",
+	"typing-extensions>=4.15.0,<5",
 	"urllib3>=2.5.0,<3",
 	# torch dependencies
-	"fsspec>=2025.7.0",
+	"fsspec>=2025.9.0",
 	"jinja2>=3.1.6,<4",
 	"networkx>=3.4.2,<3.5 ; python_full_version < '3.11'",
 	"networkx>=3.5,<4 ; python_full_version >= '3.11'",
@@ -151,19 +151,19 @@ syn = [
 # Jupyter 筆記本支援
 # Jupyter notebook support
 jupyter = [
-	"ipykernel>=6.29.5,<7",                                 # Jupyter 核心支援
+	"ipykernel>=6.30.1,<7",                                 # Jupyter 核心支援
 	"ipython>=8.3.0,<9 ; python_full_version < '3.11'",     # IPython（Python 3.10 版本）
 	"ipython>=9.4.0,<10 ; python_full_version >= '3.11'",   # IPython（Python 3.11+ 版本）
-	"jupyterlab>=4.0.0,<5",                                 # JupyterLab 支援
+	"jupyterlab>=4.4.7,<5",                                 # JupyterLab 支援
 	"notebook>=7.4.5,<8",                                   # Jupyter Notebook 支援
-	"pyzmq>=27.0.0,<28",                                    # Jupyter 訊息傳遞
+	"pyzmq>=27.0.2,<28",                                    # Jupyter 訊息傳遞
 	###### Core lib above, SBOM related below ######
 	# ipykernel dependencies
-	"debugpy>=1.8.14,<2",
+	"debugpy>=1.8.16,<2",
 	# ipython dependencies
 	"decorator>=5.2.1,<6",
 	"ipython-pygments-lexers>=1.1.1,<2 ; python_version >= '3.11'",
-	"prompt-toolkit>=3.0.51,<4",
+	"prompt-toolkit>=3.0.52,<4",
 	# jupyterlab dependencies
 	"psutil>=7.0.0,<8",
 ]
@@ -177,18 +177,18 @@ load-xlsx = [
 # 基準資料集支援
 # Benchmark dataset support
 load-benchmark = [
-    "requests>=2.32.4,<3",   # HTTP 請求下載資料集
+    "requests>=2.32.5,<3",   # HTTP 請求下載資料集
 ]
 
 # 開發工具
 # Development tools
 dev-tools = [
     "pip-audit>=2.7.3",                  # 安全稽核工具
-	"pytest>=8.4.1",                     # 測試框架
-	"pytest-cov>=6.0.0",                 # 測試覆蓋率報告
-	"python-semantic-release>=10.3.1",   # 發布自動化
-	"ruff>=0.12.7",                      # 程式碼檢查與格式化
-	"trove-classifiers>=2025.5.9.12",    # PyPI 分類器
+	"pytest>=8.4.2",                     # 測試框架
+	"pytest-cov>=6.3.0",                 # 測試覆蓋率報告
+	"python-semantic-release>=10.3.2",   # 發布自動化
+	"ruff>=0.12.12",                     # 程式碼檢查與格式化
+	"trove-classifiers>=2025.8.26.11",   # PyPI 分類器
 ]
 
 # 建置系統設定
