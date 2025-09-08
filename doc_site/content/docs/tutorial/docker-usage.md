@@ -189,8 +189,7 @@ docker run -it --rm \
 ├── petsard/          # PETsARD package source code
 ├── demo/             # Example files
 ├── templates/        # Template files
-├── pyproject.toml    # Project configuration
-├── requirements.txt  # Dependencies list
+├── pyproject.toml    # Project configuration and dependencies
 └── README.md         # Documentation
 ```
 
