@@ -18,7 +18,7 @@ jobs:
       # 檢出指定分支的程式碼並獲取完整歷史記錄
       # Checkout the repository code with full Git history for semantic analysis
       - name: Setup | Checkout Repository on Release Branch
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           ref: ${{ github.ref_name }}
           fetch-depth: 0
