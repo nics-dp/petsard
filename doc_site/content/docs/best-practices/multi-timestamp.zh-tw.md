@@ -13,7 +13,7 @@ next: docs/best-practices/high-cardinality
 ### 資料特性與挑戰
 
 - **複雜的表格結構**：原始資料分散在多個業務系統的資料表中，涉及企業基本資料、申請紀錄、財務追蹤等不同面向
-  - 處理方法見 [多表格資料 - 反正規化](docs/best-practices/multi-table)
+  - 處理方法見 [多表格資料 - 反正規化]({{< ref "multi-table" >}})
 - **時序性資料**：包含多個關鍵時間點（如申請日期、核准日期、追蹤時間等），且這些時間點之間具有邏輯順序關係
 
 ## 多時間點資料的合成挑戰
@@ -24,7 +24,7 @@ next: docs/best-practices/high-cardinality
 
 ### 模擬資料示範
 
-本模擬資料即是由 [多表格資料 - 反正規化](docs/best-practices/multi-table) 整併而來的寬表，此處僅擷取日期相關欄位：
+本模擬資料即是由 [多表格資料 - 反正規化](../multi-table) 整併而來的寬表，此處僅擷取日期相關欄位：
 
 | company_id | established_date | first_apply_apply_date | first_apply_approval_date | latest_apply_apply_date | latest_apply_approval_date | latest_track_last_tracking_date |
 |------------|------------------|------------------------|---------------------------|--------------------------|----------------------------|--------------------------------|
