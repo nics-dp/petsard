@@ -226,9 +226,3 @@ from petsard.executor import Executor
 print('✅ Executor available')
 "
 ```
-
-## Next Steps
-
-- Learn about [YAML Configuration](../yaml-config) for experiment setup
-- Explore [Default Synthesis](../default-synthesis) examples
-- Check [Use Cases](../use-cases) for practical applications

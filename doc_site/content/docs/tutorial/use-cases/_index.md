@@ -13,13 +13,13 @@ When developing privacy-preserving data synthesis workflows, you may encounter s
 
 ## **Data Understanding**:
 
-### **Data Loading: [Specify Data Schema](./specify-schema)**
+### **Data Loading: [Specify Data Schema]({{< ref "specify-schema" >}})**
 
   - Precisely control field processing during data loading
   - Support custom missing value markers, data type conversion, and numeric precision settings
   - Ensure data quality is guaranteed from the source
 
-### **Data Insights: [Data Description](./data-description)**
+### **Data Insights: [Data Description]({{< ref "data-description" >}})**
 
   - Understand your data before synthesis
   - Analyze data characteristics at different granularities
@@ -32,24 +32,24 @@ When developing privacy-preserving data synthesis workflows, you may encounter s
   - Adjust model parameters (if any)
   - Perform more detailed data preprocessing
 
-### **Data Quality Enhancement: [Data Preprocessing](./data-preprocessing)**
+### **Data Quality Enhancement: [Data Preprocessing]({{< ref "data-preprocessing" >}})**
 
   - Systematically address various data quality issues
   - Provide multiple methods for handling missing values, encoding, and outliers
   - Include uniform encoding, standardization, and discretization techniques
 
-### **Synthesis Method Selection: [Comparing Synthesizers](./comparing-synthesizers)**
+### **Synthesis Method Selection: [Comparing Synthesizers]({{< ref "comparing-synthesizers" >}})**
 
   - Compare effects of different synthesis algorithms
   - Use multiple algorithms in a single experiment
   - Includes Gaussian Copula, CTGAN, and TVAE
 
-### **Custom Synthesis: [Custom Synthesis](./custom-synthesis)**
+### **Custom Synthesis: [Custom Synthesis]({{< ref "custom-synthesis" >}})**
 
   - Create your own synthesis methods
   - Integrate into PETsARD's synthesis workflow
 
-### **Data Plausibility: [Data Constraining](./data-constraining)**
+### **Data Plausibility: [Data Constraining]({{< ref "data-constraining" >}})**
 
   - Ensure synthetic data complies with real business rules
   - Provide constraints for field values, field combinations, and null values
@@ -57,13 +57,13 @@ When developing privacy-preserving data synthesis workflows, you may encounter s
 
 ## **Data Evaluating**
 
-### **Machine Learning-based Data Utility：[ML Utility](./ml-utility)**
+### **Machine Learning-based Data Utility：[ML Utility]({{< ref "ml-utility" >}})**
 
   - Evaluate synthetic data utility for classification, regression, and clustering
   - Uses dual-source control group evaluation by default for fair comparison
   - Support multiple experimental designs for different use cases
 
-### **Custom Evaluation: [Custom Evaluation](./custom-evaluation)**
+### **Custom Evaluation: [Custom Evaluation]({{< ref "custom-evaluation" >}})**
 
   - Create your own evaluation methods
   - Implement assessments at different granularities
@@ -71,13 +71,13 @@ When developing privacy-preserving data synthesis workflows, you may encounter s
 
 ## **Workflow improvement**
 
-### **Workflow Validation: [Benchmark Datasets](./benchmark-datasets)**
+### **Workflow Validation: [Benchmark Datasets]({{< ref "benchmark-datasets" >}})**
 
   - Test your synthesis workflow on benchmark data
   - Verify synthesis parameter settings
   - Provide reliable reference standards
 
-### **Performance Analysis: [Timing](./timing)**
+### **Performance Analysis: [Timing]({{< ref "timing" >}})**
 
   - Monitor execution time for each module in your pipeline
   - Identify performance bottlenecks in your workflow
