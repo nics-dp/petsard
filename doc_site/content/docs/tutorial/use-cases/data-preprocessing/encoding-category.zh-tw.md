@@ -8,7 +8,7 @@ next: docs/tutorial/use-cases/data-preprocessing
 
 多數合成演算法僅支援數值型欄位的合成，即使直接支援類別欄位合成，也通常涉及合成器本身內建的前處理與後處理還原轉換。而 CAPE 團隊正是希望控制這些第三方套件不可預期的行為而設計了 `PETsARD`，建議對於任何包含類別變項的欄位，都應主動進行編碼處理：
 
-* 類別變項：預設使用均勻編碼（Uniform Encoding），技術細節見開發者手冊中的[均勻編碼](docs/developer-guide/uniform-encoder/)
+* 類別變項：預設使用均勻編碼（Uniform Encoding），技術細節見 Datacebo 官方文件中的[均勻編碼](https://datacebo.com/blog/improvement-uniform-encoder/)
 
 請點擊下方按鈕在 Colab 中執行範例：
 
