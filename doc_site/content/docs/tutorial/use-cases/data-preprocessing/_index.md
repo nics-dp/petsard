@@ -15,7 +15,7 @@ Ensuring the quality of source data before synthesis is crucial. High-quality in
 
 ## Information Modification
 
-### [Handling Missing Values](./handling-missing)
+### [Handling Missing Values]({{< ref "handling-missing" >}})
 
 - Handle missing and incomplete values in data
 - Ensure data completeness through deletion, statistical imputation, and custom imputation methods
@@ -30,7 +30,7 @@ Ensuring the quality of source data before synthesis is crucial. High-quality in
 
 ## Representation Transformation
 
-### [Encoding Categorical Variables](./encoding-category)
+### [Encoding Categorical Variables]({{< ref "encoding-category" >}})
 
 - Convert categorical data to numerical format
 - Support various encoding methods to preserve data characteristics
@@ -63,7 +63,7 @@ Following CAPE team's preprocessing taxonomy, `PETsARD` subdivides data preproce
   - **Discretizing**: continuous values to discrete representation
   - **Scaling**: remapping numerical ranges
 
-The following table lists all preprocessing methods supported by `PETsARD`. You can learn how to use each method through the tutorial examples, or visit [Processor](../../../api/processor/) for detailed technical implementation.
+The following table lists all preprocessing methods supported by `PETsARD`. You can learn how to use each method through the tutorial examples, or visit [Processor]({{< ref "docs/api/processor" >}}) for detailed technical implementation.
 
 | Process type | Process method | Parameters |
 | :---: | :---: | :---: |
