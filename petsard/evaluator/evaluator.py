@@ -12,7 +12,8 @@ from petsard.evaluator.anonymeter import Anonymeter
 from petsard.evaluator.customer_evaluator import CustomEvaluator
 from petsard.evaluator.data_describer import DataDescriber
 from petsard.evaluator.evaluator_base import BaseEvaluator
-from petsard.evaluator.mlutlity import MLUtility
+from petsard.evaluator.mlutility import MLUtility
+from petsard.evaluator.mlutility_v2 import MLUtility as MLUtility_v2
 from petsard.evaluator.mpuccs import MPUCCs
 from petsard.evaluator.sdmetrics import SDMetricsSingleTable
 from petsard.evaluator.stats import Stats
@@ -33,6 +34,7 @@ class EvaluatorMap(Enum):
     STATS: int = auto()
     # Utility
     MLUTILITY: int = auto()
+    MLUTILITY_V2: int = auto()
     # Describer
     DESCRIBE: int = auto()
     # Other
@@ -94,10 +96,10 @@ class EvaluatorConfig(BaseConfig):
             self._logger.debug(
                 f"Mapped evaluating method '{self.method}' to code {self.method_code}"
             )
-        except KeyError:
+        except KeyError as e:
             error_msg: str = f"Unsupported evaluator method: {self.method}"
             self._logger.error(error_msg)
-            raise UnsupportedMethodError(error_msg)
+            raise UnsupportedMethodError(error_msg) from e
 
         # Set the default
         self.eval_method: str = (
@@ -122,7 +124,8 @@ class Evaluator:
         EvaluatorMap.MPUCCS: MPUCCs,
         EvaluatorMap.SDMETRICS: SDMetricsSingleTable,
         EvaluatorMap.STATS: Stats,
-        EvaluatorMap.MLUTILITY: MLUtility,
+        EvaluatorMap.MLUTILITY: MLUtility,  # 舊版保留給 mlutility-classification 等
+        EvaluatorMap.MLUTILITY_V2: MLUtility_v2,
         EvaluatorMap.DESCRIBE: DataDescriber,
         EvaluatorMap.CUSTOM_METHOD: CustomEvaluator,
     }
@@ -187,6 +190,10 @@ class Evaluator:
         Returns:
             BaseEvaluator: The evaluator object.
         """
+        # 特殊處理：單獨的 'mlutility' 使用 V2 版本
+        if self.config.method.lower() == "mlutility":
+            return MLUtility_v2
+
         return self.EVALUATOR_MAP[self.config.method_code]
 
     def create(self) -> None:
@@ -251,11 +258,11 @@ class Evaluator:
         time_spent: float = round(time.time() - time_start, 4)
         self._logger.info(f"Evaluation completed successfully in {time_spent} seconds")
 
-        columns_info: list[str, list[str]] = {}
-        dtype_counts: list[str, list[str]] = {}
+        columns_info: dict[str, list[str]] = {}
+        dtype_counts: dict[str, dict] = {}
         for key, df in data.items():
             columns_info[key] = list(df.columns)
-            dtype_counts[key] = dict(df.dtypes.value_counts())
+            dtype_counts[key] = df.dtypes.value_counts().to_dict()
 
         self._logger.debug(
             f"Evaluation report summary: Data keys: {list(data.keys())}, "

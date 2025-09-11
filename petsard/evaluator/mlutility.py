@@ -321,6 +321,8 @@ class MLUtility(BaseEvaluator):
                         self._logger.debug(f"Column {col} removed for {key}")
 
             # One-hot encoding
+            # 注意：使用所有資料（ori、syn、control）來訓練編碼器
+            # 這確保了編碼的一致性，但可能造成輕微的資料洩漏
             ohe = OneHotEncoder(
                 drop="first",
                 sparse_output=False,
@@ -359,6 +361,8 @@ class MLUtility(BaseEvaluator):
             target: str = self.mlutility_config.target
 
             if self.mlutility_config.eval_method_code == MLUtilityMap.REGRESSION:
+                # 標準化目標變數 y（回歸任務）
+                # 使用所有資料（ori、syn、control）計算均值和標準差
                 ss_y = StandardScaler()
                 ss_y.fit(
                     np.concatenate(
@@ -369,6 +373,8 @@ class MLUtility(BaseEvaluator):
                         ]
                     )
                 )
+            # 標準化特徵 X
+            # 使用所有資料（ori、syn、control）計算均值和標準差
             ss_X = StandardScaler()
             ss_X.fit(
                 pd.concat(
@@ -409,6 +415,8 @@ class MLUtility(BaseEvaluator):
                 )
             )
 
+            # 標準化聚類資料
+            # 使用所有資料（ori、syn、control）計算均值和標準差
             ss = StandardScaler()
             ss.fit(
                 pd.concat(
