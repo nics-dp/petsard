@@ -137,7 +137,7 @@ In the synthetic data generation process, the CAPE team's PETsARD framework incl
 
 5. Field combination constraints (`field_combinations`): Provide single-field mapping and multi-field mapping functions, defining valid value combination relationships between fields in a positive enumeration manner. These are particularly suitable for establishing correspondence rules between categorical variables.
 
-This article primarily focuses on best practices, showcasing only validated and effective constraint condition setting combinations. However, human natural language and logical expressions are complex and variable, and the same set of data and constraint condition inventory may lead to multiple potential declaration methods. Users should refer to the official PETsARD data constraint tutorial documents as their main reference. For special requirements, we recommend contacting the PETsARD team directly for customized development support.
+This article primarily focuses on best practices, showcasing only validated and effective constraint condition setting combinations. However, human natural language and logical expressions are complex and variable, and the same set of data and constraint condition inventory may lead to multiple potential declaration methods. Users should refer to the official PETsARD [data constraint tutorial]({{< ref "docs/tutorial/use-cases/data-constraining" >}}) documents as their main reference. For special requirements, we recommend contacting the PETsARD team directly for customized development support.
 
 ### Birth Dates and Zodiac Signs: Field Constraints
 
