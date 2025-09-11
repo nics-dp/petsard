@@ -4,7 +4,7 @@ from unittest.mock import patch
 import numpy as np
 import pandas as pd
 
-from petsard.evaluator.mlutlity import MLUtility, MLUtilityConfig
+from petsard.evaluator.mlutility import MLUtility, MLUtilityConfig
 
 
 class TestMLUtility(unittest.TestCase):
