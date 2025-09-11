@@ -26,10 +26,16 @@ Synthetic data quality evaluator providing privacy risk metrics, data quality as
     - 'sdmetrics-diagnosticreport': Data validity report
     - 'sdmetrics-qualityreport': Data quality report
 
-  - Machine Learning Utility Assessment (MLUtility):
-    - 'mlutility-regression': Regression utility
-    - 'mlutility-classification': Classification utility
-    - 'mlutility-cluster': Clustering utility
+  - Machine Learning Utility Assessment (MLUtility - Legacy):
+    - 'mlutility-classification': Classification utility (using multiple models)
+    - 'mlutility-regression': Regression utility (using multiple models)
+    - 'mlutility-cluster': Clustering utility (K-means)
+
+  - Machine Learning Utility Assessment (MLUtility - New, Recommended):
+    - 'mlutility' with `task_type` parameter:
+      - `task_type='classification'`: Classification utility (using XGBoost)
+      - `task_type='regression'`: Regression utility (using XGBoost)
+      - `task_type='clustering'`: Clustering utility (K-means)
 
   - 'default': Uses 'sdmetrics-qualityreport'
   - 'stats': Statistical evaluation, comparing the statistical differences before and after synthesis
@@ -143,9 +149,10 @@ The evaluator supports three major categories of evaluation methods:
 | Privacy Risk Assessment | Inference Risk | anonymeter-inference |
 | Data Fidelity Assessment | Diagnostic Report | sdmetrics-diagnosticreport |
 | Data Fidelity Assessment | Quality Report | sdmetrics-qualityreport |
-| Data Utility Assessment | Classification Utility | mlutility-classification |
-| Data Utility Assessment | Regression Utility | mlutility-regression |
-| Data Utility Assessment | Clustering Utility | mlutility-cluster |
+| Data Utility Assessment (Legacy) | Classification Utility | mlutility-classification |
+| Data Utility Assessment (Legacy) | Regression Utility | mlutility-regression |
+| Data Utility Assessment (Legacy) | Clustering Utility | mlutility-cluster |
+| Data Utility Assessment (New) | Classification/Regression/Clustering Utility | mlutility |
 | Statistical Assessment | Statistical Comparison | stats |
 | Custom Assessment | Custom Method | custom_method |
 
@@ -251,58 +258,219 @@ None
     - 'Correlation Similarity': Correlation preservation
     - 'Contingency Similarity': Contingency table similarity
 
-### Data Utility Assessment
+### Data Utility Assessment - Legacy (MLUtility V1)
+
+Uses multiple models to evaluate machine learning utility of synthetic data.
+
+#### Classification Utility Assessment (Legacy)
+
+**Models Used**
+- Logistic Regression
+- Support Vector Classifier (SVC)
+- Random Forest Classifier
+- Gradient Boosting Classifier
+
+**Parameters**
+- 'eval_method' (`str`): `'mlutility-classification'`
+- 'target' (`str`): Classification target column
+
+#### Regression Utility Assessment (Legacy)
+
+**Models Used**
+- Linear Regression
+- Random Forest Regressor
+- Gradient Boosting Regressor
+
+**Parameters**
+- 'eval_method' (`str`): `'mlutility-regression'`
+- 'target' (`str`): Regression target column
+
+#### Clustering Utility Assessment (Legacy)
+
+**Models Used**
+- K-means (iterating over multiple cluster numbers)
+
+**Parameters**
+- 'eval_method' (`str`): `'mlutility-cluster'`
+- 'n_clusters' (`list`, default=[4, 5, 6]): List of cluster numbers
+
+### Data Utility Assessment - New (MLUtility, Recommended)
+
+Uses simplified single-model architecture (XGBoost) to evaluate machine learning utility of synthetic data.
+
+**Preprocessing Pipeline**:
+  1. **Missing Value Handling**: Remove rows with missing values
+  2. **Feature Separation**: Distinguish numerical and categorical features
+  3. **Categorical Encoding**: Use OneHotEncoder (sparse_output=False, handle_unknown='ignore')
+     - Train encoders using only ori and syn data to avoid data leakage
+     - Unseen categories in control are encoded as zero vectors
+  4. **Feature Standardization**: Use StandardScaler to standardize combined feature matrix
+     - Use only ori and syn data to calculate mean and standard deviation
+  5. **Target Variable Processing**:
+     - Classification: Automatically detect target column type
+       - If already numerical: Use directly without encoding
+       - If categorical: Use LabelEncoder (trained on ori + syn only)
+     - Regression: Use StandardScaler to standardize (parameters from ori + syn only)
+     - Clustering: No target variable
+  6. **Imbalanced Data Handling** (classification only, training data only):
+     - If `resampling` enabled, apply imbalanced handling on training data
+     - `'smote-enn'` (recommended): SMOTE + ENN
+       - SMOTE: Synthesize minority class samples
+       - ENN (Edited Nearest Neighbors): Remove noisy samples, more aggressive cleaning strategy
+     - `'smote-tomek'`: SMOTE + Tomek Links
+       - SMOTE: Synthesize minority class samples
+       - Tomek Links: Clean boundary samples, more conservative cleaning strategy
+     - Note: No resampling on test data (control) to maintain real distribution
+  7. **Constant Target Check**: Abort evaluation if target column is constant
+
+**Experimental Design Options**:
+MLUtility supports two experimental design modes for different evaluation needs:
+
+  1. **Dual Model Control** (**dual_model_control**)
+     - **Purpose**: Evaluate if synthetic data can directly replace original data for model development
+     - **Process**:
+       1. Train model with ori → Test on control
+       2. Train model with syn → Test on control
+       3. Compare performance on control
+     - **Required Data**: ori, syn, control
+     - **Use Case**: When you want to know if models trained on synthetic data can achieve similar performance as those trained on original data
+
+  2. **Domain Transfer** (**domain_transfer**)
+     - **Purpose**: Evaluate deployment performance of models trained on synthetic data in real environments
+     - **Process**:
+       1. Train model with syn → Test on ori
+       2. Evaluate domain transfer capability
+     - **Required Data**: ori, syn
+     - **Use Case**: When you want to know if models trained on synthetic data can work well on real data
 
 #### Classification Utility Assessment
 
-Compares the prediction performance of classification models on original and synthetic data, using logistic regression, support vector machines, random forests, and gradient boosting (all with default parameters).
+Evaluates synthetic data utility in classification tasks using XGBoost classifier.
+
+**Model Used**
+- XGBoost Classifier (XGBClassifier)
 
 **Parameters**
+- 'eval_method' (`str`): Evaluation method name `'mlutility'`
+- 'task_type' (`str`): Task type `'classification'`
+- 'experiment_design' (`str`, default='dual_model_control'): Experimental design
+  - `'dual_model_control'`: Dual model control - ori and syn train separately, test on control
+  - `'domain_transfer'`: Domain transfer - train with syn, test on ori (evaluate synthetic data domain transfer capability)
+- 'resampling' (`str`, optional): Imbalanced data handling method (classification only)
+  - `None` (default): No imbalanced handling
+  - `'smote-enn'`: Use SMOTE-ENN for imbalanced handling (recommended)
+    - SMOTE (Synthetic Minority Over-sampling Technique): Synthesize new samples for minority class
+    - ENN (Edited Nearest Neighbors): Use k-NN to remove noisy samples, more aggressive cleaning
+    - Supports binary and multi-class classification
+    - Suitable for datasets with more noise
+  - `'smote-tomek'`: Use SMOTE-Tomek for imbalanced handling
+    - SMOTE: Synthesize new samples for minority class
+    - Tomek Links: Remove boundary sample pairs, more conservative cleaning
+    - Supports binary and multi-class classification
+    - Suitable for datasets with unclear boundaries
+  - Only applied to training data (ori/syn), not test data (control)
+- 'target' (`str`): Classification target column (supports numerical or categorical types, automatically detected)
+- 'metrics' (`list[str]`, optional): List of evaluation metrics, default:
+  - `['mcc', 'f1_score', 'roc_auc', 'pr_auc', 'accuracy', 'balanced_accuracy', 'precision', 'recall', 'specificity', 'tp', 'tn', 'fp', 'fn']`
+- 'xgb_params' (`dict`, optional): Additional XGBoost parameters
+- 'random_state' (`int`, default=42): Random seed
 
-- 'target' (`str`): Classification target column
+**Supported Evaluation Metrics**
+
+Basic Classification Metrics:
+- `accuracy`: Accuracy
+- `balanced_accuracy`: Balanced accuracy (sklearn.metrics.balanced_accuracy_score)
+- `f1_score`: F1 score (binary for binary, weighted average for multi-class)
+- `f2_score`: F2 score (beta=2)
+- `f0.5_score`: F0.5 score (beta=0.5)
+- `precision`: Precision (zero_division=0)
+- `recall`: Recall
+- `mcc`: Matthews correlation coefficient (sklearn.metrics.matthews_corrcoef)
+- `cohen_kappa`: Cohen's Kappa coefficient (sklearn.metrics.cohen_kappa_score)
+- `jaccard`: Jaccard similarity (sklearn.metrics.jaccard_score)
+
+Probability Metrics:
+- `roc_auc`: Area under ROC curve (direct for binary, OvR + weighted for multi-class)
+- `pr_auc`: Area under Precision-Recall curve (using sklearn.metrics.auc)
+- `log_loss`: Log loss (sklearn.metrics.log_loss)
+- `brier_score`: Brier score (binary classification only, sklearn.metrics.brier_score_loss)
+
+Confusion Matrix Derived Metrics:
+- `tp`, `tn`, `fp`, `fn`: True/False Positive/Negative counts
+- `sensitivity` (=TPR=recall): Sensitivity
+- `specificity` (=TNR): Specificity
+- `ppv` (=precision): Positive predictive value
+- `npv`: Negative predictive value
+- `fpr`: False positive rate
+- `fnr`: False negative rate
+- `fdr`: False discovery rate
+- `for`: False omission rate
+- `informedness`: Youden's J statistic (TPR + TNR - 1)
+- `markedness`: Markedness (PPV + NPV - 1)
+- `prevalence`: Prevalence
+- `dor`: Diagnostic odds ratio
 
 **Returns**
-
-- `pd.DataFrame`: Evaluation result dataframe containing the following columns:
-  - 'ori_mean': Original data model average F1 score
-  - 'ori_std': Original data model F1 standard deviation
-  - 'syn_mean': Synthetic data model average F1 score
-  - 'syn_std': Synthetic data model F1 standard deviation
-  - 'diff': Improvement value of synthetic data relative to original data
+- `dict[str, pd.DataFrame]`:
+  - 'global': Overall evaluation results
+    - **Dual Model Control mode** includes:
+      - 'metric': Metric name
+      - 'ori': Original data model score on control
+      - 'syn': Synthetic data model score on control
+      - 'diff': syn - ori
+    - **Domain Transfer mode** includes:
+      - 'metric': Metric name
+      - 'syn_to_ori': Synthetic data model score on original data
+  - 'details': Detailed metric values for each dataset
 
 #### Regression Utility Assessment
 
-Compares the prediction performance of regression models on original and synthetic data, using linear regression, random forest regression, and gradient boosting regression (all with default parameters).
+Evaluates synthetic data utility in regression tasks using XGBoost regressor.
+
+**Model Used**
+- XGBoost Regressor (XGBRegressor)
 
 **Parameters**
+- 'eval_method' (`str`): Evaluation method name `'mlutility'`
+- 'task_type' (`str`): Task type `'regression'`
+- 'experiment_design' (`str`, default='dual_model_control'): Experimental design (same as classification)
+- 'target' (`str`): Regression target column (must be numerical)
+- 'metrics' (`list[str]`, optional): List of evaluation metrics, default: `['r2_score', 'mse', 'mae', 'rmse']`
+- 'xgb_params' (`dict`, optional): Additional XGBoost parameters
+- 'random_state' (`int`, default=42): Random seed
 
-- 'target' (`str`): Prediction target column (numerical)
+**Supported Evaluation Metrics**
+- `r2_score`: Coefficient of determination (sklearn.metrics.r2_score)
+- `mse`: Mean squared error (sklearn.metrics.mean_squared_error)
+- `mae`: Mean absolute error (sklearn.metrics.mean_absolute_error)
+- `rmse`: Root mean squared error (sqrt(MSE))
+- `mape`: Mean absolute percentage error
 
 **Returns**
-
-- `pd.DataFrame`: Evaluation result dataframe containing the following columns:
-  - 'ori_mean': Original data model average R² score
-  - 'ori_std': Original data model R² standard deviation
-  - 'syn_mean': Synthetic data model average R² score
-  - 'syn_std': Synthetic data model R² standard deviation
-  - 'diff': Improvement value of synthetic data relative to original data
+- Format same as classification task
 
 #### Clustering Utility Assessment
 
-Compares the clustering results of K-means clustering algorithm (with default parameters) on original and synthetic data.
+Evaluates synthetic data clustering performance using K-means algorithm.
+
+**Model Used**
+- K-means clustering (sklearn.cluster.KMeans, n_init='auto')
 
 **Parameters**
+- 'eval_method' (`str`): Evaluation method name `'mlutility'`
+- 'task_type' (`str`): Task type `'clustering'`
+- 'experiment_design' (`str`, default='dual_model_control'): Experimental design (same as classification)
+- 'n_clusters' (`int`, default=5): Number of clusters (fixed value, no iteration)
+- 'metrics' (`list[str]`, optional): List of evaluation metrics, default: `['silhouette_score']`
+- 'random_state' (`int`, default=42): Random seed
 
-- 'n_clusters' (`list`, default=[4, 5, 6]): List of cluster numbers
+**Supported Evaluation Metrics**
+- `silhouette_score`: Silhouette coefficient (sklearn.metrics.silhouette_score)
+  - Values range from -1 to 1
+  - Returns -1 when sample or cluster count is insufficient
 
 **Returns**
-
-- `pd.DataFrame`: Evaluation result dataframe containing the following columns:
-  - 'ori_mean': Original data average silhouette coefficient
-  - 'ori_std': Original data silhouette coefficient standard deviation
-  - 'syn_mean': Synthetic data average silhouette coefficient
-  - 'syn_std': Synthetic data silhouette coefficient standard deviation
-  - 'diff': Improvement value of synthetic data relative to original data
+- Format same as classification task
 
 ### Statistical Evaluation
 
