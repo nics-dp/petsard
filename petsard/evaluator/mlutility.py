@@ -3,7 +3,7 @@ import re
 from copy import deepcopy
 from dataclasses import dataclass, field
 from enum import Enum, auto
-from typing import Any, Optional
+from typing import Any
 
 import numpy as np
 import pandas as pd
@@ -55,7 +55,7 @@ class MLUtilityConfig(BaseConfig):
 
     Attributes:
         eval_method: The method name of how you are evaluating data.
-        eval_method_code (Optional[int]): The mapped method code.
+        eval_method_code (int | None): The mapped method code.
         target (str, optional):
             The target column for regression/classification.
             Should be a numerical column for regression.
@@ -70,27 +70,29 @@ class MLUtilityConfig(BaseConfig):
     """
 
     eval_method: str
-    eval_method_code: Optional[int] = None
-    target: Optional[str] = None
+    eval_method_code: int | None = None
+    target: str | None = None
     n_clusters: list[int] = field(default_factory=lambda: [4, 5, 6])
     REQUIRED_INPUT_KEYS: list[str] = field(
         default_factory=lambda: ["ori", "syn", "control"]
     )
-    n_rows: dict[str, int] = field(default_factory=dict)
-    category_cols: list[str] = field(default_factory=list)
-    category_cols_cardinality: dict[str, dict[str, int]] = field(default_factory=dict)
+    n_rows: dict[str, int] = field(default_factory=lambda: {})
+    category_cols: list[str] = field(default_factory=lambda: [])
+    category_cols_cardinality: dict[str, dict[str, int]] = field(
+        default_factory=lambda: {}
+    )
 
     def __post_init__(self):
         super().__post_init__()
-        error_msg: Optional[str] = None
+        error_msg: str | None = None
 
         # Map and validate method
         try:
             self.eval_method_code = MLUtilityMap.map(self.eval_method)
-        except KeyError:
+        except KeyError as e:
             error_msg = f"Unsupported method: {self.eval_method}"
             self._logger.error(error_msg)
-            raise UnsupportedMethodError(error_msg)
+            raise UnsupportedMethodError(error_msg) from e
 
         # Validate n_clusters
         if not isinstance(self.n_clusters, list):
@@ -129,7 +131,7 @@ class MLUtilityConfig(BaseConfig):
         Raises:
             ConfigError: If data is invalid.
         """
-        error_msg: Optional[str] = None
+        error_msg: str | None = None
 
         # Validate required keys
         if not all(key in data for key in self.REQUIRED_INPUT_KEYS):
@@ -223,7 +225,7 @@ class MLUtility(BaseEvaluator):
         self.mlutility_config = MLUtilityConfig(**self.config)
         self._logger.debug("MLUtilityConfig successfully initialized")
 
-        self._impl: Optional[dict[str, callable]] = None
+        self._impl: dict[str, callable] | None = None
 
     def _preprocessing(
         self, data: dict[str, pd.DataFrame]
@@ -254,9 +256,9 @@ class MLUtility(BaseEvaluator):
                     - 'target_is_constant':
                         The target column is constant
         """
-        error_msg: Optional[str] = None
+        error_msg: str | None = None
         inprogress_data: dict[str, pd.DataFrame] = deepcopy(data)
-        data_now: Optional[pd.DataFrame] = None
+        data_now: pd.DataFrame | None = None
         preprocessed_data: dict[str, pd.DataFrame] = {}
 
         for key in self.REQUIRED_INPUT_KEYS:
@@ -319,6 +321,8 @@ class MLUtility(BaseEvaluator):
                         self._logger.debug(f"Column {col} removed for {key}")
 
             # One-hot encoding
+            # 注意：使用所有資料（ori、syn、control）來訓練編碼器
+            # 這確保了編碼的一致性，但可能造成輕微的資料洩漏
             ohe = OneHotEncoder(
                 drop="first",
                 sparse_output=False,
@@ -357,6 +361,8 @@ class MLUtility(BaseEvaluator):
             target: str = self.mlutility_config.target
 
             if self.mlutility_config.eval_method_code == MLUtilityMap.REGRESSION:
+                # 標準化目標變數 y（回歸任務）
+                # 使用所有資料（ori、syn、control）計算均值和標準差
                 ss_y = StandardScaler()
                 ss_y.fit(
                     np.concatenate(
@@ -367,6 +373,8 @@ class MLUtility(BaseEvaluator):
                         ]
                     )
                 )
+            # 標準化特徵 X
+            # 使用所有資料（ori、syn、control）計算均值和標準差
             ss_X = StandardScaler()
             ss_X.fit(
                 pd.concat(
@@ -407,6 +415,8 @@ class MLUtility(BaseEvaluator):
                 )
             )
 
+            # 標準化聚類資料
+            # 使用所有資料（ori、syn、control）計算均值和標準差
             ss = StandardScaler()
             ss.fit(
                 pd.concat(
@@ -458,7 +468,7 @@ class MLUtility(BaseEvaluator):
         Returns:
             (float): The value in the range.
         """
-        error_msg: Optional[str] = None
+        error_msg: str | None = None
         lower_bound: float = self.LOWER_BOUND_MAP[
             self.mlutility_config.eval_method_code
         ]
@@ -625,9 +635,7 @@ class MLUtility(BaseEvaluator):
 
         return result
 
-    def _get_global(
-        self, result: dict[str, Optional[dict[str, float]]]
-    ) -> pd.DataFrame:
+    def _get_global(self, result: dict[str, dict[str, float] | None]) -> pd.DataFrame:
         """
         Get the global result of the evaluation.
 
@@ -667,7 +675,7 @@ class MLUtility(BaseEvaluator):
             (dict) he evaluation result.
         """
         preprocessed_data: dict[str, pd.DataFrame] = {}
-        result_details: dict[str, Optional[dict[str, float]]] = {}
+        result_details: dict[str, dict[str, float] | None] = {}
 
         self.mlutility_config.update_data(data)
 
@@ -696,18 +704,18 @@ class MLUtility(BaseEvaluator):
             result_details = {
                 data_type: evaluator_class(
                     **(
-                        dict(
-                            X_train=preprocessed_data[data_type]["X"],
-                            y_train=preprocessed_data[data_type]["y"],
-                            X_test=preprocessed_data["control"]["X"],
-                            y_test=preprocessed_data["control"]["y"],
-                        )
+                        {
+                            "X_train": preprocessed_data[data_type]["X"],
+                            "y_train": preprocessed_data[data_type]["y"],
+                            "X_test": preprocessed_data["control"]["X"],
+                            "y_test": preprocessed_data["control"]["y"],
+                        }
                         if self.mlutility_config.eval_method_code
                         in [MLUtilityMap.CLASSIFICATION, MLUtilityMap.REGRESSION]
-                        else dict(
-                            X_train=preprocessed_data[data_type]["X"],
-                            X_test=preprocessed_data["control"]["X"],
-                        )
+                        else {
+                            "X_train": preprocessed_data[data_type]["X"],
+                            "X_test": preprocessed_data["control"]["X"],
+                        }
                     )
                 )
                 for data_type in ["ori", "syn"]
