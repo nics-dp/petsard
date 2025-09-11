@@ -54,6 +54,40 @@ jobs:
           python -m pip install --upgrade pip
           pip install -e ".[dev]"
 
+      - name: 🔍 Verify Test Environment
+        run: |
+          echo "### 🔍 環境診斷 Environment Diagnostics" >> test_report.md
+          echo "" >> test_report.md
+          
+          echo "**Python 版本：**" >> test_report.md
+          python --version >> test_report.md 2>&1
+          echo "" >> test_report.md
+          
+          echo "**已安裝套件：**" >> test_report.md
+          echo "```" >> test_report.md
+          pip list | grep -E "(pytest|ruff|petsard)" >> test_report.md 2>&1 || echo "相關套件未找到" >> test_report.md
+          echo "```" >> test_report.md
+          echo "" >> test_report.md
+          
+          echo "**測試檔案結構：**" >> test_report.md
+          echo "```" >> test_report.md
+          if [ -d "tests" ]; then
+            ls -la tests/ >> test_report.md 2>&1
+          else
+            echo "tests/ 目錄不存在" >> test_report.md
+          fi
+          echo "```" >> test_report.md
+          echo "" >> test_report.md
+          
+          echo "**PETsARD 模組檢查：**" >> test_report.md
+          echo "```" >> test_report.md
+          python -c "import petsard; print(f'PETsARD version: {petsard.__version__ if hasattr(petsard, \"__version__\") else \"unknown\"}')" >> test_report.md 2>&1 || echo "無法載入 petsard 模組" >> test_report.md
+          echo "```" >> test_report.md
+          echo "" >> test_report.md
+          
+          echo "---" >> test_report.md
+          echo "" >> test_report.md
+
       - name: 🔍 Run Ruff Code Quality Check
         id: ruff-check
         run: |
@@ -91,7 +125,7 @@ jobs:
           echo "" >> test_report.md
 
           # 運行測試並捕獲結果，使用簡潔格式
-          if pytest tests/ --cov=petsard --cov-report=term-missing --cov-report=xml --tb=line --quiet --junit-xml=pytest-results.xml > test_output.txt 2>&1; then
+          if pytest tests/ --cov=petsard --cov-report=term-missing --cov-report=xml --tb=short --junit-xml=pytest-results.xml > test_output.txt 2>&1; then
             echo "test_status=success" >> $GITHUB_OUTPUT
             
             # 提取測試統計
@@ -104,36 +138,84 @@ jobs:
           else
             echo "test_status=failed" >> $GITHUB_OUTPUT
             
-            # 提取測試統計（從 pytest 摘要行）
-            SUMMARY_LINE=$(grep -E "^[0-9]+ (failed|passed|skipped|error)" test_output.txt | tail -1)
-            PASSED_COUNT=$(echo "$SUMMARY_LINE" | grep -o "[0-9]* passed" | grep -o "[0-9]*" || echo "0")
-            FAILED_COUNT=$(echo "$SUMMARY_LINE" | grep -o "[0-9]* failed" | grep -o "[0-9]*" || echo "0")
-            ERROR_COUNT=$(echo "$SUMMARY_LINE" | grep -o "[0-9]* error" | grep -o "[0-9]*" || echo "0")
-            SKIPPED_COUNT=$(echo "$SUMMARY_LINE" | grep -o "[0-9]* skipped" | grep -o "[0-9]*" || echo "0")
-            
-            TOTAL_FAILED=$((FAILED_COUNT + ERROR_COUNT))
-            TOTAL_COUNT=$((PASSED_COUNT + FAILED_COUNT + ERROR_COUNT + SKIPPED_COUNT))
-            
-            echo "### ⚠️ 測試未完全通過 Tests Not Fully Passed" >> test_report.md
-            echo "" >> test_report.md
-            echo "**📊 測試結果**: $PASSED_COUNT/$TOTAL_COUNT 通過" >> test_report.md
-            
-            if [ "$TOTAL_FAILED" -gt 0 ]; then
+            # 檢查是否有測試執行錯誤
+            if grep -q "ERROR" test_output.txt; then
+              echo "### ❌ 測試執行錯誤 Test Execution Error" >> test_report.md
               echo "" >> test_report.md
-              echo "**❌ 失敗的測試 ($TOTAL_FAILED 個):**" >> test_report.md
+              echo "**測試無法正常執行，可能的原因：**" >> test_report.md
+              echo "- 找不到測試檔案或模組" >> test_report.md
+              echo "- 測試配置錯誤" >> test_report.md
+              echo "- 相依套件未正確安裝" >> test_report.md
               echo "" >> test_report.md
+              echo "**錯誤詳情：**" >> test_report.md
+              echo "```" >> test_report.md
+              # 顯示錯誤訊息（前50行）
+              head -50 test_output.txt >> test_report.md
+              echo "```" >> test_report.md
+            else
+              # 提取測試統計（從 pytest 摘要行）
+              SUMMARY_LINE=$(grep -E "=+ (short test summary info|[0-9]+ failed|[0-9]+ passed|[0-9]+ error)" test_output.txt | tail -1)
               
-              # 提取失敗測試名稱（簡化版）
-              if grep "FAILED" test_output.txt | grep -o "tests/[^:]*::[^[:space:]]*" | sed 's/tests\///' | sed 's/::/ → /' > failed_tests.txt 2>/dev/null; then
-                cat failed_tests.txt | while IFS= read -r test_name; do
-                  echo "• \`$test_name\`" >> test_report.md
-                done
+              # 嘗試從不同格式提取統計
+              if echo "$SUMMARY_LINE" | grep -q "short test summary"; then
+                # 如果有 short test summary，從之後的行提取
+                PASSED_COUNT=$(grep -E "^[0-9]+ passed" test_output.txt | tail -1 | grep -o "^[0-9]*" || echo "0")
+                FAILED_COUNT=$(grep -E "^[0-9]+ failed" test_output.txt | tail -1 | grep -o "^[0-9]*" || echo "0")
+                ERROR_COUNT=$(grep -E "^[0-9]+ error" test_output.txt | tail -1 | grep -o "^[0-9]*" || echo "0")
+                SKIPPED_COUNT=$(grep -E "^[0-9]+ skipped" test_output.txt | tail -1 | grep -o "^[0-9]*" || echo "0")
+              else
+                # 標準格式提取
+                PASSED_COUNT=$(echo "$SUMMARY_LINE" | grep -o "[0-9]* passed" | grep -o "[0-9]*" || echo "0")
+                FAILED_COUNT=$(echo "$SUMMARY_LINE" | grep -o "[0-9]* failed" | grep -o "[0-9]*" || echo "0")
+                ERROR_COUNT=$(echo "$SUMMARY_LINE" | grep -o "[0-9]* error" | grep -o "[0-9]*" || echo "0")
+                SKIPPED_COUNT=$(echo "$SUMMARY_LINE" | grep -o "[0-9]* skipped" | grep -o "[0-9]*" || echo "0")
               fi
-            fi
-            
-            if [ "$SKIPPED_COUNT" -gt 0 ]; then
-              echo "" >> test_report.md
-              echo "**⏭️ 跳過**: $SKIPPED_COUNT 個測試" >> test_report.md
+              
+              TOTAL_FAILED=$((FAILED_COUNT + ERROR_COUNT))
+              TOTAL_COUNT=$((PASSED_COUNT + FAILED_COUNT + ERROR_COUNT + SKIPPED_COUNT))
+              
+              # 如果統計全是 0，可能是解析失敗
+              if [ "$TOTAL_COUNT" -eq 0 ]; then
+                echo "### ⚠️ 測試結果無法解析 Test Results Cannot Be Parsed" >> test_report.md
+                echo "" >> test_report.md
+                echo "**無法從測試輸出中提取統計資訊**" >> test_report.md
+                echo "" >> test_report.md
+                echo "**原始輸出（前50行）：**" >> test_report.md
+                echo "```" >> test_report.md
+                head -50 test_output.txt >> test_report.md
+                echo "```" >> test_report.md
+              else
+                echo "### ⚠️ 測試未完全通過 Tests Not Fully Passed" >> test_report.md
+                echo "" >> test_report.md
+                echo "**📊 測試結果**: $PASSED_COUNT/$TOTAL_COUNT 通過" >> test_report.md
+                
+                if [ "$TOTAL_FAILED" -gt 0 ]; then
+                  echo "" >> test_report.md
+                  echo "**❌ 失敗的測試 ($TOTAL_FAILED 個):**" >> test_report.md
+                  echo "" >> test_report.md
+                  
+                  # 提取失敗測試名稱（從 FAILED 行）
+                  if grep "FAILED" test_output.txt | grep -o "tests/[^:]*::[^[:space:]]*" | sed 's/tests\///' | sed 's/::/ → /' > failed_tests.txt 2>/dev/null && [ -s failed_tests.txt ]; then
+                    cat failed_tests.txt | while IFS= read -r test_name; do
+                      echo "• \`$test_name\`" >> test_report.md
+                    done
+                  fi
+                  
+                  # 顯示錯誤詳情（從 short test summary）
+                  if grep -q "FAILED\|ERROR" test_output.txt; then
+                    echo "" >> test_report.md
+                    echo "**錯誤詳情：**" >> test_report.md
+                    echo "```" >> test_report.md
+                    grep -A 5 "short test summary" test_output.txt | head -20 >> test_report.md
+                    echo "```" >> test_report.md
+                  fi
+                fi
+                
+                if [ "$SKIPPED_COUNT" -gt 0 ]; then
+                  echo "" >> test_report.md
+                  echo "**⏭️ 跳過**: $SKIPPED_COUNT 個測試" >> test_report.md
+                fi
+              fi
             fi
           fi
           
@@ -154,36 +236,74 @@ jobs:
       - name: 🧪 Run Functional Tests
         id: functional-tests
         run: |
-          if pytest tests/test_petsard.py --tb=line --quiet > functional_output.txt 2>&1; then
-            echo "functional_status=success" >> $GITHUB_OUTPUT
-            
-            # 提取測試數量
-            FUNC_TOTAL=$(grep -E "^[0-9]+ passed" functional_output.txt | grep -o "^[0-9]+" || echo "0")
-            
-            echo "### ✅ 功能測試通過 Functional Tests Passed" >> test_report.md
-            echo "**📊 總計**: $FUNC_TOTAL 個功能測試全部通過" >> test_report.md
+          # 檢查測試檔案是否存在
+          if [ ! -f "tests/test_petsard.py" ]; then
+            echo "functional_status=skipped" >> $GITHUB_OUTPUT
+            echo "### ⏭️ 功能測試跳過 Functional Tests Skipped" >> test_report.md
+            echo "**原因**: 找不到 tests/test_petsard.py 檔案" >> test_report.md
             echo "" >> test_report.md
           else
-            echo "functional_status=failed" >> $GITHUB_OUTPUT
-            
-            # 提取測試統計
-            SUMMARY_LINE=$(grep -E "^[0-9]+ (failed|passed)" functional_output.txt | tail -1)
-            FUNC_PASSED=$(echo "$SUMMARY_LINE" | grep -o "[0-9]* passed" | grep -o "[0-9]*" || echo "0")
-            FUNC_FAILED=$(echo "$SUMMARY_LINE" | grep -o "[0-9]* failed" | grep -o "[0-9]*" || echo "0")
-            FUNC_TOTAL=$((FUNC_PASSED + FUNC_FAILED))
-            
-            echo "### ⚠️ 功能測試未完全通過 Functional Tests Not Fully Passed" >> test_report.md
-            echo "**📊 功能測試**: $FUNC_PASSED/$FUNC_TOTAL 通過" >> test_report.md
-            
-            if [ "$FUNC_FAILED" -gt 0 ]; then
-              echo "" >> test_report.md
-              echo "**❌ 失敗的功能測試:**" >> test_report.md
+            if pytest tests/test_petsard.py --tb=short > functional_output.txt 2>&1; then
+              echo "functional_status=success" >> $GITHUB_OUTPUT
               
-              # 提取失敗測試名稱（簡化版）
-              if grep "FAILED" functional_output.txt | grep -o "test_petsard.py::[^[:space:]]*" | sed 's/test_petsard.py:://' > failed_functional.txt 2>/dev/null; then
-                cat failed_functional.txt | while IFS= read -r test_name; do
-                  echo "• \`$test_name\`" >> test_report.md
-                done
+              # 提取測試數量
+              FUNC_TOTAL=$(grep -E "^[0-9]+ passed" functional_output.txt | grep -o "^[0-9]+" || echo "0")
+              
+              echo "### ✅ 功能測試通過 Functional Tests Passed" >> test_report.md
+              echo "**📊 總計**: $FUNC_TOTAL 個功能測試全部通過" >> test_report.md
+              echo "" >> test_report.md
+            else
+              echo "functional_status=failed" >> $GITHUB_OUTPUT
+              
+              # 檢查是否有執行錯誤
+              if grep -q "ERROR" functional_output.txt; then
+                echo "### ❌ 功能測試執行錯誤 Functional Test Execution Error" >> test_report.md
+                echo "" >> test_report.md
+                echo "**錯誤詳情：**" >> test_report.md
+                echo "```" >> test_report.md
+                head -50 functional_output.txt >> test_report.md
+                echo "```" >> test_report.md
+              else
+                # 提取測試統計
+                SUMMARY_LINE=$(grep -E "^[0-9]+ (failed|passed|error)" functional_output.txt | tail -1)
+                FUNC_PASSED=$(echo "$SUMMARY_LINE" | grep -o "[0-9]* passed" | grep -o "[0-9]*" || echo "0")
+                FUNC_FAILED=$(echo "$SUMMARY_LINE" | grep -o "[0-9]* failed" | grep -o "[0-9]*" || echo "0")
+                FUNC_ERROR=$(echo "$SUMMARY_LINE" | grep -o "[0-9]* error" | grep -o "[0-9]*" || echo "0")
+                FUNC_TOTAL=$((FUNC_PASSED + FUNC_FAILED + FUNC_ERROR))
+                
+                if [ "$FUNC_TOTAL" -eq 0 ]; then
+                  echo "### ⚠️ 功能測試結果無法解析 Functional Test Results Cannot Be Parsed" >> test_report.md
+                  echo "" >> test_report.md
+                  echo "**原始輸出（前50行）：**" >> test_report.md
+                  echo "```" >> test_report.md
+                  head -50 functional_output.txt >> test_report.md
+                  echo "```" >> test_report.md
+                else
+                  echo "### ⚠️ 功能測試未完全通過 Functional Tests Not Fully Passed" >> test_report.md
+                  echo "**📊 功能測試**: $FUNC_PASSED/$FUNC_TOTAL 通過" >> test_report.md
+                  
+                  TOTAL_FUNC_FAILED=$((FUNC_FAILED + FUNC_ERROR))
+                  if [ "$TOTAL_FUNC_FAILED" -gt 0 ]; then
+                    echo "" >> test_report.md
+                    echo "**❌ 失敗的功能測試 ($TOTAL_FUNC_FAILED 個):**" >> test_report.md
+                    
+                    # 提取失敗測試名稱
+                    if grep "FAILED" functional_output.txt | grep -o "test_petsard.py::[^[:space:]]*" | sed 's/test_petsard.py:://' > failed_functional.txt 2>/dev/null && [ -s failed_functional.txt ]; then
+                      cat failed_functional.txt | while IFS= read -r test_name; do
+                        echo "• \`$test_name\`" >> test_report.md
+                      done
+                    fi
+                    
+                    # 顯示錯誤詳情
+                    if grep -q "FAILED\|ERROR" functional_output.txt; then
+                      echo "" >> test_report.md
+                      echo "**錯誤詳情：**" >> test_report.md
+                      echo "```" >> test_report.md
+                      grep -A 5 "short test summary" functional_output.txt | head -20 >> test_report.md
+                      echo "```" >> test_report.md
+                    fi
+                  fi
+                fi
               fi
             fi
           fi
