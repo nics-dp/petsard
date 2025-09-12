@@ -31,9 +31,7 @@ def create() -> None
 - StatsEvaluator
 - CustomEvaluator
 
-## 範例
-
-### 基本使用
+## 基本範例
 
 ```python
 from petsard import Evaluator
@@ -48,83 +46,6 @@ evaluator.create()
 result = evaluator.eval(data)
 ```
 
-### 隱私風險評估
-
-```python
-# Singling Out 風險
-evaluator = Evaluator(
-    method='anonymeter-singlingout',
-    n_attacks=2000  # 2,000
-)
-evaluator.create()  # 建立 AnonymeterEvaluator 實例
-
-# Linkability 風險
-evaluator = Evaluator(
-    method='anonymeter-linkability',
-    aux_cols=[['public'], ['private']]
-)
-evaluator.create()  # 建立 AnonymeterEvaluator 實例
-
-# Inference 風險
-evaluator = Evaluator(
-    method='anonymeter-inference',
-    secret='sensitive_column'
-)
-evaluator.create()  # 建立 AnonymeterEvaluator 實例
-```
-
-### 資料品質評估
-
-```python
-# Diagnostic Report
-evaluator = Evaluator('sdmetrics-diagnosticreport')
-evaluator.create()  # 建立 SDMetricsEvaluator 實例
-
-# Quality Report
-evaluator = Evaluator('sdmetrics-qualityreport')
-evaluator.create()  # 建立 SDMetricsEvaluator 實例
-```
-
-### 機器學習效用評估
-
-```python
-# 新版 MLUtility
-evaluator = Evaluator(
-    method='mlutility',
-    task_type='classification',
-    target='label'
-)
-evaluator.create()  # 建立 MLUtilityV2Evaluator 實例
-
-# 舊版 MLUtility
-evaluator = Evaluator(
-    method='mlutility-classification',
-    target='label'
-)
-evaluator.create()  # 建立 MLUtilityEvaluator 實例
-```
-
-### 統計評估
-
-```python
-evaluator = Evaluator(
-    method='stats',
-    stats_method=['mean', 'std']
-)
-evaluator.create()  # 建立 StatsEvaluator 實例
-```
-
-### 自訂評估器
-
-```python
-evaluator = Evaluator(
-    method='custom_method',
-    module_path='/path/to/evaluator.py',
-    class_name='MyEvaluator'
-)
-evaluator.create()  # 載入並建立自訂評估器實例
-```
-
 ## 錯誤處理
 
 ### 未知的評估方法
@@ -135,7 +56,6 @@ try:
     evaluator.create()
 except ValueError as e:
     print(f"錯誤：{e}")
-    # 輸出：錯誤：Unknown evaluation method: unknown-method
 ```
 
 ### 缺少必要參數
@@ -147,7 +67,6 @@ try:
     evaluator.create()
 except ValueError as e:
     print(f"錯誤：{e}")
-    # 輸出：錯誤：Missing required parameter: secret
 ```
 
 ### 自訂評估器載入失敗
@@ -162,7 +81,6 @@ try:
     evaluator.create()
 except ImportError as e:
     print(f"錯誤：{e}")
-    # 輸出：錯誤：Failed to load custom evaluator
 ```
 
 ## 內部運作
@@ -177,6 +95,7 @@ except ImportError as e:
 
 ## 注意事項
 
+- 建議使用 YAML 配置檔而非直接使用 Python API
 - 必須在 `__init__()` 之後呼叫
 - 必須在 `eval()` 之前呼叫
 - 只需呼叫一次，重複呼叫不會有額外效果
