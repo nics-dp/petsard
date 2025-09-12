@@ -3,7 +3,7 @@ title: "Python API"
 weight: 300
 ---
 
-PETsARD 的 Python API 參考。
+PETsARD 的 Python API 文件。
 
 ## 核心模組
 
