@@ -22,7 +22,7 @@ from sklearn.svm import SVC
 from petsard.config_base import BaseConfig
 from petsard.evaluator.evaluator_base import BaseEvaluator
 from petsard.exceptions import ConfigError, UnsupportedMethodError
-from petsard.metadater.types.data_types import safe_round
+from petsard.utils import safe_round
 
 
 class MLUtilityMap(Enum):

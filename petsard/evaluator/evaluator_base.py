@@ -1,13 +1,48 @@
 import logging
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
+from enum import Enum, auto
 from typing import Any
 
 import pandas as pd
 
 from petsard.config_base import BaseConfig
 from petsard.exceptions import ConfigError
-from petsard.metadater.types.data_types import EvaluationScoreGranularityMap
+
+
+class EvaluationScoreGranularityMap(Enum):
+    """
+    Mapping of the granularity of evaluation score.
+    評估分數粒度映射 Evaluation score granularity mapping
+    """
+
+    GLOBAL = auto()
+    COLUMNWISE = auto()
+    PAIRWISE = auto()
+    DETAILS = auto()
+    TREE = auto()
+
+    @classmethod
+    def map(cls, granularity: str) -> int:
+        """
+        Get suffixes mapping int value.
+
+        Args:
+            granularity (str): The granularity of evaluator score.
+
+        Returns:
+            (int): The method code.
+
+        Raises:
+            KeyError: If the granularity is not recognized.
+        """
+        try:
+            return cls[granularity.upper()].value
+        except KeyError:
+            # Fallback for backward compatibility
+            if hasattr(cls, granularity.upper()):
+                return getattr(cls, granularity.upper()).value
+            raise KeyError(f"Unknown granularity: {granularity}")
 
 
 @dataclass

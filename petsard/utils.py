@@ -3,9 +3,65 @@ import inspect
 import logging
 import os
 import sys
-from typing import Any
+from decimal import Decimal
+from typing import Any, TypeVar, overload
 
 from petsard.exceptions import ConfigError
+
+# 定義泛型類型變數，保持輸入輸出類型一致
+T = TypeVar("T", int, float, Decimal, None)
+
+
+@overload
+def safe_round(value: None, decimals: int = 2) -> None: ...
+@overload
+def safe_round(value: int, decimals: int = 2) -> int: ...
+@overload
+def safe_round(value: float, decimals: int = 2) -> float: ...
+@overload
+def safe_round(value: Decimal, decimals: int = 2) -> Decimal: ...
+
+
+def safe_round(
+    value: int | float | Decimal | None, decimals: int = 2
+) -> int | float | Decimal | None:
+    """
+    安全的四捨五入函數，保持輸入輸出類型一致
+
+    Args:
+        value: 要四捨五入的值（int, float, Decimal 或 None）
+        decimals: 小數位數（預設為 2）
+
+    Returns:
+        四捨五入後的值，保持原始類型
+        - int 輸入直接返回原值（不進行四捨五入）
+        - float 輸入返回 float
+        - Decimal 輸入返回 Decimal
+        - None 輸入返回 None
+    """
+    if value is None:
+        return None
+
+    # int 類型直接返回，不需要四捨五入
+    if isinstance(value, int):
+        return value
+
+    # float 類型
+    if isinstance(value, float):
+        return round(value, decimals)
+
+    # Decimal 類型
+    if isinstance(value, Decimal):
+        # Decimal 的 quantize 需要一個 Decimal 作為精度參考
+        if decimals == 0:
+            return round(value, 0)  # 返回 Decimal 整數
+        else:
+            # 建立精度模板，例如 0.01 代表保留 2 位小數
+            precision = Decimal(10) ** -decimals
+            return value.quantize(precision)
+
+    # 不應該到達這裡，但為了類型檢查器
+    raise TypeError(f"Unsupported type for safe_round: {type(value)}")
 
 
 def _resolve_module_path(
@@ -118,7 +174,7 @@ def load_external_module(
     except Exception as e:
         error_msg = f"Error loading module '{module_name}': {str(e)}"
         logger.error(error_msg)
-        raise ConfigError(error_msg)
+        raise ConfigError(error_msg) from e
 
     # Check if the specified class exists in the module
     if not hasattr(module, class_name):
