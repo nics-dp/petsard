@@ -117,6 +117,8 @@ class AttributeMetadater:
         strategy: dict[str, Any] | None = None,
     ) -> pd.Series:
         """根據 Attribute 對齊 Series"""
+        from petsard.utils import safe_round
+
         aligned = data.copy()
 
         # 處理空值
@@ -136,10 +138,19 @@ class AttributeMetadater:
                     aligned = pd.to_datetime(aligned, errors=attribute.cast_errors)
                 else:
                     aligned = aligned.astype(attribute.type)
-            except Exception as e:
+            except Exception:
                 if attribute.cast_errors == "raise":
-                    raise e
+                    raise  # 保留原始 traceback
                 # coerce: 保持原始資料
+
+        # 處理數值精度（如果有設定）
+        if attribute.type_attr and "precision" in attribute.type_attr:
+            precision = attribute.type_attr["precision"]
+            if attribute.type and (
+                "float" in attribute.type or "int" in attribute.type
+            ):
+                # 對數值欄位應用精度
+                aligned = aligned.apply(lambda x: safe_round(x, precision))
 
         # 應用預設值
         if attribute.default_value is not None:
@@ -276,17 +287,23 @@ class SchemaMetadater:
         if field.get("category_method") == "force":
             attr["logical_type"] = "category"
 
+        # 合併 type_attr
+        type_attr = {}
+
         if "precision" in field:
-            attr["type_attr"] = {"precision": field["precision"]}
+            type_attr["precision"] = field["precision"]
 
         if "datetime_format" in field:
-            attr["type_attr"] = {"format": field["datetime_format"]}
+            type_attr["format"] = field["datetime_format"]
 
         if "leading_zeros" in field:
             leading = field["leading_zeros"]
             if leading.startswith("leading_"):
                 width = int(leading.split("_")[1])
-                attr["type_attr"] = {"width": width}
+                type_attr["width"] = width
+
+        if type_attr:
+            attr["type_attr"] = type_attr
 
         return attr
 
