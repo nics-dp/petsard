@@ -7,6 +7,7 @@ import pandas as pd
 import yaml
 
 from petsard.metadater.metadata import Attribute, Metadata, Schema
+from petsard.metadater.stats import StatsCalculator
 
 
 class AttributeMetadater:
@@ -17,7 +18,9 @@ class AttributeMetadater:
     """
 
     @classmethod
-    def from_data(cls, data: pd.Series) -> Attribute:
+    def from_data(
+        cls, data: pd.Series, enable_stats: bool = True, **kwargs
+    ) -> Attribute:
         """從 Series 建立 Attribute 設定檔 Create Attribute configuration from Series"""
         # 推斷資料類型 Infer data type
         dtype_str = str(data.dtype)
@@ -41,11 +44,18 @@ class AttributeMetadater:
         # 推斷邏輯類型 Infer logical type
         logical_type = cls._infer_logical_type(data)
 
+        # 計算統計資訊
+        stats = None
+        if enable_stats:
+            stats = StatsCalculator.calculate_field_stats(data)
+
         return Attribute(
             name=data.name,
             type=data_type,
             logical_type=logical_type,
             enable_null=data.isnull().any(),
+            enable_stats=enable_stats,
+            stats=stats,
         )
 
     @classmethod
@@ -530,6 +540,48 @@ class Metadater:
     """
 
     @classmethod
+    @classmethod
+    def from_data(
+        cls, tables: dict[str, pd.DataFrame], enable_stats: bool = True, **kwargs
+    ) -> Metadata:
+        """從資料建立 Metadata，包含統計資訊
+
+        Args:
+            tables: 資料表字典
+            enable_stats: 是否計算統計資訊
+            **kwargs: 其他 Metadata 參數
+
+        Returns:
+            Metadata: 包含統計資訊的 Metadata
+        """
+
+        # 建立 schemas
+        schemas = {}
+        for name, df in tables.items():
+            schemas[name] = SchemaMetadater.from_data(
+                df, id=name, enable_stats=enable_stats
+            )
+
+        # 計算資料集統計
+        stats = None
+        if enable_stats:
+            # 收集已經計算好的表格統計
+            table_stats = {
+                name: schema.stats for name, schema in schemas.items() if schema.stats
+            }
+            stats = StatsCalculator.calculate_datasets_stats(table_stats=table_stats)
+
+        # 覆寫預設值
+        defaults = {
+            "id": kwargs.get("id", "auto_metadata"),
+            "schemas": schemas,
+            "enable_stats": enable_stats,
+            "stats": stats,
+        }
+        defaults.update(kwargs)
+
+        return Metadata(**defaults)
+
     def from_data(cls, data: dict[str, pd.DataFrame]) -> Metadata:
         """從資料建立 Metadata 設定檔"""
         schemas = {}
