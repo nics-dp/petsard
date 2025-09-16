@@ -8,7 +8,10 @@ weight: 1
 ## 語法
 
 ```python
-Metadater.from_data(data: dict[str, pd.DataFrame]) -> Metadata
+Metadater.from_data(
+    data: dict[str, pd.DataFrame],
+    enable_stats: bool = False
+) -> Metadata
 ```
 
 ## 參數
@@ -16,6 +19,11 @@ Metadater.from_data(data: dict[str, pd.DataFrame]) -> Metadata
 - **data** (`dict[str, pd.DataFrame]`)
   - 資料表字典
   - key 為表格名稱，value 為 pandas DataFrame
+  
+- **enable_stats** (`bool`, 選填)
+  - 是否計算統計資料
+  - 預設值：`False`
+  - 設為 `True` 時會自動計算每個欄位和表格的統計資訊
 
 ## 返回值
 
@@ -50,6 +58,16 @@ metadata = Metadater.from_data(data)
 # - 兩個 schema：'users' 和 'orders'
 # - 每個 schema 的所有欄位定義
 # - 自動推斷的資料型別
+
+# 包含統計資料
+metadata_with_stats = Metadater.from_data(data, enable_stats=True)
+
+# 存取統計資料
+users_schema = metadata_with_stats.schemas['users']
+print(f"總列數：{users_schema.stats.row_count}")
+
+age_field = users_schema.fields['age']
+print(f"平均年齡：{age_field.stats.mean}")
 ```
 
 ## 自動推斷規則
@@ -66,3 +84,4 @@ metadata = Metadater.from_data(data)
 - 會自動偵測每個欄位是否可為空值
 - 表格名稱會作為 schema id
 - 欄位名稱保持原樣
+- 當 `enable_stats=True` 時，會計算詳細統計資料（參見 [Schema YAML 文檔](/docs/experimental-new-format/yaml/schema-yaml) 中的統計資料說明）

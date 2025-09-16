@@ -88,16 +88,20 @@ metadata = Metadater.from_dict(config)
 ### `from_data()`
 
 ```python
-Metadater.from_data(data: dict[str, pd.DataFrame]) -> Metadata
+Metadater.from_data(
+    data: dict[str, pd.DataFrame],
+    enable_stats: bool = False
+) -> Metadata
 ```
 
 從資料自動推斷並建立詮釋資料結構。
 
 **參數**
 - `data` (dict[str, pd.DataFrame])：資料表字典
+- `enable_stats` (bool, 選填)：是否計算統計資料，預設為 `False`
 
 **回傳值**
-- `Metadata`：詮釋資料物件
+- `Metadata`：詮釋資料物件（當 `enable_stats=True` 時包含統計資訊）
 
 ### `from_dict()`
 
@@ -152,6 +156,9 @@ Metadater.align(metadata: Metadata, data: dict[str, pd.DataFrame], strategy: dic
 class Metadata:
     id: str                        # 資料集識別碼
     schemas: dict[str, Schema]     # 表格結構字典
+    stats: DatasetsStats | None    # 資料集統計（enable_stats=True 時產生）
+    diffs: dict | None             # 差異記錄
+    change_history: list | None    # 變更歷史
 ```
 
 ### Schema（中間層）
@@ -160,6 +167,7 @@ class Metadata:
 class Schema:
     id: str                              # 表格識別碼
     attributes: dict[str, Attribute]     # 欄位屬性字典
+    stats: TableStats | None             # 表格統計（enable_stats=True 時產生）
 ```
 
 ### Attribute（最底層）
@@ -170,6 +178,7 @@ class Attribute:
     type: str                # 資料型別
     nullable: bool           # 是否允許空值
     logical_type: str | None # 邏輯型別
+    stats: FieldStats | None # 欄位統計（enable_stats=True 時產生）
 ```
 
 ## 資料抽象層
@@ -243,6 +252,11 @@ metadata = Metadater.from_data(data)
 
 print(f"資料集 ID：{metadata.id}")
 print(f"表格數量：{len(metadata.schemas)}")
+
+# 包含統計資料
+metadata_with_stats = Metadater.from_data(data, enable_stats=True)
+users_schema = metadata_with_stats.schemas['users']
+print(f"總列數：{users_schema.stats.row_count if users_schema.stats else 'N/A'}")
 ```
 
 ### 差異比較
@@ -331,8 +345,3 @@ Loader:
     filepath: data/users.csv
     schema: schemas/user_schema.yaml
 ```
-
-## 相關文檔
-
-- [Schema YAML](/docs/experimental-new-format/yaml/schema-yaml)：Schema 配置格式
-- [Metadater API](/docs/experimental-new-format/python-api/metadater-api)：詳細 API 文檔
