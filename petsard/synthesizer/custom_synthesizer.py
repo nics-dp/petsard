@@ -3,7 +3,7 @@ import logging
 import pandas as pd
 
 from petsard.exceptions import ConfigError
-from petsard.metadater import SchemaMetadata
+from petsard.metadater import Schema
 from petsard.synthesizer.synthesizer_base import BaseSynthesizer
 from petsard.utils import load_external_module
 
@@ -19,11 +19,11 @@ class CustomSynthesizer(BaseSynthesizer):
         "sample": [],
     }
 
-    def __init__(self, config: dict, metadata: SchemaMetadata = None):
+    def __init__(self, config: dict, metadata: Schema = None):
         """
         Args:
             config (dict): The configuration assign by Synthesizer
-            metadata (SchemaMetadata, optional): The metadata object.
+            metadata (Schema, optional): The metadata object.
 
         Attributes:
             _logger (logging.Logger): The logger object.

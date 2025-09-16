@@ -18,7 +18,8 @@ from petsard.evaluator.stats_base import (
     StatsStd,
 )
 from petsard.exceptions import ConfigError, UnsupportedMethodError
-from petsard.metadater import Metadater, safe_round
+from petsard.metadater import AttributeMetadater
+from petsard.utils import safe_round
 
 
 class StatsMap(Enum):
@@ -171,18 +172,31 @@ class StatsConfig(BaseConfig):
                 if colname in data[source].columns:
                     dtype = data[source][colname].dtype
                     # Create a temporary series to analyze the data type
-                    temp_series = data[source][colname]
-                    field_metadata = Metadater.create_field(
-                        series=temp_series,
-                        field_name=colname,
-                        compute_stats=False,
-                        infer_logical_type=False,
-                        optimize_dtype=False,
-                    )
+                    temp_series = data[source][colname].copy()
+                    temp_series.name = colname
+
+                    # 使用新的 AttributeMetadater API
+                    attribute = AttributeMetadater.from_data(temp_series)
+
+                    # 根據 attribute.type 推斷資料類型分類
+                    if attribute.type:
+                        if "int" in attribute.type or "float" in attribute.type:
+                            infer_dtype = "numerical"
+                        elif "bool" in attribute.type:
+                            infer_dtype = "boolean"
+                        elif "datetime" in attribute.type:
+                            infer_dtype = "datetime"
+                        elif attribute.logical_type == "category":
+                            infer_dtype = "categorical"
+                        else:
+                            infer_dtype = "categorical"  # 預設為 categorical
+                    else:
+                        infer_dtype = "categorical"
+
                     temp.update(
                         {
                             f"{source}_dtype": dtype,
-                            f"{source}_infer_dtype": field_metadata.data_type.value.lower(),
+                            f"{source}_infer_dtype": infer_dtype,
                         }
                     )
             temp["dtype_match"] = temp.get("ori_dtype") == temp.get("syn_dtype")

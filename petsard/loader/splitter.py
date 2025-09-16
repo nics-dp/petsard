@@ -4,7 +4,7 @@ import pandas as pd
 
 from petsard.exceptions import ConfigError
 from petsard.loader.loader import Loader
-from petsard.metadater import SchemaMetadata
+from petsard.metadater.metadata import Schema
 
 
 class Splitter:
@@ -108,7 +108,7 @@ class Splitter:
     def split(
         self,
         data: pd.DataFrame = None,
-        metadata: SchemaMetadata = None,
+        metadata: Schema = None,
         exist_train_indices: list[set] = None,
     ) -> tuple[dict, dict, list[set]]:
         """
@@ -126,7 +126,7 @@ class Splitter:
         Returns:
             tuple[dict, dict, list[set]]:
                 - Split data: {1: {train: pd.DataFrame, validation: pd.DataFrame}, 2: ...}
-                - Metadata: {1: {train: SchemaMetadata, validation: SchemaMetadata}, 2: ...}
+                - Metadata: {1: {train: Schema, validation: Schema}, 2: ...}
                 - Train indices: [{train_indices_set1}, {train_indices_set2}, ...]
         """
         if "method" in self.config:
@@ -217,8 +217,8 @@ class Splitter:
         return []
 
     def _update_metadata_with_split_info(
-        self, metadata: SchemaMetadata, train_rows: int, validation_rows: int
-    ) -> SchemaMetadata:
+        self, metadata: Schema, train_rows: int, validation_rows: int
+    ) -> Schema:
         """
         Update metadata with split information using functional approach.
 
@@ -238,7 +238,7 @@ class Splitter:
         }
 
         # Create new metadata instance with updated properties
-        return SchemaMetadata(
+        return Schema(
             schema_id=metadata.schema_id,
             name=metadata.name,
             description=metadata.description,

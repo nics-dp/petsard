@@ -8,7 +8,7 @@ import pandas as pd
 
 from petsard.config_base import BaseConfig
 from petsard.exceptions import ConfigError, UncreatedError, UnsupportedMethodError
-from petsard.metadater import SchemaMetadata
+from petsard.metadater.metadata import Schema
 from petsard.synthesizer.custom_data import CustomDataSynthesizer
 from petsard.synthesizer.custom_synthesizer import CustomSynthesizer
 from petsard.synthesizer.sdv import SDVSingleTableSynthesizer
@@ -149,7 +149,7 @@ class Synthesizer:
         self._logger.info("Synthesizer initialization completed")
 
     def _determine_sample_configuration(
-        self, metadata: SchemaMetadata = None
+        self, metadata: Schema = None
     ) -> tuple[str, int | None]:
         """
         Determine the sample configuration based on available metadata and configuration.
@@ -162,7 +162,7 @@ class Synthesizer:
         4. Fall back to source data if no other information is available
 
         Args:
-            metadata (SchemaMetadata, optional): The schema metadata containing information about the dataset
+            metadata (Schema, optional): The schema metadata containing information about the dataset
 
         Returns:
             (tuple[str, Optional[int]]): A tuple containing:
@@ -216,12 +216,12 @@ class Synthesizer:
         )
         return sample_from, sample_num_rows
 
-    def create(self, metadata: SchemaMetadata = None) -> None:
+    def create(self, metadata: Schema = None) -> None:
         """
         Create a synthesizer object with the given data.
 
         Args.:
-            metadata (SchemaMetadata, optional): The schema metadata of the data.
+            metadata (Schema, optional): The schema metadata of the data.
         """
         self._logger.info("Creating synthesizer instance")
         if metadata is not None:
