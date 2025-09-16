@@ -22,6 +22,7 @@ jobs:
         with:
           ref: ${{ github.ref_name }}
           fetch-depth: 0
+          persist-credentials: false # 防止使用預設的 GITHUB_TOKEN
 
       # 強制重設本地分支到觸發工作流程的確切提交
       # Force reset local branch to the exact commit that triggered the workflow
@@ -76,9 +77,7 @@ jobs:
         id: release
         uses: python-semantic-release/python-semantic-release@v10.3.0
         with:
-          github_token: ${{ secrets.WORKFLOW_TOKEN_CLASSICAL }}
-          git_committer_name: "Justyn (WORKFLOW_TOKEN)"
-          git_committer_email: "matheme.justyn@gmail.com"
+          github_token: ${{ secrets.MATHEME_JUSTYN_SEMANTIC }}  # 使用你的正確 token 名稱
 
       # 刷新本地程式碼狀態（不需要重新 checkout）
       # Refresh local code state without re-checkout
