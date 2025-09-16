@@ -75,7 +75,7 @@ jobs:
       # Execute semantic version analysis, automatically determine version and create tags
       - name: Action | Semantic Version Release
         id: release
-        uses: python-semantic-release/python-semantic-release@v10.3.0
+        uses: python-semantic-release/python-semantic-release@v10.4.1
         with:
           github_token: ${{ secrets.MATHEME_JUSTYN_SEMANTIC }}  # 使用你的正確 token 名稱
 
@@ -102,7 +102,7 @@ jobs:
       # 發布套件到 TestPyPI 測試環境（僅限 dev 分支）
       # Publish package to TestPyPI testing environment (dev branch only)
       - name: Publish | Upload package to TestPyPI (dev branch)
-        uses: pypa/gh-action-pypi-publish@v1.12.4
+        uses: pypa/gh-action-pypi-publish@v1.13.0
         if: steps.release.outputs.released == 'true' && github.ref_name == 'dev'
         with:
           repository-url: https://test.pypi.org/legacy/
@@ -113,7 +113,7 @@ jobs:
       # 發布套件到正式 PyPI 環境（僅限 main 分支）
       # Publish package to official PyPI environment (main branch only)
       - name: Publish | Upload package to PyPI (main branch)
-        uses: pypa/gh-action-pypi-publish@v1.12.4
+        uses: pypa/gh-action-pypi-publish@v1.13.0
         if: steps.release.outputs.released == 'true' && github.ref_name == 'main'
         with:
           password: ${{ secrets.PYPI_API_TOKEN }}
@@ -123,7 +123,7 @@ jobs:
       # 上傳構建檔案到 GitHub Releases 作為發布資產
       # Upload built files to GitHub Releases as release assets
       - name: Publish | Upload to GitHub Release Assets
-        uses: python-semantic-release/publish-action@v10.2.0
+        uses: python-semantic-release/publish-action@v10.4.1
         if: steps.release.outputs.released == 'true'
         with:
           github_token: ${{ secrets.WORKFLOW_TOKEN_CLASSICAL }}
