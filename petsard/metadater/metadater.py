@@ -218,15 +218,33 @@ class SchemaMetadater:
     """
 
     @classmethod
-    def from_data(cls, data: pd.DataFrame) -> Schema:
+    def from_data(
+        cls, data: pd.DataFrame, enable_stats: bool = False, **kwargs
+    ) -> Schema:
         """從 DataFrame 建立 Schema 設定檔"""
         attributes = {}
 
         for col in data.columns:
-            attributes[col] = AttributeMetadater.from_data(data[col])
+            attributes[col] = AttributeMetadater.from_data(
+                data[col], enable_stats=enable_stats
+            )
+
+        # 計算表格統計
+        stats = None
+        if enable_stats:
+            stats = StatsCalculator.calculate_table_stats(data, attributes)
 
         return Schema(
-            id="inferred_schema", name="Inferred Schema", attributes=attributes
+            id=kwargs.get("id", "inferred_schema"),
+            name=kwargs.get("name", "Inferred Schema"),
+            attributes=attributes,
+            enable_stats=enable_stats,
+            stats=stats,
+            **{
+                k: v
+                for k, v in kwargs.items()
+                if k not in ["id", "name", "enable_stats", "stats"]
+            },
         )
 
     @classmethod
@@ -540,14 +558,13 @@ class Metadater:
     """
 
     @classmethod
-    @classmethod
     def from_data(
-        cls, tables: dict[str, pd.DataFrame], enable_stats: bool = True, **kwargs
+        cls, data: dict[str, pd.DataFrame], enable_stats: bool = False, **kwargs
     ) -> Metadata:
         """從資料建立 Metadata，包含統計資訊
 
         Args:
-            tables: 資料表字典
+            data: 資料表字典
             enable_stats: 是否計算統計資訊
             **kwargs: 其他 Metadata 參數
 
@@ -557,10 +574,12 @@ class Metadater:
 
         # 建立 schemas
         schemas = {}
-        for name, df in tables.items():
-            schemas[name] = SchemaMetadater.from_data(
-                df, id=name, enable_stats=enable_stats
+        for name, df in data.items():
+            # 直接傳遞參數給 SchemaMetadater.from_data
+            schema = SchemaMetadater.from_data(
+                df, enable_stats=enable_stats, id=name, name=name
             )
+            schemas[name] = schema
 
         # 計算資料集統計
         stats = None
@@ -573,7 +592,8 @@ class Metadater:
 
         # 覆寫預設值
         defaults = {
-            "id": kwargs.get("id", "auto_metadata"),
+            "id": kwargs.get("id", "inferred_metadata"),
+            "name": kwargs.get("name", "Inferred Metadata"),
             "schemas": schemas,
             "enable_stats": enable_stats,
             "stats": stats,
@@ -581,20 +601,6 @@ class Metadater:
         defaults.update(kwargs)
 
         return Metadata(**defaults)
-
-    def from_data(cls, data: dict[str, pd.DataFrame]) -> Metadata:
-        """從資料建立 Metadata 設定檔"""
-        schemas = {}
-
-        for table_name, df in data.items():
-            schema = SchemaMetadater.from_data(df)
-            # 更新 schema id 為表名
-            schema = Schema(**{**schema.__dict__, "id": table_name, "name": table_name})
-            schemas[table_name] = schema
-
-        return Metadata(
-            id="inferred_metadata", name="Inferred Metadata", schemas=schemas
-        )
 
     @classmethod
     def from_metadata(cls, metadata: Metadata) -> Metadata:
