@@ -22,7 +22,7 @@ from sklearn.svm import SVC
 from petsard.config_base import BaseConfig
 from petsard.evaluator.evaluator_base import BaseEvaluator
 from petsard.exceptions import ConfigError, UnsupportedMethodError
-from petsard.metadater.types.data_types import safe_round
+from petsard.utils import safe_round
 
 
 class MLUtilityMap(Enum):
@@ -660,7 +660,10 @@ class MLUtility(BaseEvaluator):
             index=[0],
         )
 
-        compare_df["diff"] = safe_round(compare_df["syn_mean"] - compare_df["ori_mean"])
+        # Extract scalar values from Series before passing to safe_round
+        compare_df["diff"] = safe_round(
+            compare_df["syn_mean"].iloc[0] - compare_df["ori_mean"].iloc[0]
+        )
 
         return compare_df
 

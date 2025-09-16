@@ -1,13 +1,48 @@
 import logging
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
+from enum import Enum, auto
 from typing import Any
 
 import pandas as pd
 
 from petsard.config_base import BaseConfig
 from petsard.exceptions import ConfigError
-from petsard.metadater.types.data_types import EvaluationScoreGranularityMap
+
+
+class EvaluationScoreGranularityMap(Enum):
+    """
+    Mapping of the granularity of evaluation score.
+    評估分數粒度映射 Evaluation score granularity mapping
+    """
+
+    GLOBAL = auto()
+    COLUMNWISE = auto()
+    PAIRWISE = auto()
+    DETAILS = auto()
+    TREE = auto()
+
+    @classmethod
+    def map(cls, granularity: str) -> int:
+        """
+        Get suffixes mapping int value.
+
+        Args:
+            granularity (str): The granularity of evaluator score.
+
+        Returns:
+            (int): The method code.
+
+        Raises:
+            KeyError: If the granularity is not recognized.
+        """
+        try:
+            return cls[granularity.upper()].value
+        except KeyError:
+            # Fallback for backward compatibility
+            if hasattr(cls, granularity.upper()):
+                return getattr(cls, granularity.upper()).value
+            raise KeyError(f"Unknown granularity: {granularity}") from None
 
 
 @dataclass
@@ -88,15 +123,11 @@ class EvaluatorInputConfig(BaseConfig):
             raise ConfigError(error_msg)
 
         if len(required_input_keys) > 1:
-            from petsard.metadater import Metadater
-
             reference_data: pd.DataFrame = getattr(self, self.major_key)
             reference_columns: set = set(reference_data.columns)
 
-            # Create schema metadata using Metadater
-            schema_metadata = Metadater.create_schema(
-                dataframe=reference_data, schema_id="reference_schema"
-            )
+            # Note: Schema metadata creation removed as it was not being used
+            # If needed in the future, use: SchemaMetadater.from_data(reference_data)
 
             other_keys: list[str] = [
                 key for key in required_input_keys if key != self.major_key
@@ -144,7 +175,7 @@ class EvaluatorInputConfig(BaseConfig):
                     f"dtypes count ({len(reference_data.dtypes)}). {str(e)}"
                 )
                 self._logger.error(error_msg)
-                raise ConfigError(error_msg)
+                raise ConfigError(error_msg) from e
 
             for other_key in other_keys:
                 other_data = getattr(self, other_key)
@@ -163,7 +194,7 @@ class EvaluatorInputConfig(BaseConfig):
                         f"dtypes count ({len(other_data.dtypes)}). {str(e)}"
                     )
                     self._logger.error(error_msg)
-                    raise ConfigError(error_msg)
+                    raise ConfigError(error_msg) from e
 
                 mismatched_columns = []
                 for col in reference_columns:

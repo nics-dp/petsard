@@ -1,7 +1,7 @@
 import logging
 from dataclasses import dataclass, field
 from enum import Enum, auto
-from typing import Any, Optional
+from typing import Any
 
 import numpy as np
 import pandas as pd
@@ -18,7 +18,8 @@ from petsard.evaluator.stats_base import (
     StatsStd,
 )
 from petsard.exceptions import ConfigError, UnsupportedMethodError
-from petsard.metadater import Metadater, safe_round
+from petsard.metadater import AttributeMetadater
+from petsard.utils import safe_round
 
 
 class StatsMap(Enum):
@@ -75,7 +76,7 @@ class StatsConfig(BaseConfig):
     """
 
     eval_method: str
-    eval_method_code: Optional[int] = None
+    eval_method_code: int | None = None
     AVAILABLE_STATS_METHODS: list[str] = field(
         default_factory=lambda: [
             "mean",
@@ -107,11 +108,11 @@ class StatsConfig(BaseConfig):
     compare_method: str = "pct_change"
     aggregated_method: str = "mean"
     summary_method: str = "mean"
-    columns_info: Optional[dict[str, dict[str, str]]] = field(default_factory=dict)
+    columns_info: dict[str, dict[str, str]] | None = field(default_factory=dict)
 
     def __post_init__(self):
         super().__post_init__()
-        error_msg: Optional[str] = None
+        error_msg: str | None = None
 
         invalid_methods: list[str] = [
             method
@@ -142,7 +143,7 @@ class StatsConfig(BaseConfig):
             raise UnsupportedMethodError(error_msg)
 
     def update_data(self, data: dict[str, pd.DataFrame]) -> None:
-        error_msg: Optional[str] = None
+        error_msg: str | None = None
 
         self._logger.info(
             f"Updating data with {len(self.REQUIRED_INPUT_KEYS)} required keys"
@@ -171,18 +172,31 @@ class StatsConfig(BaseConfig):
                 if colname in data[source].columns:
                     dtype = data[source][colname].dtype
                     # Create a temporary series to analyze the data type
-                    temp_series = data[source][colname]
-                    field_metadata = Metadater.create_field(
-                        series=temp_series,
-                        field_name=colname,
-                        compute_stats=False,
-                        infer_logical_type=False,
-                        optimize_dtype=False,
-                    )
+                    temp_series = data[source][colname].copy()
+                    temp_series.name = colname
+
+                    # 使用新的 AttributeMetadater API
+                    attribute = AttributeMetadater.from_data(temp_series)
+
+                    # 根據 attribute.type 推斷資料類型分類
+                    if attribute.type:
+                        if "int" in attribute.type or "float" in attribute.type:
+                            infer_dtype = "numerical"
+                        elif "bool" in attribute.type:
+                            infer_dtype = "boolean"
+                        elif "datetime" in attribute.type:
+                            infer_dtype = "datetime"
+                        elif attribute.logical_type == "category":
+                            infer_dtype = "categorical"
+                        else:
+                            infer_dtype = "categorical"  # 預設為 categorical
+                    else:
+                        infer_dtype = "categorical"
+
                     temp.update(
                         {
                             f"{source}_dtype": dtype,
-                            f"{source}_infer_dtype": field_metadata.data_type.value.lower(),
+                            f"{source}_infer_dtype": infer_dtype,
                         }
                     )
             temp["dtype_match"] = temp.get("ori_dtype") == temp.get("syn_dtype")
@@ -273,7 +287,7 @@ class Stats(BaseEvaluator):
         self.stats_config = StatsConfig(**self.config)
         self._logger.debug("StatsConfig successfully initialized")
 
-        self._impl: Optional[dict[str, callable]] = None
+        self._impl: dict[str, callable] | None = None
 
     def _process_columnwise(
         self, data: dict[str, pd.DataFrame], col: str, info: dict[str, Any], method: str
@@ -414,7 +428,7 @@ class Stats(BaseEvaluator):
         self._logger.debug(
             f"Applying comparison method '{compare_method}' to DataFrame"
         )
-        error_msg: Optional[list[str]] = None
+        error_msg: list[str] | None = None
 
         method_info = self.COMPARE_METHOD_MAP.get(compare_method)
         if not method_info:
@@ -432,7 +446,7 @@ class Stats(BaseEvaluator):
             raise ValueError(error_msg)
 
         result = df.copy()
-        for ori_col, syn_col in zip(ori_cols, syn_cols):
+        for ori_col, syn_col in zip(ori_cols, syn_cols, strict=True):
             eval_col = f"{ori_col.replace('_ori', f'_{compare_method}')}"
 
             if eval_col in result.columns:
@@ -443,10 +457,20 @@ class Stats(BaseEvaluator):
             # Apply appropriate function based on whether original value is zero
             func = method_info["func"]
             handle_zero = method_info["handle_zero"]
+
+            # Calculate the comparison values
+            comparison_values = func(result[syn_col], result[ori_col])
+
+            # Apply safe_round element-wise if it's a Series
+            if isinstance(comparison_values, pd.Series):
+                rounded_values = comparison_values.apply(safe_round)
+            else:
+                rounded_values = safe_round(comparison_values)
+
             result[eval_col] = np.where(
                 result[ori_col].astype(float) == 0.0,
                 handle_zero(result[syn_col], result[ori_col]),
-                safe_round(func(result[syn_col], result[ori_col])),
+                rounded_values,
             )
 
         self._logger.debug(f"Comparison method '{compare_method}' applied successfully")

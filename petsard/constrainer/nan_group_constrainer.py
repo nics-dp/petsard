@@ -1,5 +1,4 @@
 import warnings
-from typing import Dict, List, Union
 
 import numpy as np
 import pandas as pd
@@ -11,7 +10,7 @@ from petsard.exceptions import ConfigError
 class NaNGroupConstrainer(BaseConstrainer):
     """Handle NaN group constraints"""
 
-    def __init__(self, constraints: Dict[str, Dict[str, Union[str, List[str]]]]):
+    def __init__(self, constraints: dict[str, dict[str, str | list[str]]]):
         """
         Initialize the constrainer with given constraints
 

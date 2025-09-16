@@ -576,7 +576,7 @@ class FieldProportionsConstrainer(BaseConstrainer):
 
             self.proportions_config = FieldProportionsConfig(**config_dict)
         except Exception as e:
-            raise ValueError(f"Invalid field proportions configuration: {e}")
+            raise ValueError(f"Invalid field proportions configuration: {e}") from e
 
     def _set_target_rows(self, target_rows: int):
         """Internal method to set target rows from Constrainer"""
@@ -649,7 +649,7 @@ class FieldProportionsConstrainer(BaseConstrainer):
 
         # 複製資料以避免修改原始資料
         data_result = data.copy()
-        initial_rows = len(data_result)
+        # initial_rows = len(data_result)  # Currently unused, commented for future use
 
         # 創建操作記錄的列表
         ops_records = []
@@ -687,7 +687,7 @@ class FieldProportionsConstrainer(BaseConstrainer):
                 break
 
             # 1. 先標記所有需要保護的資料（計數過少的條件）
-            protect_mask = pd.Series(False, index=data_result.index)
+            # protect_mask = pd.Series(False, index=data_result.index)  # Currently unused
 
             # 2. 找出第一個計數過多的違規條件，進行處理
             found_overflow = False
@@ -747,16 +747,28 @@ class FieldProportionsConstrainer(BaseConstrainer):
                                                     == parsed_value[i]
                                                 )
                                 else:
+                                    # Capture loop variable to avoid B023
+                                    def check_value(row, target_value=value):
+                                        return str(tuple(row)) == target_value
+
                                     value_mask = data_result[list(fields)].apply(
-                                        lambda row: str(tuple(row)) == value, axis=1
+                                        check_value, axis=1
                                     )
-                            except:
+                            except Exception:  # Avoid bare except E722
+                                # Capture loop variable to avoid B023
+                                def check_value_fallback(row, target_value=value):
+                                    return str(tuple(row)) == target_value
+
                                 value_mask = data_result[list(fields)].apply(
-                                    lambda row: str(tuple(row)) == value, axis=1
+                                    check_value_fallback, axis=1
                                 )
                         else:
+                            # Capture loop variable to avoid B023
+                            def check_value_str(row, target_value=value):
+                                return str(tuple(row)) == str(target_value)
+
                             value_mask = data_result[list(fields)].apply(
-                                lambda row: str(tuple(row)) == str(value), axis=1
+                                check_value_str, axis=1
                             )
                         condition_desc = f"欄位組合 {field_name} 的值 {value}"
                     else:  # mode == 'missing'

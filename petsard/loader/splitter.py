@@ -4,7 +4,7 @@ import pandas as pd
 
 from petsard.exceptions import ConfigError
 from petsard.loader.loader import Loader
-from petsard.metadater import SchemaMetadata
+from petsard.metadater.metadata import Schema
 
 
 class Splitter:
@@ -108,7 +108,7 @@ class Splitter:
     def split(
         self,
         data: pd.DataFrame = None,
-        metadata: SchemaMetadata = None,
+        metadata: Schema = None,
         exist_train_indices: list[set] = None,
     ) -> tuple[dict, dict, list[set]]:
         """
@@ -126,7 +126,7 @@ class Splitter:
         Returns:
             tuple[dict, dict, list[set]]:
                 - Split data: {1: {train: pd.DataFrame, validation: pd.DataFrame}, 2: ...}
-                - Metadata: {1: {train: SchemaMetadata, validation: SchemaMetadata}, 2: ...}
+                - Metadata: {1: {train: Schema, validation: Schema}, 2: ...}
                 - Train indices: [{train_indices_set1}, {train_indices_set2}, ...]
         """
         if "method" in self.config:
@@ -217,8 +217,8 @@ class Splitter:
         return []
 
     def _update_metadata_with_split_info(
-        self, metadata: SchemaMetadata, train_rows: int, validation_rows: int
-    ) -> SchemaMetadata:
+        self, metadata: Schema, train_rows: int, validation_rows: int
+    ) -> Schema:
         """
         Update metadata with split information using functional approach.
 
@@ -230,21 +230,22 @@ class Splitter:
         Returns:
             Updated metadata with split information
         """
-        # Create new properties with split information
-        updated_properties = metadata.properties.copy() if metadata.properties else {}
-        updated_properties["row_num_after_split"] = {
-            "train": train_rows,
-            "validation": validation_rows,
-        }
+        # Create new metadata instance with updated split information
+        # Store split info in description field or create new stats
+        split_description = (
+            f"{metadata.description or ''} | Split info: train={train_rows} rows, validation={validation_rows} rows"
+        ).strip()
 
-        # Create new metadata instance with updated properties
-        return SchemaMetadata(
-            schema_id=metadata.schema_id,
-            name=metadata.name,
-            description=metadata.description,
-            fields=metadata.fields,
-            properties=updated_properties,
-        )
+        # Since Schema is now mutable, we can create a copy and update it
+        from copy import deepcopy
+
+        updated_metadata = deepcopy(metadata)
+        updated_metadata.description = split_description
+
+        # Store split info in a custom field if needed for programmatic access
+        # We can add it as a comment in the description for now
+
+        return updated_metadata
 
     def _bootstrapping(
         self, index: list, exist_train_indices: list[set] = None

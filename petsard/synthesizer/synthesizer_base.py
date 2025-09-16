@@ -5,7 +5,7 @@ from typing import Any
 import pandas as pd
 
 from petsard.exceptions import ConfigError, UnfittedError
-from petsard.metadater import SchemaMetadata
+from petsard.metadater import Schema
 
 
 class BaseSynthesizer(ABC):
@@ -14,13 +14,13 @@ class BaseSynthesizer(ABC):
     These engines are used by the main Synthesizer to perform the actual data synthesis.
     """
 
-    def __init__(self, config: dict, metadata: SchemaMetadata = None):
+    def __init__(self, config: dict, metadata: Schema = None):
         """
         Args:
             config (dict): The configuration assign by Synthesizer
                 - syn_method (str): The method of how you synthesize data.
                 - sample_num_rows (int): The number of rows to be synthesized.
-            metadata (SchemaMetadata, optional): The schema metadata object.
+            metadata (Schema, optional): The schema metadata object.
 
         Attributes:
             _logger (logging.Logger): The logger object.

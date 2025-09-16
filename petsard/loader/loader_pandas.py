@@ -77,14 +77,14 @@ class LoaderPandasExcel(LoaderBase):
         """
         # 檢查 openpyxl 是否已安裝
         try:
-            import openpyxl
-        except ImportError:
+            import openpyxl  # noqa: F401
+        except ImportError as e:
             from petsard.exceptions import ConfigError
 
             raise ConfigError(
                 "openpyxl is required to read Excel files. "
                 "Please install it with: pip install petsard[xlsx]"
-            )
+            ) from e
 
         # 1. set the filepath as first positional argument
         filepath = self.config["filepath"]
