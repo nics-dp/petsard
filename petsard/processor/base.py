@@ -212,7 +212,9 @@ class Processor:
         # Setup logging
         self.logger = logging.getLogger(f"PETsARD.{self.__class__.__name__}")
         self.logger.debug("Initializing Processor")
-        self.logger.debug(f"Loaded metadata contains {len(metadata.fields)} fields")
+        self.logger.debug(
+            f"Loaded metadata contains {len(metadata.attributes)} attributes"
+        )
 
         self.logger.debug("config is provided:")
         self.logger.debug(f"config is provided: {config}")
@@ -247,68 +249,70 @@ class Processor:
 
     def _get_field_names(self) -> list[str]:
         """Get all field names from schema metadata"""
-        return [field.name for field in self._metadata.fields]
+        return list(self._metadata.attributes.keys())
 
     def _get_field_infer_dtype(self, field_name: str) -> str:
         """Get inferred data type for a field"""
-        field = self._metadata.get_field(field_name)
+        field = self._metadata.attributes.get(field_name)
         if not field:
             raise ValueError(f"Field {field_name} not found in metadata")
 
-        # Map DataType to legacy string format
-        if hasattr(field.data_type, "value"):
-            data_type_str = field.data_type.value.lower()
-        else:
-            data_type_str = str(field.data_type).lower()
+        # Map Attribute type to legacy string format
+        data_type_str = str(field.type).lower() if field.type else "object"
 
-        # Map specific DataType values to legacy categories
-        if data_type_str in [
-            "int8",
-            "int16",
-            "int32",
-            "int64",
-            "float32",
-            "float64",
-            "decimal",
-        ]:
+        # Map specific types to legacy categories
+        if "int" in data_type_str or "float" in data_type_str:
             return "numerical"
-        elif data_type_str in ["string", "binary"]:
+        elif data_type_str in ["string", "str", "binary"]:
             return "categorical"
         elif data_type_str == "boolean":
             return "categorical"
-        elif data_type_str in ["date", "time", "timestamp", "timestamp_tz"]:
+        elif "datetime" in data_type_str or data_type_str in [
+            "date",
+            "time",
+            "timestamp",
+        ]:
             return "datetime"
+        elif field.logical_type == "category":
+            return "categorical"
         else:
             return "object"
 
     def _get_field_dtype(self, field_name: str) -> str:
         """Get source dtype for a field"""
-        field = self._metadata.get_field(field_name)
+        field = self._metadata.attributes.get(field_name)
         if not field:
             raise ValueError(f"Field {field_name} not found in metadata")
-        return field.source_dtype
+        # Attribute doesn't have source_dtype, return the type
+        return field.type or "object"
 
     def _get_field_na_percentage(self, field_name: str) -> float:
         """Get NA percentage for a field"""
-        field = self._metadata.get_field(field_name)
+        field = self._metadata.attributes.get(field_name)
         if not field or not field.stats:
             return 0.0
-        return field.stats.na_percentage
+        return (
+            field.stats.na_percentage if hasattr(field.stats, "na_percentage") else 0.0
+        )
 
     def _get_global_na_percentage(self) -> float:
         """Calculate global NA percentage from all fields"""
-        if not self._metadata.fields:
+        if not self._metadata.attributes:
             return 0.0
 
         total_na = sum(
-            field.stats.na_count if field.stats else 0
-            for field in self._metadata.fields
+            field.stats.na_count
+            if field.stats and hasattr(field.stats, "na_count")
+            else 0
+            for field in self._metadata.attributes.values()
         )
         total_rows = max(
-            field.stats.row_count if field.stats else 0
-            for field in self._metadata.fields
+            field.stats.row_count
+            if field.stats and hasattr(field.stats, "row_count")
+            else 0
+            for field in self._metadata.attributes.values()
         )
-        total_cells = total_rows * len(self._metadata.fields)
+        total_cells = total_rows * len(self._metadata.attributes)
 
         return (total_na / total_cells) if total_cells > 0 else 0.0
 
@@ -932,12 +936,10 @@ class Processor:
         Return:
             (pd.DataFrame): The aligned data.
         """
-        # Use Metadater.align instead of apply_dtype_conversion
-        # Create a temporary Metadater instance for alignment
-        from petsard.metadater import Metadater as NewMetadater
+        # Use SchemaMetadater.align instead of apply_dtype_conversion
+        from petsard.metadater import SchemaMetadater
 
         # Use the metadata to align data types
-        metadater = NewMetadater.from_metadata(self._metadata)
-        aligned_data = metadater.align(data)
+        aligned_data = SchemaMetadater.align(self._metadata, data)
 
         return aligned_data
