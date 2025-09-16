@@ -123,15 +123,11 @@ class EvaluatorInputConfig(BaseConfig):
             raise ConfigError(error_msg)
 
         if len(required_input_keys) > 1:
-            from petsard.metadater import Metadater
-
             reference_data: pd.DataFrame = getattr(self, self.major_key)
             reference_columns: set = set(reference_data.columns)
 
-            # Create schema metadata using Metadater
-            schema_metadata = Metadater.create_schema(
-                dataframe=reference_data, schema_id="reference_schema"
-            )
+            # Note: Schema metadata creation removed as it was not being used
+            # If needed in the future, use: SchemaMetadater.from_data(reference_data)
 
             other_keys: list[str] = [
                 key for key in required_input_keys if key != self.major_key
