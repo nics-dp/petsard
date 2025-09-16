@@ -2,7 +2,7 @@ import logging
 from abc import ABC, abstractmethod
 from dataclasses import _MISSING_TYPE, dataclass, fields
 from enum import Enum, auto
-from typing import Any, Optional
+from typing import Any
 
 from petsard.exceptions import ConfigError
 
@@ -28,7 +28,7 @@ class ConfigGetParamConfig:
     """
 
     action: ConfigGetParamActionMap
-    rename: Optional[dict] = None
+    rename: dict | None = None
 
     @classmethod
     def from_dict(cls, config_dict: dict[str, Any]) -> "ConfigGetParamConfig":
@@ -301,7 +301,7 @@ class BaseConfig(ABC):
             except ValueError as e:
                 error_msg = f"Configuration error: {e}"
                 self._logger.error(error_msg)
-                raise ConfigError(error_msg)
+                raise ConfigError(error_msg) from e
 
         return params
 

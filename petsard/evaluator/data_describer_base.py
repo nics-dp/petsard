@@ -1,6 +1,6 @@
 import logging
 from abc import abstractmethod
-from typing import Any, Optional
+from typing import Any
 
 import numpy as np
 import pandas as pd
@@ -23,7 +23,7 @@ class BaseDataDescriber:
         self.config = self._init_config(config)
         self._logger.debug(f"Configuration: {self.config}")
 
-    def _init_config(self, config: dict[str, Any]) -> Optional[dict[str, Any]]:
+    def _init_config(self, config: dict[str, Any]) -> dict[str, Any] | None:
         """
         Initialize the configuration parameters.
 
@@ -239,7 +239,7 @@ class DataDescriberPercentile(BaseDataDescriber):
     def __init__(self, config: dict[str, Any] = None):
         super().__init__(config=config)
 
-    def _init_config(self, config: dict[str, Any]) -> Optional[dict[str, Any]]:
+    def _init_config(self, config: dict[str, Any]) -> dict[str, Any] | None:
         """
         Initialize the configuration parameters.
 

@@ -8,7 +8,7 @@ next: docs/tutorial/use-cases/data-preprocessing
 
 Most synthetic data algorithms only support numerical field synthesis. Even when they directly support categorical field synthesis, it usually involves the synthesizer's built-in preprocessing and post-processing restoration transformations. The CAPE team designed `PETsARD` specifically to control these unpredictable behaviors from third-party packages, recommending active encoding for any fields containing categorical variables:
 
-* Categorical variables: Default to Uniform Encoding, see technical details in the developer manual [Uniform Encoding](docs/developer-guide/uniform-encoder/)
+* Categorical variables: Default to Uniform Encoding, see technical details in the official Datacebo documentation [Uniform Encoding](https://datacebo.com/blog/improvement-uniform-encoder/)
 
 Click the below button to run this example in Colab:
 

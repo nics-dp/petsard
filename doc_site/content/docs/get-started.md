@@ -8,7 +8,7 @@ next: docs/tutorial
 
 ## Installation
 
-PETsARD is available on PyPI and can be installed with different dependency groups based on your needs. You can also install from source using `pyproject.toml` or `requirements.txt`.
+PETsARD is available on PyPI and can be installed with different dependency groups based on your needs. You can also install from source using `pyproject.toml`.
 
 ### PyPI Installation (Recommended)
 
@@ -44,11 +44,12 @@ For development or custom builds:
 git clone https://github.com/nics-tw/petsard.git
 cd petsard
 
-# Install with pyproject.toml
+# Install with pyproject.toml (recommended)
 pip install -e ".[all]"
 
-# Or install with requirements.txt (based on default)
-pip install -r requirements.txt
+# Or install specific dependency groups
+pip install -e ".[ds]"    # Data science features
+pip install -e ".[dev]"   # Development tools
 ```
 
 **Recommended tools for development:**

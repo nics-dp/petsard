@@ -432,6 +432,87 @@ Enhanced outlier detection with pandas nullable integer array compatibility:
 
 ### `Metadater`
 
+> tests/metadater/test_metadater.py
+
+Tests for the complete Metadater three-layer architecture functionality (700+ lines of tests):
+
+#### Three-Layer Architecture Tests
+
+**Metadata Layer Tests:**
+- `test_metadata_from_data`: Test creating Metadata from data
+- `test_metadata_from_metadata`: Test creating Metadata from configuration
+- `test_metadata_get`: Test getting Schema objects
+- `test_metadata_add`: Test adding Schema
+- `test_metadata_update`: Test updating Schema
+- `test_metadata_remove`: Test removing Schema
+- `test_metadata_diff`: Test Metadata-level difference comparison
+- `test_metadata_align`: Test Metadata-level data alignment
+
+**Schema Layer Tests:**
+- `test_schema_from_data`: Test creating Schema from DataFrame
+- `test_schema_from_metadata`: Test creating Schema from configuration
+- `test_schema_get`: Test getting Attribute objects
+- `test_schema_add`: Test adding Attribute
+- `test_schema_update`: Test updating Attribute
+- `test_schema_remove`: Test removing Attribute
+- `test_schema_diff`: Test Schema-level difference comparison
+- `test_schema_align`: Test Schema-level data alignment
+
+**Attribute Layer Tests:**
+- `test_attribute_from_data`: Test creating Attribute from Series
+- `test_attribute_from_metadata`: Test creating Attribute from configuration
+- `test_attribute_diff`: Test Attribute-level difference comparison
+- `test_attribute_align`: Test Attribute-level data alignment
+
+#### Statistics Functionality Tests
+
+- `test_metadater_with_stats`: Test Metadater functionality with statistics enabled
+- `test_schema_metadater_with_stats`: Test Schema-level statistics calculation
+- `test_attribute_metadater_with_stats`: Test Attribute-level statistics calculation
+- `test_stats_calculation_accuracy`: Test statistics calculation accuracy:
+  - Mean, median, standard deviation
+  - Unique value count, null count
+  - Min, max, quartiles
+
+#### YAML Compatibility Tests
+
+- `test_yaml_fields_compatibility`: Test mapping of 'fields' in YAML to internal 'attributes'
+- `test_schema_to_dict_with_fields`: Test Schema output as dictionary uses 'fields' key name
+- `test_metadater_yaml_roundtrip`: Test complete YAML configuration roundtrip:
+  - Load from YAML
+  - Process and modify
+  - Output back to YAML format
+
+#### Advanced Functionality Tests
+
+- `test_multi_table_operations`: Test multi-table operations:
+  - Process multiple tables simultaneously
+  - Cross-table difference comparison
+  - Batch alignment operations
+- `test_nested_diff_operations`: Test nested difference operations:
+  - Metadata level calls Schema.diff()
+  - Schema level calls Attribute.diff()
+  - Hierarchical difference result labeling
+- `test_strategy_based_align`: Test strategy-based alignment:
+  - Automatic diff mode
+  - Specified strategy mode
+  - Custom alignment rules
+
+#### Edge Case Tests
+
+- `test_empty_data_handling`: Test empty data handling
+- `test_missing_table_handling`: Test missing table handling
+- `test_invalid_configuration`: Test invalid configuration error handling
+- `test_type_mismatch_handling`: Test type mismatch handling
+
+#### Performance Tests
+
+- `test_large_dataset_performance`: Test large dataset performance
+- `test_memory_efficiency`: Test memory usage efficiency
+- `test_concurrent_operations`: Test concurrent operation safety
+
+> **Architecture Refactoring Note**: Metadater tests have been completely refactored, consolidating the original test_metadater_v2.py and test_metadater_functional.py into a single comprehensive test suite. The new tests cover the three-layer architecture (Metadata → Schema → Attribute) with all functionality including statistics calculation, difference comparison, data alignment, and YAML compatibility.
+
 #### Field Functions
 
 > tests/metadater/field/test_field_functions.py
@@ -835,21 +916,67 @@ Tests for custom evaluator functionality:
 
 > tests/evaluator/test_mlutility.py
 
-Tests for machine learning utility evaluation:
+Tests for machine learning utility evaluation (original version, 7 tests):
 
-- `test_classification_of_single_value`: Tests classification with constant target in three scenarios:
-  - Original data has single level target
-  - Synthetic data has single level target
-  - Both datasets have single level target
-  - Verifies correct handling of NaN scores and warnings
-- `test_classification_normal_case`: Tests normal multi-class classification:
-  - Verifies score calculation
-  - Checks score ranges
-  - Validates statistical metrics
-- `test_classification_empty_data`: Tests behavior with empty data:
-  - Handles preprocessing of empty data
-  - Verifies NaN scores
-  - Checks warning messages
+- `test_init`: Tests MLUtility evaluator initialization
+- `test_eval_classification`: Tests classification task evaluation (using mock)
+- `test_eval_regression`: Tests regression task evaluation (using mock)
+- `test_eval_cluster`: Tests clustering task evaluation (using mock)
+- `test_preprocessing`: Tests data preprocessing functionality
+- `test_invalid_method`: Tests error handling for invalid evaluation methods
+- `test_missing_target`: Tests error handling for missing target column
+
+**Fixed Issues:**
+- Fixed import typo on line 7: `mlutlity` → `mlutility`
+
+#### `MLUtility V2`
+
+> tests/evaluator/test_mlutility_v2.py
+
+Tests for MLUtility V2 extended functionality (new version, 23 tests):
+
+**TaskType Tests (2 tests):**
+- `test_task_type_from_string`: Tests task type string conversion (classification, regression, clustering)
+- `test_task_type_invalid`: Tests error handling for invalid task types
+
+**MetricRegistry Tests (4 tests):**
+- `test_default_metrics`: Tests default metrics for each task type
+- `test_metric_compatibility`: Tests metric compatibility with task types
+- `test_register_custom_metric`: Tests custom metric registration
+- `test_confusion_matrix_metrics`: Tests confusion matrix derived metrics calculation
+
+**MLUtilityConfig Tests (6 tests):**
+- `test_config_initialization`: Tests configuration initialization
+- `test_experiment_design_validation`: Tests experiment design validation (dual_model_control, domain_transfer)
+- `test_resampling_validation`: Tests imbalanced data handling validation (smote-enn, smote-tomek)
+- `test_domain_transfer_keys`: Tests data key requirements for domain transfer mode
+- `test_clustering_no_target`: Tests that clustering tasks don't require target column
+- `test_metric_compatibility_validation`: Tests metric compatibility validation
+
+**MLUtility V2 Main Functionality Tests (11 tests):**
+- `test_classification_with_extended_metrics`: Tests extended classification metrics (MCC, F1, precision, recall, specificity)
+- `test_regression_with_custom_metrics`: Tests custom regression metrics (R2, RMSE, MAPE)
+- `test_clustering_evaluation`: Tests clustering evaluation (Silhouette Score)
+- `test_domain_transfer_experiment`: Tests domain transfer experiment design
+- `test_xgb_params_configuration`: Tests XGBoost parameter configuration
+- `test_multiclass_classification`: Tests multi-class classification
+- `test_resampling_smote_enn`: Tests SMOTE-ENN imbalanced data handling
+- `test_categorical_encoding`: Tests categorical variable encoding (OneHotEncoder)
+- `test_empty_data_handling`: Tests empty data handling
+- `test_missing_target_column`: Tests missing target column handling
+- `test_end_to_end_workflow`: Tests end-to-end workflow
+
+**New Features:**
+- **Extended Evaluation Metrics**: Supports full sklearn.metrics metric set
+- **Experiment Design Modes**:
+  - dual_model_control: Dual model control group (ori and syn trained separately, tested on control)
+  - domain_transfer: Domain transfer (syn trained, tested on ori)
+- **Imbalanced Data Handling**: Integrates SMOTE-ENN and SMOTE-Tomek (requires imbalanced-learn)
+- **XGBoost Integration**: Uses XGBoost for classification and regression tasks
+- **Automatic Categorical Encoding**: Uses OneHotEncoder for categorical variables
+- **Numeric/Datetime Precision**: Automatic detection and handling of field precision
+
+> **Architecture Enhancement**: MLUtility V2 (`mlutility_v2.py`) provides a completely redesigned machine learning utility evaluation system with richer metrics, flexible experiment design, imbalanced data handling support, and better type handling capabilities. It coexists with the original MLUtility to maintain backward compatibility.
 
 #### `MPUCCs`
 

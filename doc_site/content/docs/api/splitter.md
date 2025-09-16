@@ -94,6 +94,7 @@ splits, metadata, indices = create_non_overlapping_splits(df)
 ```python
 split_data, metadata_dict, train_indices = splitter.split(
     data=None,
+    metadata=None,
     exist_train_indices=None
 )
 ```
@@ -104,6 +105,11 @@ Perform data splitting using functional programming patterns with enhanced overl
 
 - `data` (pd.DataFrame, optional): Dataset to be split
   - Not required if `method='custom_data'`
+- `metadata` (SchemaMetadata, optional): Metadata for the dataset
+  - Required for normal splitting method
+  - Not used for custom splitting method (loaded from files)
+  - Contains schema information about the data
+  - Will be updated with split information
 - `exist_train_indices` (list[set], optional): List of existing training index sets to avoid overlap with
   - Default: None
   - Each set contains training indices from previous splits
@@ -120,9 +126,9 @@ Perform data splitting using functional programming patterns with enhanced overl
 **Examples**
 
 ```python
-# Basic splitting
+# Basic splitting with metadata
 splitter = Splitter(num_samples=3, train_split_ratio=0.8)
-split_data, metadata_dict, train_indices = splitter.split(data=df)
+split_data, metadata_dict, train_indices = splitter.split(data=df, metadata=schema_metadata)
 
 # Access split data
 train_df = split_data[1]['train']  # First split's training set
@@ -134,6 +140,7 @@ train_idx = train_indices[0]  # First sample's training indices
 existing_samples = [{0, 1, 2, 5}, {10, 11, 15, 20}]
 new_data, new_meta, new_indices = splitter.split(
     data=df,
+    metadata=schema_metadata,
     exist_train_indices=existing_samples
 )
 ```

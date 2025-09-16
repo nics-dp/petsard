@@ -434,6 +434,87 @@ python -c "from tests.loader.test_loader import run_stress_demo; run_stress_demo
 
 ### `Metadater`
 
+> tests/metadater/test_metadater.py
+
+測試 Metadater 三層架構的完整功能（700+ 行測試）：
+
+#### 三層架構測試
+
+**Metadata 層測試：**
+- `test_metadata_from_data`：測試從資料建立 Metadata
+- `test_metadata_from_metadata`：測試從配置建立 Metadata
+- `test_metadata_get`：測試取得 Schema 物件
+- `test_metadata_add`：測試新增 Schema
+- `test_metadata_update`：測試更新 Schema
+- `test_metadata_remove`：測試移除 Schema
+- `test_metadata_diff`：測試 Metadata 層級差異比較
+- `test_metadata_align`：測試 Metadata 層級資料對齊
+
+**Schema 層測試：**
+- `test_schema_from_data`：測試從 DataFrame 建立 Schema
+- `test_schema_from_metadata`：測試從配置建立 Schema
+- `test_schema_get`：測試取得 Attribute 物件
+- `test_schema_add`：測試新增 Attribute
+- `test_schema_update`：測試更新 Attribute
+- `test_schema_remove`：測試移除 Attribute
+- `test_schema_diff`：測試 Schema 層級差異比較
+- `test_schema_align`：測試 Schema 層級資料對齊
+
+**Attribute 層測試：**
+- `test_attribute_from_data`：測試從 Series 建立 Attribute
+- `test_attribute_from_metadata`：測試從配置建立 Attribute
+- `test_attribute_diff`：測試 Attribute 層級差異比較
+- `test_attribute_align`：測試 Attribute 層級資料對齊
+
+#### 統計功能測試
+
+- `test_metadater_with_stats`：測試啟用統計的 Metadater 功能
+- `test_schema_metadater_with_stats`：測試 Schema 層級統計計算
+- `test_attribute_metadater_with_stats`：測試 Attribute 層級統計計算
+- `test_stats_calculation_accuracy`：測試統計計算準確性：
+  - 均值、中位數、標準差
+  - 唯一值計數、空值計數
+  - 最小值、最大值、四分位數
+
+#### YAML 相容性測試
+
+- `test_yaml_fields_compatibility`：測試 YAML 中 'fields' 到內部 'attributes' 的對應
+- `test_schema_to_dict_with_fields`：測試 Schema 輸出為字典時使用 'fields' 鍵名
+- `test_metadater_yaml_roundtrip`：測試 YAML 配置的完整往返：
+  - 從 YAML 載入
+  - 處理和修改
+  - 輸出回 YAML 格式
+
+#### 進階功能測試
+
+- `test_multi_table_operations`：測試多表格操作：
+  - 同時處理多個表格
+  - 跨表格的差異比較
+  - 批次對齊操作
+- `test_nested_diff_operations`：測試嵌套差異操作：
+  - Metadata 層級調用 Schema.diff()
+  - Schema 層級調用 Attribute.diff()
+  - 差異結果的層級標示
+- `test_strategy_based_align`：測試策略導向的對齊：
+  - 自動 diff 模式
+  - 指定策略模式
+  - 自定義對齊規則
+
+#### 邊界情況測試
+
+- `test_empty_data_handling`：測試空資料處理
+- `test_missing_table_handling`：測試缺失表格處理
+- `test_invalid_configuration`：測試無效配置的錯誤處理
+- `test_type_mismatch_handling`：測試型別不匹配處理
+
+#### 效能測試
+
+- `test_large_dataset_performance`：測試大型資料集效能
+- `test_memory_efficiency`：測試記憶體使用效率
+- `test_concurrent_operations`：測試並行操作安全性
+
+> **架構重構說明**：Metadater 測試已完全重構，整合了原有的 test_metadater_v2.py 和 test_metadater_functional.py，形成單一全面的測試套件。新測試涵蓋三層架構（Metadata → Schema → Attribute）的所有功能，包含統計計算、差異比較、資料對齊、YAML 相容性等完整功能。
+
 #### 欄位函數
 
 > tests/metadater/field/test_field_functions.py
@@ -864,21 +945,67 @@ python -c "from tests.loader.test_loader import run_stress_demo; run_stress_demo
 
 > tests/evaluator/test_mlutility.py
 
-測試機器學習效用評估：
+測試機器學習效用評估（原版，7 個測試）：
 
-- `test_classification_of_single_value`：測試單一值分類目標的三種情境：
-  - 原始資料有單一層級目標
-  - 合成資料有單一層級目標
-  - 兩個資料集都有單一層級目標
-  - 驗證 NaN 分數和警告的正確處理
-- `test_classification_normal_case`：測試正常多分類情況：
-  - 驗證分數計算
-  - 檢查分數範圍
-  - 驗證統計指標
-- `test_classification_empty_data`：測試空資料的行為：
-  - 處理空資料的預處理
-  - 驗證 NaN 分數
-  - 檢查警告訊息
+- `test_init`：測試 MLUtility 評估器的初始化
+- `test_eval_classification`：測試分類任務評估（使用 mock）
+- `test_eval_regression`：測試回歸任務評估（使用 mock）
+- `test_eval_cluster`：測試聚類任務評估（使用 mock）
+- `test_preprocessing`：測試資料前處理功能
+- `test_invalid_method`：測試無效評估方法的錯誤處理
+- `test_missing_target`：測試缺少目標欄位的錯誤處理
+
+**修復的問題：**
+- 修正了第 7 行的 import 拼字錯誤：`mlutlity` → `mlutility`
+
+#### `MLUtility V2`
+
+> tests/evaluator/test_mlutility_v2.py
+
+測試 MLUtility V2 的擴展功能（新版本，23 個測試）：
+
+**TaskType 測試（2 個測試）：**
+- `test_task_type_from_string`：測試任務類型字串轉換（classification、regression、clustering）
+- `test_task_type_invalid`：測試無效任務類型的錯誤處理
+
+**MetricRegistry 測試（4 個測試）：**
+- `test_default_metrics`：測試各任務類型的預設指標
+- `test_metric_compatibility`：測試指標與任務類型的相容性
+- `test_register_custom_metric`：測試自定義指標註冊
+- `test_confusion_matrix_metrics`：測試混淆矩陣衍生指標計算
+
+**MLUtilityConfig 測試（6 個測試）：**
+- `test_config_initialization`：測試配置初始化
+- `test_experiment_design_validation`：測試實驗設計驗證（dual_model_control、domain_transfer）
+- `test_resampling_validation`：測試不平衡處理方法驗證（smote-enn、smote-tomek）
+- `test_domain_transfer_keys`：測試領域遷移模式的資料鍵需求
+- `test_clustering_no_target`：測試聚類任務不需要目標欄位
+- `test_metric_compatibility_validation`：測試指標相容性驗證
+
+**MLUtility V2 主要功能測試（11 個測試）：**
+- `test_classification_with_extended_metrics`：測試擴展分類指標（MCC、F1、精確率、召回率、特異性）
+- `test_regression_with_custom_metrics`：測試自定義回歸指標（R2、RMSE、MAPE）
+- `test_clustering_evaluation`：測試聚類評估（Silhouette Score）
+- `test_domain_transfer_experiment`：測試領域遷移實驗設計
+- `test_xgb_params_configuration`：測試 XGBoost 參數配置
+- `test_multiclass_classification`：測試多類別分類
+- `test_resampling_smote_enn`：測試 SMOTE-ENN 不平衡處理
+- `test_categorical_encoding`：測試類別變數編碼（OneHotEncoder）
+- `test_empty_data_handling`：測試空資料處理
+- `test_missing_target_column`：測試缺失目標欄位
+- `test_end_to_end_workflow`：測試端到端工作流程
+
+**新功能特色：**
+- **擴展的評估指標**：支援完整的 sklearn.metrics 指標集
+- **實驗設計模式**：
+  - dual_model_control：雙模型控制組（ori 和 syn 分別訓練，在 control 測試）
+  - domain_transfer：領域遷移（syn 訓練，在 ori 測試）
+- **不平衡資料處理**：整合 SMOTE-ENN 和 SMOTE-Tomek（需要 imbalanced-learn）
+- **XGBoost 整合**：使用 XGBoost 進行分類和回歸任務
+- **自動類別編碼**：使用 OneHotEncoder 處理類別變數
+- **數值/日期時間精度**：自動檢測和處理欄位精度
+
+> **架構增強**：MLUtility V2（`mlutility_v2.py`）提供了完全重新設計的機器學習效用評估系統，具有更豐富的指標、靈活的實驗設計、不平衡處理支援，以及更好的類型處理能力。與原版 MLUtility 並存，保持向後相容性。
 
 #### `MPUCCs`
 

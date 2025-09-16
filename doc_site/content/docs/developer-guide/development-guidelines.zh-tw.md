@@ -57,10 +57,15 @@ uv --project petsard add "urllib3>=2.2.2"
 uv --project petsard add --group dev "tornado>=6.4.2"
 ```
 
-```bash
-uv export --format requirements-txt --no-group dev --no-editable > requirements.txt
-uv export --format requirements-txt --all-groups --no-editable > requirements-dev.txt
-```
+### 依賴管理
+
+所有依賴項目都透過 `pyproject.toml` 使用依賴群組管理：
+- `default`: 核心功能
+- `ds`: 資料科學功能
+- `all`: 完整安裝
+- `dev`: 開發工具
+
+不需要額外的 `requirements.txt` 檔案。
 
 ## 版本控制備忘錄
 

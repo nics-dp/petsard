@@ -33,7 +33,7 @@ class MissingHandler:
 
         self.na_percentage = na_percentage
 
-    def set_imputation_index(self, index_list: list = []) -> None:
+    def set_imputation_index(self, index_list: list = None) -> None:
         """
         Determine which indices can be imputed as NA globally.
 

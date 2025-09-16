@@ -157,7 +157,8 @@ class DiscretizingKBins(DiscretizingHandler):
         """
         if len(data.unique()) < 2:
             warnings.warn(
-                f"{data.name} is constant." + " No transformation will be applied."
+                f"{data.name} is constant." + " No transformation will be applied.",
+                stacklevel=2,
             )
             self.is_constant = True
             return data.values
