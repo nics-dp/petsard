@@ -1,5 +1,5 @@
 from collections import Counter
-from typing import Any, Optional
+from typing import Any
 
 import numpy as np
 import pandas as pd
@@ -289,7 +289,7 @@ class MPUCCs(BaseEvaluator):
 
     def _find_valid_base_combo(
         self, combo: tuple[str, ...], target_sizes: set[int], sorted_columns: list[str]
-    ) -> Optional[tuple[str, ...]]:
+    ) -> tuple[str, ...] | None:
         """
         Find valid base combination based on field priority
 
@@ -428,7 +428,7 @@ class MPUCCs(BaseEvaluator):
 
     def _find_unique_match(
         self, data: pd.DataFrame, fields: tuple[str, ...], values: tuple[Any]
-    ) -> Optional[int]:
+    ) -> int | None:
         """Find unique match in dataset"""
         if not isinstance(values, tuple):
             values = (values,)
@@ -438,7 +438,7 @@ class MPUCCs(BaseEvaluator):
 
         mask = np.ones(len(data), dtype=bool)
 
-        for field, value in zip(fields, values):
+        for field, value in zip(fields, values, strict=True):
             if pd.isna(value):
                 current_mask = data[field].isna().values
             else:

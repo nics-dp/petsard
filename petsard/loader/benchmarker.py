@@ -264,13 +264,13 @@ class BenchmarkerRequests(BaseBenchmarker):
         # 檢查 requests 是否已安裝
         try:
             import requests
-        except ImportError:
+        except ImportError as e:
             from petsard.exceptions import ConfigError
 
             raise ConfigError(
                 "requests is required for benchmark dataset downloading. "
                 "Please install it with: pip install petsard[load-benchmark]"
-            )
+            ) from e
 
         if self.config["benchmark_already_exist"]:
             self._logger.info(f"Using local file: {self.config['filepath']}")

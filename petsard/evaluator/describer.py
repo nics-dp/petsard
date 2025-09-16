@@ -52,10 +52,10 @@ class DescriberConfig(EvaluatorConfig):
             self._logger.debug(
                 f"Mapped evaluating method '{self.method}' to code {self.method_code}"
             )
-        except KeyError:
+        except KeyError as e:
             error_msg = f"Unsupported describer method: {self.method}"
             self._logger.error(error_msg)
-            raise UnsupportedMethodError(error_msg)
+            raise UnsupportedMethodError(error_msg) from e
 
         # Set the default
         self.eval_method: str = (
@@ -123,6 +123,4 @@ class Describer(Evaluator):
         Returns:
             BaseEvaluator: The evaluator object.
         """
-        return self.DESCIRBER_MAP[self.config.method_code]
-        return self.DESCIRBER_MAP[self.config.method_code]
         return self.DESCIRBER_MAP[self.config.method_code]
