@@ -88,16 +88,20 @@ metadata = Metadater.from_dict(config)
 ### `from_data()`
 
 ```python
-Metadater.from_data(data: dict[str, pd.DataFrame]) -> Metadata
+Metadater.from_data(
+    data: dict[str, pd.DataFrame],
+    enable_stats: bool = False
+) -> Metadata
 ```
 
 Automatically infer and create metadata structure from data.
 
 **Parameters**
 - `data` (dict[str, pd.DataFrame]): Dictionary of data tables
+- `enable_stats` (bool, optional): Whether to calculate statistics, defaults to `False`
 
 **Returns**
-- `Metadata`: Metadata object
+- `Metadata`: Metadata object (includes statistics when `enable_stats=True`)
 
 ### `from_dict()`
 
@@ -152,6 +156,9 @@ Align data structure according to metadata definition.
 class Metadata:
     id: str                        # Dataset identifier
     schemas: dict[str, Schema]     # Table schemas dictionary
+    stats: DatasetsStats | None    # Dataset statistics (generated when enable_stats=True)
+    diffs: dict | None             # Difference records
+    change_history: list | None    # Change history
 ```
 
 ### Schema (Middle Level)
@@ -160,6 +167,7 @@ class Metadata:
 class Schema:
     id: str                              # Table identifier
     attributes: dict[str, Attribute]     # Field attributes dictionary
+    stats: TableStats | None             # Table statistics (generated when enable_stats=True)
 ```
 
 ### Attribute (Bottom Level)
@@ -170,6 +178,7 @@ class Attribute:
     type: str                # Data type
     nullable: bool           # Allow nulls
     logical_type: str | None # Logical type
+    stats: FieldStats | None # Field statistics (generated when enable_stats=True)
 ```
 
 ## Data Abstraction Layer
@@ -243,6 +252,11 @@ metadata = Metadater.from_data(data)
 
 print(f"Dataset ID: {metadata.id}")
 print(f"Number of tables: {len(metadata.schemas)}")
+
+# Include statistics
+metadata_with_stats = Metadater.from_data(data, enable_stats=True)
+users_schema = metadata_with_stats.schemas['users']
+print(f"Row count: {users_schema.stats.row_count if users_schema.stats else 'N/A'}")
 ```
 
 ### Difference Comparison
@@ -331,8 +345,3 @@ Loader:
     filepath: data/users.csv
     schema: schemas/user_schema.yaml
 ```
-
-## Related Documentation
-
-- [Schema YAML](/docs/experimental-new-format/yaml/schema-yaml): Schema configuration format
-- [Metadater API](/docs/experimental-new-format/python-api/metadater-api): Detailed API documentation
