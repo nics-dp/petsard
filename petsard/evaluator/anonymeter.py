@@ -107,10 +107,10 @@ class AnonymeterConfig(BaseConfig):
 
         try:
             self.eval_method_code = AnonymeterMap.map(self.eval_method)
-        except KeyError:
+        except KeyError as e:
             error_msg = f"Unsupported evaluator method: {self.eval_method}"
             self._logger.error(error_msg)
-            raise UnsupportedMethodError(error_msg)
+            raise UnsupportedMethodError(error_msg) from e
 
         if self.n_attacks <= 0:
             error_msg = "The number of attacks must be greater than 0."

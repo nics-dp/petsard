@@ -1,7 +1,7 @@
 import logging
 from dataclasses import dataclass, field
 from enum import Enum, auto
-from typing import Any, Optional
+from typing import Any
 
 import pandas as pd
 
@@ -83,7 +83,7 @@ class DataDescriberConfig(BaseConfig):
     """
 
     eval_method: str
-    eval_method_code: Optional[int] = None
+    eval_method_code: int | None = None
 
     AVAILABLE_DESCRIBE_METHODS: list[str] = field(
         default_factory=lambda: [
@@ -132,7 +132,7 @@ class DataDescriberConfig(BaseConfig):
 
     def __post_init__(self):
         super().__post_init__()
-        error_msg: Optional[str] = None
+        error_msg: str | None = None
 
         if isinstance(self.describe_method, str):
             self.describe_method = [self.describe_method]
@@ -158,7 +158,7 @@ class DataDescriberConfig(BaseConfig):
             )
 
     def update_data(self, data: dict[str, pd.DataFrame]) -> None:
-        error_msg: Optional[str] = None
+        error_msg: str | None = None
 
         self._logger.info(
             f"Updating data with {len(self.REQUIRED_INPUT_KEYS)} required keys"
@@ -261,7 +261,7 @@ class DataDescriber(BaseEvaluator):
 
         impl_config: dict[str, Any] = self.config
         _ = impl_config.pop("eval_method", None)
-        self._impl: Optional[dict[str, callable]] = {
+        self._impl: dict[str, callable] | None = {
             method: self.MODULE_MAP[method](config=impl_config)
             for method in self.desc_config.describe_method
         }
@@ -308,10 +308,10 @@ class DataDescriber(BaseEvaluator):
 
             try:
                 granularity = self.EXEC_GRANULARITY_MAP[method]
-            except KeyError:
+            except KeyError as e:
                 error_msg: str = f"Unassigned granulariy describer method: {method}"
                 self._logger.error(error_msg)
-                raise UnsupportedMethodError(error_msg)
+                raise UnsupportedMethodError(error_msg) from e
             if granularity not in temp_desc_result:
                 temp_desc_result[granularity] = []
 

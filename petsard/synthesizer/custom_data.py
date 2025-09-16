@@ -62,7 +62,7 @@ class CustomDataSynthesizer(BaseSynthesizer):
         except Exception as e:
             error_msg: str = f"Unable to load data from the given filepath and config {filtered_config}: {e}"
             self._logger.error(error_msg)
-            raise ConfigError(error_msg)
+            raise ConfigError(error_msg) from e
 
         data: pd.DataFrame = None
         data, _ = loader.load()

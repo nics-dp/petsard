@@ -1,7 +1,7 @@
 import logging
 from dataclasses import dataclass, field
 from enum import Enum, auto
-from typing import Any, Optional
+from typing import Any
 
 import numpy as np
 import pandas as pd
@@ -75,7 +75,7 @@ class StatsConfig(BaseConfig):
     """
 
     eval_method: str
-    eval_method_code: Optional[int] = None
+    eval_method_code: int | None = None
     AVAILABLE_STATS_METHODS: list[str] = field(
         default_factory=lambda: [
             "mean",
@@ -107,11 +107,11 @@ class StatsConfig(BaseConfig):
     compare_method: str = "pct_change"
     aggregated_method: str = "mean"
     summary_method: str = "mean"
-    columns_info: Optional[dict[str, dict[str, str]]] = field(default_factory=dict)
+    columns_info: dict[str, dict[str, str]] | None = field(default_factory=dict)
 
     def __post_init__(self):
         super().__post_init__()
-        error_msg: Optional[str] = None
+        error_msg: str | None = None
 
         invalid_methods: list[str] = [
             method
@@ -142,7 +142,7 @@ class StatsConfig(BaseConfig):
             raise UnsupportedMethodError(error_msg)
 
     def update_data(self, data: dict[str, pd.DataFrame]) -> None:
-        error_msg: Optional[str] = None
+        error_msg: str | None = None
 
         self._logger.info(
             f"Updating data with {len(self.REQUIRED_INPUT_KEYS)} required keys"
@@ -273,7 +273,7 @@ class Stats(BaseEvaluator):
         self.stats_config = StatsConfig(**self.config)
         self._logger.debug("StatsConfig successfully initialized")
 
-        self._impl: Optional[dict[str, callable]] = None
+        self._impl: dict[str, callable] | None = None
 
     def _process_columnwise(
         self, data: dict[str, pd.DataFrame], col: str, info: dict[str, Any], method: str
@@ -414,7 +414,7 @@ class Stats(BaseEvaluator):
         self._logger.debug(
             f"Applying comparison method '{compare_method}' to DataFrame"
         )
-        error_msg: Optional[list[str]] = None
+        error_msg: list[str] | None = None
 
         method_info = self.COMPARE_METHOD_MAP.get(compare_method)
         if not method_info:
@@ -432,7 +432,7 @@ class Stats(BaseEvaluator):
             raise ValueError(error_msg)
 
         result = df.copy()
-        for ori_col, syn_col in zip(ori_cols, syn_cols):
+        for ori_col, syn_col in zip(ori_cols, syn_cols, strict=True):
             eval_col = f"{ori_col.replace('_ori', f'_{compare_method}')}"
 
             if eval_col in result.columns:

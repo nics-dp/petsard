@@ -2,7 +2,7 @@ import logging
 import re
 import time
 from dataclasses import dataclass, field
-from typing import Any, Optional
+from typing import Any
 
 import pandas as pd
 
@@ -77,10 +77,10 @@ class SynthesizerConfig(BaseConfig):
             self._logger.debug(
                 f"Mapped synthesizing method '{self.method}' to code {self.method_code}"
             )
-        except KeyError:
+        except KeyError as e:
             error_msg: str = f"Unsupported synthesizer method: {self.method}"
             self._logger.error(error_msg)
-            raise UnsupportedMethodError(error_msg)
+            raise UnsupportedMethodError(error_msg) from e
 
         # Set the default
         self.syn_method: str = (
@@ -150,7 +150,7 @@ class Synthesizer:
 
     def _determine_sample_configuration(
         self, metadata: SchemaMetadata = None
-    ) -> tuple[str, Optional[int]]:
+    ) -> tuple[str, int | None]:
         """
         Determine the sample configuration based on available metadata and configuration.
 
@@ -171,7 +171,7 @@ class Synthesizer:
         """
         self._logger.debug("Determining sample configuration")
         sample_from: str = self.config.sample_from
-        sample_num_rows: Optional[int] = self.config.sample_num_rows
+        sample_num_rows: int | None = self.config.sample_num_rows
 
         # 1. If manual input, use the sample number of rows from the input
         if self.config.sample_num_rows is not None:
