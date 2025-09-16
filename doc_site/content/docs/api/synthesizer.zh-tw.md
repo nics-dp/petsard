@@ -34,7 +34,17 @@ Synthesizer(
 - **`enforce_rounding=True`**：套用至所有 SDV 合成器類型，維持數值欄位的整數精度
 - **`enforce_min_max_values=True`**：僅套用於 TVAE 和 GaussianCopula 合成器，用於強制數值範圍限制
 
-這些參數有助於在合成輸出中保持原始資料的資料型別完整性和數值範圍。
+## 精度四捨五入
+
+所有合成器會根據 schema metadata 自動套用精度四捨五入。當 schema 中指定了精度設定（無論是 v1.0 或 v2.0 格式），合成器會將生成的數值四捨五入到指定的小數位數。
+
+此功能確保合成資料維持與原始資料相同的數值精度，這對以下應用非常重要：
+- 金融資料（價格、金額）
+- 科學測量
+- 統計報告
+- 任何對精度敏感的應用
+
+如需詳細的 schema 配置說明，請參考[指定資料表架構](../tutorial/use-cases/specify-schema)教學。
 
 ## 範例
 

@@ -34,7 +34,17 @@ All SDV synthesizers are initialized with the following default parameters to en
 - **`enforce_rounding=True`**: Applied to all SDV synthesizer types to maintain integer precision for numerical columns
 - **`enforce_min_max_values=True`**: Applied only to TVAE and GaussianCopula synthesizers to enforce value bounds
 
-These parameters help preserve the data type integrity and value ranges of the original data in the synthesized output.
+## Precision Rounding
+
+All synthesizers automatically apply precision rounding based on schema metadata. When precision is specified in the schema (either v1.0 or v2.0 format), the synthesizer will round generated values to the specified decimal places.
+
+This feature ensures that synthesized data maintains the same numerical precision as the original data, which is crucial for:
+- Financial data (prices, amounts)
+- Scientific measurements
+- Statistical reporting
+- Any precision-sensitive applications
+
+For detailed schema configuration, refer to the [Specify Data Schema](../tutorial/use-cases/specify-schema) tutorial.
 
 ## Examples
 
