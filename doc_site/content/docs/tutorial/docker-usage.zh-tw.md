@@ -189,8 +189,7 @@ docker run -it --rm \
 ├── petsard/          # PETsARD 套件原始碼
 ├── demo/             # 範例檔案
 ├── templates/        # 模板檔案
-├── pyproject.toml    # 專案配置
-├── requirements.txt  # 依賴清單
+├── pyproject.toml    # 專案配置與依賴
 └── README.md         # 說明文件
 ```
 
@@ -227,9 +226,3 @@ from petsard.executor import Executor
 print('✅ Executor 可用')
 "
 ```
-
-## 下一步
-
-- 了解 [YAML 配置](../yaml-config) 進行實驗設定
-- 探索 [預設合成](../default-synthesis) 範例
-- 查看 [使用案例](../use-cases) 了解實際應用

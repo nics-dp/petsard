@@ -6,10 +6,7 @@ from sklearn.ensemble import IsolationForest
 from sklearn.neighbors import LocalOutlierFactor
 
 from petsard.exceptions import UnfittedError
-from petsard.processor.encoder import (
-    EncoderDateDiff,
-    EncoderOneHot,
-)
+from petsard.processor.encoder import EncoderDateDiff, EncoderOneHot
 from petsard.processor.missing import MissingDrop
 from petsard.processor.outlier import (
     OutlierIQR,
@@ -216,7 +213,7 @@ class MediatorOutlier(Mediator):
         # if any column in the config sets outlier method
         # as isolation forest or local outlier factor
         # it sets the overall transformation as that one
-        for col, obj in self._config.items():
+        for _col, obj in self._config.items():
             if isinstance(obj, OutlierIsolationForest):
                 self.model = IsolationForest()
                 self._global_model_indicator = True

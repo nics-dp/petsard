@@ -330,10 +330,45 @@ schema:
 - 概念上類似於 Pandas 的 `category[dtype]` 但提供更精細的控制
 
 ### 3. 數值精度操控 (`precision`)
-控制浮點數的小數位數，確保數值格式一致：
+控制浮點數的小數位數，確保數值格式一致。這對於金融資料、科學測量和任何對精度敏感的應用至關重要。
 
-- 僅適用於 `float` 型別：`precision: 2`
-- **注意**：`int` 型別使用 `precision` 會報錯
+#### Schema 格式 v2.0（推薦）
+```yaml
+attributes:  # 注意：v2.0 使用 'attributes' 而非 'fields'
+  price:
+    type: float64
+    type_attr:
+      precision: 2  # 捨入到小數點後 2 位
+
+  quantity:
+    type: float64
+    type_attr:
+      precision: 0  # 捨入到整數
+```
+
+#### Schema 格式 v1.0（即將棄用 - 未來版本將移除）
+```yaml
+fields:  # 注意：v1.0 使用 'fields'，將被 'attributes' 取代
+  price:
+    type: float
+    precision: 2  # 直接在欄位層級設定精度
+  
+  quantity:
+    type: float
+    precision: 0
+```
+
+#### 精度設定
+- `precision: 0` - 捨入到整數（無小數位）
+- `precision: 1` - 捨入到小數點後 1 位（例如：10.1）
+- `precision: 2` - 捨入到小數點後 2 位（例如：10.12）
+- `precision: n` - 捨入到小數點後 n 位
+
+**重要說明**：
+- 僅適用於 `float` 型別欄位
+- 對 `int` 型別使用 `precision` 會導致錯誤
+- 精度在合成過程中應用，確保輸出格式一致
+- 對於維護金融和科學應用中的資料完整性很有用
 
 ### 4. 類別變項優化
 基於 Zhu et al. (2024) 研究的智慧分類判斷：

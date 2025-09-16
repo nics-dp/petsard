@@ -2,13 +2,13 @@ import logging
 import re
 import time
 from dataclasses import dataclass, field
-from typing import Any, Optional
+from typing import Any
 
 import pandas as pd
 
 from petsard.config_base import BaseConfig
 from petsard.exceptions import ConfigError, UncreatedError, UnsupportedMethodError
-from petsard.metadater import SchemaMetadata
+from petsard.metadater.metadata import Schema
 from petsard.synthesizer.custom_data import CustomDataSynthesizer
 from petsard.synthesizer.custom_synthesizer import CustomSynthesizer
 from petsard.synthesizer.sdv import SDVSingleTableSynthesizer
@@ -77,10 +77,10 @@ class SynthesizerConfig(BaseConfig):
             self._logger.debug(
                 f"Mapped synthesizing method '{self.method}' to code {self.method_code}"
             )
-        except KeyError:
+        except KeyError as e:
             error_msg: str = f"Unsupported synthesizer method: {self.method}"
             self._logger.error(error_msg)
-            raise UnsupportedMethodError(error_msg)
+            raise UnsupportedMethodError(error_msg) from e
 
         # Set the default
         self.syn_method: str = (
@@ -149,8 +149,8 @@ class Synthesizer:
         self._logger.info("Synthesizer initialization completed")
 
     def _determine_sample_configuration(
-        self, metadata: SchemaMetadata = None
-    ) -> tuple[str, Optional[int]]:
+        self, metadata: Schema = None
+    ) -> tuple[str, int | None]:
         """
         Determine the sample configuration based on available metadata and configuration.
 
@@ -162,7 +162,7 @@ class Synthesizer:
         4. Fall back to source data if no other information is available
 
         Args:
-            metadata (SchemaMetadata, optional): The schema metadata containing information about the dataset
+            metadata (Schema, optional): The schema metadata containing information about the dataset
 
         Returns:
             (tuple[str, Optional[int]]): A tuple containing:
@@ -171,7 +171,7 @@ class Synthesizer:
         """
         self._logger.debug("Determining sample configuration")
         sample_from: str = self.config.sample_from
-        sample_num_rows: Optional[int] = self.config.sample_num_rows
+        sample_num_rows: int | None = self.config.sample_num_rows
 
         # 1. If manual input, use the sample number of rows from the input
         if self.config.sample_num_rows is not None:
@@ -216,12 +216,12 @@ class Synthesizer:
         )
         return sample_from, sample_num_rows
 
-    def create(self, metadata: SchemaMetadata = None) -> None:
+    def create(self, metadata: Schema = None) -> None:
         """
         Create a synthesizer object with the given data.
 
         Args.:
-            metadata (SchemaMetadata, optional): The schema metadata of the data.
+            metadata (Schema, optional): The schema metadata of the data.
         """
         self._logger.info("Creating synthesizer instance")
         if metadata is not None:

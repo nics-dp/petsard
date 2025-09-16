@@ -57,10 +57,15 @@ uv --project petsard add "urllib3>=2.2.2"
 uv --project petsard add --group dev "tornado>=6.4.2"
 ```
 
-```bash
-uv export --format requirements-txt --no-group dev --no-editable > requirements.txt
-uv export --format requirements-txt --all-groups --no-editable > requirements-dev.txt
-```
+### Dependency Management
+
+All dependencies are managed through `pyproject.toml` using dependency groups:
+- `default`: Core functionality
+- `ds`: Data science features
+- `all`: Complete installation
+- `dev`: Development tools
+
+No separate `requirements.txt` files are needed.
 
 ## Version Control Notes
 

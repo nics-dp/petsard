@@ -94,6 +94,7 @@ splits, metadata, indices = create_non_overlapping_splits(df)
 ```python
 split_data, metadata_dict, train_indices = splitter.split(
     data=None,
+    metadata=None,
     exist_train_indices=None
 )
 ```
@@ -104,6 +105,11 @@ split_data, metadata_dict, train_indices = splitter.split(
 
 - `data` (pd.DataFrame, optional)：要分割的資料集
   - 若 `method='custom_data'` 則不需提供
+- `metadata` (SchemaMetadata, optional)：資料集的詮釋資料
+  - 一般分割方法時為必要參數
+  - 自訂分割方法不使用此參數（從檔案載入）
+  - 包含資料的結構描述資訊
+  - 會更新分割資訊
 - `exist_train_indices` (list[set], optional)：要避免重疊的現有訓練索引集合列表
   - 預設值：無
   - 每個集合包含來自先前分割的訓練索引
@@ -120,9 +126,9 @@ split_data, metadata_dict, train_indices = splitter.split(
 **範例**
 
 ```python
-# 基本分割
+# 基本分割（含詮釋資料）
 splitter = Splitter(num_samples=3, train_split_ratio=0.8)
-split_data, metadata_dict, train_indices = splitter.split(data=df)
+split_data, metadata_dict, train_indices = splitter.split(data=df, metadata=schema_metadata)
 
 # 存取分割資料
 train_df = split_data[1]['train']  # 第一次分割的訓練集
@@ -134,6 +140,7 @@ train_idx = train_indices[0]  # 第一個樣本的訓練索引
 existing_samples = [{0, 1, 2, 5}, {10, 11, 15, 20}]
 new_data, new_meta, new_indices = splitter.split(
     data=df,
+    metadata=schema_metadata,
     exist_train_indices=existing_samples
 )
 ```

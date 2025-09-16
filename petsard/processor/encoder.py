@@ -536,8 +536,8 @@ class EncoderMinguoDate(Encoder):
                         roc_year = int(parts[0])
                         month = int(parts[1])
                         day = int(parts[2])
-                    except ValueError:
-                        raise ValueError(f"無法解析 YYY-MM-DD 格式: {value}")
+                    except ValueError as e:
+                        raise ValueError(f"無法解析 YYY-MM-DD 格式: {value}") from e
                 else:
                     raise ValueError(f"無效的 YYY-MM-DD 格式: {value}")
 
@@ -552,8 +552,8 @@ class EncoderMinguoDate(Encoder):
                         roc_year = int(parts[0])
                         month = int(parts[1])
                         day = int(parts[2])
-                    except ValueError:
-                        raise ValueError(f"無法解析 YYY/MM/DD 格式: {value}")
+                    except ValueError as e:
+                        raise ValueError(f"無法解析 YYY/MM/DD 格式: {value}") from e
                 else:
                     raise ValueError(f"無效的 YYY/MM/DD 格式: {value}")
 
@@ -574,8 +574,8 @@ class EncoderMinguoDate(Encoder):
                         roc_year = numeric_value // 10000
                         month = (numeric_value % 10000) // 100
                         day = numeric_value % 100
-                    except ValueError:
-                        raise ValueError(f"無法解析民國年格式: {value}")
+                    except ValueError as e:
+                        raise ValueError(f"無法解析民國年格式: {value}") from e
 
         else:
             raise ValueError(f"無法解析日期格式：{value} (類型: {type(value)})")
@@ -621,7 +621,7 @@ class EncoderMinguoDate(Encoder):
                         # If all strategies fail
                         raise ValueError(
                             f"無法修復日期： {roc_year:03d}年{month:02d}月{day:02d}日，錯誤: {str(e)}"
-                        )
+                        ) from e
                     # Try next strategy
                     continue
 
@@ -644,8 +644,8 @@ class EncoderMinguoDate(Encoder):
         if isinstance(value, str):
             try:
                 value = pd.to_datetime(value).date()
-            except Exception:
-                raise ValueError(f"無法解析 AD 日期字串: {value}")
+            except Exception as e:
+                raise ValueError(f"無法解析 AD 日期字串: {value}") from e
 
         # Handle pandas Timestamp
         if isinstance(value, pd.Timestamp):
@@ -678,9 +678,11 @@ class EncoderMinguoDate(Encoder):
                         )
                         value = fixed_date
                         break
-                    except Exception:
+                    except Exception as e:
                         if strategy_level == len(fix_strategies):
-                            raise ValueError(f"無法修復早於民國元年的日期： {value}")
+                            raise ValueError(
+                                f"無法修復早於民國元年的日期： {value}"
+                            ) from e
                         continue
 
             # If no year fix strategy and not fixed
@@ -733,7 +735,9 @@ class EncoderMinguoDate(Encoder):
         try:
             data.apply(self._convert_minguo_to_ad)
         except Exception as e:
-            raise ValueError(f"無法解析日期格式，請檢查日期格式是否正確：{str(e)}")
+            raise ValueError(
+                f"無法解析日期格式，請檢查日期格式是否正確：{str(e)}"
+            ) from e
 
     def _transform(self, data: pd.Series) -> pd.Series:
         """
@@ -779,7 +783,7 @@ class EncoderMinguoDate(Encoder):
         try:
             return data.apply(self._convert_ad_to_minguo)
         except Exception as e:
-            raise ValueError(f"無法轉換日期：{str(e)}")
+            raise ValueError(f"無法轉換日期：{str(e)}") from e
 
 
 class EncoderDateDiff(Encoder):
@@ -974,10 +978,11 @@ class EncoderDateDiff(Encoder):
                 result[col] = pd.to_datetime(result[col], errors="coerce")
 
             # Calculate difference
-            result[col] = result.apply(
-                lambda row: self._calc_date_diff(row[self.baseline_date], row[col]),
-                axis=1,
-            )
+            # Capture loop variable to avoid B023
+            def calc_diff(row, column=col):
+                return self._calc_date_diff(row[self.baseline_date], row[column])
+
+            result[col] = result.apply(calc_diff, axis=1)
 
         return result
 
@@ -1006,12 +1011,13 @@ class EncoderDateDiff(Encoder):
         for col in self.related_date_list:
             if col in result.columns:
                 # Calculate date from difference
-                result[col] = result.apply(
-                    lambda row: self._calc_date_from_diff(
-                        row[self.baseline_date], row[col]
-                    ),
-                    axis=1,
-                )
+                # Capture loop variable to avoid B023
+                def calc_date(row, column=col):
+                    return self._calc_date_from_diff(
+                        row[self.baseline_date], row[column]
+                    )
+
+                result[col] = result.apply(calc_date, axis=1)
 
                 # Convert back to original dtype if possible
                 if col in self._original_dtypes:

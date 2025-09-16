@@ -366,6 +366,10 @@ By applying `MinMaxScaler` from `sklearn`, this method scales the data to fit wi
 
 This method requires the input data to be positive. It applies log transformation to mitigate the impact of extreme values.
 
+#### `ScalerLog1p`
+
+This method requires the input data to be positive. It applies log(1 + x) transformation using numpy's log1p function, which provides better numerical stability for values close to zero. The inverse transformation uses numpy's expm1 function to restore the original values.
+
 #### `ScalerTimeAnchor`
 
 This method scales datetime data by calculating time differences from a reference time series. It provides two modes of scaling:

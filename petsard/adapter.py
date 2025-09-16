@@ -10,7 +10,8 @@ from petsard.constrainer import Constrainer
 from petsard.evaluator import Describer, Evaluator
 from petsard.exceptions import ConfigError
 from petsard.loader import Loader, Splitter
-from petsard.metadater import SchemaMetadata
+from petsard.metadater.metadata import Schema
+from petsard.metadater.metadater import SchemaMetadater
 from petsard.processor import Processor
 from petsard.reporter import Reporter
 from petsard.synthesizer import Synthesizer
@@ -140,12 +141,12 @@ class BaseAdapter:
         raise NotImplementedError
 
     @log_and_raise_not_implemented
-    def get_metadata(self) -> SchemaMetadata:
+    def get_metadata(self) -> Schema:
         """
         Retrieve the metadata of the loaded data.
 
         Returns:
-            (SchemaMetadata): The metadata of the loaded data.
+            (Schema): The metadata of the loaded data.
         """
         raise NotImplementedError
 
@@ -166,7 +167,7 @@ class LoaderAdapter(BaseAdapter):
         """
         super().__init__(config)
         self.loader = Loader(**config)
-        self._schema_metadata = None  # Store the SchemaMetadata
+        self._schema_metadata = None  # Store the Schema
 
     def _run(self, input: dict):
         """
@@ -182,8 +183,8 @@ class LoaderAdapter(BaseAdapter):
         self._logger.debug("Starting data loading process")
         self.data, self._schema_metadata = self.loader.load()
 
-        # Use SchemaMetadata directly
-        self._logger.debug("Using SchemaMetadata from Metadater")
+        # Use Schema directly
+        self._logger.debug("Using Schema from Metadater")
         self.metadata = self._schema_metadata
 
         self._logger.debug("Data loading completed")
@@ -206,12 +207,12 @@ class LoaderAdapter(BaseAdapter):
         """
         return self.data
 
-    def get_metadata(self) -> SchemaMetadata:
+    def get_metadata(self) -> Schema:
         """
         Retrieve the metadata of the loaded data.
 
         Returns:
-            (SchemaMetadata): The metadata of the loaded data.
+            (Schema): The metadata of the loaded data.
         """
         return self.metadata
 
@@ -240,7 +241,9 @@ class SplitterAdapter(BaseAdapter):
 
         Args:
             input (dict):
-                Splitter input should contains data (pd.DataFrame) and exclude_index (list[set]).
+                Splitter input should contains
+                    data (pd.DataFrame), metadata (Schema),
+                    and exclude_index (list[set]).
 
         Attributes:
             data (Dict[int, Dict[str, pd.DataFrame]]):
@@ -256,6 +259,8 @@ class SplitterAdapter(BaseAdapter):
         split_params = {}
         for key, value in input.items():
             if key == "data":
+                split_params[key] = value
+            elif key == "metadata":
                 split_params[key] = value
             elif key == "exist_train_indices" and value:  # 只有非空時才傳遞
                 split_params[key] = value
@@ -295,12 +300,12 @@ class SplitterAdapter(BaseAdapter):
         result: dict = deepcopy(self.data[1])
         return result
 
-    def get_metadata(self) -> SchemaMetadata:
+    def get_metadata(self) -> Schema:
         """
         Retrieve the metadata.
 
         Returns:
-            (SchemaMetadata): The updated metadata.
+            (Schema): The updated metadata.
         """
         return deepcopy(self.metadata[1]["train"])
 
@@ -406,19 +411,19 @@ class PreprocessorAdapter(BaseAdapter):
         result: pd.DataFrame = deepcopy(self.data_preproc)
         return result
 
-    def get_metadata(self) -> SchemaMetadata:
+    def get_metadata(self) -> Schema:
         """
         Retrieve the metadata.
             If the encoder is EncoderUniform,
             update the metadata infer_dtype to numerical.
 
         Returns:
-            (SchemaMetadata): The updated metadata.
+            (Schema): The updated metadata.
         """
-        metadata: SchemaMetadata = deepcopy(self.processor._metadata)
+        metadata: Schema = deepcopy(self.processor._metadata)
 
         # Note: The metadata update logic for EncoderUniform and ScalerTimeAnchor
-        # needs to be adapted to work with SchemaMetadata instead of legacy Metadata
+        # needs to be adapted to work with Schema instead of legacy Metadata
         # This will be handled by the processor module's own refactoring
 
         return metadata
@@ -478,10 +483,10 @@ class SynthesizerAdapter(BaseAdapter):
         # Check if metadata exists for the previous module
         try:
             self.input["metadata"] = status.get_metadata(pre_module)
-            # Validate that the metadata has fields
-            if not self.input["metadata"].fields:
+            # Validate that the metadata has attributes
+            if not self.input["metadata"].attributes:
                 self._logger.warning(
-                    f"Metadata from {pre_module} has no fields, setting to None"
+                    f"Metadata from {pre_module} has no attributes, setting to None"
                 )
                 self.input["metadata"] = None
         except Exception as e:
@@ -713,18 +718,35 @@ class EvaluatorAdapter(BaseAdapter):
         super().__init__(config)
         self.evaluator = Evaluator(**config)
         self.evaluations: dict[str, pd.DataFrame] = None
+        self._schema: Schema = None  # Store schema for data alignment
 
     def _run(self, input: dict):
         """
         Executes the data evaluating using the Evaluator instance.
 
         Args:
-            input (dict): Evaluator input should contains data (dict).
+            input (dict): Evaluator input should contains data (dict) and optional schema.
 
         Attributes:
             evaluator.result (dict): An evaluating result data.
         """
         self._logger.debug("Starting data evaluating process")
+
+        # Auto-align data types if schema is available
+        if "schema" in input and input["schema"]:
+            self._logger.debug("Schema found, aligning data types")
+            aligned_data = {}
+            for key, df in input["data"].items():
+                if df is not None and not df.empty:
+                    self._logger.debug(f"Aligning data type for '{key}' data")
+                    aligned_data[key] = SchemaMetadater.align(input["schema"], df)
+                else:
+                    aligned_data[key] = df
+            input["data"] = aligned_data
+            self._logger.debug("Data type alignment completed")
+
+            # Remove schema from input as Evaluator.eval() doesn't accept it
+            del input["schema"]
 
         self.evaluator.create()
         self._logger.debug("Evaluation model initialization completed")
@@ -742,7 +764,7 @@ class EvaluatorAdapter(BaseAdapter):
 
         Returns:
             dict:
-                Evaluator input should contains data (dict).
+                Evaluator input should contains data (dict) and optional schema.
         """
         if "Splitter" in status.status:
             self.input["data"] = {
@@ -755,6 +777,28 @@ class EvaluatorAdapter(BaseAdapter):
                 "ori": status.get_result("Loader"),
                 "syn": status.get_result(status.get_pre_module("Evaluator")),
             }
+
+        # Try to get schema for data alignment
+        # Priority: Loader > Splitter > Preprocessor
+        schema = None
+        try:
+            if "Loader" in status.status:
+                schema = status.get_metadata("Loader")
+                self._logger.debug("Using schema from Loader for data alignment")
+            elif "Splitter" in status.status:
+                schema = status.get_metadata("Splitter")
+                self._logger.debug("Using schema from Splitter for data alignment")
+            elif "Preprocessor" in status.status:
+                schema = status.get_metadata("Preprocessor")
+                self._logger.debug("Using schema from Preprocessor for data alignment")
+        except Exception as e:
+            self._logger.warning(f"Could not retrieve schema for data alignment: {e}")
+
+        if schema:
+            self.input["schema"] = schema
+            self._schema = schema  # Store for later use
+        else:
+            self._logger.warning("No schema available for data type alignment")
 
         return self.input
 
