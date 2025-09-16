@@ -173,9 +173,9 @@ class LoaderConfig(BaseConfig):
                 self._logger.debug(
                     "Checking for conflicts between schema and column_types"
                 )
-                # Use hasattr to avoid depending on schema internal structure
-                if hasattr(self.schema, "fields") and self.schema.fields:
-                    schema_fields = set(self.schema.fields.keys())
+                # Schema uses 'attributes' not 'fields'
+                if hasattr(self.schema, "attributes") and self.schema.attributes:
+                    schema_fields = set(self.schema.attributes.keys())
                     column_type_fields = set()
                     for columns in self.column_types.values():
                         column_type_fields.update(columns)
@@ -566,7 +566,7 @@ class Loader:
         if schema is None or not schema.attributes:
             try:
                 schema = SchemaMetadater.from_data(data)
-                # 更新 schema id
+                # 現在可以直接修改屬性（已移除 frozen）
                 schema.id = self.config.file_name or "inferred_schema"
                 schema.name = self.config.base_name or "Inferred Schema"
                 self._logger.debug("Created schema from data")

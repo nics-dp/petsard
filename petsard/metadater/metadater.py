@@ -65,12 +65,28 @@ class AttributeMetadater:
         if data.dtype == "object":
             sample = data.dropna().head(100)
 
-            # 檢查是否為 email
-            if sample.str.contains(r"^[^@]+@[^@]+\.[^@]+$", regex=True).all():
-                return "email"
+            # 確保樣本不為空
+            if len(sample) == 0:
+                return None
+
+            # 檢查是否全部為字串類型
+            try:
+                # 先確認所有值都是字串
+                all_strings = all(isinstance(x, str) for x in sample)
+
+                if all_strings:
+                    # 檢查是否為 email
+                    if sample.str.contains(
+                        r"^[^@]+@[^@]+\.[^@]+$", regex=True, na=False
+                    ).all():
+                        return "email"
+            except (AttributeError, TypeError):
+                # 如果有任何混合類型，跳過 email 檢查
+                pass
 
             # 檢查是否為分類資料
-            if len(data.unique()) / len(data) < 0.05:  # 唯一值比例小於 5%
+            unique_ratio = len(data.unique()) / len(data) if len(data) > 0 else 1.0
+            if unique_ratio < 0.05:  # 唯一值比例小於 5%
                 return "category"
 
         return None
