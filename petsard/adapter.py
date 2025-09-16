@@ -11,6 +11,7 @@ from petsard.evaluator import Describer, Evaluator
 from petsard.exceptions import ConfigError
 from petsard.loader import Loader, Splitter
 from petsard.metadater.metadata import Schema
+from petsard.metadater.metadater import SchemaMetadater
 from petsard.processor import Processor
 from petsard.reporter import Reporter
 from petsard.synthesizer import Synthesizer
@@ -717,18 +718,35 @@ class EvaluatorAdapter(BaseAdapter):
         super().__init__(config)
         self.evaluator = Evaluator(**config)
         self.evaluations: dict[str, pd.DataFrame] = None
+        self._schema: Schema = None  # Store schema for data alignment
 
     def _run(self, input: dict):
         """
         Executes the data evaluating using the Evaluator instance.
 
         Args:
-            input (dict): Evaluator input should contains data (dict).
+            input (dict): Evaluator input should contains data (dict) and optional schema.
 
         Attributes:
             evaluator.result (dict): An evaluating result data.
         """
         self._logger.debug("Starting data evaluating process")
+
+        # Auto-align data types if schema is available
+        if "schema" in input and input["schema"]:
+            self._logger.debug("Schema found, aligning data types")
+            aligned_data = {}
+            for key, df in input["data"].items():
+                if df is not None and not df.empty:
+                    self._logger.debug(f"Aligning data type for '{key}' data")
+                    aligned_data[key] = SchemaMetadater.align(input["schema"], df)
+                else:
+                    aligned_data[key] = df
+            input["data"] = aligned_data
+            self._logger.debug("Data type alignment completed")
+
+            # Remove schema from input as Evaluator.eval() doesn't accept it
+            del input["schema"]
 
         self.evaluator.create()
         self._logger.debug("Evaluation model initialization completed")
@@ -746,7 +764,7 @@ class EvaluatorAdapter(BaseAdapter):
 
         Returns:
             dict:
-                Evaluator input should contains data (dict).
+                Evaluator input should contains data (dict) and optional schema.
         """
         if "Splitter" in status.status:
             self.input["data"] = {
@@ -759,6 +777,28 @@ class EvaluatorAdapter(BaseAdapter):
                 "ori": status.get_result("Loader"),
                 "syn": status.get_result(status.get_pre_module("Evaluator")),
             }
+
+        # Try to get schema for data alignment
+        # Priority: Loader > Splitter > Preprocessor
+        schema = None
+        try:
+            if "Loader" in status.status:
+                schema = status.get_metadata("Loader")
+                self._logger.debug("Using schema from Loader for data alignment")
+            elif "Splitter" in status.status:
+                schema = status.get_metadata("Splitter")
+                self._logger.debug("Using schema from Splitter for data alignment")
+            elif "Preprocessor" in status.status:
+                schema = status.get_metadata("Preprocessor")
+                self._logger.debug("Using schema from Preprocessor for data alignment")
+        except Exception as e:
+            self._logger.warning(f"Could not retrieve schema for data alignment: {e}")
+
+        if schema:
+            self.input["schema"] = schema
+            self._schema = schema  # Store for later use
+        else:
+            self._logger.warning("No schema available for data type alignment")
 
         return self.input
 
