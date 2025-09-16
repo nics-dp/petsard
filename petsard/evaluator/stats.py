@@ -457,10 +457,20 @@ class Stats(BaseEvaluator):
             # Apply appropriate function based on whether original value is zero
             func = method_info["func"]
             handle_zero = method_info["handle_zero"]
+
+            # Calculate the comparison values
+            comparison_values = func(result[syn_col], result[ori_col])
+
+            # Apply safe_round element-wise if it's a Series
+            if isinstance(comparison_values, pd.Series):
+                rounded_values = comparison_values.apply(safe_round)
+            else:
+                rounded_values = safe_round(comparison_values)
+
             result[eval_col] = np.where(
                 result[ori_col].astype(float) == 0.0,
                 handle_zero(result[syn_col], result[ori_col]),
-                safe_round(func(result[syn_col], result[ori_col])),
+                rounded_values,
             )
 
         self._logger.debug(f"Comparison method '{compare_method}' applied successfully")
