@@ -82,8 +82,8 @@ class SDVSingleTableSynthesizer(BaseSynthesizer):
                 "Metadata provided, initializing synthesizer in __init__"
             )
             # Use SchemaMetadater.to_sdv() to convert metadata
-            schema_metadater = SchemaMetadater.from_metadata(metadata)
-            sdv_metadata = schema_metadater.to_sdv()
+            # metadata is already a Schema object, convert it to SDV format
+            sdv_metadata = SchemaMetadater.to_sdv(metadata)
             self._impl: BaseSingleTableSynthesizer = self._initialize_impl(
                 metadata=sdv_metadata
             )
@@ -157,9 +157,9 @@ class SDVSingleTableSynthesizer(BaseSynthesizer):
         # If metadata is not provided, initialize the synthesizer in the fit method.
         if not hasattr(self, "_impl") or self._impl is None:
             self._logger.debug("Initializing synthesizer in _fit method")
-            # Create SchemaMetadater from data and convert to SDV metadata
-            schema_metadater = SchemaMetadater.from_data(data)
-            sdv_metadata = schema_metadater.to_sdv()
+            # Create Schema from data and convert to SDV metadata
+            schema = SchemaMetadater.from_data(data)
+            sdv_metadata = SchemaMetadater.to_sdv(schema)
             self._impl: BaseSingleTableSynthesizer = self._initialize_impl(
                 metadata=sdv_metadata
             )
