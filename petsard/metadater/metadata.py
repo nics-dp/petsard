@@ -4,6 +4,8 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Any
 
+from petsard.metadater.stats import DatasetsStats, FieldStats, TableStats
+
 
 @dataclass(frozen=True)
 class Attribute:
@@ -21,6 +23,10 @@ class Attribute:
     # 配置參數 Configuration parameters (inherit or override)
     enable_optimize_type: bool = True
     enable_null: bool = True
+    enable_stats: bool = True  # 新增：是否計算統計資訊
+
+    # 統計資訊
+    stats: FieldStats | None = None
 
     # 資料處理 Data processing
     na_values: list[Any] | None = None
@@ -61,6 +67,10 @@ class Schema:
     # 配置參數（繼承或覆寫）
     enable_optimize_type: bool = True
     enable_null: bool = True
+    enable_stats: bool = True  # 新增：是否計算統計資訊
+
+    # 統計資訊
+    stats: TableStats | None = None
 
     # 時間資訊 Timestamps
     created_at: datetime = field(default_factory=datetime.now)
@@ -87,6 +97,10 @@ class Metadata:
     enable_optimize_type: bool = True
     enable_null: bool = True
     enable_relations: bool = True
+    enable_stats: bool = True  # 新增：是否計算統計資訊
+
+    # 統計資訊
+    stats: DatasetsStats | None = None
 
     # 關係定義 Relationship definitions
     relations: list[dict[str, Any]] | None = None
