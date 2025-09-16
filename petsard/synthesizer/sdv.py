@@ -20,6 +20,56 @@ from petsard.metadater.metadater import SchemaMetadater
 from petsard.synthesizer.synthesizer_base import BaseSynthesizer
 
 
+def schema_to_sdv(schema: Schema) -> dict[str, Any]:
+    """轉換 PETsARD Schema 為 SDV (Synthetic Data Vault) 格式
+
+    Args:
+        schema: PETsARD Schema 物件
+
+    Returns:
+        dict: SDV metadata 格式的字典
+    """
+    sdv_metadata = {"columns": {}, "METADATA_SPEC_VERSION": "SINGLE_TABLE_V1"}
+
+    for attr_name, attribute in schema.attributes.items():
+        sdtype = _map_attribute_to_sdv_type(attribute)
+        sdv_metadata["columns"][attr_name] = {"sdtype": sdtype}
+
+    return sdv_metadata
+
+
+def _map_attribute_to_sdv_type(attribute: Any) -> str:
+    """將 PETsARD Attribute 對應到 SDV sdtype
+
+    Args:
+        attribute: PETsARD Attribute 物件
+
+    Returns:
+        str: SDV sdtype
+    """
+    # 根據邏輯類型優先判斷
+    if attribute.logical_type:
+        logical = attribute.logical_type.lower()
+        if logical in ["email", "phone"]:
+            return "pii"
+        elif logical == "category":
+            return "categorical"
+        elif logical in ["datetime", "date", "time"]:
+            return "datetime"
+
+    # 根據資料類型判斷
+    if attribute.type:
+        if "int" in attribute.type or "float" in attribute.type:
+            return "numerical"
+        elif "bool" in attribute.type:
+            return "boolean"
+        elif "datetime" in attribute.type:
+            return "datetime"
+
+    # 預設為分類
+    return "categorical"
+
+
 class SDVSingleTableMap:
     """
     Mapping of SDV.
@@ -81,9 +131,18 @@ class SDVSingleTableSynthesizer(BaseSynthesizer):
             self._logger.debug(
                 "Metadata provided, initializing synthesizer in __init__"
             )
-            # Use SchemaMetadater.to_sdv() to convert metadata
-            # metadata is already a Schema object, convert it to SDV format
-            sdv_metadata = SchemaMetadater.to_sdv(metadata)
+            # Convert Schema to SDV format using local function
+            sdv_metadata_dict = schema_to_sdv(metadata)
+            # Create SDV Metadata object from the dictionary
+            # Suppress the "No table name was provided" warning and log it instead
+            with warnings.catch_warnings(record=True) as w:
+                warnings.filterwarnings(
+                    "always", message="No table name was provided.*"
+                )
+                sdv_metadata = SDV_Metadata.load_from_dict(sdv_metadata_dict)
+                # Log any warnings as debug messages
+                for warning in w:
+                    self._logger.debug(f"SDV Metadata: {warning.message}")
             self._impl: BaseSingleTableSynthesizer = self._initialize_impl(
                 metadata=sdv_metadata
             )
@@ -159,7 +218,17 @@ class SDVSingleTableSynthesizer(BaseSynthesizer):
             self._logger.debug("Initializing synthesizer in _fit method")
             # Create Schema from data and convert to SDV metadata
             schema = SchemaMetadater.from_data(data)
-            sdv_metadata = SchemaMetadater.to_sdv(schema)
+            sdv_metadata_dict = schema_to_sdv(schema)
+            # Create SDV Metadata object from the dictionary
+            # Suppress the "No table name was provided" warning and log it instead
+            with warnings.catch_warnings(record=True) as w:
+                warnings.filterwarnings(
+                    "always", message="No table name was provided.*"
+                )
+                sdv_metadata = SDV_Metadata.load_from_dict(sdv_metadata_dict)
+                # Log any warnings as debug messages
+                for warning in w:
+                    self._logger.debug(f"SDV Metadata: {warning.message}")
             self._impl: BaseSingleTableSynthesizer = self._initialize_impl(
                 metadata=sdv_metadata
             )
