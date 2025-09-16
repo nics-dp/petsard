@@ -5,7 +5,7 @@ import pandas as pd
 
 from petsard.exceptions import ConfigError
 from petsard.loader import Loader
-from petsard.metadater import SchemaMetadata
+from petsard.metadater import Schema
 from petsard.synthesizer.synthesizer_base import BaseSynthesizer
 
 
@@ -20,11 +20,11 @@ class CustomDataSynthesizer(BaseSynthesizer):
         "sample_num_rows",
     ]
 
-    def __init__(self, config: dict, metadata: SchemaMetadata = None):
+    def __init__(self, config: dict, metadata: Schema = None):
         """
         Args:
             config (dict): The configuration assign by Synthesizer
-            metadata (SchemaMetadata, optional): The schema metadata object.
+            metadata (Schema, optional): The schema metadata object.
 
         Attributes:
             _logger (logging.Logger): The logger object.

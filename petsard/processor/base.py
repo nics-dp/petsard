@@ -8,7 +8,7 @@ import pandas as pd
 from pandas.api.types import is_datetime64_any_dtype
 
 from petsard.exceptions import ConfigError, UnfittedError
-from petsard.metadater import Metadater, SchemaMetadata
+from petsard.metadater.metadata import Schema
 from petsard.processor.discretizing import DiscretizingKBins
 from petsard.processor.encoder import (
     EncoderDateDiff,
@@ -170,10 +170,10 @@ class Processor:
     MAX_SEQUENCE_LENGTH: int = 4  # Maximum number of procedures allowed in sequence
     DEFAULT_SEQUENCE: list[str] = ["missing", "outlier", "encoder", "scaler"]
 
-    def __init__(self, metadata: SchemaMetadata, config: dict = None) -> None:
+    def __init__(self, metadata: Schema, config: dict = None) -> None:
         """
         Args:
-            metadata (SchemaMetadata):
+            metadata (Schema):
                 The schema metadata class to provide the metadata of the data,
                 which contains the properties of the data,
                 including column names, column types, inferred column types,
@@ -218,7 +218,7 @@ class Processor:
         self.logger.debug(f"config is provided: {config}")
 
         # Initialize metadata
-        self._metadata: SchemaMetadata = metadata
+        self._metadata: Schema = metadata
         self.logger.debug("Schema metadata loaded.")
 
         # Initialize processing state
@@ -645,12 +645,16 @@ class Processor:
                                 ScalerZeroCenter,
                             ),
                         ):
-                            Metadater.adjust_metadata_after_processing(
-                                mode="columnwise",
-                                data=self.transformed[col],
-                                original_metadata=self._metadata,
-                                col=col,
-                            )
+                            # TODO: Handle metadata adjustment after processing
+                            # adjust_metadata_after_processing should not be in Metadater
+                            # Processor should maintain its own statistics using Field/Table objects
+                            # Metadater.adjust_metadata_after_processing(
+                            #     mode="columnwise",
+                            #     data=self.transformed[col],
+                            #     original_metadata=self._metadata,
+                            #     col=col,
+                            # )
+                            pass
 
                     # Log post-transformation statistics
                     if self.transformed[col].dtype.kind in "biufc":
@@ -681,11 +685,15 @@ class Processor:
                 if isinstance(processor, MediatorEncoder) or isinstance(
                     processor, MediatorScaler
                 ):
-                    Metadater.adjust_metadata_after_processing(
-                        mode="global",
-                        data=self.transformed,
-                        original_metadata=self._metadata,
-                    )
+                    # TODO: Handle metadata adjustment after processing
+                    # adjust_metadata_after_processing should not be in Metadater
+                    # Processor should maintain its own statistics using Field/Table objects
+                    # Metadater.adjust_metadata_after_processing(
+                    #     mode="global",
+                    #     data=self.transformed,
+                    #     original_metadata=self._metadata,
+                    # )
+                    pass
                 self._adjust_working_config(processor, self._fitting_sequence)
 
                 self.logger.debug(
@@ -924,10 +932,12 @@ class Processor:
         Return:
             (pd.DataFrame): The aligned data.
         """
-        for col in self._get_field_names():
-            dtype = self._get_field_dtype(col)
-            data[col] = Metadater.apply_dtype_conversion(
-                data[col], dtype, cast_error="coerce"
-            )
+        # Use Metadater.align instead of apply_dtype_conversion
+        # Create a temporary Metadater instance for alignment
+        from petsard.metadater import Metadater as NewMetadater
 
-        return data
+        # Use the metadata to align data types
+        metadater = NewMetadater.from_metadata(self._metadata)
+        aligned_data = metadater.align(data)
+
+        return aligned_data
