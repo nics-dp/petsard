@@ -9,7 +9,8 @@ import pandas as pd
 
 from petsard.adapter import BaseAdapter
 from petsard.exceptions import SnapshotError, StatusError, TimingError, UnexecutedError
-from petsard.metadater import MetadataChange, Metadater, SchemaMetadata
+from petsard.metadater.metadata import Metadata, Schema
+from petsard.metadater.metadater import SchemaMetadater
 from petsard.processor import Processor
 from petsard.synthesizer import Synthesizer
 
@@ -24,8 +25,8 @@ class ExecutionSnapshot:
     module_name: str
     experiment_name: str
     timestamp: datetime
-    metadata_before: SchemaMetadata | None = None
-    metadata_after: SchemaMetadata | None = None
+    metadata_before: Schema | None = None
+    metadata_after: Schema | None = None
     context: dict[str, Any] = field(default_factory=dict)
 
 
@@ -141,12 +142,16 @@ class Status:
         self.sequence: list = config.sequence
         self._logger = logging.getLogger(f"PETsARD.{self.__class__.__name__}")
 
-        # 核心 Metadater 實例 - 包含變更追蹤功能
-        self.metadater = Metadater(max_changes=max_changes)
+        # 核心 Metadata 實例 - 儲存所有變更歷史
+        self.metadata_obj = Metadata(
+            id="status_metadata",
+            name="Status Metadata",
+            description="Metadata tracking for Status module",
+        )
 
         # 狀態儲存 - 保持與原有介面相容
         self.status: dict = {}
-        self.metadata: dict[str, SchemaMetadata] = {}
+        self.metadata: dict[str, Schema] = {}
 
         # 優化的快照功能 - 使用 deque 限制大小
         self.max_snapshots = max_snapshots
@@ -208,8 +213,8 @@ class Status:
         self,
         module: str,
         expt: str,
-        metadata_before: SchemaMetadata | None = None,
-        metadata_after: SchemaMetadata | None = None,
+        metadata_before: Schema | None = None,
+        metadata_after: Schema | None = None,
         context: dict[str, Any] | None = None,
     ) -> ExecutionSnapshot:
         """
@@ -512,23 +517,38 @@ class Status:
         if module in ["Loader", "Splitter", "Preprocessor"]:
             new_metadata = operator.get_metadata()
 
-            # 使用 Metadater 追蹤元資料變更
-            if metadata_before is not None:
-                self.metadater.track_metadata_change(
-                    change_type="update",
-                    target_type="schema",
-                    target_id=new_metadata.schema_id,
-                    before_state=metadata_before,
-                    after_state=new_metadata,
-                    module_context=f"{module}[{expt}]",
-                )
-            else:
-                self.metadater.track_metadata_change(
-                    change_type="create",
-                    target_type="schema",
-                    target_id=new_metadata.schema_id,
-                    after_state=new_metadata,
-                    module_context=f"{module}[{expt}]",
+            # 使用 SchemaMetadater.diff 追蹤變更
+            if metadata_before is not None and hasattr(operator, "get_data"):
+                # 計算差異
+                diff_result = SchemaMetadater.diff(metadata_before, operator.get_data())
+
+                # 記錄變更到 Metadata
+                timestamp = datetime.now().isoformat()
+                change_record = {
+                    "timestamp": timestamp,
+                    "module": f"{module}[{expt}]",
+                    "before_id": metadata_before.id,
+                    "after_id": new_metadata.id,
+                    "diff": diff_result,
+                }
+
+                # 更新 Metadata 的 change_history 和 diffs
+                # 由於 Metadata 是 frozen，需要重建
+                updated_change_history = list(self.metadata_obj.change_history)
+                updated_change_history.append(change_record)
+
+                updated_diffs = dict(self.metadata_obj.diffs)
+                if timestamp not in updated_diffs:
+                    updated_diffs[timestamp] = {}
+                updated_diffs[timestamp][module] = diff_result
+
+                from dataclasses import replace
+
+                self.metadata_obj = replace(
+                    self.metadata_obj,
+                    change_history=updated_change_history,
+                    diffs=updated_diffs,
+                    updated_at=datetime.now(),
                 )
 
             self.set_metadata(module, new_metadata)
@@ -627,11 +647,11 @@ class Status:
         for index_set in new_indices:
             self.exist_train_indices.append(index_set)
 
-    def set_metadata(self, module: str, metadata: SchemaMetadata) -> None:
+    def set_metadata(self, module: str, metadata: Schema) -> None:
         """設定給定模組的元資料"""
         self.metadata[module] = metadata
 
-    def get_metadata(self, module: str = "Loader") -> SchemaMetadata:
+    def get_metadata(self, module: str = "Loader") -> Schema:
         """取得資料集的元資料"""
         if module not in self.metadata:
             raise UnexecutedError
@@ -686,7 +706,7 @@ class Status:
         """
         return self._snapshot_index.get(snapshot_id)
 
-    def get_change_history(self, module: str = None) -> list[MetadataChange]:
+    def get_change_history(self, module: str = None) -> list[dict[str, Any]]:
         """
         取得變更歷史
 
@@ -694,11 +714,18 @@ class Status:
             module: 可選的模組名稱過濾
 
         Returns:
-            List[MetadataChange]: 變更記錄列表
+            List[dict]: 變更記錄列表
         """
-        return self.metadater.get_change_history(module)
+        if module is None:
+            return self.metadata_obj.change_history
+        else:
+            return [
+                ch
+                for ch in self.metadata_obj.change_history
+                if module in ch.get("module", "")
+            ]
 
-    def get_metadata_evolution(self, module: str = "Loader") -> list[SchemaMetadata]:
+    def get_metadata_evolution(self, module: str = "Loader") -> list[Schema]:
         """
         取得特定模組的元資料演進歷史 - 優化版本避免重複
 
@@ -706,7 +733,7 @@ class Status:
             module: 模組名稱
 
         Returns:
-            List[SchemaMetadata]: 元資料演進列表
+            List[Schema]: 元資料演進列表
         """
         evolution = []
         seen_ids = set()
@@ -774,17 +801,23 @@ class Status:
         Returns:
             Dict[str, Any]: 狀態摘要
         """
-        change_summary = self.metadater.get_change_summary()
+        # 計算變更統計
+        total_changes = len(self.metadata_obj.change_history)
+        last_change = (
+            self.metadata_obj.change_history[-1]
+            if self.metadata_obj.change_history
+            else None
+        )
+
         return {
             "sequence": self.sequence,
             "active_modules": list(self.status.keys()),
             "metadata_modules": list(self.metadata.keys()),
             "total_snapshots": len(self.snapshots),
-            "total_changes": change_summary["total_changes"],
+            "total_changes": total_changes,
+            "total_diffs": len(self.metadata_obj.diffs),
             "last_snapshot": self.snapshots[-1].snapshot_id if self.snapshots else None,
-            "last_change": change_summary["latest_change"],
-            "change_types": change_summary["change_types"],
-            "target_types": change_summary["target_types"],
+            "last_change": last_change,
         }
 
     def get_timing_records(self, module: str = None) -> list[TimingRecord]:

@@ -91,6 +91,15 @@ class Metadata:
     # 關係定義 Relationship definitions
     relations: list[dict[str, Any]] | None = None
 
+    # 差異追蹤 Diff tracking
+    # 儲存不同 schema 之間的差異記錄
+    # 格式: {timestamp: {module: diff_result, ...}, ...}
+    diffs: dict[str, dict[str, Any]] = field(default_factory=dict)
+
+    # 變更歷史 Change history
+    # 格式: [{timestamp, module, before_id, after_id, diff}, ...]
+    change_history: list[dict[str, Any]] = field(default_factory=list)
+
     # 時間資訊 Timestamps
     created_at: datetime = field(default_factory=datetime.now)
     updated_at: datetime = field(default_factory=datetime.now)
