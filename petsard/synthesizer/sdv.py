@@ -42,14 +42,22 @@ def _map_attribute_to_sdv_type(attribute: Any) -> str:
     """將 PETsARD Attribute 對應到 SDV sdtype
 
     Args:
-        attribute: PETsARD Attribute 物件
+        attribute: PETsARD Attribute 物件或 dict
 
     Returns:
         str: SDV sdtype
     """
+    # 處理 dict 和 Attribute 物件兩種情況
+    if isinstance(attribute, dict):
+        logical_type = attribute.get("logical_type")
+        attr_type = attribute.get("type")
+    else:
+        logical_type = attribute.logical_type
+        attr_type = attribute.type
+
     # 根據邏輯類型優先判斷
-    if attribute.logical_type:
-        logical = attribute.logical_type.lower()
+    if logical_type:
+        logical = logical_type.lower()
         if logical in ["email", "phone"]:
             return "pii"
         elif logical == "category":
@@ -58,12 +66,12 @@ def _map_attribute_to_sdv_type(attribute: Any) -> str:
             return "datetime"
 
     # 根據資料類型判斷
-    if attribute.type:
-        if "int" in attribute.type or "float" in attribute.type:
+    if attr_type:
+        if "int" in attr_type or "float" in attr_type:
             return "numerical"
-        elif "bool" in attribute.type:
+        elif "bool" in attr_type:
             return "boolean"
-        elif "datetime" in attribute.type:
+        elif "datetime" in attr_type:
             return "datetime"
 
     # 預設為分類
@@ -181,13 +189,24 @@ class SDVSingleTableSynthesizer(BaseSynthesizer):
             self._logger.error(error_msg)
             raise UnsupportedMethodError(error_msg) from None
 
+        # Prepare initialization parameters
+        init_params = {
+            "metadata": metadata,
+            "enforce_rounding": True,  # Apply to all synthesizer types
+        }
+
+        # Add enforce_min_max_values only for TVAE and GaussianCopula
+        if method_code in [SDVSingleTableMap.TVAE, SDVSingleTableMap.GAUSSIANCOPULA]:
+            init_params["enforce_min_max_values"] = True
+            self._logger.debug(
+                f"Adding enforce_min_max_values=True for {synthesizer_class.__name__}"
+            )
+
         # catch warnings during synthesizer initialization:
         # "We strongly recommend saving the metadata using 'save_to_json' for replicability in future SDV versions."
         with warnings.catch_warnings(record=True) as w:
             warnings.simplefilter("always")
-            synthesizer: BaseSingleTableSynthesizer = synthesizer_class(
-                metadata=metadata
-            )
+            synthesizer: BaseSingleTableSynthesizer = synthesizer_class(**init_params)
 
             for warning in w:
                 self._logger.debug(f"Warning during fit: {warning.message}")
@@ -268,6 +287,7 @@ class SDVSingleTableSynthesizer(BaseSynthesizer):
             )
             self._logger.info(f"Successfully sampled {len(synthetic_data)} rows")
             self._logger.debug(f"Generated data shape: {synthetic_data.shape}")
+            # Precision rounding is now handled by the base class
             return synthetic_data
         except Exception as ex:
             error_msg: str = f"SDV synthesizer couldn't sample the data: {ex}"

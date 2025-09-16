@@ -330,10 +330,45 @@ Our design treats categorical processing as a storage optimization strategy, not
 - Conceptually similar to Pandas' `category[dtype]` but provides more fine-grained control
 
 ### 3. Numerical Precision Control (`precision`)
-Control the decimal places of floating-point numbers to ensure consistent numerical format:
+Control the decimal places of floating-point numbers to ensure consistent numerical format. This is essential for financial data, scientific measurements, and any precision-sensitive applications.
 
-- Only applies to `float` type: `precision: 2`
-- **Note**: Using `precision` with `int` type will cause an error
+#### Schema Format v2.0 (Recommended)
+```yaml
+attributes:  # Note: v2.0 uses 'attributes' instead of 'fields'
+  price:
+    type: float64
+    type_attr:
+      precision: 2  # Round to 2 decimal places
+  
+  quantity:
+    type: float64
+    type_attr:
+      precision: 0  # Round to integer
+```
+
+#### Schema Format v1.0 (Next Deprecated - Will be removed in future versions)
+```yaml
+fields:  # Note: v1.0 uses 'fields' which will be replaced by 'attributes'
+  price:
+    type: float
+    precision: 2  # Direct field-level precision
+  
+  quantity:
+    type: float
+    precision: 0
+```
+
+#### Precision Settings
+- `precision: 0` - Rounds to integer (no decimal places)
+- `precision: 1` - Rounds to 1 decimal place (e.g., 10.1)
+- `precision: 2` - Rounds to 2 decimal places (e.g., 10.12)
+- `precision: n` - Rounds to n decimal places
+
+**Important Notes**:
+- Only applies to `float` type fields
+- Using `precision` with `int` type will cause an error
+- Precision is applied during synthesis to ensure consistent output format
+- Useful for maintaining data integrity in financial and scientific applications
 
 ### 4. Categorical Variable Optimization
 Intelligent classification judgment based on Zhu et al. (2024) research:
