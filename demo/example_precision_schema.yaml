@@ -1,0 +1,60 @@
+# PETsARD Schema with Precision Settings Example
+# 精度設定範例
+
+# Schema 基本資訊
+schema_id: example_precision
+name: Precision Example Schema
+description: 展示如何設定數值精度的範例 Schema
+
+# 全域設定（選擇性）
+optimize_dtypes: selective
+nullable_int: force
+
+# 欄位定義
+fields:
+  # 整數欄位 - 不需要 precision
+  product_id:
+    type: int
+    description: 產品編號
+  
+  # 價格 - 保留2位小數（金額常用）
+  price:
+    type: float
+    precision: 2
+    description: 產品價格，保留2位小數
+  
+  # 折扣率 - 保留1位小數（百分比）
+  discount_rate:
+    type: float
+    precision: 1
+    description: 折扣率（%），保留1位小數
+  
+  # 數量 - 四捨五入到整數
+  quantity:
+    type: float
+    precision: 0
+    description: 數量，四捨五入到整數
+  
+  # 評分 - 保留3位小數（精確評分）
+  rating:
+    type: float
+    precision: 3
+    description: 用戶評分，保留3位小數
+  
+  # 重量 - 保留4位小數（精密測量）
+  weight_kg:
+    type: float
+    precision: 4
+    description: 產品重量（公斤），保留4位小數
+  
+  # 沒有指定 precision 的浮點數 - 保持原始精度
+  raw_measurement:
+    type: float
+    description: 原始測量值，不限制精度
+
+# 說明：
+# 1. precision 參數直接放在 field 層級（v1.0 格式）
+# 2. precision 指定小數點後的位數
+# 3. precision: 0 表示四捨五入到整數
+# 4. 如果不指定 precision，則保持原始精度
+# 5. precision 只對 float 類型有效，int 類型不需要
