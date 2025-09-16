@@ -1,11 +1,11 @@
-name: Image Building and Publishing
+name: 🐳 Image Building and Publishing
 
 on:
   push:
-    tags: ["v*.*.*"]  # 只在標籤推送時觸發，確保版本已更新
+    tags: ["v*.*.*"] # 只在標籤推送時觸發，確保版本已更新
   workflow_dispatch:
   workflow_run:
-    workflows: ["Semantic Release"]  # 在 semantic release 完成後觸發
+    workflows: ["📦 Semantic Release and PyPI Publish"]  # 在 semantic release 完成後觸發
     types:
       - completed
     branches:
@@ -48,7 +48,7 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           fetch-depth: 0
 

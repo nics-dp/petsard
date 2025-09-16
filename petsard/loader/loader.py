@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import logging
 import re
 from dataclasses import dataclass
@@ -14,7 +16,7 @@ from petsard.exceptions import (
     UnsupportedMethodError,
 )
 from petsard.loader.benchmarker import BenchmarkerConfig, BenchmarkerRequests
-from petsard.metadater import FieldConfig, Metadater, SchemaConfig, SchemaMetadata
+from petsard.metadater import Attribute, Schema, SchemaMetadater
 
 
 class LoaderFileExt:
@@ -58,7 +60,7 @@ class LoaderConfig(BaseConfig):
         column_types (dict): The dictionary of column types and their corresponding column names.
         header_names (list): Specifies a list of headers for the data without header.
         na_values (str | list | dict): Extra string to recognized as NA/NaN.
-        schema (SchemaConfig): Schema configuration object with field definitions and global parameters.
+        schema (Schema): Schema configuration object with field definitions and global parameters.
         schema_path (str): The path to schema file if loaded from YAML file.
         dir_name (str): The directory name of the file path.
         base_name (str): The base name of the file path.
@@ -79,7 +81,7 @@ class LoaderConfig(BaseConfig):
     na_values: str | list[str] | dict[str, str] | None = (
         None  # TODO: Deprecated in v2.0.0 - will be removed
     )
-    schema: SchemaConfig | None = None
+    schema: Schema | None = None
     schema_path: str | None = None  # 記錄 schema 來源路徑（如果從檔案載入）
 
     # Filepath related
@@ -171,9 +173,9 @@ class LoaderConfig(BaseConfig):
                 self._logger.debug(
                     "Checking for conflicts between schema and column_types"
                 )
-                # Use hasattr to avoid depending on schema internal structure
-                if hasattr(self.schema, "fields") and self.schema.fields:
-                    schema_fields = set(self.schema.fields.keys())
+                # Schema uses 'attributes' not 'fields'
+                if hasattr(self.schema, "attributes") and self.schema.attributes:
+                    schema_fields = set(self.schema.attributes.keys())
                     column_type_fields = set()
                     for columns in self.column_types.values():
                         column_type_fields.update(columns)
@@ -213,7 +215,7 @@ class Loader:
         | list[str]
         | dict[str, str]
         | None = None,  # TODO: Deprecated in v2.0.0
-        schema: SchemaConfig | dict | str | None = None,
+        schema: Schema | dict | str | None = None,
     ):
         """
         Args:
@@ -236,10 +238,10 @@ class Loader:
                 Format as {colname: na_values}.
                 Default is None, means no extra.
                 Check pandas document for Default NA string list.
-            schema (SchemaConfig | dict | str, optional): Schema configuration.
+            schema (Schema | dict | str, optional): Schema configuration.
                 Can be one of:
-                - SchemaConfig object: Direct schema configuration
-                - dict: Dictionary that will be converted to SchemaConfig using from_dict()
+                - Schema object: Direct schema configuration
+                - dict: Dictionary that will be converted to Schema using from_dict()
                 - str: Path to YAML file containing schema configuration
                 Contains field definitions and global parameters for data processing.
 
@@ -270,42 +272,49 @@ class Loader:
         self._logger.debug("LoaderConfig successfully initialized")
 
     def _process_schema_parameter(
-        self, schema: SchemaConfig | dict | str | None
-    ) -> tuple[SchemaConfig | None, str | None]:
+        self, schema: Schema | dict | str | None
+    ) -> tuple[Schema | None, str | None]:
         """
-        Process schema parameter and convert it to SchemaConfig object.
+        Process schema parameter and convert it to Schema object.
 
         Args:
-            schema: Schema parameter that can be SchemaConfig, dict, str (path), or None
+            schema: Schema parameter that can be Schema, dict, str (path), or None
 
         Returns:
             tuple: (processed_schema, schema_path)
-                - processed_schema: SchemaConfig object or None
+                - processed_schema: Schema object or None
                 - schema_path: Path to schema file if loaded from file, None otherwise
         """
         if schema is None:
             self._logger.debug("No schema provided")
             return None, None
 
-        if isinstance(schema, SchemaConfig):
-            self._logger.debug("Schema provided as SchemaConfig object")
+        if isinstance(schema, Schema):
+            self._logger.debug("Schema provided as Schema object")
             return schema, None
 
         if isinstance(schema, dict):
-            self._logger.debug(
-                "Schema provided as dictionary, converting to SchemaConfig"
-            )
+            self._logger.debug("Schema provided as dictionary, converting to Schema")
             try:
-                # Ensure schema_id is present - generate one if missing
-                schema_dict = schema.copy()
-                if "schema_id" not in schema_dict:
-                    schema_dict["schema_id"] = "auto_generated_schema"
-                    self._logger.debug("Auto-generated schema_id for dictionary schema")
+                # 使用 SchemaMetadater 的 from_dict 或 from_dict_v1 方法
+                # 檢查是否有舊格式的特徵
+                has_global_params = any(
+                    k in schema
+                    for k in ["optimize_dtypes", "nullable_int", "infer_logical_types"]
+                )
 
-                schema_config = SchemaConfig.from_dict(schema_dict)
-                return schema_config, None
+                if has_global_params:
+                    # v1.0 格式
+                    schema_obj = SchemaMetadater.from_dict_v1(schema)
+                else:
+                    # v2.0 格式 - 確保有 id
+                    if "id" not in schema:
+                        schema["id"] = "auto_generated_schema"
+                    schema_obj = SchemaMetadater.from_dict(schema)
+
+                return schema_obj, None
             except Exception as e:
-                error_msg = f"Failed to convert dictionary to SchemaConfig: {str(e)}"
+                error_msg = f"Failed to convert dictionary to Schema: {str(e)}"
                 self._logger.error(error_msg)
                 raise ConfigError(error_msg) from e
 
@@ -318,25 +327,10 @@ class Loader:
                     self._logger.error(error_msg)
                     raise ConfigError(error_msg)
 
-                with open(schema_path, encoding="utf-8") as f:
-                    schema_dict = yaml.safe_load(f)
-
-                if not isinstance(schema_dict, dict):
-                    error_msg = f"Schema file must contain a dictionary, got {type(schema_dict)}"
-                    self._logger.error(error_msg)
-                    raise ConfigError(error_msg)
-
-                # Ensure schema_id is present - generate one if missing
-                if "schema_id" not in schema_dict:
-                    # Use filename (without extension) as schema_id
-                    schema_dict["schema_id"] = schema_path.stem
-                    self._logger.debug(
-                        f"Auto-generated schema_id from filename: {schema_path.stem}"
-                    )
-
-                schema_config = SchemaConfig.from_dict(schema_dict)
+                # 使用 SchemaMetadater.from_yaml 直接載入
+                schema_obj = SchemaMetadater.from_yaml(str(schema_path))
                 self._logger.debug(f"Successfully loaded schema from {schema}")
-                return schema_config, str(schema_path)
+                return schema_obj, str(schema_path)
 
             except yaml.YAMLError as e:
                 error_msg = f"Failed to parse YAML file {schema}: {str(e)}"
@@ -351,7 +345,7 @@ class Loader:
         self._logger.error(error_msg)
         raise ConfigError(error_msg)
 
-    def load(self) -> tuple[pd.DataFrame, SchemaMetadata]:
+    def load(self) -> tuple[pd.DataFrame, Schema]:
         """
         Load data from the specified file path.
 
@@ -363,7 +357,7 @@ class Loader:
 
         Returns:
             data (pd.DataFrame): Data been loaded
-            schema (SchemaMetadata): Schema metadata of the data
+            schema (Schema): Schema metadata of the data
         """
         self._logger.info(f"Loading data from {self.config.filepath}")
 
@@ -398,34 +392,21 @@ class Loader:
             self._logger.error(error_msg)
             raise BenchmarkDatasetsError(error_msg) from e
 
-    def _merge_legacy_to_schema(self) -> SchemaConfig:
+    def _merge_legacy_to_schema(self) -> Schema:
         """
-        Merge legacy column_types and na_values into SchemaConfig.
+        Merge legacy column_types and na_values into Schema.
 
         Returns:
-            SchemaConfig: Merged schema configuration
+            Schema: Merged schema configuration
         """
         # Start with existing schema or create a new one
         if self.config.schema:
-            # Use existing schema as base - avoid accessing internal structure
+            # Use existing schema as base
             self._logger.debug("Using existing schema configuration")
             return self.config.schema
         else:
-            # Create new schema_config with defaults
-            fields_config = {}
-            schema_config_params = {
-                "schema_id": self.config.file_name or "default_schema",
-                "name": self.config.base_name or "default_schema",
-                "description": None,
-                "fields": fields_config,
-                "compute_stats": True,
-                "infer_logical_types": False,
-                "optimize_dtypes": True,
-                "sample_size": None,
-                "leading_zeros": "never",
-                "nullable_int": "force",
-                "properties": {},
-            }
+            # Create new schema with attributes
+            attributes = {}
 
             # Merge legacy column_types
             if self.config.column_types:
@@ -434,21 +415,19 @@ class Loader:
                 )
                 for col_type, columns in self.config.column_types.items():
                     for col in columns:
-                        if col not in fields_config:
-                            fields_config[col] = FieldConfig()
-                        # Update the field config with the column type
-                        field_params = {
-                            "type": col_type,
-                            "na_values": fields_config[col].na_values,
-                            "precision": fields_config[col].precision,
-                            "category": fields_config[col].category,
-                            "category_method": fields_config[col].category_method,
-                            "datetime_precision": fields_config[col].datetime_precision,
-                            "datetime_format": fields_config[col].datetime_format,
-                            "logical_type": fields_config[col].logical_type,
-                            "leading_zeros": fields_config[col].leading_zeros,
+                        # 建立 Attribute 物件
+                        type_mapping = {
+                            "category": "category",
+                            "datetime": "datetime64",
                         }
-                        fields_config[col] = FieldConfig(**field_params)
+                        attributes[col] = Attribute(
+                            name=col,
+                            type=type_mapping.get(col_type, "string"),
+                            logical_type=col_type
+                            if col_type in ["category", "datetime"]
+                            else None,
+                            enable_null=True,
+                        )
 
             # Merge legacy na_values
             if self.config.na_values:
@@ -456,42 +435,34 @@ class Loader:
                 if isinstance(self.config.na_values, dict):
                     # Column-specific na_values
                     for col, na_val in self.config.na_values.items():
-                        if col not in fields_config:
-                            fields_config[col] = FieldConfig()
-                        # Update the field config with na_values
-                        field_params = {
-                            "type": fields_config[col].type,
-                            "na_values": na_val,
-                            "precision": fields_config[col].precision,
-                            "category": fields_config[col].category,
-                            "category_method": fields_config[col].category_method,
-                            "datetime_precision": fields_config[col].datetime_precision,
-                            "datetime_format": fields_config[col].datetime_format,
-                            "logical_type": fields_config[col].logical_type,
-                            "leading_zeros": fields_config[col].leading_zeros,
-                        }
-                        fields_config[col] = FieldConfig(**field_params)
-                else:
-                    # Global na_values - store in properties for now
-                    schema_config_params["properties"]["global_na_values"] = (
-                        self.config.na_values
-                    )
+                        if col not in attributes:
+                            attributes[col] = Attribute(
+                                name=col,
+                                type="string",
+                                enable_null=True,
+                            )
+                        # 更新 na_values
+                        attributes[col].na_values = (
+                            na_val if isinstance(na_val, list) else [na_val]
+                        )
 
-            # Update fields in schema_config_params
-            schema_config_params["fields"] = fields_config
+            # 建立 Schema 物件
+            merged_schema = Schema(
+                id=self.config.file_name or "default_schema",
+                name=self.config.base_name or "Default Schema",
+                description="Auto-generated schema from legacy parameters",
+                attributes=attributes,
+            )
 
-            merged_schema_config = SchemaConfig(**schema_config_params)
             self._logger.debug("Created merged schema config")
-            return merged_schema_config
+            return merged_schema
 
-    def _read_data_with_pandas_reader(
-        self, schema_config: SchemaConfig
-    ) -> pd.DataFrame:
+    def _read_data_with_pandas_reader(self, schema: Schema) -> pd.DataFrame:
         """
         Read data using the pandas loader classes.
 
         Args:
-            schema_config: Merged schema configuration
+            schema: Merged schema configuration
 
         Returns:
             pd.DataFrame: Loaded dataframe
@@ -536,20 +507,19 @@ class Loader:
                     dtype_dict[col] = str
 
         # Handle schema-based dtype configuration
-        if schema_config and hasattr(schema_config, "fields") and schema_config.fields:
-            for field_name, field_config in schema_config.fields.items():
-                if hasattr(field_config, "type") and field_config.type:
-                    field_type = field_config.type
+        if schema and schema.attributes:
+            for attr_name, attribute in schema.attributes.items():
+                if attribute.type:
                     # Map schema types to pandas dtypes
-                    if field_type == "str":
-                        dtype_dict[field_name] = str
-                    elif field_type == "int":
-                        # Use object type for int to handle NA values properly
-                        dtype_dict[field_name] = "Int64"
-                    elif field_type == "float":
-                        dtype_dict[field_name] = float
-                    elif field_type == "bool":
-                        dtype_dict[field_name] = "boolean"
+                    if attribute.type == "string":
+                        dtype_dict[attr_name] = str
+                    elif "int" in attribute.type:
+                        # Use nullable integer type for int to handle NA values properly
+                        dtype_dict[attr_name] = "Int64"
+                    elif "float" in attribute.type:
+                        dtype_dict[attr_name] = float
+                    elif attribute.type == "boolean":
+                        dtype_dict[attr_name] = "boolean"
                     # datetime will be handled post-loading
 
         # Only add dtype parameter if we have dtype specifications
@@ -558,19 +528,11 @@ class Loader:
             self._logger.debug(f"Using dtype configuration: {dtype_dict}")
 
         # Handle schema-based na_values (only if legacy na_values not provided)
-        if (
-            self.config.na_values is None
-            and schema_config
-            and hasattr(schema_config, "fields")
-            and schema_config.fields
-        ):
+        if self.config.na_values is None and schema and schema.attributes:
             na_values_dict = {}
-            for field_name, field_config in schema_config.fields.items():
-                if (
-                    hasattr(field_config, "na_values")
-                    and field_config.na_values is not None
-                ):
-                    na_values_dict[field_name] = field_config.na_values
+            for attr_name, attribute in schema.attributes.items():
+                if attribute.na_values:
+                    na_values_dict[attr_name] = attribute.na_values
             if na_values_dict:
                 config["na_values"] = na_values_dict
                 self._logger.debug(f"Using schema-based na_values: {na_values_dict}")
@@ -587,50 +549,40 @@ class Loader:
             self._logger.error(error_msg)
             raise UnableToFollowMetadataError(error_msg) from e
 
-    def _process_with_metadater(
-        self, data: pd.DataFrame, schema_config: SchemaConfig
-    ) -> SchemaMetadata:
+    def _process_with_metadater(self, data: pd.DataFrame, schema: Schema) -> Schema:
         """
         Process data and schema with metadater.
 
         Args:
             data: Loaded dataframe
-            schema_config: Merged schema configuration
+            schema: Merged schema configuration
 
         Returns:
-            SchemaMetadata: Schema metadata
+            Schema: Schema metadata
         """
         self._logger.info("Processing with metadater")
 
-        # Build schema metadata using Metadater with the SchemaConfig directly
+        # 如果沒有 schema，從資料建立
+        if schema is None or not schema.attributes:
+            try:
+                schema = SchemaMetadater.from_data(data)
+                # 現在可以直接修改屬性（已移除 frozen）
+                schema.id = self.config.file_name or "inferred_schema"
+                schema.name = self.config.base_name or "Inferred Schema"
+                self._logger.debug("Created schema from data")
+            except Exception as e:
+                error_msg = f"Failed to create schema from data: {str(e)}"
+                self._logger.error(error_msg)
+                raise UnableToFollowMetadataError(error_msg) from e
+
+        # 對齊資料與 schema
         try:
-            # Get schema_id safely without depending on internal structure
-            schema_id = getattr(schema_config, "schema_id", "default_schema")
-            schema_metadata: SchemaMetadata = Metadater.create_schema(
-                dataframe=data, schema_id=schema_id, config=schema_config
-            )
-            self._logger.debug("Built schema metadata successfully")
+            aligned_data = SchemaMetadater.align(schema, data)
+            # 更新原始 data 參考
+            data.update(aligned_data)
+            self._logger.debug("Data aligned with schema successfully")
         except Exception as e:
-            error_msg = f"Failed to build schema metadata: {str(e)}"
-            self._logger.error(error_msg)
-            raise UnableToFollowMetadataError(error_msg) from e
+            self._logger.warning(f"Failed to align data with schema: {str(e)}")
+            # 對齊失敗時繼續執行，但記錄警告
 
-        # Apply schema transformations
-        try:
-            from petsard.metadater.schema.schema_functions import (
-                apply_schema_transformations,
-            )
-
-            data = apply_schema_transformations(
-                data=data,
-                schema=schema_metadata,
-                include_fields=None,
-                exclude_fields=None,
-            )
-            self._logger.debug("Schema transformations applied successfully")
-        except Exception as e:
-            error_msg = f"Failed to apply schema transformations: {str(e)}"
-            self._logger.error(error_msg)
-            raise UnableToFollowMetadataError(error_msg) from e
-
-        return schema_metadata
+        return schema

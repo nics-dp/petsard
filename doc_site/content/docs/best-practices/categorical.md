@@ -69,7 +69,7 @@ Different encoding methods are suitable for different categorical variable chara
 >   - ⚠️ Moderate/Requires trade-off
 >   - ❌ Disadvantage/Not supported
 
-The academic community is still researching more universal and robust encoding strategies. Our team recommends initially using Uniform Encoding for all categorical variables as recommended by SDV [^1]. When encountering high cardinality categorical variables—fields with many unique values—current mainstream encoding methods all have certain limitations. We recommend complementing this approach with the [High-Cardinality attributes - Constraints](./high-cardinality) discussed in the next article.
+The academic community is still researching more universal and robust encoding strategies. Our team recommends initially using Uniform Encoding for all categorical variables as recommended by SDV [^1]. When encountering high cardinality categorical variables—fields with many unique values—current mainstream encoding methods all have certain limitations. We recommend complementing this approach with the [High-Cardinality attributes - Constraints]({{< ref "high-cardinality" >}}) discussed in the next article.
 
 ### Uniform Encoding
 

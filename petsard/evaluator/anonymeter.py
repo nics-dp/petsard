@@ -15,7 +15,7 @@ from anonymeter.evaluators import (
 from petsard.config_base import BaseConfig
 from petsard.evaluator.evaluator_base import BaseEvaluator
 from petsard.exceptions import ConfigError, UnsupportedMethodError
-from petsard.metadater.types.data_types import safe_round
+from petsard.utils import safe_round
 
 
 class AnonymeterMap(Enum):
@@ -107,10 +107,10 @@ class AnonymeterConfig(BaseConfig):
 
         try:
             self.eval_method_code = AnonymeterMap.map(self.eval_method)
-        except KeyError:
+        except KeyError as e:
             error_msg = f"Unsupported evaluator method: {self.eval_method}"
             self._logger.error(error_msg)
-            raise UnsupportedMethodError(error_msg)
+            raise UnsupportedMethodError(error_msg) from e
 
         if self.n_attacks <= 0:
             error_msg = "The number of attacks must be greater than 0."

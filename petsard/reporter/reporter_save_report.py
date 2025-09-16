@@ -185,8 +185,8 @@ class ReporterSaveReport(BaseReporter):
                 if code not in supported_granularities:
                     raise ConfigError
                 granularity_codes.append(code)
-            except:
-                raise ConfigError
+            except Exception as e:
+                raise ConfigError("Failed to process granularity code") from e
 
         self.config["granularity_list"] = granularity_list
         self.config["granularity_codes"] = granularity_codes

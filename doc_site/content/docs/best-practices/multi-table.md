@@ -14,7 +14,7 @@ A policy-based financial institution possesses rich enterprise financing-related
 
 - **Complex Table Structure**: Original data is distributed across multiple business systems' tables, involving company basic data, application records, financial tracking, and other different aspects
 - **Time-Series Data**: Contains multiple key time points (such as application date, approval date, tracking time, etc.), and there are logical sequential relationships between these time points
-  - Processing method see [Multi-timestamp Data - Time Anchoring](docs/best-practices/multi-timestamp)
+  - Processing method see [Multi-timestamp Data - Time Anchoring]({{< ref "multi-timestamp" >}})
 
 ## Data Table Relationships and Business Context
 

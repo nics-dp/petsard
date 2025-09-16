@@ -37,8 +37,6 @@ dist/
 # 套件管理 Package management
 ## Poetry
 **/poetry.lock
-## uv
-**/uv.lock
 
 # 測試相關 Testing related
 .pytest_cache/

@@ -8,7 +8,7 @@ next: docs/tutorial
 
 ## 安裝
 
-PETsARD 已發布至 PyPI，可根據您的需求選擇不同的依賴群組進行安裝。您也可以使用 `pyproject.toml` 或 `requirements.txt` 從原始碼安裝。
+PETsARD 已發布至 PyPI，可根據您的需求選擇不同的依賴群組進行安裝。您也可以使用 `pyproject.toml` 從原始碼安裝。
 
 ### PyPI 安裝（推薦）
 
@@ -44,11 +44,12 @@ pip install petsard[dev]
 git clone https://github.com/nics-tw/petsard.git
 cd petsard
 
-# 使用 pyproject.toml 安裝
+# 使用 pyproject.toml 安裝（推薦）
 pip install -e ".[all]"
 
-# 或使用 requirements.txt 安裝（基於預設安裝）
-pip install -r requirements.txt
+# 或安裝特定依賴群組
+pip install -e ".[ds]"    # 資料科學功能
+pip install -e ".[dev]"   # 開發工具
 ```
 
 **開發推薦工具：**

@@ -189,8 +189,7 @@ docker run -it --rm \
 ├── petsard/          # PETsARD package source code
 ├── demo/             # Example files
 ├── templates/        # Template files
-├── pyproject.toml    # Project configuration
-├── requirements.txt  # Dependencies list
+├── pyproject.toml    # Project configuration and dependencies
 └── README.md         # Documentation
 ```
 
@@ -227,9 +226,3 @@ from petsard.executor import Executor
 print('✅ Executor available')
 "
 ```
-
-## Next Steps
-
-- Learn about [YAML Configuration](../yaml-config) for experiment setup
-- Explore [Default Synthesis](../default-synthesis) examples
-- Check [Use Cases](../use-cases) for practical applications
