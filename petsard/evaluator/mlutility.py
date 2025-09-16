@@ -660,7 +660,10 @@ class MLUtility(BaseEvaluator):
             index=[0],
         )
 
-        compare_df["diff"] = safe_round(compare_df["syn_mean"] - compare_df["ori_mean"])
+        # Extract scalar values from Series before passing to safe_round
+        compare_df["diff"] = safe_round(
+            compare_df["syn_mean"].iloc[0] - compare_df["ori_mean"].iloc[0]
+        )
 
         return compare_df
 
