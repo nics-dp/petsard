@@ -181,13 +181,24 @@ class SDVSingleTableSynthesizer(BaseSynthesizer):
             self._logger.error(error_msg)
             raise UnsupportedMethodError(error_msg) from None
 
+        # Prepare initialization parameters
+        init_params = {
+            "metadata": metadata,
+            "enforce_rounding": True,  # Apply to all synthesizer types
+        }
+
+        # Add enforce_min_max_values only for TVAE and GaussianCopula
+        if method_code in [SDVSingleTableMap.TVAE, SDVSingleTableMap.GAUSSIANCOPULA]:
+            init_params["enforce_min_max_values"] = True
+            self._logger.debug(
+                f"Adding enforce_min_max_values=True for {synthesizer_class.__name__}"
+            )
+
         # catch warnings during synthesizer initialization:
         # "We strongly recommend saving the metadata using 'save_to_json' for replicability in future SDV versions."
         with warnings.catch_warnings(record=True) as w:
             warnings.simplefilter("always")
-            synthesizer: BaseSingleTableSynthesizer = synthesizer_class(
-                metadata=metadata
-            )
+            synthesizer: BaseSingleTableSynthesizer = synthesizer_class(**init_params)
 
             for warning in w:
                 self._logger.debug(f"Warning during fit: {warning.message}")

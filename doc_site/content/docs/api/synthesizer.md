@@ -27,6 +27,15 @@ Synthetic data generator supporting multiple synthesis methods.
     - gaussiancopula: Gaussian Copula model
     - tvae: TVAE generative model
 
+## Default Parameters
+
+All SDV synthesizers are initialized with the following default parameters to ensure numerical precision:
+
+- **`enforce_rounding=True`**: Applied to all SDV synthesizer types to maintain integer precision for numerical columns
+- **`enforce_min_max_values=True`**: Applied only to TVAE and GaussianCopula synthesizers to enforce value bounds
+
+These parameters help preserve the data type integrity and value ranges of the original data in the synthesized output.
+
 ## Examples
 
 ```python
