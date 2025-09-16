@@ -1,5 +1,3 @@
-from typing import List
-
 import pandas as pd
 
 from petsard.exceptions import ConfigError
@@ -33,7 +31,7 @@ class FieldCombinationConstrainer:
     ]
     """
 
-    def __init__(self, constraints: List[tuple]):
+    def __init__(self, constraints: list[tuple]):
         """
         Initialize the constrainer with given constraints
 
@@ -198,7 +196,7 @@ class FieldCombinationConstrainer:
 
                 # 找到匹配源值的行
                 source_mask = pd.Series(True, index=result.index)
-                for field, value in zip(source_fields, source_values):
+                for field, value in zip(source_fields, source_values, strict=False):
                     if self._is_na_value(value):
                         field_match = result[field].isna()
                     else:

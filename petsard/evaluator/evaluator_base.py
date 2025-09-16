@@ -42,7 +42,7 @@ class EvaluationScoreGranularityMap(Enum):
             # Fallback for backward compatibility
             if hasattr(cls, granularity.upper()):
                 return getattr(cls, granularity.upper()).value
-            raise KeyError(f"Unknown granularity: {granularity}")
+            raise KeyError(f"Unknown granularity: {granularity}") from None
 
 
 @dataclass
@@ -179,7 +179,7 @@ class EvaluatorInputConfig(BaseConfig):
                     f"dtypes count ({len(reference_data.dtypes)}). {str(e)}"
                 )
                 self._logger.error(error_msg)
-                raise ConfigError(error_msg)
+                raise ConfigError(error_msg) from e
 
             for other_key in other_keys:
                 other_data = getattr(self, other_key)
@@ -198,7 +198,7 @@ class EvaluatorInputConfig(BaseConfig):
                         f"dtypes count ({len(other_data.dtypes)}). {str(e)}"
                     )
                     self._logger.error(error_msg)
-                    raise ConfigError(error_msg)
+                    raise ConfigError(error_msg) from e
 
                 mismatched_columns = []
                 for col in reference_columns:
