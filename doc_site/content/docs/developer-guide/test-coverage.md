@@ -432,6 +432,87 @@ Enhanced outlier detection with pandas nullable integer array compatibility:
 
 ### `Metadater`
 
+> tests/metadater/test_metadater.py
+
+Tests for the complete Metadater three-layer architecture functionality (700+ lines of tests):
+
+#### Three-Layer Architecture Tests
+
+**Metadata Layer Tests:**
+- `test_metadata_from_data`: Test creating Metadata from data
+- `test_metadata_from_metadata`: Test creating Metadata from configuration
+- `test_metadata_get`: Test getting Schema objects
+- `test_metadata_add`: Test adding Schema
+- `test_metadata_update`: Test updating Schema
+- `test_metadata_remove`: Test removing Schema
+- `test_metadata_diff`: Test Metadata-level difference comparison
+- `test_metadata_align`: Test Metadata-level data alignment
+
+**Schema Layer Tests:**
+- `test_schema_from_data`: Test creating Schema from DataFrame
+- `test_schema_from_metadata`: Test creating Schema from configuration
+- `test_schema_get`: Test getting Attribute objects
+- `test_schema_add`: Test adding Attribute
+- `test_schema_update`: Test updating Attribute
+- `test_schema_remove`: Test removing Attribute
+- `test_schema_diff`: Test Schema-level difference comparison
+- `test_schema_align`: Test Schema-level data alignment
+
+**Attribute Layer Tests:**
+- `test_attribute_from_data`: Test creating Attribute from Series
+- `test_attribute_from_metadata`: Test creating Attribute from configuration
+- `test_attribute_diff`: Test Attribute-level difference comparison
+- `test_attribute_align`: Test Attribute-level data alignment
+
+#### Statistics Functionality Tests
+
+- `test_metadater_with_stats`: Test Metadater functionality with statistics enabled
+- `test_schema_metadater_with_stats`: Test Schema-level statistics calculation
+- `test_attribute_metadater_with_stats`: Test Attribute-level statistics calculation
+- `test_stats_calculation_accuracy`: Test statistics calculation accuracy:
+  - Mean, median, standard deviation
+  - Unique value count, null count
+  - Min, max, quartiles
+
+#### YAML Compatibility Tests
+
+- `test_yaml_fields_compatibility`: Test mapping of 'fields' in YAML to internal 'attributes'
+- `test_schema_to_dict_with_fields`: Test Schema output as dictionary uses 'fields' key name
+- `test_metadater_yaml_roundtrip`: Test complete YAML configuration roundtrip:
+  - Load from YAML
+  - Process and modify
+  - Output back to YAML format
+
+#### Advanced Functionality Tests
+
+- `test_multi_table_operations`: Test multi-table operations:
+  - Process multiple tables simultaneously
+  - Cross-table difference comparison
+  - Batch alignment operations
+- `test_nested_diff_operations`: Test nested difference operations:
+  - Metadata level calls Schema.diff()
+  - Schema level calls Attribute.diff()
+  - Hierarchical difference result labeling
+- `test_strategy_based_align`: Test strategy-based alignment:
+  - Automatic diff mode
+  - Specified strategy mode
+  - Custom alignment rules
+
+#### Edge Case Tests
+
+- `test_empty_data_handling`: Test empty data handling
+- `test_missing_table_handling`: Test missing table handling
+- `test_invalid_configuration`: Test invalid configuration error handling
+- `test_type_mismatch_handling`: Test type mismatch handling
+
+#### Performance Tests
+
+- `test_large_dataset_performance`: Test large dataset performance
+- `test_memory_efficiency`: Test memory usage efficiency
+- `test_concurrent_operations`: Test concurrent operation safety
+
+> **Architecture Refactoring Note**: Metadater tests have been completely refactored, consolidating the original test_metadater_v2.py and test_metadater_functional.py into a single comprehensive test suite. The new tests cover the three-layer architecture (Metadata → Schema → Attribute) with all functionality including statistics calculation, difference comparison, data alignment, and YAML compatibility.
+
 #### Field Functions
 
 > tests/metadater/field/test_field_functions.py
