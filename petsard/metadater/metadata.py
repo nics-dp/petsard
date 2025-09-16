@@ -7,7 +7,7 @@ from typing import Any
 from petsard.metadater.stats import DatasetsStats, FieldStats, TableStats
 
 
-@dataclass(frozen=True)
+@dataclass
 class Attribute:
     """單欄設定檔 Single column configuration (pure data, no methods)"""
 
@@ -42,7 +42,7 @@ class Attribute:
     updated_at: datetime = field(default_factory=datetime.now)
 
 
-@dataclass(frozen=True)
+@dataclass
 class Schema:
     """單表設定檔 Single table configuration (pure data, no methods)"""
 
@@ -77,7 +77,7 @@ class Schema:
     updated_at: datetime = field(default_factory=datetime.now)
 
 
-@dataclass(frozen=True)
+@dataclass
 class Metadata:
     """多表設定檔 Multiple tables configuration (pure data, no methods)"""
 

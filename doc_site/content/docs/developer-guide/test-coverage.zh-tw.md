@@ -434,6 +434,87 @@ python -c "from tests.loader.test_loader import run_stress_demo; run_stress_demo
 
 ### `Metadater`
 
+> tests/metadater/test_metadater.py
+
+測試 Metadater 三層架構的完整功能（700+ 行測試）：
+
+#### 三層架構測試
+
+**Metadata 層測試：**
+- `test_metadata_from_data`：測試從資料建立 Metadata
+- `test_metadata_from_metadata`：測試從配置建立 Metadata
+- `test_metadata_get`：測試取得 Schema 物件
+- `test_metadata_add`：測試新增 Schema
+- `test_metadata_update`：測試更新 Schema
+- `test_metadata_remove`：測試移除 Schema
+- `test_metadata_diff`：測試 Metadata 層級差異比較
+- `test_metadata_align`：測試 Metadata 層級資料對齊
+
+**Schema 層測試：**
+- `test_schema_from_data`：測試從 DataFrame 建立 Schema
+- `test_schema_from_metadata`：測試從配置建立 Schema
+- `test_schema_get`：測試取得 Attribute 物件
+- `test_schema_add`：測試新增 Attribute
+- `test_schema_update`：測試更新 Attribute
+- `test_schema_remove`：測試移除 Attribute
+- `test_schema_diff`：測試 Schema 層級差異比較
+- `test_schema_align`：測試 Schema 層級資料對齊
+
+**Attribute 層測試：**
+- `test_attribute_from_data`：測試從 Series 建立 Attribute
+- `test_attribute_from_metadata`：測試從配置建立 Attribute
+- `test_attribute_diff`：測試 Attribute 層級差異比較
+- `test_attribute_align`：測試 Attribute 層級資料對齊
+
+#### 統計功能測試
+
+- `test_metadater_with_stats`：測試啟用統計的 Metadater 功能
+- `test_schema_metadater_with_stats`：測試 Schema 層級統計計算
+- `test_attribute_metadater_with_stats`：測試 Attribute 層級統計計算
+- `test_stats_calculation_accuracy`：測試統計計算準確性：
+  - 均值、中位數、標準差
+  - 唯一值計數、空值計數
+  - 最小值、最大值、四分位數
+
+#### YAML 相容性測試
+
+- `test_yaml_fields_compatibility`：測試 YAML 中 'fields' 到內部 'attributes' 的對應
+- `test_schema_to_dict_with_fields`：測試 Schema 輸出為字典時使用 'fields' 鍵名
+- `test_metadater_yaml_roundtrip`：測試 YAML 配置的完整往返：
+  - 從 YAML 載入
+  - 處理和修改
+  - 輸出回 YAML 格式
+
+#### 進階功能測試
+
+- `test_multi_table_operations`：測試多表格操作：
+  - 同時處理多個表格
+  - 跨表格的差異比較
+  - 批次對齊操作
+- `test_nested_diff_operations`：測試嵌套差異操作：
+  - Metadata 層級調用 Schema.diff()
+  - Schema 層級調用 Attribute.diff()
+  - 差異結果的層級標示
+- `test_strategy_based_align`：測試策略導向的對齊：
+  - 自動 diff 模式
+  - 指定策略模式
+  - 自定義對齊規則
+
+#### 邊界情況測試
+
+- `test_empty_data_handling`：測試空資料處理
+- `test_missing_table_handling`：測試缺失表格處理
+- `test_invalid_configuration`：測試無效配置的錯誤處理
+- `test_type_mismatch_handling`：測試型別不匹配處理
+
+#### 效能測試
+
+- `test_large_dataset_performance`：測試大型資料集效能
+- `test_memory_efficiency`：測試記憶體使用效率
+- `test_concurrent_operations`：測試並行操作安全性
+
+> **架構重構說明**：Metadater 測試已完全重構，整合了原有的 test_metadater_v2.py 和 test_metadater_functional.py，形成單一全面的測試套件。新測試涵蓋三層架構（Metadata → Schema → Attribute）的所有功能，包含統計計算、差異比較、資料對齊、YAML 相容性等完整功能。
+
 #### 欄位函數
 
 > tests/metadater/field/test_field_functions.py
