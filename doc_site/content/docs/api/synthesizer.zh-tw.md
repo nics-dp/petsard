@@ -27,6 +27,15 @@ Synthesizer(
     - gaussiancopula：高斯耦合模型
     - tvae：TVAE 生成模型
 
+## 預設參數
+
+所有 SDV 合成器都會使用以下預設參數進行初始化，以確保數值精度：
+
+- **`enforce_rounding=True`**：套用至所有 SDV 合成器類型，維持數值欄位的整數精度
+- **`enforce_min_max_values=True`**：僅套用於 TVAE 和 GaussianCopula 合成器，用於強制數值範圍限制
+
+這些參數有助於在合成輸出中保持原始資料的資料型別完整性和數值範圍。
+
 ## 範例
 
 ```python
