@@ -1,6 +1,8 @@
 ---
 title: "實驗性新格式"
 weight: 100
+prev: docs/developer-guide
+next: docs/glossary
 ---
 
 {{< callout type="warning" >}}

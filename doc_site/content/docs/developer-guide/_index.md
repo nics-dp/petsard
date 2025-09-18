@@ -3,7 +3,7 @@ title: Developer Guide
 type: docs
 weight: 80
 prev: docs/api
-next: docs
+next: docs/experimental-new-format
 sidebar:
   open: false
 ---
