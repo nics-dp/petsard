@@ -67,7 +67,7 @@ jobs:
       # 安裝 uv 工具
       # Install uv tool
       - name: Setup | Install uv
-        uses: astral-sh/setup-uv@v4
+        uses: astral-sh/setup-uv@v6
         with:
           enable-cache: false
 
