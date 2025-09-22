@@ -1,0 +1,106 @@
+classDiagram
+    class Loader {
+        <<main>>
+        +__init__(filepath: str, **kwargs)
+        +load() tuple[DataFrame, SchemaMetadata]
+        +config: LoaderConfig
+    }
+
+    class BaseLoader {
+        <<abstract>>
+        +load() tuple[DataFrame, SchemaMetadata]
+        #_read_file() DataFrame
+        #_infer_schema() SchemaMetadata
+    }
+
+    class CSVLoader {
+        <<subclass>>
+        +load() tuple[DataFrame, SchemaMetadata]
+        -_read_csv() DataFrame
+        -_handle_headers() DataFrame
+    }
+
+    class ExcelLoader {
+        <<subclass>>
+        +load() tuple[DataFrame, SchemaMetadata]
+        -_read_excel() DataFrame
+        -_select_sheet() DataFrame
+    }
+
+    class ParquetLoader {
+        <<subclass>>
+        +load() tuple[DataFrame, SchemaMetadata]
+        -_read_parquet() DataFrame
+    }
+
+    class BenchmarkLoader {
+        <<subclass>>
+        +load() tuple[DataFrame, SchemaMetadata]
+        -_download_data() DataFrame
+        -_get_metadata() SchemaMetadata
+    }
+
+    class DefaultLoader {
+        <<subclass>>
+        +load() tuple[DataFrame, SchemaMetadata]
+        -_load_adult_income() DataFrame
+    }
+
+    class LoaderConfig {
+        <<dataclass>>
+        +filepath: str
+        +method: str
+        +schema: SchemaConfig | None
+        +schema_path: str | None
+        +file_name: str
+        +file_ext: str
+        +header_names: list | None
+    }
+
+    class SchemaMetadata {
+        <<dataclass>>
+        +column_types: dict
+        +primary_key: str | None
+        +relationships: list
+        +constraints: dict
+    }
+
+    class SchemaConfig {
+        <<dataclass>>
+        +columns: dict
+        +primary_key: str | None
+        +relationships: list
+        +constraints: dict
+    }
+
+    %% 繼承關係
+    BaseLoader <|-- CSVLoader : extends
+    BaseLoader <|-- ExcelLoader : extends
+    BaseLoader <|-- ParquetLoader : extends
+    BaseLoader <|-- BenchmarkLoader : extends
+    BaseLoader <|-- DefaultLoader : extends
+    
+    %% 組合關係
+    Loader *-- LoaderConfig : contains
+    Loader *-- BaseLoader : uses
+    Loader *-- SchemaMetadata : returns
+    LoaderConfig *-- SchemaConfig : contains
+
+    %% 依賴關係
+    Loader ..> CSVLoader : creates
+    Loader ..> ExcelLoader : creates
+    Loader ..> ParquetLoader : creates
+    Loader ..> BenchmarkLoader : creates
+    Loader ..> DefaultLoader : creates
+
+    %% 樣式標示
+    style Loader fill:#e6f3ff,stroke:#4a90e2,stroke-width:3px
+    style BaseLoader fill:#f0f8ff,stroke:#6495ed,stroke-width:2px
+    style CSVLoader fill:#fff2e6,stroke:#ff9800,stroke-width:2px
+    style ExcelLoader fill:#fff2e6,stroke:#ff9800,stroke-width:2px
+    style ParquetLoader fill:#fff2e6,stroke:#ff9800,stroke-width:2px
+    style BenchmarkLoader fill:#fff2e6,stroke:#ff9800,stroke-width:2px
+    style DefaultLoader fill:#fff2e6,stroke:#ff9800,stroke-width:2px
+    style LoaderConfig fill:#f0f8ff,stroke:#6495ed,stroke-width:2px
+    style SchemaMetadata fill:#f0f8ff,stroke:#6495ed,stroke-width:2px
+    style SchemaConfig fill:#f0f8ff,stroke:#6495ed,stroke-width:2px
