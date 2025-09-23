@@ -1,6 +1,6 @@
 ---
 title: "Loader YAML"
-weight: 210
+weight: 110
 ---
 
 Loader 模組的 YAML 設定檔案格式。

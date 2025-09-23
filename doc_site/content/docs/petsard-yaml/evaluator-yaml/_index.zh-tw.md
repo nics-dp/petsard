@@ -1,6 +1,6 @@
 ---
 title: "Evaluator YAML"
-weight: 240
+weight: 140
 ---
 
 Evaluator 模組的 YAML 設定檔案格式。

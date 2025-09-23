@@ -1,6 +1,6 @@
 ---
 title: "Schema YAML"
-weight: 220
+weight: 200
 ---
 
 資料結構定義的 YAML 設定格式。
