@@ -50,11 +50,10 @@ Abstract base class defining the standard interface for all adapters.
 LoaderAdapter(config)
 ```
 
-Wraps the Loader module for data loading operations.
+Wraps the Loader module for data loading operations. The adapter automatically detects and handles the `benchmark://` protocol, downloading benchmark datasets through the Benchmarker when needed.
 
 **Configuration Parameters**
 - `filepath` (str): Path to the data file or benchmark URL (e.g., 'benchmark://adult-income')
-- `method` (str, optional): Loading method ('default' for benchmark data)
 - `column_types` (dict, optional): **DEPRECATED** - Column type specifications (use schema instead)
 - `header_names` (list, optional): Custom header names for files without headers
 - `na_values` (str/list/dict, optional): **DEPRECATED** - Custom NA value definitions (use schema instead)
@@ -62,6 +61,14 @@ Wraps the Loader module for data loading operations.
   - Schema object: Direct schema configuration
   - dict: Dictionary that will be converted to Schema
   - str: Path to YAML file containing schema configuration
+
+**Special Handling for benchmark:// Protocol**
+
+When the filepath starts with 'benchmark://', LoaderAdapter:
+1. Automatically creates a BenchmarkerConfig for the specified dataset
+2. Downloads the dataset using the Benchmarker module if not already cached
+3. Loads the data from the downloaded location
+4. Protocol matching is case-insensitive ('benchmark://' or 'Benchmark://' both work)
 
 **Key Methods**
 - `get_result()`: Returns loaded DataFrame

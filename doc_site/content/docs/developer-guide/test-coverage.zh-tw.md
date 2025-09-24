@@ -616,6 +616,111 @@ python -c "from tests.loader.test_loader import run_stress_demo; run_stress_demo
   - 布林型態
   - 無效型態
 
+### `Adapter Layer`
+
+> tests/test_adapter.py
+
+測試所有 Adapter 層級功能，包含各種操作器的適配器實作：
+
+#### BaseAdapter 測試
+
+**基礎類別測試（6 個測試）：**
+- `test_init_with_valid_config`：測試使用有效配置初始化
+- `test_init_with_none_config`：測試使用 None 配置時拋出 ConfigError
+- `test_run_template_method`：測試 run 模板方法的計時記錄功能
+- `test_log_and_raise_config_error_decorator`：測試配置錯誤裝飾器
+- `test_not_implemented_methods`：測試未實作方法拋出 NotImplementedError
+- `test_run_with_error_timing`：測試錯誤情況下的計時記錄
+
+#### LoaderAdapter 測試
+
+**基本功能測試（5 個測試）：**
+- `test_init_regular_file`：測試一般檔案初始化
+- `test_run_regular_file`：測試一般檔案執行
+- `test_set_input`：測試輸入設定
+- `test_get_result`：測試結果取得
+- `test_get_metadata`：測試元資料取得
+
+**Benchmark 協議處理測試（4 個測試）：**
+- `test_init_benchmark_protocol`：測試 benchmark:// 協議初始化：
+  - 驗證 `is_benchmark` 屬性正確設置為 True
+  - 確認 `benchmarker_config` 正確建立
+  - 測試檔案路徑從 benchmark:// 格式轉換
+- `test_run_benchmark_protocol`：測試 benchmark:// 協議執行（包含下載）：
+  - 模擬 BenchmarkerRequests 的下載行為
+  - 驗證檔案路徑正確轉換為本地路徑
+  - 確認 Loader 接收正確的本地檔案路徑
+- `test_benchmark_download_failure`：測試 benchmark 下載失敗處理
+- `test_benchmark_protocol_case_insensitive`：測試協議大小寫不敏感
+
+#### SplitterAdapter 測試
+
+**功能測試（6 個測試）：**
+- `test_init`：測試初始化
+- `test_run`：測試執行分割操作
+- `test_set_input_with_data`：測試有資料的輸入設定
+- `test_get_result`：測試結果取得
+- `test_get_metadata`：測試元資料取得（新字典格式）
+- `test_get_train_indices`：測試訓練索引取得
+
+#### PreprocessorAdapter 測試
+
+**功能測試（7 個測試）：**
+- `test_init_default_method`：測試預設方法初始化
+- `test_init_custom_method`：測試自定義方法初始化（含序列參數）
+- `test_run_default_sequence`：測試預設序列執行
+- `test_run_custom_sequence`：測試自定義序列執行
+- `test_set_input_from_splitter`：測試從 Splitter 設定輸入
+- `test_set_input_from_loader`：測試從 Loader 設定輸入
+- `test_get_result`：測試結果取得
+- `test_get_metadata`：測試元資料取得
+
+#### SynthesizerAdapter 測試
+
+**功能測試（5 個測試）：**
+- `test_init`：測試初始化
+- `test_run`：測試執行合成操作
+- `test_set_input_with_metadata`：測試有元資料的輸入設定
+- `test_set_input_without_metadata`：測試無元資料的輸入設定
+- `test_get_result`：測試結果取得
+
+#### ConstrainerAdapter 測試
+
+**功能測試（5 個測試）：**
+- `test_init_basic`：測試基本初始化
+- `test_init_with_sampling_params`：測試包含採樣參數的初始化
+- `test_transform_field_combinations`：測試欄位組合轉換為 tuple
+- `test_run_simple_apply`：測試簡單約束應用
+- `test_run_resample_until_satisfy`：測試重採樣直到滿足約束
+
+#### EvaluatorAdapter 測試
+
+**功能測試（4 個測試）：**
+- `test_init`：測試初始化
+- `test_run`：測試執行評估操作
+- `test_set_input_with_splitter`：測試有 Splitter 的輸入設定
+- `test_set_input_without_splitter`：測試無 Splitter 的輸入設定
+
+#### ReporterAdapter 測試
+
+**功能測試（7 個測試）：**
+- `test_init`：測試初始化
+- `test_run_save_report`：測試儲存報告執行
+- `test_run_save_data`：測試儲存資料執行
+- `test_set_input`：測試輸入設定
+- `test_run_save_report_multi_granularity`：測試多 granularity 儲存報告
+- `test_run_save_report_new_granularity_types`：測試新的 granularity 類型（details, tree）
+- `test_run_save_report_backward_compatibility`：測試向後相容性（舊格式結果）
+- `test_run_save_timing`：測試儲存時間執行
+
+> **架構說明**：Adapter Layer 提供了所有 PETsARD 模組與 Executor 之間的橋樑。每個 Adapter 類別：
+> - 繼承自 BaseAdapter，提供標準化的執行模板和錯誤處理
+> - 實作 `_run()` 方法處理具體業務邏輯
+> - 透過 `set_input()` 和 `get_result()` 方法管理資料流
+> - 支援計時記錄和日誌記錄功能
+>
+> LoaderAdapter 特別實現了 benchmark:// 協議處理，實現 Loader 與 Benchmarker 的解耦。
+
 ### `Splitter`
 
 > tests/loader/test_splitter.py
@@ -626,16 +731,12 @@ python -c "from tests.loader.test_loader import run_stress_demo; run_stress_demo
 
 - `test_splitter_init_normal`：測試正常初始化，包含預設參數設定
 - `test_splitter_init_invalid_ratio`：測試無效分割比例的處理
-- ~~`test_splitter_init_custom_data_valid`~~：**已跳過** - custom_data 功能已移至 SplitterAdapter
-- ~~`test_splitter_init_custom_data_invalid_method`~~：**已跳過** - custom_data 功能已移至 SplitterAdapter
-- ~~`test_splitter_init_custom_data_invalid_filepath`~~：**已跳過** - custom_data 功能已移至 SplitterAdapter
 
 #### 分割方法測試
 
 - `test_split_normal_method`：測試正常分割方法，驗證返回格式為三元組
 - `test_split_normal_method_no_data`：測試無資料情況下的分割
 - `test_split_multiple_samples`：測試多重樣本分割，驗證每個樣本的獨立性
-- ~~`test_split_custom_data_method`~~：**已跳過** - custom_data 功能已移至 SplitterAdapter
 - `test_split_basic_functionality`：測試基本分割功能和資料完整性
 
 #### 重疊控制功能測試
@@ -673,9 +774,7 @@ python -c "from tests.loader.test_loader import run_stress_demo; run_stress_demo
   - `max_overlap_ratio` 範圍檢查
   - `max_attempts` 正整數檢查
 
-> **架構重構說明**：
-> - 2025/6/18：所有外部模組（Loader、Processor、Splitter、Benchmarker）已不再直接導入 Metadater 的內部 API（`metadater.api`、`metadater.core`、`metadater.types`），改為使用 Metadater 類別的公共方法。相關測試的 mock 路徑也已相應更新，確保架構的封裝性和一致性。
-> - 2025/9：custom_data 功能從 Splitter 和 Synthesizer 移至對應的 Adapter 類別，改善權責分離。相關測試已標記為跳過（`@pytest.mark.skip`），因為此功能現在由 SplitterAdapter 和 SynthesizerAdapter 處理。
+> **架構重構說明**：2025/6/18 - 所有外部模組（Loader、Processor、Splitter、Benchmarker）已不再直接導入 Metadater 的內部 API（`metadater.api`、`metadater.core`、`metadater.types`），改為使用 Metadater 類別的公共方法。相關測試的 mock 路徑也已相應更新，確保架構的封裝性和一致性。
 
 ## 資料合成
 
