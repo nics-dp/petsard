@@ -172,6 +172,9 @@ class LoaderAdapter(BaseAdapter):
         """
         super().__init__(config)
 
+        # Copy config once at the beginning to avoid modifying the original
+        config = config.copy()
+
         # Check if filepath uses benchmark:// protocol
         filepath = config.get("filepath", "")
         self.is_benchmark = filepath.lower().startswith("benchmark://")
@@ -199,13 +202,11 @@ class LoaderAdapter(BaseAdapter):
             local_filepath = Path("benchmark").joinpath(
                 self.benchmarker_config.benchmark_filename
             )
-            config = config.copy()
             config["filepath"] = str(local_filepath)
 
             self._logger.debug(f"Updated filepath to local path: {local_filepath}")
 
         # Remove method parameter if exists, as Loader no longer accepts it
-        config = config.copy()
         config.pop("method", None)
 
         # Create Loader instance with possibly updated config
