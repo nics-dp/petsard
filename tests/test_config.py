@@ -10,7 +10,7 @@ from petsard.adapter import BaseAdapter
 from petsard.config import Config
 from petsard.config_base import BaseConfig, ConfigGetParamActionMap
 from petsard.exceptions import ConfigError, UnexecutedError
-from petsard.metadater import SchemaMetadata
+from petsard.metadater.metadata import Schema
 from petsard.status import Status
 
 
@@ -76,20 +76,23 @@ class TestConfig:
             assert expt_config["num_samples"] == 1
 
     def test_set_flow(self):
-        """測試流程設定"""
+        """測試流程設定
+        Test flow setup"""
         config_dict = {
-            "Loader": {"load_data": {"method": "default"}},
+            "Loader": {"load_data": {"filepath": "test.csv"}},
             "Synthesizer": {"synth_data": {"method": "sdv"}},
         }
 
         config = Config(config_dict)
 
         # 檢查佇列大小
+        # Check queue sizes
         assert config.config.qsize() == 2
         assert config.module_flow.qsize() == 2
         assert config.expt_flow.qsize() == 2
 
         # 檢查佇列內容順序
+        # Check queue content order
         modules = []
         expts = []
         while not config.module_flow.empty():
@@ -128,8 +131,8 @@ class TestStatus:
         mock_operator = Mock(spec=BaseAdapter)
         mock_operator.get_result.return_value = pd.DataFrame({"A": [1, 2, 3]})
 
-        # 建立模擬 SchemaMetadata
-        mock_metadata = Mock(spec=SchemaMetadata)
+        # 建立模擬 Schema
+        mock_metadata = Mock(spec=Schema)
         mock_metadata.schema_id = "test_schema"
         mock_operator.get_metadata.return_value = mock_metadata
 
@@ -147,7 +150,7 @@ class TestStatus:
 
     def test_metadata_management(self):
         """測試元資料管理"""
-        mock_metadata = Mock(spec=SchemaMetadata)
+        mock_metadata = Mock(spec=Schema)
 
         # 設定元資料
         self.status.set_metadata("Loader", mock_metadata)

@@ -8,7 +8,7 @@ import pandas as pd
 
 from petsard.adapter import BaseAdapter
 from petsard.config import Config
-from petsard.metadater import SchemaMetadata
+from petsard.metadater.metadata import Schema
 from petsard.status import Status
 
 
@@ -30,8 +30,8 @@ class TestStatusSnapshots:
         mock_operator = Mock(spec=BaseAdapter)
         mock_operator.get_result.return_value = pd.DataFrame({"A": [1, 2, 3]})
 
-        # 建立模擬 SchemaMetadata
-        mock_metadata = Mock(spec=SchemaMetadata)
+        # 建立模擬 Schema
+        mock_metadata = Mock(spec=Schema)
         mock_metadata.schema_id = "test_schema"
         mock_operator.get_metadata.return_value = mock_metadata
 
@@ -53,8 +53,8 @@ class TestStatusSnapshots:
         mock_operator = Mock(spec=BaseAdapter)
         mock_operator.get_result.return_value = pd.DataFrame({"A": [1, 2, 3]})
 
-        # 建立模擬 SchemaMetadata
-        mock_metadata = Mock(spec=SchemaMetadata)
+        # 建立模擬 Schema
+        mock_metadata = Mock(spec=Schema)
         mock_metadata.schema_id = "test_schema"
         mock_operator.get_metadata.return_value = mock_metadata
 
@@ -74,13 +74,13 @@ class TestStatusSnapshots:
         """測試元資料演進追蹤"""
         # 建立第一個操作器
         mock_operator1 = Mock(spec=BaseAdapter)
-        mock_metadata1 = Mock(spec=SchemaMetadata)
+        mock_metadata1 = Mock(spec=Schema)
         mock_metadata1.schema_id = "schema_v1"
         mock_operator1.get_metadata.return_value = mock_metadata1
 
         # 建立第二個操作器
         mock_operator2 = Mock(spec=BaseAdapter)
-        mock_metadata2 = Mock(spec=SchemaMetadata)
+        mock_metadata2 = Mock(spec=Schema)
         mock_metadata2.schema_id = "schema_v2"
         mock_operator2.get_metadata.return_value = mock_metadata2
 
@@ -99,7 +99,7 @@ class TestStatusSnapshots:
         """測試狀態摘要"""
         # 建立模擬操作器
         mock_operator = Mock(spec=BaseAdapter)
-        mock_metadata = Mock(spec=SchemaMetadata)
+        mock_metadata = Mock(spec=Schema)
         mock_metadata.schema_id = "test_schema"
         mock_operator.get_metadata.return_value = mock_metadata
 
@@ -124,7 +124,7 @@ class TestStatusSnapshots:
         """測試快照檢索"""
         # 建立模擬操作器
         mock_operator = Mock(spec=BaseAdapter)
-        mock_metadata = Mock(spec=SchemaMetadata)
+        mock_metadata = Mock(spec=Schema)
         mock_metadata.schema_id = "test_schema"
         mock_operator.get_metadata.return_value = mock_metadata
 
