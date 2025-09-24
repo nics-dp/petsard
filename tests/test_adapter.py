@@ -14,7 +14,7 @@ from petsard.adapter import (
     SynthesizerAdapter,
 )
 from petsard.exceptions import ConfigError
-from petsard.metadater import SchemaMetadata
+from petsard.metadater import Schema
 
 
 class TestBaseAdapter:
@@ -35,7 +35,7 @@ class TestBaseAdapter:
                 return None
 
             def get_metadata(self):
-                return Mock(spec=SchemaMetadata)
+                return Mock(spec=Schema)
 
         operator = TestOperator(config)
 
@@ -57,7 +57,7 @@ class TestBaseAdapter:
                 return None
 
             def get_metadata(self):
-                return Mock(spec=SchemaMetadata)
+                return Mock(spec=Schema)
 
         with pytest.raises(ConfigError):
             TestOperator(None)
@@ -81,7 +81,7 @@ class TestBaseAdapter:
                 return None
 
             def get_metadata(self):
-                return Mock(spec=SchemaMetadata)
+                return Mock(spec=Schema)
 
         operator = TestOperator(config)
 
@@ -108,7 +108,7 @@ class TestBaseAdapter:
                 return None
 
             def get_metadata(self):
-                return Mock(spec=SchemaMetadata)
+                return Mock(spec=Schema)
 
             @BaseAdapter.log_and_raise_config_error
             def set_input(self, status):
@@ -151,7 +151,7 @@ class TestBaseAdapter:
                 return None
 
             def get_metadata(self):
-                return Mock(spec=SchemaMetadata)
+                return Mock(spec=Schema)
 
         operator = ErrorOperator(config)
 
@@ -185,7 +185,7 @@ class TestLoaderAdapter:
         """測試執行"""
         config = {"method": "csv", "path": "test.csv"}
         test_data = pd.DataFrame({"A": [1, 2, 3], "B": [4, 5, 6]})
-        mock_metadata = Mock(spec=SchemaMetadata)
+        mock_metadata = Mock(spec=Schema)
 
         with patch("petsard.adapter.Loader") as mock_loader_class:
             mock_loader = Mock()
@@ -225,7 +225,7 @@ class TestLoaderAdapter:
     def test_get_metadata(self):
         """測試元資料取得"""
         config = {"method": "csv", "path": "test.csv"}
-        mock_metadata = Mock(spec=SchemaMetadata)
+        mock_metadata = Mock(spec=Schema)
 
         with patch("petsard.adapter.Loader"):
             operator = LoaderAdapter(config)
@@ -252,7 +252,7 @@ class TestSplitterAdapter:
         config = {"method": "random", "test_size": 0.2}
         input_data = {
             "data": pd.DataFrame({"A": [1, 2, 3]}),
-            "metadata": Mock(spec=SchemaMetadata),
+            "metadata": Mock(spec=Schema),
             "exist_train_indices": [],
         }
 
@@ -264,7 +264,7 @@ class TestSplitterAdapter:
                     "validation": pd.DataFrame({"A": [3]}),
                 }
             }
-            mock_metadata = Mock(spec=SchemaMetadata)
+            mock_metadata = Mock(spec=Schema)
             mock_train_indices = {1: [0, 1]}
             mock_splitter.split.return_value = (
                 mock_data,
@@ -277,9 +277,10 @@ class TestSplitterAdapter:
             operator._run(input_data)
 
             # Check that split was called with correct parameters
-            # 空的 exist_train_indices 不會被傳遞
+            # 現在 split 需要 metadata 參數
             expected_params = {
                 "data": input_data["data"],
+                "metadata": input_data["metadata"],
             }
             mock_splitter.split.assert_called_once_with(**expected_params)
 
@@ -292,7 +293,7 @@ class TestSplitterAdapter:
         """測試有資料的輸入設定"""
         config = {"test_size": 0.2}  # 沒有 method 參數
         test_data = pd.DataFrame({"A": [1, 2, 3]})
-        mock_metadata = Mock(spec=SchemaMetadata)
+        mock_metadata = Mock(spec=Schema)
 
         with patch("petsard.adapter.Splitter"):
             operator = SplitterAdapter(config)
@@ -306,21 +307,6 @@ class TestSplitterAdapter:
 
             assert result["data"].equals(test_data)
             assert result["metadata"] == mock_metadata
-            assert result["exist_train_indices"] == []
-
-    def test_set_input_custom_method(self):
-        """測試自定義方法的輸入設定"""
-        config = {"method": "custom_data"}
-
-        with patch("petsard.adapter.Splitter"):
-            operator = SplitterAdapter(config)
-
-            mock_status = Mock()
-            mock_status.get_exist_train_indices.return_value = []
-
-            result = operator.set_input(mock_status)
-
-            assert result["data"] is None
             assert result["exist_train_indices"] == []
 
     def test_get_result(self):
@@ -344,7 +330,7 @@ class TestSplitterAdapter:
     def test_get_metadata(self):
         """測試元資料取得"""
         config = {"method": "random"}
-        mock_metadata = Mock(spec=SchemaMetadata)
+        mock_metadata = Mock(spec=Schema)
 
         with patch("petsard.adapter.Splitter") as mock_splitter_class:
             mock_splitter = Mock()
@@ -416,7 +402,7 @@ class TestPreprocessorAdapter:
         config = {"method": "default"}
         input_data = {
             "data": pd.DataFrame({"A": [1, 2, 3]}),
-            "metadata": Mock(spec=SchemaMetadata),
+            "metadata": Mock(spec=Schema),
         }
 
         with patch("petsard.adapter.Processor") as mock_processor_class:
@@ -435,7 +421,7 @@ class TestPreprocessorAdapter:
         config = {"method": "custom", "sequence": ["encoder", "scaler"]}
         input_data = {
             "data": pd.DataFrame({"A": [1, 2, 3]}),
-            "metadata": Mock(spec=SchemaMetadata),
+            "metadata": Mock(spec=Schema),
         }
 
         with patch("petsard.adapter.Processor") as mock_processor_class:
@@ -462,7 +448,7 @@ class TestPreprocessorAdapter:
             "train": pd.DataFrame({"A": [1, 2]}),
             "validation": pd.DataFrame({"A": [3]}),
         }
-        mock_status.get_metadata.return_value = Mock(spec=SchemaMetadata)
+        mock_status.get_metadata.return_value = Mock(spec=Schema)
 
         result = operator.set_input(mock_status)
 
@@ -478,7 +464,7 @@ class TestPreprocessorAdapter:
         mock_status = Mock()
         mock_status.get_pre_module.return_value = "Loader"
         mock_status.get_result.return_value = test_data
-        mock_status.get_metadata.return_value = Mock(spec=SchemaMetadata)
+        mock_status.get_metadata.return_value = Mock(spec=Schema)
 
         result = operator.set_input(mock_status)
 
@@ -501,7 +487,7 @@ class TestPreprocessorAdapter:
     def test_get_metadata(self):
         """測試元資料取得"""
         config = {"method": "default"}
-        mock_metadata = Mock(spec=SchemaMetadata)
+        mock_metadata = Mock(spec=Schema)
 
         with patch("petsard.adapter.Processor") as mock_processor_class:
             mock_processor = Mock()
@@ -539,7 +525,7 @@ class TestSynthesizerAdapter:
         config = {"method": "sdv", "model": "GaussianCopula"}
         input_data = {
             "data": pd.DataFrame({"A": [1, 2, 3]}),
-            "metadata": Mock(spec=SchemaMetadata),
+            "metadata": Mock(spec=Schema),
         }
         synthetic_data = pd.DataFrame({"A": [4, 5, 6]})
 
@@ -561,7 +547,7 @@ class TestSynthesizerAdapter:
         """測試有元資料的輸入設定"""
         config = {"method": "sdv"}
         test_data = pd.DataFrame({"A": [1, 2, 3]})
-        mock_metadata = Mock(spec=SchemaMetadata)
+        mock_metadata = Mock(spec=Schema)
 
         operator = SynthesizerAdapter(config)
 
@@ -571,8 +557,8 @@ class TestSynthesizerAdapter:
         mock_status.get_metadata.return_value = mock_metadata
         mock_status.get_result.return_value = test_data
 
-        # Mock the fields attribute to make metadata valid
-        mock_metadata.fields = {"field1": "type1", "field2": "type2"}
+        # Mock the attributes to make metadata valid (Schema uses attributes, not fields)
+        mock_metadata.attributes = {"field1": "type1", "field2": "type2"}
 
         result = operator.set_input(mock_status)
 
