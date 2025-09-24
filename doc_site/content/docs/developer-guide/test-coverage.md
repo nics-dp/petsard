@@ -614,6 +614,111 @@ Tests for metadata handling and type inference:
   - Boolean types
   - Invalid types
 
+### `Adapter Layer`
+
+> tests/test_adapter.py
+
+Tests for all Adapter layer functionality, including adapter implementations for various operators:
+
+#### BaseAdapter Tests
+
+**Base Class Tests (6 tests):**
+- `test_init_with_valid_config`: Tests initialization with valid configuration
+- `test_init_with_none_config`: Tests that None configuration raises ConfigError
+- `test_run_template_method`: Tests run template method with timing logging
+- `test_log_and_raise_config_error_decorator`: Tests configuration error decorator
+- `test_not_implemented_methods`: Tests that unimplemented methods raise NotImplementedError
+- `test_run_with_error_timing`: Tests timing logging in error scenarios
+
+#### LoaderAdapter Tests
+
+**Basic Functionality Tests (5 tests):**
+- `test_init_regular_file`: Tests regular file initialization
+- `test_run_regular_file`: Tests regular file execution
+- `test_set_input`: Tests input setting
+- `test_get_result`: Tests result retrieval
+- `test_get_metadata`: Tests metadata retrieval
+
+**Benchmark Protocol Handling Tests (4 tests):**
+- `test_init_benchmark_protocol`: Tests benchmark:// protocol initialization:
+  - Verifies `is_benchmark` attribute is correctly set to True
+  - Confirms `benchmarker_config` is properly created
+  - Tests filepath conversion from benchmark:// format
+- `test_run_benchmark_protocol`: Tests benchmark:// protocol execution with download:
+  - Simulates BenchmarkerRequests download behavior
+  - Verifies filepath is correctly converted to local path
+  - Confirms Loader receives the correct local filepath
+- `test_benchmark_download_failure`: Tests benchmark download failure handling
+- `test_benchmark_protocol_case_insensitive`: Tests protocol case insensitivity
+
+#### SplitterAdapter Tests
+
+**Functionality Tests (6 tests):**
+- `test_init`: Tests initialization
+- `test_run`: Tests execution of splitting operation
+- `test_set_input_with_data`: Tests input setting with data
+- `test_get_result`: Tests result retrieval
+- `test_get_metadata`: Tests metadata retrieval (new dictionary format)
+- `test_get_train_indices`: Tests training indices retrieval
+
+#### PreprocessorAdapter Tests
+
+**Functionality Tests (7 tests):**
+- `test_init_default_method`: Tests default method initialization
+- `test_init_custom_method`: Tests custom method initialization with sequence parameter
+- `test_run_default_sequence`: Tests default sequence execution
+- `test_run_custom_sequence`: Tests custom sequence execution
+- `test_set_input_from_splitter`: Tests input setting from Splitter
+- `test_set_input_from_loader`: Tests input setting from Loader
+- `test_get_result`: Tests result retrieval
+- `test_get_metadata`: Tests metadata retrieval
+
+#### SynthesizerAdapter Tests
+
+**Functionality Tests (5 tests):**
+- `test_init`: Tests initialization
+- `test_run`: Tests execution of synthesis operation
+- `test_set_input_with_metadata`: Tests input setting with metadata
+- `test_set_input_without_metadata`: Tests input setting without metadata
+- `test_get_result`: Tests result retrieval
+
+#### ConstrainerAdapter Tests
+
+**Functionality Tests (5 tests):**
+- `test_init_basic`: Tests basic initialization
+- `test_init_with_sampling_params`: Tests initialization with sampling parameters
+- `test_transform_field_combinations`: Tests field combination transformation to tuples
+- `test_run_simple_apply`: Tests simple constraint application
+- `test_run_resample_until_satisfy`: Tests resampling until constraints are satisfied
+
+#### EvaluatorAdapter Tests
+
+**Functionality Tests (4 tests):**
+- `test_init`: Tests initialization
+- `test_run`: Tests execution of evaluation operation
+- `test_set_input_with_splitter`: Tests input setting with Splitter
+- `test_set_input_without_splitter`: Tests input setting without Splitter
+
+#### ReporterAdapter Tests
+
+**Functionality Tests (7 tests):**
+- `test_init`: Tests initialization
+- `test_run_save_report`: Tests save report execution
+- `test_run_save_data`: Tests save data execution
+- `test_set_input`: Tests input setting
+- `test_run_save_report_multi_granularity`: Tests multi-granularity report saving
+- `test_run_save_report_new_granularity_types`: Tests new granularity types (details, tree)
+- `test_run_save_report_backward_compatibility`: Tests backward compatibility with old format
+- `test_run_save_timing`: Tests timing report saving
+
+> **Architecture Note**: The Adapter Layer provides bridges between all PETsARD modules and the Executor. Each Adapter class:
+> - Inherits from BaseAdapter, providing standardized execution template and error handling
+> - Implements the `_run()` method for specific business logic
+> - Manages data flow through `set_input()` and `get_result()` methods
+> - Supports timing logging and general logging functionality
+>
+> LoaderAdapter specifically implements benchmark:// protocol handling, achieving decoupling between Loader and Benchmarker.
+
 ### `Splitter`
 
 > tests/loader/test_splitter.py
@@ -623,15 +728,11 @@ Tests for data splitting functionality with enhanced overlap control:
 #### Core Functionality Tests
 - `test_splitter_init_normal`: Tests normal initialization with new parameters (`max_overlap_ratio`, `max_attempts`)
 - `test_splitter_init_invalid_ratio`: Tests handling of invalid split ratios and overlap ratios
-- `test_splitter_init_custom_data_valid`: Tests valid custom data method configuration (Skipped - functionality moved to adapter layer)
-- `test_splitter_init_custom_data_invalid_method`: Tests error handling for invalid custom methods (Skipped - functionality moved to adapter layer)
-- `test_splitter_init_custom_data_invalid_filepath`: Tests error handling for invalid file paths (Skipped - functionality moved to adapter layer)
 
 #### Functional Programming API Tests
 - `test_split_normal_method`: Tests normal splitting method with new return format `(split_data, metadata_dict, train_indices)`
 - `test_split_normal_method_no_data`: Tests splitting with no data
 - `test_split_multiple_samples`: Tests multiple sample splitting with `list[set]` train indices format
-- `test_split_custom_data_method`: Tests custom data splitting method with updated metadata structure (Skipped - functionality moved to adapter layer)
 - `test_split_basic_functionality`: Tests basic splitting functionality with functional API
 
 #### Overlap Control Features

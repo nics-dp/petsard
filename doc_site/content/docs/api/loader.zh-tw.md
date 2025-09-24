@@ -10,7 +10,6 @@ next: docs/api/metadater
 ```python
 Loader(
     filepath=None,
-    method=None,
     column_types=None,
     header_names=None,
     na_values=None,
@@ -22,12 +21,9 @@ Loader(
 
 ## 參數
 
-- `filepath` (`str`, optional)：資料集檔案路徑，不可與 `method` 同時使用
-  - 預設值：無
-  - 若使用基準資料集，格式為 `benchmark://{dataset_name}`
-- `method` (`str`, optional)：載入方法，不可與 `filepath` 同時使用
-  - 預設值：無
-  - 可用值：'default' - 載入 PETsARD 預設資料集 'adult-income'
+- `filepath` (`str`)：資料集檔案路徑
+  - 必要參數，指定要載入的本地檔案路徑
+  - 支援格式：CSV、Excel (XLS, XLSX, XLSM, XLSB, ODF, ODS, ODT)
 - `column_types` (`dict`, optional)：**⚠️ v2.0.0 版本將下架移除** 欄位型態定義
   - 預設值：無
   - 格式：`{type: [colname]}`
@@ -63,10 +59,6 @@ from petsard import Loader
 
 # 基本用法
 load = Loader('data.csv')
-data, meta = load.load()
-
-# 使用基準資料集
-load = Loader('benchmark://adult-income')
 data, meta = load.load()
 
 # 使用外部架構檔案（推薦方式）
@@ -126,7 +118,6 @@ data, meta = loader.load()  # 得到載入的資料
 
 - `config` (`LoaderConfig`)：設定物件，包含：
   - `filepath` (`str`)：本地端資料檔案路徑
-  - `method` (`str`)：載入方法
   - `column_types` (`dict`)：使用者定義的欄位型態（已棄用）
   - `header_names` (`list`)：欄位標題
   - `na_values` (`str` | `list` | `dict`)：NA 值定義（已棄用）
@@ -138,4 +129,5 @@ data, meta = loader.load()  # 得到載入的資料
     - `file_name` (`str`)：不含副檔名的檔名
     - `file_ext` (`str`)：檔案副檔名
     - `file_ext_code` (`int`)：用於內部處理的檔案副檔名代碼
-  - `benchmarker_config` (`BenchmarkerConfig` | `None`)：基準資料集配置（處理所有基準資料集相關操作）
+
+> **注意事項**：若需要使用基準資料集（benchmark://），請透過 LoaderAdapter 來處理。Loader 現在專注於純檔案載入功能。

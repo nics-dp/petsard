@@ -50,11 +50,12 @@ BaseAdapter(config)
 LoaderAdapter(config)
 ```
 
-包裝 Loader 模組進行資料載入操作。
+包裝 Loader 模組進行資料載入操作，並自動處理基準資料集協議。
 
 **配置參數**
-- `filepath` (str)：資料檔案路徑或基準資料集 URL（如 'benchmark://adult-income'）
-- `method` (str, optional)：載入方法（'default' 用於基準資料）
+- `filepath` (str)：資料檔案路徑，支援兩種格式：
+  - **本地檔案**：一般檔案路徑（如 'data.csv'）
+  - **基準資料集**：使用 `benchmark://` 協議（如 'benchmark://adult-income'）
 - `column_types` (dict, optional)：**已棄用** - 欄位類型規格（請改用 schema）
 - `header_names` (list, optional)：無標頭檔案的自訂標題名稱
 - `na_values` (str/list/dict, optional)：**已棄用** - 自訂 NA 值定義（請改用 schema）
@@ -62,6 +63,16 @@ LoaderAdapter(config)
   - Schema 物件：直接提供 schema 設定
   - dict：將轉換為 Schema 的字典
   - str：包含 schema 設定的 YAML 檔案路徑
+
+**基準資料集處理**
+LoaderAdapter 會自動偵測 `benchmark://` 協議並處理：
+1. 解析協議並提取資料集名稱
+2. 建立 BenchmarkerConfig 實例
+3. 使用 BenchmarkerRequests 下載資料集（如需要）
+4. 將路徑轉換為本地檔案路徑
+5. 使用 Loader 載入本地檔案
+
+此設計實現了 Loader 與 Benchmarker 的完全解耦，讓 Loader 專注於純檔案載入功能。
 
 **主要方法**
 - `get_result()`：回傳載入的 DataFrame
