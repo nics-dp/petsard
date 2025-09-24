@@ -3,7 +3,6 @@ import random
 import pandas as pd
 
 from petsard.exceptions import ConfigError
-from petsard.loader.loader import Loader
 from petsard.metadater.metadata import Schema
 
 
@@ -13,25 +12,18 @@ class Splitter:
     a.) split input data via assigned ratio (train_split_ratio)
     b.) resampling assigned times (num_samples)
     c.) output their train/validation indexes (self.index_samples) and pd.DataFrame data (self.data)
-
-    When method is 'custom_data', the data will be loaded from the filepath.
     """
 
     def __init__(
         self,
-        method: str = None,
         num_samples: int | None = 1,
         train_split_ratio: float | None = 0.8,
         random_state: int | float | str | None = None,
         max_overlap_ratio: float | None = 1.0,
         max_attempts: int | None = 30,
-        **kwargs,
     ):
         """
         Args:
-            method (str, optional):
-                Supports loading existing split data, only accepting 'custom_data'.
-                Default is None.
             num_samples (int, optional):
                 Number of times to resample the data. Default is 1.
             train_split_ratio (float, optional):
@@ -44,71 +36,33 @@ class Splitter:
                 Default is 1.0 (100%). Set to 0.0 for no overlap.
             max_attempts (int, optional):
                 Maximum number of attempts for sampling. Default is 30.
-            **kwargs (optional):
-                For method 'custom_data' only. Parameters can be:
-                - Dictionary parameters (like filepath, schema): must contain 'ori' and 'control' keys
-                - Non-dictionary parameters: passed directly to both Loaders
-                Example: filepath={'ori': 'file1.csv', 'control': 'file2.csv'},
-                        schema={'ori': 'schema1.yaml', 'control': 'schema2.yaml'}
 
         Attr:
             config (dict):
-                The configuration of Splitter.
-                If method is None,
-                    it contains num_samples, train_split_ratio, random_state, max_overlap_ratio, max_attempts.
-                If method is 'custom_data',
-                    it only contains method.
-
+                The configuration of Splitter containing:
+                num_samples, train_split_ratio, random_state, max_overlap_ratio, max_attempts.
         """
-        self.config: dict = {}
+        if not (0.0 <= train_split_ratio <= 1.0):
+            raise ConfigError(
+                "Splitter: train_split_ratio must be a float between 0 and 1."
+            )
+        if not (0.0 <= max_overlap_ratio <= 1.0):
+            raise ConfigError(
+                "Splitter: max_overlap_ratio must be a float between 0 and 1."
+            )
 
-        # Normal Splitter use case
-        if method is None:
-            if not (0 <= train_split_ratio <= 1):
-                raise ConfigError(
-                    "Splitter:  train_split_ratio must be a float between 0 and 1."
-                )
-            if not (0 <= max_overlap_ratio <= 1):
-                raise ConfigError(
-                    "Splitter: max_overlap_ratio must be a float between 0 and 1."
-                )
-            self.config = {
-                "num_samples": num_samples,
-                "train_split_ratio": train_split_ratio,
-                "random_state": random_state,
-                "max_overlap_ratio": max_overlap_ratio,
-                "max_attempts": max_attempts,
-            }
-
-        # custom_data Splitter use case
-        else:
-            if method.lower() != "custom_data":
-                raise ConfigError
-
-            self.config = {"method": method}
-            self.loader: dict = {}
-
-            # Pure splitting: assign top-level configuration to corresponding Loader for 'ori' and 'control'
-            for key in ["ori", "control"]:
-                # 準備該 Loader 的配置
-                loader_config = {}
-
-                # Process all first-level parameters; if it's a dict containing the corresponding key, extract the corresponding value
-                for param_name, param_value in kwargs.items():
-                    if param_name == "method":
-                        continue  # 跳過 method
-                    elif isinstance(param_value, dict) and key in param_value:
-                        loader_config[param_name] = param_value[key]
-                    elif not isinstance(param_value, dict):
-                        # 非字典參數直接傳遞
-                        loader_config[param_name] = param_value
-
-                self.loader[key] = Loader(**loader_config)
+        self.config = {
+            "num_samples": num_samples,
+            "train_split_ratio": train_split_ratio,
+            "random_state": random_state,
+            "max_overlap_ratio": max_overlap_ratio,
+            "max_attempts": max_attempts,
+        }
 
     def split(
         self,
-        data: pd.DataFrame = None,
-        metadata: Schema = None,
+        data: pd.DataFrame,
+        metadata: Schema,
         exist_train_indices: list[set] = None,
     ) -> tuple[dict, dict, list[set]]:
         """
@@ -116,10 +70,9 @@ class Splitter:
             and split it into train and validation sets
             using the generated index samples.
 
-        When method is 'custom_data', the data will be loaded from the filepath.
-
         Args:
-            data (pd.DataFrame, optional): The dataset which wait for split.
+            data (pd.DataFrame): The dataset which wait for split.
+            metadata (Schema): The metadata of the dataset.
             exist_train_indices (list[set], optional):
                 The existing train index sets we want to avoid overlapping with.
 
@@ -129,78 +82,45 @@ class Splitter:
                 - Metadata: {1: {train: Schema, validation: Schema}, 2: ...}
                 - Train indices: [{train_indices_set1}, {train_indices_set2}, ...]
         """
-        if "method" in self.config:
-            # Custom data method - load from files
-            ori_data, ori_metadata = self.loader["ori"].load()
-            ctrl_data, ctrl_metadata = self.loader["control"].load()
+        if data is None:
+            raise ConfigError("Data must be provided for splitting")
+        if metadata is None:
+            raise ConfigError("Metadata must be provided for splitting")
 
-            split_data = {
-                1: {
-                    "train": ori_data,
-                    "validation": ctrl_data,
-                }
+        data.reset_index(drop=True, inplace=True)  # avoid unexpected index
+
+        index_result = self._bootstrapping(
+            index=data.index.tolist(), exist_train_indices=exist_train_indices
+        )
+
+        split_data = {}
+        metadata_dict = {}
+        train_indices_list = []
+
+        for key, index in index_result.items():
+            split_data[key] = {
+                "train": data.iloc[index["train"]].reset_index(drop=True),
+                "validation": data.iloc[index["validation"]].reset_index(drop=True),
             }
 
             # Create metadata for both train and validation
             train_metadata = self._update_metadata_with_split_info(
-                ori_metadata, ori_data.shape[0], ctrl_data.shape[0]
+                metadata,
+                len(index["train"]),
+                len(index["validation"]),
             )
             validation_metadata = self._update_metadata_with_split_info(
-                ctrl_metadata, ori_data.shape[0], ctrl_data.shape[0]
+                metadata,
+                len(index["train"]),
+                len(index["validation"]),
             )
 
-            metadata_dict = {
-                1: {
-                    "train": train_metadata,
-                    "validation": validation_metadata,
-                }
+            metadata_dict[key] = {
+                "train": train_metadata,
+                "validation": validation_metadata,
             }
 
-            train_indices_list = [set(ori_data.index.tolist())]
-
-        else:
-            # Normal splitting method
-            if data is None:
-                raise ConfigError("Data must be provided for normal splitting method")
-            if metadata is None:
-                raise ConfigError(
-                    "Metadata must be provided for normal splitting method"
-                )
-
-            data.reset_index(drop=True, inplace=True)  # avoid unexpected index
-
-            index_result = self._bootstrapping(
-                index=data.index.tolist(), exist_train_indices=exist_train_indices
-            )
-
-            split_data = {}
-            metadata_dict = {}
-            train_indices_list = []
-
-            for key, index in index_result.items():
-                split_data[key] = {
-                    "train": data.iloc[index["train"]].reset_index(drop=True),
-                    "validation": data.iloc[index["validation"]].reset_index(drop=True),
-                }
-
-                # Create metadata for both train and validation
-                train_metadata = self._update_metadata_with_split_info(
-                    metadata,
-                    len(index["train"]),
-                    len(index["validation"]),
-                )
-                validation_metadata = self._update_metadata_with_split_info(
-                    metadata,
-                    len(index["train"]),
-                    len(index["validation"]),
-                )
-
-                metadata_dict[key] = {
-                    "train": train_metadata,
-                    "validation": validation_metadata,
-                }
-
-                train_indices_list.append(set(index["train"]))
+            train_indices_list.append(set(index["train"]))
 
         return split_data, metadata_dict, train_indices_list
 
