@@ -172,13 +172,13 @@ class LoaderAdapter(BaseAdapter):
         """
         super().__init__(config)
 
-        # 檢查是否為 benchmark:// 協議
+        # Check if filepath uses benchmark:// protocol
         filepath = config.get("filepath", "")
         self.is_benchmark = filepath.lower().startswith("benchmark://")
         self.benchmarker_config = None
 
         if self.is_benchmark:
-            # 如果是 benchmark 協議，需要先準備 benchmarker
+            # If benchmark protocol detected, prepare benchmarker
             import re
             from pathlib import Path
 
@@ -190,12 +190,12 @@ class LoaderAdapter(BaseAdapter):
 
             self._logger.info(f"Detected benchmark protocol: {benchmark_name}")
 
-            # 建立 BenchmarkerConfig
+            # Create BenchmarkerConfig
             self.benchmarker_config = BenchmarkerConfig(
                 benchmark_name=benchmark_name, filepath_raw=filepath
             )
 
-            # 更新 config 中的 filepath 為本地路徑
+            # Update filepath in config to local path
             local_filepath = Path("benchmark").joinpath(
                 self.benchmarker_config.benchmark_filename
             )
@@ -204,11 +204,11 @@ class LoaderAdapter(BaseAdapter):
 
             self._logger.debug(f"Updated filepath to local path: {local_filepath}")
 
-        # 移除 method 參數（如果存在），因為 Loader 不再接受此參數
+        # Remove method parameter if exists, as Loader no longer accepts it
         config = config.copy()
         config.pop("method", None)
 
-        # 建立 Loader 實例（使用可能更新過的 config）
+        # Create Loader instance with possibly updated config
         self.loader = Loader(**config)
         self._schema_metadata = None  # Store the Schema
 
@@ -226,7 +226,7 @@ class LoaderAdapter(BaseAdapter):
         """
         self._logger.debug("Starting data loading process")
 
-        # 如果是 benchmark 協議，先執行下載
+        # If benchmark protocol, download dataset first
         if self.is_benchmark and self.benchmarker_config:
             self._logger.info(
                 f"Downloading benchmark dataset: {self.benchmarker_config.benchmark_name}"
@@ -244,7 +244,7 @@ class LoaderAdapter(BaseAdapter):
                 self._logger.error(error_msg)
                 raise BenchmarkDatasetsError(error_msg) from e
 
-        # 載入資料（不論是否為 benchmark）
+        # Load data (regardless of whether it's benchmark or not)
         self.data, self._schema_metadata = self.loader.load()
 
         # Use Schema directly
@@ -416,7 +416,7 @@ class SplitterAdapter(BaseAdapter):
                     split_params[key] = value
                 elif key == "metadata":
                     split_params[key] = value
-                elif key == "exist_train_indices" and value:  # 只有非空時才傳遞
+                elif key == "exist_train_indices" and value:  # Only pass when not empty
                     split_params[key] = value
             self.data, self.metadata, self.train_indices = self.splitter.split(
                 **split_params
@@ -623,7 +623,7 @@ class SynthesizerAdapter(BaseAdapter):
         Returns:
             dict: Configuration for Loader
         """
-        # Common Loader parameters (移除 'method'，因為 Loader 不再接受此參數)
+        # Common Loader parameters (removed 'method' as Loader no longer accepts it)
         LOADER_PARAMS = [
             "filepath",
             "delimiter",
@@ -1137,7 +1137,7 @@ class ReporterAdapter(BaseAdapter):
     def _run(self, input: dict):
         """
         Runs the Reporter to create and generate reports.
-        適應新的函式化 Reporter 架構
+        Adapts to the new functional Reporter architecture
 
         Args:
             input (dict): Input data for the Reporter.
@@ -1145,53 +1145,53 @@ class ReporterAdapter(BaseAdapter):
         """
         self._logger.debug("Starting data reporting process")
 
-        # 使用新的函式化 Reporter 介面
+        # Use the new functional Reporter interface
         processed_data = self.reporter.create(data=input["data"])
         self._logger.debug("Reporting configuration initialization completed")
 
-        # 調用函式化的 report 方法
+        # Call the functional report method
         result = self.reporter.report(processed_data)
 
-        # 處理不同類型的 Reporter 結果
+        # Handle different types of Reporter results
         if isinstance(result, dict) and "Reporter" in result:
             # ReporterSaveReport
             temp = result["Reporter"]
 
-            # 檢查是否為舊格式（單一 granularity）
+            # Check if it's the old format (single granularity)
             if "eval_expt_name" in temp and "report" in temp:
-                # 舊格式：單一 granularity
+                # Old format: single granularity
                 if "warnings" in temp:
                     return
                 eval_expt_name = temp["eval_expt_name"]
                 report = deepcopy(temp["report"])
                 self.report[eval_expt_name] = report
             else:
-                # 新格式：多 granularity
+                # New format: multiple granularities
                 for eval_expt_name, granularity_data in temp.items():
                     if not isinstance(granularity_data, dict):
                         continue
 
-                    # 跳過有警告的 granularity
+                    # Skip granularities with warnings
                     if "warnings" in granularity_data:
                         continue
 
-                    # 驗證必要的鍵
+                    # Validate required keys
                     if not all(
                         key in granularity_data for key in ["eval_expt_name", "report"]
                     ):
                         continue
 
-                    # 跳過 report 為 None 的情況
+                    # Skip if report is None
                     if granularity_data["report"] is None:
                         continue
 
                     report = deepcopy(granularity_data["report"])
                     self.report[eval_expt_name] = report
         elif isinstance(result, dict):
-            # ReporterSaveData 或其他類型
+            # ReporterSaveData or other types
             self.report = deepcopy(result)
         else:
-            # ReporterSaveTiming 或其他返回 DataFrame 的類型
+            # ReporterSaveTiming or other types that return DataFrame
             self.report = (
                 {"timing_report": deepcopy(result)} if result is not None else {}
             )
@@ -1233,7 +1233,7 @@ class ReporterAdapter(BaseAdapter):
         self.input["data"] = data
         self.input["data"]["exist_report"] = status.get_report()
 
-        # 新增時間資料支援
+        # Add timing data support
         if hasattr(status, "get_timing_report_data"):
             timing_data = status.get_timing_report_data()
             if not timing_data.empty:
