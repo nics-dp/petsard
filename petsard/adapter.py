@@ -535,7 +535,7 @@ class SynthesizerAdapter(BaseAdapter):
         super().__init__(config)
 
         # Check if it's custom_data method
-        if config.get("syn_method") == "custom_data":
+        if config.get("method") == "custom_data":
             # Extract Loader configuration (but don't run yet)
             loader_config = self._extract_loader_config(config)
             self.loader_adapter = LoaderAdapter(loader_config)
