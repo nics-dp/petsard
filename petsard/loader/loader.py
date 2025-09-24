@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import logging
-import re
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -10,12 +9,10 @@ import yaml
 
 from petsard.config_base import BaseConfig
 from petsard.exceptions import (
-    BenchmarkDatasetsError,
     ConfigError,
     UnableToFollowMetadataError,
     UnsupportedMethodError,
 )
-from petsard.loader.benchmarker import BenchmarkerConfig, BenchmarkerRequests
 from petsard.metadater import Attribute, Schema, SchemaMetadater
 
 
@@ -54,9 +51,7 @@ class LoaderConfig(BaseConfig):
 
     Attributes:
         _logger (logging.Logger): The logger object.
-        DEFAULT_METHOD_FILEPATH (str): The default method filepath.
         filepath (str): The fullpath of dataset.
-        method (str): The method of Loader.
         column_types (dict): The dictionary of column types and their corresponding column names.
         header_names (list): Specifies a list of headers for the data without header.
         na_values (str | list | dict): Extra string to recognized as NA/NaN.
@@ -67,13 +62,9 @@ class LoaderConfig(BaseConfig):
         file_name (str): The file name of the file path.
         file_ext (str): The file extension of the file path.
         file_ext_code (int): The file extension code.
-        benchmarker_config (BenchmarkerConfig): Optional benchmarker configuration.
     """
 
-    DEFAULT_METHOD_FILEPATH: str = "benchmark://adult-income"
-
     filepath: str | None = None
-    method: str | None = None
     column_types: dict[str, list[str]] | None = (
         None  # TODO: Deprecated in v2.0.0 - will be removed
     )
@@ -91,51 +82,18 @@ class LoaderConfig(BaseConfig):
     file_ext: str | None = None
     file_ext_code: int | None = None
 
-    # Benchmarker configuration
-    benchmarker_config: BenchmarkerConfig | None = None
-
     def __post_init__(self):
         super().__post_init__()
         self._logger.debug("Initializing LoaderConfig")
         error_msg: str = ""
 
-        # 1. set default method if method = 'default'
-        if self.filepath is None and self.method is None:
-            error_msg = "filepath or method must be specified"
+        # 1. validate filepath
+        if self.filepath is None:
+            error_msg = "filepath must be specified"
             self._logger.error(error_msg)
             raise ConfigError(error_msg)
-        elif self.method:
-            if self.method.lower() == "default":
-                # default will use adult-income
-                self._logger.info("Using default method: adult-income")
-                self.filepath = self.DEFAULT_METHOD_FILEPATH
-            else:
-                error_msg = f"Unsupported method: {self.method}"
-                self._logger.error(error_msg)
-                raise UnsupportedMethodError(error_msg)
 
-        # 2. check if filepath is specified as a benchmark
-        if self.filepath.lower().startswith("benchmark://"):
-            self._logger.info(f"Detected benchmark filepath: {self.filepath}")
-            benchmark_name = re.sub(
-                r"^benchmark://", "", self.filepath, flags=re.IGNORECASE
-            ).lower()
-            self._logger.debug(f"Extracted benchmark name: {benchmark_name}")
-
-            # Create BenchmarkerConfig
-            self.benchmarker_config = BenchmarkerConfig(
-                benchmark_name=benchmark_name, filepath_raw=self.filepath
-            )
-
-            # Update filepath to local benchmark path
-            self.filepath = Path("benchmark").joinpath(
-                self.benchmarker_config.benchmark_filename
-            )
-            self._logger.info(
-                f"Configured benchmark dataset: {benchmark_name}, filepath: {self.filepath}"
-            )
-
-        # 3. handle filepath
+        # 2. handle filepath
         filepath_path: Path = Path(self.filepath)
         self.dir_name = str(filepath_path.parent)
         self.base_name = filepath_path.name
@@ -198,17 +156,15 @@ class Loader:
     The Loader class is responsible for creating and configuring a data loader,
     as well as retrieving and processing data from the specified sources.
 
-    The Loader is designed to be passive and focuses on four core functions:
-    1. Benchmark handling: Download benchmark datasets when needed
-    2. Schema processing: Pass schema parameters to metadater for validation
-    3. Legacy compatibility: Update legacy column_types and na_values to schema
-    4. Data reading: Use pandas reader module to load data with proper configuration
+    The Loader is designed to be passive and focuses on three core functions:
+    1. Schema processing: Pass schema parameters to metadater for validation
+    2. Legacy compatibility: Update legacy column_types and na_values to schema
+    3. Data reading: Use pandas reader module to load data with proper configuration
     """
 
     def __init__(
         self,
         filepath: str = None,
-        method: str = None,
         column_types: dict[str, list[str]] | None = None,  # TODO: Deprecated in v2.0.0
         header_names: list[str] | None = None,
         na_values: str
@@ -219,9 +175,7 @@ class Loader:
     ):
         """
         Args:
-            filepath (str, optional): The fullpath of dataset.
-            method (str, optional): The method of Loader.
-                Default is None, indicating only filepath is specified.
+            filepath (str): The fullpath of dataset.
             column_types (dict ,optional): **DEPRECATED in v2.0.0 - will be removed**
                 The dictionary of column types and their corresponding column names,
                 formatted as {type: [colname]}
@@ -254,7 +208,7 @@ class Loader:
         )
         self._logger.info("Initializing Loader")
         self._logger.debug(
-            f"Loader parameters - filepath: {filepath}, method: {method}, column_types: {column_types}"
+            f"Loader parameters - filepath: {filepath}, column_types: {column_types}"
         )
 
         # Process schema parameter - handle different input types
@@ -262,7 +216,6 @@ class Loader:
 
         self.config: LoaderConfig = LoaderConfig(
             filepath=filepath,
-            method=method,
             column_types=column_types,
             header_names=header_names,
             na_values=na_values,
@@ -349,11 +302,10 @@ class Loader:
         """
         Load data from the specified file path.
 
-        This method implements four core functions:
-        1. Benchmark handling: Download benchmark datasets when needed
-        2. Schema processing: Merge legacy parameters into schema and validate
-        3. Data reading: Use pandas reader module for file loading
-        4. Metadater integration: Pass schema to metadater for processing
+        This method implements three core functions:
+        1. Schema processing: Merge legacy parameters into schema and validate
+        2. Data reading: Use pandas reader module for file loading
+        3. Metadater integration: Pass schema to metadater for processing
 
         Returns:
             data (pd.DataFrame): Data been loaded
@@ -361,36 +313,17 @@ class Loader:
         """
         self._logger.info(f"Loading data from {self.config.filepath}")
 
-        # 1: Benchmark handling
-        if self.config.benchmarker_config:
-            self._handle_benchmark_download()
-
-        # 2: Schema processing - merge legacy parameters into schema
+        # 1: Schema processing - merge legacy parameters into schema
         merged_schema_config = self._merge_legacy_to_schema()
 
-        # 3: Data reading using pandas reader module
+        # 2: Data reading using pandas reader module
         data = self._read_data_with_pandas_reader(merged_schema_config)
 
-        # 4: Pass schema to metadater for validation and processing
+        # 3: Pass schema to metadater for validation and processing
         schema_metadata = self._process_with_metadater(data, merged_schema_config)
 
         self._logger.info("Data loading completed successfully")
         return data, schema_metadata
-
-    def _handle_benchmark_download(self):
-        """Handle benchmark dataset download."""
-        self._logger.info(
-            f"Downloading benchmark dataset: {self.config.benchmarker_config.benchmark_name}"
-        )
-        try:
-            BenchmarkerRequests(
-                self.config.benchmarker_config.get_benchmarker_config()
-            ).download()
-            self._logger.debug("Benchmark dataset downloaded successfully")
-        except Exception as e:
-            error_msg = f"Failed to download benchmark dataset: {str(e)}"
-            self._logger.error(error_msg)
-            raise BenchmarkDatasetsError(error_msg) from e
 
     def _merge_legacy_to_schema(self) -> Schema:
         """

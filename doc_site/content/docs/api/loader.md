@@ -10,7 +10,6 @@ next: docs/api/metadater
 ```python
 Loader(
     filepath=None,
-    method=None,
     column_types=None,
     header_names=None,
     na_values=None,
@@ -22,12 +21,9 @@ Module for loading tabular data.
 
 ## Parameters
 
-- `filepath` (`str`, optional): Path to the dataset file. Cannot be used with `method`
-  - Default: None
-  - If using benchmark dataset, format as `benchmark://{dataset_name}`
-- `method` (`str`, optional): Loading method. Cannot be used with `filepath`
-  - Default: None
-  - Values: 'default'- loads PETsARD's default dataset 'adult-income'
+- `filepath` (`str`): Path to the dataset file
+  - Required parameter, specifies the local file path to load
+  - Supported formats: CSV, Excel (XLS, XLSX, XLSM, XLSB, ODF, ODS, ODT)
 - `column_types` (`dict`, optional): **⚠️ DEPRECATED in v2.0.0 - will be removed** Column type definitions
   - Default: None
   - Format: `{type: [colname]}`
@@ -63,10 +59,6 @@ from petsard import Loader
 
 # Basic usage
 load = Loader('data.csv')
-data, meta = load.load()
-
-# Using benchmark dataset
-load = Loader('benchmark://adult-income')
 data, meta = load.load()
 
 # Using external schema file (recommended)
@@ -136,7 +128,6 @@ data, meta = loader.load() # get loaded DataFrame
 
 - `config` (`LoaderConfig`): Configuration object containing：
   - `filepath` (`str`): Local data file path
-  - `method` (`str`): Loading method
   - `column_types` (`dict`): User-defined column types (deprecated)
   - `header_names` (`list`): Column headers
   - `na_values` (`str` | `list` | `dict`): NA value definitions (deprecated)
@@ -148,4 +139,5 @@ data, meta = loader.load() # get loaded DataFrame
     - `file_name` (`str`): Filename without extension
     - `file_ext` (`str`): File extension
     - `file_ext_code` (`int`): File extension code for internal processing
-  - `benchmarker_config` (`BenchmarkerConfig` | `None`): Benchmark dataset configuration (handles all benchmark-related operations)
+
+> **Note**: To use benchmark datasets (benchmark://), please use LoaderAdapter instead. Loader now focuses purely on file loading functionality.

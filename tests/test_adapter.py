@@ -171,19 +171,50 @@ class TestBaseAdapter:
 class TestLoaderAdapter:
     """測試 LoaderAdapter"""
 
-    def test_init(self):
-        """測試初始化"""
-        config = {"method": "csv", "path": "test.csv"}
+    def test_init_regular_file(self):
+        """測試一般檔案初始化"""
+        config = {"filepath": "test.csv"}
 
         with patch("petsard.adapter.Loader") as mock_loader_class:
             operator = LoaderAdapter(config)
 
-            mock_loader_class.assert_called_once_with(**config)
+            mock_loader_class.assert_called_once_with(filepath="test.csv")
             assert operator._schema_metadata is None
+            assert operator.is_benchmark is False
+            assert operator.benchmarker_config is None
 
-    def test_run(self):
-        """測試執行"""
-        config = {"method": "csv", "path": "test.csv"}
+    def test_init_benchmark_protocol(self):
+        """測試 benchmark:// 協議初始化"""
+        config = {"filepath": "benchmark://adult-income"}
+
+        with patch("petsard.adapter.Loader") as mock_loader_class:
+            with patch(
+                "petsard.loader.benchmarker.BenchmarkerConfig"
+            ) as mock_benchmarker_config_class:
+                mock_benchmarker_config = Mock()
+                mock_benchmarker_config.benchmark_filename = "adult-income.csv"
+                mock_benchmarker_config_class.return_value = mock_benchmarker_config
+
+                operator = LoaderAdapter(config)
+
+                # 檢查 BenchmarkerConfig 被正確建立
+                mock_benchmarker_config_class.assert_called_once_with(
+                    benchmark_name="adult-income",
+                    filepath_raw="benchmark://adult-income",
+                )
+
+                # 檢查 Loader 被呼叫時使用本地路徑
+                mock_loader_class.assert_called_once()
+                call_args = mock_loader_class.call_args[1]
+                assert call_args["filepath"] == "benchmark/adult-income.csv"
+
+                # 檢查屬性設置
+                assert operator.is_benchmark is True
+                assert operator.benchmarker_config == mock_benchmarker_config
+
+    def test_run_regular_file(self):
+        """測試一般檔案執行"""
+        config = {"filepath": "test.csv"}
         test_data = pd.DataFrame({"A": [1, 2, 3], "B": [4, 5, 6]})
         mock_metadata = Mock(spec=Schema)
 
@@ -195,13 +226,101 @@ class TestLoaderAdapter:
             operator = LoaderAdapter(config)
             operator._run({})
 
+            # 不應該呼叫 BenchmarkerRequests
+            mock_loader.load.assert_called_once()
             assert operator.data.equals(test_data)
             assert operator.metadata == mock_metadata
             assert operator._schema_metadata == mock_metadata
 
+    def test_run_benchmark_protocol(self):
+        """測試 benchmark:// 協議執行（包含下載）"""
+        config = {"filepath": "benchmark://adult-income"}
+        test_data = pd.DataFrame({"A": [1, 2, 3], "B": [4, 5, 6]})
+        mock_metadata = Mock(spec=Schema)
+
+        with patch("petsard.adapter.Loader") as mock_loader_class:
+            with patch(
+                "petsard.loader.benchmarker.BenchmarkerConfig"
+            ) as mock_benchmarker_config_class:
+                with patch(
+                    "petsard.loader.benchmarker.BenchmarkerRequests"
+                ) as mock_benchmarker_requests_class:
+                    # 設置 BenchmarkerConfig mock
+                    mock_benchmarker_config = Mock()
+                    mock_benchmarker_config.benchmark_filename = "adult-income.csv"
+                    mock_benchmarker_config.benchmark_name = "adult-income"
+                    mock_benchmarker_config.get_benchmarker_config.return_value = {
+                        "benchmark_filename": "adult-income.csv",
+                        "benchmark_bucket_name": "test-bucket",
+                        "benchmark_sha256": "test-sha256",
+                        "filepath": "benchmark/adult-income.csv",
+                    }
+                    mock_benchmarker_config_class.return_value = mock_benchmarker_config
+
+                    # 設置 BenchmarkerRequests mock
+                    mock_benchmarker_requests = Mock()
+                    mock_benchmarker_requests_class.return_value = (
+                        mock_benchmarker_requests
+                    )
+
+                    # 設置 Loader mock
+                    mock_loader = Mock()
+                    mock_loader.load.return_value = (test_data, mock_metadata)
+                    mock_loader_class.return_value = mock_loader
+
+                    operator = LoaderAdapter(config)
+                    operator._run({})
+
+                    # 檢查 BenchmarkerRequests 被呼叫
+                    mock_benchmarker_requests_class.assert_called_once()
+                    mock_benchmarker_requests.download.assert_called_once()
+
+                    # 檢查 Loader 被呼叫
+                    mock_loader.load.assert_called_once()
+                    assert operator.data.equals(test_data)
+                    assert operator.metadata == mock_metadata
+
+    def test_benchmark_download_failure(self):
+        """測試 benchmark 下載失敗"""
+        config = {"filepath": "benchmark://adult-income"}
+
+        with patch("petsard.adapter.Loader") as mock_loader_class:
+            with patch(
+                "petsard.loader.benchmarker.BenchmarkerConfig"
+            ) as mock_benchmarker_config_class:
+                with patch(
+                    "petsard.loader.benchmarker.BenchmarkerRequests"
+                ) as mock_benchmarker_requests_class:
+                    # 設置 BenchmarkerConfig mock
+                    mock_benchmarker_config = Mock()
+                    mock_benchmarker_config.benchmark_filename = "adult-income.csv"
+                    mock_benchmarker_config.benchmark_name = "adult-income"
+                    mock_benchmarker_config.get_benchmarker_config.return_value = {}
+                    mock_benchmarker_config_class.return_value = mock_benchmarker_config
+
+                    # 設置 BenchmarkerRequests 下載失敗
+                    mock_benchmarker_requests = Mock()
+                    mock_benchmarker_requests.download.side_effect = Exception(
+                        "Download failed"
+                    )
+                    mock_benchmarker_requests_class.return_value = (
+                        mock_benchmarker_requests
+                    )
+
+                    operator = LoaderAdapter(config)
+
+                    # 預期拋出 BenchmarkDatasetsError
+                    from petsard.exceptions import BenchmarkDatasetsError
+
+                    with pytest.raises(
+                        BenchmarkDatasetsError,
+                        match="Failed to download benchmark dataset",
+                    ):
+                        operator._run({})
+
     def test_set_input(self):
         """測試輸入設定"""
-        config = {"method": "csv", "path": "test.csv"}
+        config = {"filepath": "test.csv"}
 
         with patch("petsard.adapter.Loader"):
             operator = LoaderAdapter(config)
@@ -212,7 +331,7 @@ class TestLoaderAdapter:
 
     def test_get_result(self):
         """測試結果取得"""
-        config = {"method": "csv", "path": "test.csv"}
+        config = {"filepath": "test.csv"}
         test_data = pd.DataFrame({"A": [1, 2, 3]})
 
         with patch("petsard.adapter.Loader"):
@@ -224,7 +343,7 @@ class TestLoaderAdapter:
 
     def test_get_metadata(self):
         """測試元資料取得"""
-        config = {"method": "csv", "path": "test.csv"}
+        config = {"filepath": "test.csv"}
         mock_metadata = Mock(spec=Schema)
 
         with patch("petsard.adapter.Loader"):
@@ -233,6 +352,26 @@ class TestLoaderAdapter:
 
             result = operator.get_metadata()
             assert result == mock_metadata
+
+    def test_benchmark_protocol_case_insensitive(self):
+        """測試 benchmark:// 協議大小寫不敏感"""
+        configs = [
+            {"filepath": "BENCHMARK://adult-income"},
+            {"filepath": "Benchmark://adult-income"},
+            {"filepath": "BenchMark://adult-income"},
+        ]
+
+        for config in configs:
+            with patch("petsard.adapter.Loader"):
+                with patch(
+                    "petsard.loader.benchmarker.BenchmarkerConfig"
+                ) as mock_benchmarker_config_class:
+                    mock_benchmarker_config = Mock()
+                    mock_benchmarker_config.benchmark_filename = "adult-income.csv"
+                    mock_benchmarker_config_class.return_value = mock_benchmarker_config
+
+                    operator = LoaderAdapter(config)
+                    assert operator.is_benchmark is True
 
 
 class TestSplitterAdapter:

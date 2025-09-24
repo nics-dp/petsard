@@ -154,6 +154,7 @@ class BaseAdapter:
 class LoaderAdapter(BaseAdapter):
     """
     LoaderAdapter is responsible for loading data using the configured Loader instance as a decorator.
+    For benchmark:// protocol files, it handles downloading before loading.
     """
 
     def __init__(self, config: dict):
@@ -164,14 +165,58 @@ class LoaderAdapter(BaseAdapter):
         Attributes:
             loader (Loader):
                 An instance of the Loader class initialized with the provided configuration.
+            is_benchmark (bool):
+                Whether the filepath uses benchmark:// protocol.
+            benchmarker_config (BenchmarkerConfig):
+                Configuration for benchmark dataset if applicable.
         """
         super().__init__(config)
+
+        # Copy config once at the beginning to avoid modifying the original
+        config = config.copy()
+
+        # Check if filepath uses benchmark:// protocol
+        filepath = config.get("filepath", "")
+        self.is_benchmark = filepath.lower().startswith("benchmark://")
+        self.benchmarker_config = None
+
+        if self.is_benchmark:
+            # If benchmark protocol detected, prepare benchmarker
+            import re
+            from pathlib import Path
+
+            from petsard.loader.benchmarker import BenchmarkerConfig
+
+            benchmark_name = re.sub(
+                r"^benchmark://", "", filepath, flags=re.IGNORECASE
+            ).lower()
+
+            self._logger.info(f"Detected benchmark protocol: {benchmark_name}")
+
+            # Create BenchmarkerConfig
+            self.benchmarker_config = BenchmarkerConfig(
+                benchmark_name=benchmark_name, filepath_raw=filepath
+            )
+
+            # Update filepath in config to local path
+            local_filepath = Path("benchmark").joinpath(
+                self.benchmarker_config.benchmark_filename
+            )
+            config["filepath"] = str(local_filepath)
+
+            self._logger.debug(f"Updated filepath to local path: {local_filepath}")
+
+        # Remove method parameter if exists, as Loader no longer accepts it
+        config.pop("method", None)
+
+        # Create Loader instance with possibly updated config
         self.loader = Loader(**config)
         self._schema_metadata = None  # Store the Schema
 
     def _run(self, input: dict):
         """
         Executes the data loading process using the Loader instance.
+        For benchmark:// protocol, downloads dataset first.
 
         Args:
             input (dict): Loader input should contains nothing ({}).
@@ -181,6 +226,26 @@ class LoaderAdapter(BaseAdapter):
                 An loading result data.
         """
         self._logger.debug("Starting data loading process")
+
+        # If benchmark protocol, download dataset first
+        if self.is_benchmark and self.benchmarker_config:
+            self._logger.info(
+                f"Downloading benchmark dataset: {self.benchmarker_config.benchmark_name}"
+            )
+            try:
+                from petsard.exceptions import BenchmarkDatasetsError
+                from petsard.loader.benchmarker import BenchmarkerRequests
+
+                BenchmarkerRequests(
+                    self.benchmarker_config.get_benchmarker_config()
+                ).download()
+                self._logger.debug("Benchmark dataset downloaded successfully")
+            except Exception as e:
+                error_msg = f"Failed to download benchmark dataset: {str(e)}"
+                self._logger.error(error_msg)
+                raise BenchmarkDatasetsError(error_msg) from e
+
+        # Load data (regardless of whether it's benchmark or not)
         self.data, self._schema_metadata = self.loader.load()
 
         # Use Schema directly
@@ -352,7 +417,7 @@ class SplitterAdapter(BaseAdapter):
                     split_params[key] = value
                 elif key == "metadata":
                     split_params[key] = value
-                elif key == "exist_train_indices" and value:  # 只有非空時才傳遞
+                elif key == "exist_train_indices" and value:  # Only pass when not empty
                     split_params[key] = value
             self.data, self.metadata, self.train_indices = self.splitter.split(
                 **split_params
@@ -559,10 +624,9 @@ class SynthesizerAdapter(BaseAdapter):
         Returns:
             dict: Configuration for Loader
         """
-        # Common Loader parameters
+        # Common Loader parameters (removed 'method' as Loader no longer accepts it)
         LOADER_PARAMS = [
             "filepath",
-            "method",
             "delimiter",
             "encoding",
             "schema",
@@ -1074,7 +1138,7 @@ class ReporterAdapter(BaseAdapter):
     def _run(self, input: dict):
         """
         Runs the Reporter to create and generate reports.
-        適應新的函式化 Reporter 架構
+        Adapts to the new functional Reporter architecture
 
         Args:
             input (dict): Input data for the Reporter.
@@ -1082,53 +1146,53 @@ class ReporterAdapter(BaseAdapter):
         """
         self._logger.debug("Starting data reporting process")
 
-        # 使用新的函式化 Reporter 介面
+        # Use the new functional Reporter interface
         processed_data = self.reporter.create(data=input["data"])
         self._logger.debug("Reporting configuration initialization completed")
 
-        # 調用函式化的 report 方法
+        # Call the functional report method
         result = self.reporter.report(processed_data)
 
-        # 處理不同類型的 Reporter 結果
+        # Handle different types of Reporter results
         if isinstance(result, dict) and "Reporter" in result:
             # ReporterSaveReport
             temp = result["Reporter"]
 
-            # 檢查是否為舊格式（單一 granularity）
+            # Check if it's the old format (single granularity)
             if "eval_expt_name" in temp and "report" in temp:
-                # 舊格式：單一 granularity
+                # Old format: single granularity
                 if "warnings" in temp:
                     return
                 eval_expt_name = temp["eval_expt_name"]
                 report = deepcopy(temp["report"])
                 self.report[eval_expt_name] = report
             else:
-                # 新格式：多 granularity
+                # New format: multiple granularities
                 for eval_expt_name, granularity_data in temp.items():
                     if not isinstance(granularity_data, dict):
                         continue
 
-                    # 跳過有警告的 granularity
+                    # Skip granularities with warnings
                     if "warnings" in granularity_data:
                         continue
 
-                    # 驗證必要的鍵
+                    # Validate required keys
                     if not all(
                         key in granularity_data for key in ["eval_expt_name", "report"]
                     ):
                         continue
 
-                    # 跳過 report 為 None 的情況
+                    # Skip if report is None
                     if granularity_data["report"] is None:
                         continue
 
                     report = deepcopy(granularity_data["report"])
                     self.report[eval_expt_name] = report
         elif isinstance(result, dict):
-            # ReporterSaveData 或其他類型
+            # ReporterSaveData or other types
             self.report = deepcopy(result)
         else:
-            # ReporterSaveTiming 或其他返回 DataFrame 的類型
+            # ReporterSaveTiming or other types that return DataFrame
             self.report = (
                 {"timing_report": deepcopy(result)} if result is not None else {}
             )
@@ -1170,7 +1234,7 @@ class ReporterAdapter(BaseAdapter):
         self.input["data"] = data
         self.input["data"]["exist_report"] = status.get_report()
 
-        # 新增時間資料支援
+        # Add timing data support
         if hasattr(status, "get_timing_report_data"):
             timing_data = status.get_timing_report_data()
             if not timing_data.empty:
