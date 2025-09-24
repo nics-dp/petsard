@@ -53,11 +53,15 @@ LoaderAdapter(config)
 Wraps the Loader module for data loading operations.
 
 **Configuration Parameters**
-- `filepath` (str): Path to the data file
+- `filepath` (str): Path to the data file or benchmark URL (e.g., 'benchmark://adult-income')
 - `method` (str, optional): Loading method ('default' for benchmark data)
-- `column_types` (dict, optional): Column type specifications
-- `header_names` (list, optional): Custom header names
-- `na_values` (str/list/dict, optional): Custom NA value definitions
+- `column_types` (dict, optional): **DEPRECATED** - Column type specifications (use schema instead)
+- `header_names` (list, optional): Custom header names for files without headers
+- `na_values` (str/list/dict, optional): **DEPRECATED** - Custom NA value definitions (use schema instead)
+- `schema` (Schema/dict/str, optional): Schema configuration for comprehensive data typing and metadata:
+  - Schema object: Direct schema configuration
+  - dict: Dictionary that will be converted to Schema
+  - str: Path to YAML file containing schema configuration
 
 **Key Methods**
 - `get_result()`: Returns loaded DataFrame
@@ -69,13 +73,20 @@ Wraps the Loader module for data loading operations.
 SplitterAdapter(config)
 ```
 
-Wraps the Splitter module for data splitting operations.
+Wraps the Splitter module for data splitting operations. When `method='custom_data'` is specified in configuration, the adapter handles loading pre-split data directly using LoaderAdapter instead of using the Splitter module.
 
 **Configuration Parameters**
 - `train_split_ratio` (float): Ratio for training data (default: 0.8)
 - `num_samples` (int): Number of split samples (default: 1)
 - `random_state` (int/float/str, optional): Random seed
-- `method` (str, optional): 'custom_data' for loading pre-split data
+
+For custom_data mode:
+- `method` (str): Set to 'custom_data' to load pre-split data
+- `filepath` (dict): Paths for 'ori' (training) and 'control' (validation) data
+- All LoaderAdapter parameters are supported for each file, including:
+  - `header_names` (list): Custom column headers for files without headers
+  - `schema` (Schema/dict/str): Schema configuration for data types and metadata
+  - Additional data loading parameters as needed
 
 **Key Methods**
 - `get_result()`: Returns dict with 'train' and 'validation' DataFrames
@@ -104,12 +115,20 @@ Wraps the Processor module for data preprocessing operations.
 SynthesizerAdapter(config)
 ```
 
-Wraps the Synthesizer module for synthetic data generation.
+Wraps the Synthesizer module for synthetic data generation. When `syn_method='custom_data'` is specified in configuration, the adapter handles loading external synthetic data directly using LoaderAdapter instead of using the Synthesizer module.
 
 **Configuration Parameters**
 - `method` (str): Synthesis method (e.g., 'sdv')
 - `model` (str): Model type (e.g., 'GaussianCopula')
 - Additional parameters specific to the chosen method
+
+For custom_data mode:
+- `method` (str): Set to 'custom_data' to load external synthetic data
+- `filepath` (str): Path to the pre-synthesized data file
+- All LoaderAdapter parameters are supported, including:
+  - `header_names` (list): Custom column headers for files without headers
+  - `schema` (Schema/dict/str): Schema configuration for data types and metadata
+  - Additional data loading parameters as needed
 
 **Key Methods**
 - `get_result()`: Returns synthetic DataFrame

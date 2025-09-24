@@ -20,12 +20,13 @@ Synthetic data generator supporting multiple synthesis methods.
 
 - `method` (str): Synthesis method
   - 'default': Use SDV-GaussianCopula
-  - 'custom_data': Load custom data from file
   - 'sdv-single_table-{method}': Use SDV provided methods
     - copulagan: CopulaGAN generative model
     - ctgan: CTGAN generative model
     - gaussiancopula: Gaussian Copula model
     - tvae: TVAE generative model
+
+Note: The 'custom_data' method for loading external synthetic data is handled at the framework level and doesn't require synthesizer instantiation.
 
 ## Default Parameters
 
@@ -148,4 +149,3 @@ None. Generated data is stored in `data_syn` attribute
   - `method_code` (int): Method type code
   - Additional parameters specific to each method
 - `synthesizer`: Instantiated synthesizer object (for SDV methods)
-- `loader`: Loader object (for 'custom_data' method only)

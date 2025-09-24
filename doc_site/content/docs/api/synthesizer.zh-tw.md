@@ -20,12 +20,13 @@ Synthesizer(
 
 - `method` (str)：合成方法
   - 'default'：使用 SDV-GaussianCopula
-  - 'custom_data'：從檔案載入自定義資料
   - 'sdv-single_table-{method}'：使用 SDV 提供的方法
     - copulagan：CopulaGAN 生成模型
     - ctgan：CTGAN 生成模型
     - gaussiancopula：高斯耦合模型
     - tvae：TVAE 生成模型
+
+註：'custom_data' 方法用於載入外部合成資料，由框架層級處理，不需要合成器實例化。
 
 ## 預設參數
 
@@ -147,4 +148,3 @@ Perform training and generation in sequence. Combines functionality of `fit()` a
   - `method_code` (int)：方法類型代碼
   - 各方法特定的其他參數
 - `synthesizer`：實例化的合成器物件（用於 SDV 方法）
-- `loader`：載入器物件（僅用於 'custom_data' 方法）
