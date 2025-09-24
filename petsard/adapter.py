@@ -154,6 +154,7 @@ class BaseAdapter:
 class LoaderAdapter(BaseAdapter):
     """
     LoaderAdapter is responsible for loading data using the configured Loader instance as a decorator.
+    For benchmark:// protocol files, it handles downloading before loading.
     """
 
     def __init__(self, config: dict):
@@ -164,14 +165,57 @@ class LoaderAdapter(BaseAdapter):
         Attributes:
             loader (Loader):
                 An instance of the Loader class initialized with the provided configuration.
+            is_benchmark (bool):
+                Whether the filepath uses benchmark:// protocol.
+            benchmarker_config (BenchmarkerConfig):
+                Configuration for benchmark dataset if applicable.
         """
         super().__init__(config)
+
+        # 檢查是否為 benchmark:// 協議
+        filepath = config.get("filepath", "")
+        self.is_benchmark = filepath.lower().startswith("benchmark://")
+        self.benchmarker_config = None
+
+        if self.is_benchmark:
+            # 如果是 benchmark 協議，需要先準備 benchmarker
+            import re
+            from pathlib import Path
+
+            from petsard.loader.benchmarker import BenchmarkerConfig
+
+            benchmark_name = re.sub(
+                r"^benchmark://", "", filepath, flags=re.IGNORECASE
+            ).lower()
+
+            self._logger.info(f"Detected benchmark protocol: {benchmark_name}")
+
+            # 建立 BenchmarkerConfig
+            self.benchmarker_config = BenchmarkerConfig(
+                benchmark_name=benchmark_name, filepath_raw=filepath
+            )
+
+            # 更新 config 中的 filepath 為本地路徑
+            local_filepath = Path("benchmark").joinpath(
+                self.benchmarker_config.benchmark_filename
+            )
+            config = config.copy()
+            config["filepath"] = str(local_filepath)
+
+            self._logger.debug(f"Updated filepath to local path: {local_filepath}")
+
+        # 移除 method 參數（如果存在），因為 Loader 不再接受此參數
+        config = config.copy()
+        config.pop("method", None)
+
+        # 建立 Loader 實例（使用可能更新過的 config）
         self.loader = Loader(**config)
         self._schema_metadata = None  # Store the Schema
 
     def _run(self, input: dict):
         """
         Executes the data loading process using the Loader instance.
+        For benchmark:// protocol, downloads dataset first.
 
         Args:
             input (dict): Loader input should contains nothing ({}).
@@ -181,6 +225,26 @@ class LoaderAdapter(BaseAdapter):
                 An loading result data.
         """
         self._logger.debug("Starting data loading process")
+
+        # 如果是 benchmark 協議，先執行下載
+        if self.is_benchmark and self.benchmarker_config:
+            self._logger.info(
+                f"Downloading benchmark dataset: {self.benchmarker_config.benchmark_name}"
+            )
+            try:
+                from petsard.exceptions import BenchmarkDatasetsError
+                from petsard.loader.benchmarker import BenchmarkerRequests
+
+                BenchmarkerRequests(
+                    self.benchmarker_config.get_benchmarker_config()
+                ).download()
+                self._logger.debug("Benchmark dataset downloaded successfully")
+            except Exception as e:
+                error_msg = f"Failed to download benchmark dataset: {str(e)}"
+                self._logger.error(error_msg)
+                raise BenchmarkDatasetsError(error_msg) from e
+
+        # 載入資料（不論是否為 benchmark）
         self.data, self._schema_metadata = self.loader.load()
 
         # Use Schema directly
@@ -559,10 +623,9 @@ class SynthesizerAdapter(BaseAdapter):
         Returns:
             dict: Configuration for Loader
         """
-        # Common Loader parameters
+        # Common Loader parameters (移除 'method'，因為 Loader 不再接受此參數)
         LOADER_PARAMS = [
             "filepath",
-            "method",
             "delimiter",
             "encoding",
             "schema",
