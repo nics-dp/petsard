@@ -9,7 +9,6 @@ next: docs/api/processor
 
 ```python
 Splitter(
-    method=None,
     num_samples=1,
     train_split_ratio=0.8,
     random_state=None,
@@ -24,9 +23,6 @@ Splitter(
 
 ## 參數
 
-- `method` (str, optional)：載入已分割資料的方法
-  - 預設值：無
-  - 可用值：'custom_data' - 從檔案路徑載入分割資料
 - `num_samples` (int, optional)：重複抽樣次數
   - 預設值：1
 - `train_split_ratio` (float, optional)：訓練集的資料比例
@@ -103,11 +99,8 @@ split_data, metadata_dict, train_indices = splitter.split(
 
 **參數**
 
-- `data` (pd.DataFrame, optional)：要分割的資料集
-  - 若 `method='custom_data'` 則不需提供
-- `metadata` (SchemaMetadata, optional)：資料集的詮釋資料
-  - 一般分割方法時為必要參數
-  - 自訂分割方法不使用此參數（從檔案載入）
+- `data` (pd.DataFrame)：要分割的資料集
+- `metadata` (SchemaMetadata)：資料集的詮釋資料
   - 包含資料的結構描述資訊
   - 會更新分割資訊
 - `exist_train_indices` (list[set], optional)：要避免重疊的現有訓練索引集合列表
@@ -148,16 +141,11 @@ new_data, new_meta, new_indices = splitter.split(
 ## 屬性
 
 - `config`：設定字典，包含：
-  - 若 `method=None`：
-    - `num_samples` (int)：重複抽樣次數
-    - `train_split_ratio` (float)：分割比例
-    - `random_state` (int | float | str)：隨機種子
-    - `max_overlap_ratio` (float)：最大重疊比率
-    - `max_attempts` (int)：最大抽樣嘗試次數
-  - 若 `method='custom_data'`：
-    - `method` (str)：載入方法
-    - `filepath` (dict)：資料檔案路徑
-    - 其他 Loader 設定
+  - `num_samples` (int)：重複抽樣次數
+  - `train_split_ratio` (float)：分割比例
+  - `random_state` (int | float | str)：隨機種子
+  - `max_overlap_ratio` (float)：最大重疊比率
+  - `max_attempts` (int)：最大抽樣嘗試次數
 
 ## 重疊控制功能
 

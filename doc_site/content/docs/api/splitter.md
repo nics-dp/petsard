@@ -9,7 +9,6 @@ next: docs/api/processor
 
 ```python
 Splitter(
-    method=None,
     num_samples=1,
     train_split_ratio=0.8,
     random_state=None,
@@ -24,9 +23,6 @@ The module uses a functional approach with pure functions and immutable data str
 
 ## Parameters
 
-- `method` (str, optional): Loading method for existing split data
-  - Default: None
-  - Values: 'custom_data' - load split data from filepath
 - `num_samples` (int, optional): Number of times to resample the data
   - Default: 1
 - `train_split_ratio` (float, optional): Ratio of data for training set
@@ -103,11 +99,8 @@ Perform data splitting using functional programming patterns with enhanced overl
 
 **Parameters**
 
-- `data` (pd.DataFrame, optional): Dataset to be split
-  - Not required if `method='custom_data'`
-- `metadata` (SchemaMetadata, optional): Metadata for the dataset
-  - Required for normal splitting method
-  - Not used for custom splitting method (loaded from files)
+- `data` (pd.DataFrame): Dataset to be split
+- `metadata` (SchemaMetadata): Metadata for the dataset
   - Contains schema information about the data
   - Will be updated with split information
 - `exist_train_indices` (list[set], optional): List of existing training index sets to avoid overlap with
@@ -148,16 +141,11 @@ new_data, new_meta, new_indices = splitter.split(
 ## Attributes
 
 - `config`: Configuration dictionary containing:
-  - If `method=None`:
-    - `num_samples` (int): Resample times
-    - `train_split_ratio` (float): Split ratio
-    - `random_state` (int | float | str): Random seed
-    - `max_overlap_ratio` (float): Maximum overlap ratio
-    - `max_attempts` (int): Maximum sampling attempts
-  - If `method='custom_data'`:
-    - `method` (str): Loading method
-    - `filepath` (dict): Data file paths
-    - Additional Loader configurations
+  - `num_samples` (int): Resample times
+  - `train_split_ratio` (float): Split ratio
+  - `random_state` (int | float | str): Random seed
+  - `max_overlap_ratio` (float): Maximum overlap ratio
+  - `max_attempts` (int): Maximum sampling attempts
 
 ## Overlap Control Features
 

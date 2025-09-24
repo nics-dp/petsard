@@ -623,15 +623,15 @@ Tests for data splitting functionality with enhanced overlap control:
 #### Core Functionality Tests
 - `test_splitter_init_normal`: Tests normal initialization with new parameters (`max_overlap_ratio`, `max_attempts`)
 - `test_splitter_init_invalid_ratio`: Tests handling of invalid split ratios and overlap ratios
-- `test_splitter_init_custom_data_valid`: Tests valid custom data method configuration
-- `test_splitter_init_custom_data_invalid_method`: Tests error handling for invalid custom methods
-- `test_splitter_init_custom_data_invalid_filepath`: Tests error handling for invalid file paths
+- `test_splitter_init_custom_data_valid`: Tests valid custom data method configuration (Skipped - functionality moved to adapter layer)
+- `test_splitter_init_custom_data_invalid_method`: Tests error handling for invalid custom methods (Skipped - functionality moved to adapter layer)
+- `test_splitter_init_custom_data_invalid_filepath`: Tests error handling for invalid file paths (Skipped - functionality moved to adapter layer)
 
 #### Functional Programming API Tests
 - `test_split_normal_method`: Tests normal splitting method with new return format `(split_data, metadata_dict, train_indices)`
 - `test_split_normal_method_no_data`: Tests splitting with no data
 - `test_split_multiple_samples`: Tests multiple sample splitting with `list[set]` train indices format
-- `test_split_custom_data_method`: Tests custom data splitting method with updated metadata structure
+- `test_split_custom_data_method`: Tests custom data splitting method with updated metadata structure (Skipped - functionality moved to adapter layer)
 - `test_split_basic_functionality`: Tests basic splitting functionality with functional API
 
 #### Overlap Control Features

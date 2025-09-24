@@ -233,7 +233,55 @@ class SplitterAdapter(BaseAdapter):
                 An instance of the Splitter class initialized with the provided configuration.
         """
         super().__init__(config)
-        self.splitter = Splitter(**config)
+
+        # Check if it's custom_data method
+        if config.get("method") == "custom_data":
+            # Create LoaderAdapter instances (but don't run yet)
+            ori_config = self._create_loader_config(config, "ori")
+            self.ori_loader_adapter = LoaderAdapter(ori_config)
+
+            ctrl_config = self._create_loader_config(config, "control")
+            self.ctrl_loader_adapter = LoaderAdapter(ctrl_config)
+
+            self.is_custom_data = True
+            self.splitter = None
+        else:
+            self.splitter = Splitter(**config)
+            self.is_custom_data = False
+
+    def _create_loader_config(self, config: dict, key: str) -> dict:
+        """
+        Create Loader configuration for a specific key (ori/control).
+
+        Args:
+            config: Full configuration dictionary
+            key: Either 'ori' or 'control'
+
+        Returns:
+            dict: Loader configuration for the specified key
+        """
+        # Parameters that should be excluded (Splitter-specific parameters)
+        SPLITTER_ONLY_PARAMS = [
+            "method",
+            "num_samples",
+            "train_split_ratio",
+            "random_state",
+            "max_overlap_ratio",
+            "max_attempts",
+        ]
+
+        loader_config = {}
+        for param_name, param_value in config.items():
+            # Skip Splitter-specific parameters
+            if param_name in SPLITTER_ONLY_PARAMS:
+                continue
+
+            if isinstance(param_value, dict) and key in param_value:
+                loader_config[param_name] = param_value[key]
+            elif not isinstance(param_value, dict):
+                # Non-dict parameters are passed directly (if not excluded)
+                loader_config[param_name] = param_value
+        return loader_config
 
     def _run(self, input: dict):
         """
@@ -255,18 +303,60 @@ class SplitterAdapter(BaseAdapter):
                 The original indices of training data for each sample.
         """
         self._logger.debug("Starting data splitting process")
-        # Only pass parameters that Splitter.split() accepts and are not empty
-        split_params = {}
-        for key, value in input.items():
-            if key == "data":
-                split_params[key] = value
-            elif key == "metadata":
-                split_params[key] = value
-            elif key == "exist_train_indices" and value:  # 只有非空時才傳遞
-                split_params[key] = value
-        self.data, self.metadata, self.train_indices = self.splitter.split(
-            **split_params
-        )
+
+        if self.is_custom_data:
+            # Execute LoaderAdapters to load data
+            self.ori_loader_adapter._run({})
+            ori_data = self.ori_loader_adapter.get_result()
+            ori_metadata = self.ori_loader_adapter.get_metadata()
+
+            self.ctrl_loader_adapter._run({})
+            ctrl_data = self.ctrl_loader_adapter.get_result()
+            ctrl_metadata = self.ctrl_loader_adapter.get_metadata()
+
+            # Update metadata with split information
+            from copy import deepcopy
+
+            train_metadata = deepcopy(ori_metadata)
+            validation_metadata = deepcopy(ctrl_metadata)
+
+            # Add split description
+            split_info = f"Split info: train={ori_data.shape[0]} rows, validation={ctrl_data.shape[0]} rows"
+            train_metadata.description = (
+                f"{train_metadata.description or ''} | {split_info}".strip()
+            )
+            validation_metadata.description = (
+                f"{validation_metadata.description or ''} | {split_info}".strip()
+            )
+
+            # Assemble results
+            self.data = {
+                1: {
+                    "train": ori_data,
+                    "validation": ctrl_data,
+                }
+            }
+            self.metadata = {
+                1: {
+                    "train": train_metadata,
+                    "validation": validation_metadata,
+                }
+            }
+            self.train_indices = [set(ori_data.index.tolist())]
+        else:
+            # Normal splitting process
+            # Only pass parameters that Splitter.split() accepts and are not empty
+            split_params = {}
+            for key, value in input.items():
+                if key == "data":
+                    split_params[key] = value
+                elif key == "metadata":
+                    split_params[key] = value
+                elif key == "exist_train_indices" and value:  # 只有非空時才傳遞
+                    split_params[key] = value
+            self.data, self.metadata, self.train_indices = self.splitter.split(
+                **split_params
+            )
         self._logger.debug("Data splitting completed")
 
     @BaseAdapter.log_and_raise_config_error
@@ -281,9 +371,10 @@ class SplitterAdapter(BaseAdapter):
             dict: Splitter input should contains
                 data (pd.DataFrame), exclude_index (list), and Metadata (Metadata)
         """
-        if "method" in self.config:
-            # Splitter method = 'custom_data'
+        if self.is_custom_data:
+            # For custom_data, we don't need input data
             self.input["data"] = None
+            self.input["metadata"] = None
         else:
             # Splitter accept following Loader only
             self.input["data"] = status.get_result("Loader")
@@ -443,8 +534,52 @@ class SynthesizerAdapter(BaseAdapter):
         """
         super().__init__(config)
 
-        self.synthesizer: Synthesizer = Synthesizer(**config)
+        # Check if it's custom_data method
+        if config.get("method") == "custom_data":
+            # Extract Loader configuration (but don't run yet)
+            loader_config = self._extract_loader_config(config)
+            self.loader_adapter = LoaderAdapter(loader_config)
+
+            # No need to create synthesizer for custom_data
+            self.synthesizer = None
+            self.is_custom_data = True
+            self._sample_num_rows = config.get("sample_num_rows", 0)
+        else:
+            self.synthesizer: Synthesizer = Synthesizer(**config)
+            self.is_custom_data = False
         self.data_syn: pd.DataFrame = None
+
+    def _extract_loader_config(self, config: dict) -> dict:
+        """
+        Extract Loader-related configuration from synthesizer config.
+
+        Args:
+            config: Full synthesizer configuration
+
+        Returns:
+            dict: Configuration for Loader
+        """
+        # Common Loader parameters
+        LOADER_PARAMS = [
+            "filepath",
+            "method",
+            "delimiter",
+            "encoding",
+            "schema",
+            "header",
+            "index_col",
+            "usecols",
+            "dtype",
+            "nrows",
+            "skiprows",
+            "na_values",
+            "parse_dates",
+            "date_format",
+        ]
+        loader_config = {
+            k: v for k, v in config.items() if k in LOADER_PARAMS and v is not None
+        }
+        return loader_config
 
     def _run(self, input: dict):
         """
@@ -459,11 +594,31 @@ class SynthesizerAdapter(BaseAdapter):
         """
         self._logger.debug("Starting data synthesizing process")
 
-        self.synthesizer.create(metadata=input["metadata"])
-        self._logger.debug("Synthesizing model initialization completed")
+        if self.is_custom_data:
+            # Execute LoaderAdapter to load custom data
+            self._logger.debug("Using custom_data method")
+            self.loader_adapter._run({})
+            custom_data = self.loader_adapter.get_result()
 
-        self.data_syn = self.synthesizer.fit_sample(data=input["data"])
-        self._logger.debug("Train and sampling Synthesizing model completed")
+            # Handle sample_num_rows if specified
+            if self._sample_num_rows > 0 and self._sample_num_rows < len(custom_data):
+                self._logger.warning(
+                    f"sample_num_rows ({self._sample_num_rows}) is specified for custom_data. "
+                    f"Will use first {self._sample_num_rows} rows."
+                )
+                self.data_syn = custom_data.iloc[: self._sample_num_rows].copy()
+            else:
+                self.data_syn = custom_data.copy()
+        else:
+            # Normal synthesizing process
+            if self.synthesizer is None:
+                raise ConfigError("Synthesizer not initialized properly")
+
+            self.synthesizer.create(metadata=input["metadata"])
+            self._logger.debug("Synthesizing model initialization completed")
+
+            self.data_syn = self.synthesizer.fit_sample(data=input["data"])
+            self._logger.debug("Train and sampling Synthesizing model completed")
 
     @BaseAdapter.log_and_raise_config_error
     def set_input(self, status) -> dict:
@@ -478,25 +633,30 @@ class SynthesizerAdapter(BaseAdapter):
                 Synthesizer input should contains data (pd.DataFrame)
                     and SDV format metadata (dict or None).
         """
-        pre_module = status.get_pre_module("Synthesizer")
-
-        # Check if metadata exists for the previous module
-        try:
-            self.input["metadata"] = status.get_metadata(pre_module)
-            # Validate that the metadata has attributes
-            if not self.input["metadata"].attributes:
-                self._logger.warning(
-                    f"Metadata from {pre_module} has no attributes, setting to None"
-                )
-                self.input["metadata"] = None
-        except Exception as e:
-            self._logger.warning(f"Could not get metadata from {pre_module}: {e}")
+        if self.is_custom_data:
+            # For custom_data, we don't need input from previous modules
+            self.input["data"] = None
             self.input["metadata"] = None
+        else:
+            pre_module = status.get_pre_module("Synthesizer")
 
-        if pre_module == "Splitter":
-            self.input["data"] = status.get_result(pre_module)["train"]
-        else:  # Loader or Preprocessor
-            self.input["data"] = status.get_result(pre_module)
+            # Check if metadata exists for the previous module
+            try:
+                self.input["metadata"] = status.get_metadata(pre_module)
+                # Validate that the metadata has attributes
+                if not self.input["metadata"].attributes:
+                    self._logger.warning(
+                        f"Metadata from {pre_module} has no attributes, setting to None"
+                    )
+                    self.input["metadata"] = None
+            except Exception as e:
+                self._logger.warning(f"Could not get metadata from {pre_module}: {e}")
+                self.input["metadata"] = None
+
+            if pre_module == "Splitter":
+                self.input["data"] = status.get_result(pre_module)["train"]
+            else:  # Loader or Preprocessor
+                self.input["data"] = status.get_result(pre_module)
 
         return self.input
 
