@@ -9,7 +9,6 @@ import pandas as pd
 from petsard.config_base import BaseConfig
 from petsard.exceptions import ConfigError, UncreatedError, UnsupportedMethodError
 from petsard.metadater.metadata import Schema
-from petsard.synthesizer.custom_data import CustomDataSynthesizer
 from petsard.synthesizer.custom_synthesizer import CustomSynthesizer
 from petsard.synthesizer.sdv import SDVSingleTableSynthesizer
 from petsard.synthesizer.synthesizer_base import BaseSynthesizer
@@ -22,8 +21,6 @@ class SynthesizerMap:
 
     DEFAULT: int = 1
     SDV: int = 10
-
-    CUSTOM_DATA: int = 2
     CUSTOM_METHOD: int = 3
 
     @classmethod
@@ -102,7 +99,6 @@ class Synthesizer:
     SYNTHESIZER_MAP: dict[int, BaseSynthesizer] = {
         SynthesizerMap.DEFAULT: SDVSingleTableSynthesizer,
         SynthesizerMap.SDV: SDVSingleTableSynthesizer,
-        SynthesizerMap.CUSTOM_DATA: CustomDataSynthesizer,
         SynthesizerMap.CUSTOM_METHOD: CustomSynthesizer,
     }
 
@@ -268,7 +264,6 @@ class Synthesizer:
         Args:
             data (pd.DataFrame):
                 The data to be fitted.
-                Only 'CUSTOM_DATA' method doesn't need data to fit.
         """
         if self._impl is None:
             error_msg: str = "Synthesizer not created yet, call create() first"
@@ -276,30 +271,26 @@ class Synthesizer:
             raise UncreatedError(error_msg)
 
         if data is None:
-            # Should only happen for 'CUSTOM_DATA' method
-            if self.config.method_code != SynthesizerMap.CUSTOM_DATA:
-                error_msg: str = (
-                    f"Data must be provided for fitting in {self.config.method}"
-                )
-                self._logger.error(error_msg)
-                raise ConfigError(error_msg)
-
-            self._logger.info("Fitting synthesizer without data")
-        else:
-            # In other methods, update the sample_num_rows in the synthesizer config
-            self._logger.info(f"Fitting synthesizer with data shape: {data.shape}")
-
-            if self.config.sample_from == "Source data":
-                old_value: int = self.config.sample_num_rows
-                self.config.update({"sample_num_rows": data.shape[0]})
-                self._logger.debug(
-                    f"Updated sample_num_rows from {old_value} to {data.shape[0]}"
-                )
-
-            self._impl.update_config({"sample_num_rows": data.shape[0]})
-            self._logger.debug(
-                f"Updated synthesizer config with sample_num_rows={data.shape[0]}"
+            error_msg: str = (
+                f"Data must be provided for fitting in {self.config.method}"
             )
+            self._logger.error(error_msg)
+            raise ConfigError(error_msg)
+
+        # Update the sample_num_rows in the synthesizer config
+        self._logger.info(f"Fitting synthesizer with data shape: {data.shape}")
+
+        if self.config.sample_from == "Source data":
+            old_value: int = self.config.sample_num_rows
+            self.config.update({"sample_num_rows": data.shape[0]})
+            self._logger.debug(
+                f"Updated sample_num_rows from {old_value} to {data.shape[0]}"
+            )
+
+        self._impl.update_config({"sample_num_rows": data.shape[0]})
+        self._logger.debug(
+            f"Updated synthesizer config with sample_num_rows={data.shape[0]}"
+        )
 
         time_start: time = time.time()
 
