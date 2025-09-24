@@ -4,9 +4,8 @@ import os
 import resource
 import tempfile
 import time
-from pathlib import Path
 from typing import Any
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 import numpy as np
 import pandas as pd
@@ -30,97 +29,34 @@ class TestLoaderConfig:
         with pytest.raises(ConfigError):
             LoaderConfig()
 
-    def test_default_method(self):
-        """Test default method configuration
-        測試默認方法配置
+    def test_default_filepath(self):
+        """Test that filepath must be specified
+        測試必須指定 filepath 參數
         """
-        with patch.object(
-            BenchmarkerConfig, "_load_benchmark_config"
-        ) as mock_load_config:
-            mock_load_config.return_value = {
-                "adult-income": {
-                    "filename": "adult-income.csv",
-                    "access": "public",
-                    "region_name": "us-west-2",
-                    "bucket_name": "petsard-benchmark",
-                    "sha256": "1f13ee2bf9d7c66098429281ab91fa1b51cbabd3b805cc365b3c6b44491ea2c0",
-                }
-            }
+        # LoaderConfig no longer supports method parameter
+        # LoaderConfig 不再支持 method 參數
+        with pytest.raises(ConfigError):
+            LoaderConfig()  # No filepath specified
 
-            config = LoaderConfig(method="default")
-            # 檢查初始 filepath 被設置為 benchmark URL
-            # Check that initial filepath is set to benchmark URL
-            assert config.DEFAULT_METHOD_FILEPATH == "benchmark://adult-income"
-            # 檢查 filepath 已被處理為本地路徑
-            # Check that filepath has been processed to local path
-            assert str(config.filepath).endswith("benchmark/adult-income.csv")
-            # 檢查 benchmarker_config 已被設置
-            # Check that benchmarker_config is set
-            assert config.benchmarker_config is not None
-            assert config.benchmarker_config.benchmark_name == "adult-income"
-
-    def test_unsupported_method(self):
-        """Test unsupported method raises error
-        測試不支援的方法會引發錯誤
+    def test_regular_filepath(self):
+        """Test regular file path parsing
+        測試一般檔案路徑解析
         """
+        # LoaderConfig should handle regular file paths
+        config = LoaderConfig(filepath="path/to/data.csv")
+        assert config.filepath == "path/to/data.csv"
+        assert config.file_ext == ".csv"
+
+    def test_benchmark_path_not_supported_in_loader(self):
+        """Test that benchmark:// paths are not supported in LoaderConfig
+        測試 LoaderConfig 不支援 benchmark:// 路徑
+        """
+        # LoaderConfig should not handle benchmark:// paths
+        # These should be handled by LoaderAdapter instead
+        # LoaderConfig 不應處理 benchmark:// 路徑
+        # 這些應該由 LoaderAdapter 處理
         with pytest.raises(UnsupportedMethodError):
-            LoaderConfig(method="unsupported_method")
-
-    def test_benchmark_path_parsing(self):
-        """Test parsing of benchmark path
-        測試基準資料集路徑解析
-        """
-        with patch.object(
-            BenchmarkerConfig, "_load_benchmark_config"
-        ) as mock_load_config:
-            mock_load_config.return_value = {
-                "adult-income": {
-                    "filename": "adult.csv",
-                    "access": "public",
-                    "region_name": "us-west-2",
-                    "bucket_name": "test-bucket",
-                    "sha256": "test-hash",
-                }
-            }
-            config = LoaderConfig(filepath="benchmark://adult-income")
-            assert config.benchmarker_config is not None
-            assert config.benchmarker_config.benchmark_name == "adult-income"
-            assert config.filepath == Path("benchmark").joinpath("adult.csv")
-            assert config.benchmarker_config.benchmark_filename == "adult.csv"
-            assert config.benchmarker_config.benchmark_access == "public"
-            assert config.benchmarker_config.benchmark_region_name == "us-west-2"
-            assert config.benchmarker_config.benchmark_bucket_name == "test-bucket"
-            assert config.benchmarker_config.benchmark_sha256 == "test-hash"
-
-    def test_unsupported_benchmark(self):
-        """Test unsupported benchmark raises error
-        測試不支援的基準資料集會引發錯誤
-        """
-        with patch.object(
-            BenchmarkerConfig, "_load_benchmark_config"
-        ) as mock_load_config:
-            mock_load_config.return_value = {}
-            with pytest.raises(UnsupportedMethodError):
-                LoaderConfig(filepath="benchmark://nonexistent")
-
-    def test_private_benchmark_unsupported(self):
-        """Test private benchmark access raises error
-        測試私有基準資料集存取會引發錯誤
-        """
-        with patch.object(
-            BenchmarkerConfig, "_load_benchmark_config"
-        ) as mock_load_config:
-            mock_load_config.return_value = {
-                "private-data": {
-                    "filename": "private.csv",
-                    "access": "private",
-                    "region_name": "us-west-2",
-                    "bucket_name": "private-bucket",
-                    "sha256": "test-hash",
-                }
-            }
-            with pytest.raises(UnsupportedMethodError):
-                LoaderConfig(filepath="benchmark://private-data")
+            LoaderConfig(filepath="benchmark://adult-income")
 
     @pytest.mark.parametrize(
         "filepath,expected_ext,expected_code",
@@ -310,28 +246,11 @@ class TestLoader:
         assert attr.type == "string"
         assert attr.description == "Modified description"
 
-    def test_benchmark_loader_schema_inference(self):
-        """Test loading benchmark dataset with schema inference
-        測試載入基準資料集並推斷 schema
+    def test_loader_with_regular_csv(self):
+        """Test loading regular CSV dataset with schema inference
+        測試載入一般 CSV 資料集並推斷 schema
         """
-        with (
-            patch("petsard.loader.loader.BenchmarkerRequests") as mock_benchmarker,
-            patch.object(
-                BenchmarkerConfig, "_load_benchmark_config"
-            ) as mock_load_config,
-            patch("pandas.read_csv") as mock_read_csv,
-        ):
-            # Setup mocks
-            mock_load_config.return_value = {
-                "adult-income": {
-                    "filename": "adult.csv",
-                    "access": "public",
-                    "region_name": "us-west-2",
-                    "bucket_name": "test-bucket",
-                    "sha256": "test-hash",
-                }
-            }
-
+        with patch("pandas.read_csv") as mock_read_csv:
             # Mock DataFrame
             mock_df = pd.DataFrame(
                 {
@@ -351,15 +270,15 @@ class TestLoader:
                 with patch.object(SchemaMetadater, "align") as mock_align:
                     mock_align.return_value = mock_df
 
-                    # Create loader and load data
-                    loader = Loader(filepath="benchmark://adult-income")
+                    # Create loader and load data with regular file path
+                    loader = Loader(filepath="data/test.csv")
                     data, schema = loader.load()
 
                     # Verify schema was created and modified
                     mock_from_data.assert_called_once()
-                    assert schema.id == "adult"  # Should be modified from temp_id
+                    assert schema.id == "test"  # Should be modified from temp_id
                     assert (
-                        schema.name == "adult.csv"
+                        schema.name == "test.csv"
                     )  # Should be modified from temp_name
 
     @pytest.fixture
@@ -418,33 +337,14 @@ class TestLoader:
         loader = Loader(filepath=sample_csv_path, column_types=column_types)
         assert loader.config.column_types == column_types
 
-    def test_benchmark_loader(self):
-        """Test loading benchmark dataset
-        測試載入基準資料集
+    def test_loader_does_not_handle_benchmark(self):
+        """Test that Loader does not handle benchmark datasets
+        測試 Loader 不處理基準資料集
         """
-        with (
-            patch("petsard.loader.loader.BenchmarkerRequests") as mock_benchmarker,
-            patch.object(
-                BenchmarkerConfig, "_load_benchmark_config"
-            ) as mock_load_config,
-        ):
-            mock_load_config.return_value = {
-                "adult-income": {
-                    "filename": "adult.csv",
-                    "access": "public",
-                    "region_name": "us-west-2",
-                    "bucket_name": "test-bucket",
-                    "sha256": "test-hash",
-                }
-            }
-
-            loader = Loader(filepath="benchmark://adult-income")
-            # Benchmarker should not be called during init
-            # 初始化期間不應調用 Benchmarker
-            mock_benchmarker.assert_not_called()
-
-            assert loader.config.benchmarker_config is not None
-            assert loader.config.benchmarker_config.benchmark_name == "adult-income"
+        # Loader should raise error for benchmark:// paths
+        # Loader 應該對 benchmark:// 路徑拋出錯誤
+        with pytest.raises(UnsupportedMethodError):
+            Loader(filepath="benchmark://adult-income")
 
     def test_load_csv(self, sample_csv_path):
         """Test loading CSV file
@@ -525,32 +425,14 @@ class TestLoader:
                 assert schema.id == "file"  # From file stem
                 assert schema.name == "file.xlsx"  # From file name
 
-    def test_benchmark_data_load(self):
-        """Test loading benchmark data
-        測試載入基準資料
+    def test_regular_data_load(self):
+        """Test loading regular data
+        測試載入一般資料
         """
-        with (
-            patch.object(
-                BenchmarkerConfig, "_load_benchmark_config"
-            ) as mock_load_config,
-            patch("petsard.loader.loader.BenchmarkerRequests") as mock_benchmarker,
-            patch("pandas.read_csv") as mock_read_csv,
-        ):
+        with patch("pandas.read_csv") as mock_read_csv:
             # Setup mock returns
-            mock_load_config.return_value = {
-                "adult-income": {
-                    "filename": "adult.csv",
-                    "access": "public",
-                    "region_name": "us-west-2",
-                    "bucket_name": "test-bucket",
-                    "sha256": "test-hash",
-                }
-            }
             mock_df = pd.DataFrame({"A": [1, 2, 3], "B": ["x", "y", "z"]})
             mock_read_csv.return_value = mock_df
-
-            mock_benchmarker_instance = MagicMock()
-            mock_benchmarker.return_value = mock_benchmarker_instance
 
             # Mock SchemaMetadater methods
             with (
@@ -561,19 +443,17 @@ class TestLoader:
                 mock_from_data.return_value = test_schema
                 mock_align.return_value = mock_df
 
-                # Create and load benchmark data
-                loader = Loader(filepath="benchmark://adult-income")
+                # Create and load regular data
+                loader = Loader(filepath="data/test.csv")
                 data, schema = loader.load()
 
                 # Assertions
-                mock_benchmarker.assert_called_once()
-                mock_benchmarker_instance.download.assert_called_once()
                 mock_read_csv.assert_called_once()
                 assert data is not None
                 assert schema is not None
                 # Verify schema was modified
-                assert schema.id == "adult"
-                assert schema.name == "adult.csv"
+                assert schema.id == "test"
+                assert schema.name == "test.csv"
 
     def test_custom_na_values(self, sample_csv_path):
         """Test loading with custom NA values
