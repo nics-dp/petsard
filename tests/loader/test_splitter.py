@@ -1,5 +1,3 @@
-from unittest.mock import patch
-
 import pandas as pd
 import pytest
 
@@ -66,38 +64,6 @@ class TestSplitter:
         with pytest.raises(ConfigError):
             Splitter(train_split_ratio=-0.1)
 
-    def test_splitter_init_custom_data_valid(self, sample_csv_files):
-        """Test Splitter initialization with custom_data method
-        測試使用 custom_data 方法初始化 Splitter
-        """
-        splitter = Splitter(method="custom_data", filepath=sample_csv_files)
-
-        assert splitter.config["method"] == "custom_data"
-        # filepath 不會存儲在 config 中，而是傳遞給 loader
-        assert "ori" in splitter.loader
-        assert "control" in splitter.loader
-
-    def test_splitter_init_custom_data_invalid_method(self):
-        """Test Splitter initialization with invalid custom method
-        測試使用無效自訂方法初始化 Splitter
-        """
-        with pytest.raises(ConfigError):
-            Splitter(method="invalid_method")
-
-    def test_splitter_init_custom_data_invalid_filepath(self):
-        """Test Splitter initialization with invalid filepath for custom_data
-        測試使用無效檔案路徑初始化 custom_data Splitter
-        """
-        # 測試無效的檔案路徑（沒有擴展名會導致 UnsupportedMethodError）
-        with pytest.raises(Exception):  # 可能是 UnsupportedMethodError 或其他異常
-            Splitter(method="custom_data", filepath="invalid")
-
-        # 測試缺少 control 鍵的情況
-        with pytest.raises(Exception):  # Loader 初始化會失敗
-            Splitter(
-                method="custom_data", filepath={"ori": "file1.csv"}
-            )  # missing control
-
     def test_split_normal_method(self, sample_data):
         """Test normal splitting method
         測試正常分割方法
@@ -143,8 +109,12 @@ class TestSplitter:
         """
         splitter = Splitter(num_samples=1, train_split_ratio=0.8)
 
+        # Create a basic schema for testing
+        test_schema = Schema(id="test", name="Test Schema", attributes={})
+
         with pytest.raises(ConfigError):
-            splitter.split()
+            # Split method now requires both data and metadata
+            splitter.split(data=None, metadata=test_schema)
 
     def test_split_multiple_samples(self, sample_data):
         """Test splitting with multiple samples
@@ -175,63 +145,6 @@ class TestSplitter:
         assert len(train_indices) == 3
         for i in range(3):
             assert isinstance(train_indices[i], set)
-
-    def test_split_custom_data_method(self, sample_csv_files):
-        """Test custom_data splitting method
-        測試 custom_data 分割方法
-        """
-        with (
-            patch(
-                "petsard.metadater.metadater.SchemaMetadater.from_data"
-            ) as mock_from_data,
-            patch("petsard.metadater.metadater.SchemaMetadater.align") as mock_align,
-            patch("pandas.read_csv") as mock_read_csv,
-        ):
-            # Setup mocks
-            train_data = pd.DataFrame({"A": [1, 2, 3], "B": ["a", "b", "c"]})
-            val_data = pd.DataFrame({"A": [4, 5], "B": ["d", "e"]})
-
-            mock_read_csv.side_effect = [
-                train_data.fillna(pd.NA),  # First call for training data
-                val_data.fillna(pd.NA),  # Second call for validation data
-            ]
-
-            # Create mock Schema objects
-            mock_train_schema = Schema(
-                id="train_schema",
-                name="Train Schema",
-                description="Test Description",
-                attributes={},
-            )
-            mock_val_schema = Schema(
-                id="val_schema",
-                name="Val Schema",
-                description="Test Description",
-                attributes={},
-            )
-
-            mock_from_data.side_effect = [mock_train_schema, mock_val_schema]
-            mock_align.side_effect = [train_data, val_data]
-
-            # Create splitter and split
-            splitter = Splitter(method="custom_data", filepath=sample_csv_files)
-            split_data, metadata, train_indices = splitter.split()
-
-            # Check data structure
-            assert 1 in split_data
-            assert "train" in split_data[1]
-            assert "validation" in split_data[1]
-
-            # Check data content
-            pd.testing.assert_frame_equal(split_data[1]["train"], train_data)
-            pd.testing.assert_frame_equal(split_data[1]["validation"], val_data)
-
-            # Check metadata - 現在是字典格式
-            assert isinstance(metadata, dict)
-            assert 1 in metadata
-            assert "train" in metadata[1]
-            assert "validation" in metadata[1]
-            assert isinstance(metadata[1]["train"], Schema)
 
     def test_split_basic_functionality(self, sample_data):
         """Test basic splitting functionality
@@ -274,8 +187,11 @@ class TestSplitter:
         # With only 4 data points and 50% split, collisions are very likely
         small_data = pd.DataFrame({"A": [1, 2, 3, 4]})
 
+        # Create a basic schema for testing
+        test_schema = Schema(id="test", name="Test Schema", attributes={})
+
         with pytest.raises(ConfigError):
-            splitter.split(data=small_data)
+            splitter.split(data=small_data, metadata=test_schema)
 
     def test_metadata_update_functional_approach(self):
         """Test metadata update using functional approach

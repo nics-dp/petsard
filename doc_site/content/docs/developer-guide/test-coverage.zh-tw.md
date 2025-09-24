@@ -626,16 +626,16 @@ python -c "from tests.loader.test_loader import run_stress_demo; run_stress_demo
 
 - `test_splitter_init_normal`：測試正常初始化，包含預設參數設定
 - `test_splitter_init_invalid_ratio`：測試無效分割比例的處理
-- `test_splitter_init_custom_data_valid`：測試自定義資料方法的有效配置
-- `test_splitter_init_custom_data_invalid_method`：測試無效自定義方法的錯誤處理
-- `test_splitter_init_custom_data_invalid_filepath`：測試無效檔案路徑的錯誤處理
+- ~~`test_splitter_init_custom_data_valid`~~：**已跳過** - custom_data 功能已移至 SplitterAdapter
+- ~~`test_splitter_init_custom_data_invalid_method`~~：**已跳過** - custom_data 功能已移至 SplitterAdapter
+- ~~`test_splitter_init_custom_data_invalid_filepath`~~：**已跳過** - custom_data 功能已移至 SplitterAdapter
 
 #### 分割方法測試
 
 - `test_split_normal_method`：測試正常分割方法，驗證返回格式為三元組
 - `test_split_normal_method_no_data`：測試無資料情況下的分割
 - `test_split_multiple_samples`：測試多重樣本分割，驗證每個樣本的獨立性
-- `test_split_custom_data_method`：測試自定義資料分割方法
+- ~~`test_split_custom_data_method`~~：**已跳過** - custom_data 功能已移至 SplitterAdapter
 - `test_split_basic_functionality`：測試基本分割功能和資料完整性
 
 #### 重疊控制功能測試
@@ -673,7 +673,9 @@ python -c "from tests.loader.test_loader import run_stress_demo; run_stress_demo
   - `max_overlap_ratio` 範圍檢查
   - `max_attempts` 正整數檢查
 
-> **架構重構說明**：在 2025/6/18 的重構中，所有外部模組（Loader、Processor、Splitter、Benchmarker）已不再直接導入 Metadater 的內部 API（`metadater.api`、`metadater.core`、`metadater.types`），改為使用 Metadater 類別的公共方法。相關測試的 mock 路徑也已相應更新，確保架構的封裝性和一致性。
+> **架構重構說明**：
+> - 2025/6/18：所有外部模組（Loader、Processor、Splitter、Benchmarker）已不再直接導入 Metadater 的內部 API（`metadater.api`、`metadater.core`、`metadater.types`），改為使用 Metadater 類別的公共方法。相關測試的 mock 路徑也已相應更新，確保架構的封裝性和一致性。
+> - 2025/9：custom_data 功能從 Splitter 和 Synthesizer 移至對應的 Adapter 類別，改善權責分離。相關測試已標記為跳過（`@pytest.mark.skip`），因為此功能現在由 SplitterAdapter 和 SynthesizerAdapter 處理。
 
 ## 資料合成
 
