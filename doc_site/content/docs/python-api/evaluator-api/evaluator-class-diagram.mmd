@@ -1,0 +1,81 @@
+classDiagram
+    class Evaluator {
+        <<main>>
+        +__init__(method: str, **kwargs)
+        +create() void
+        +eval(data: dict) dict[str, DataFrame]
+        +config: EvaluatorConfig
+    }
+
+    class AnonymeterEvaluator {
+        <<subclass>>
+        +eval(data: dict) dict[str, DataFrame]
+        -_evaluate_singlingout()
+        -_evaluate_linkability()
+        -_evaluate_inference()
+    }
+
+    class SDMetricsEvaluator {
+        <<subclass>>
+        +eval(data: dict) dict[str, DataFrame]
+        -_diagnostic_report()
+        -_quality_report()
+    }
+
+    class MLUtilityEvaluator {
+        <<subclass>>
+        +eval(data: dict) dict[str, DataFrame]
+        -_classification()
+        -_regression()
+        -_clustering()
+    }
+
+    class MLUtilityV2Evaluator {
+        <<subclass>>
+        +eval(data: dict) dict[str, DataFrame]
+        -_preprocess_data()
+        -_evaluate_classification()
+        -_evaluate_regression()
+        -_evaluate_clustering()
+    }
+
+    class StatsEvaluator {
+        <<subclass>>
+        +eval(data: dict) dict[str, DataFrame]
+        -_compute_stats()
+    }
+
+    class CustomEvaluator {
+        <<subclass>>
+        +eval(data: dict) dict[str, DataFrame]
+        +module_path: str
+        +class_name: str
+    }
+
+    class EvaluatorConfig {
+        <<dataclass>>
+        +method: str
+        +method_code: str
+        +params: dict
+    }
+
+    %% 繼承關係
+    Evaluator <|-- AnonymeterEvaluator : extends
+    Evaluator <|-- SDMetricsEvaluator : extends
+    Evaluator <|-- MLUtilityEvaluator : extends
+    Evaluator <|-- MLUtilityV2Evaluator : extends
+    Evaluator <|-- StatsEvaluator : extends
+    Evaluator <|-- CustomEvaluator : extends
+    
+    %% 組合關係
+    Evaluator *-- EvaluatorConfig : contains
+
+    %% 樣式標示
+    style Evaluator fill:#e6f3ff,stroke:#4a90e2,stroke-width:3px
+    style AnonymeterEvaluator fill:#fff2e6,stroke:#ff9800,stroke-width:2px
+    style SDMetricsEvaluator fill:#fff2e6,stroke:#ff9800,stroke-width:2px
+    style MLUtilityEvaluator fill:#fff2e6,stroke:#ff9800,stroke-width:2px
+    style MLUtilityV2Evaluator fill:#fff2e6,stroke:#ff9800,stroke-width:2px
+    style StatsEvaluator fill:#fff2e6,stroke:#ff9800,stroke-width:2px
+    style CustomEvaluator fill:#fff2e6,stroke:#ff9800,stroke-width:2px
+    style EvaluatorConfig fill:#f0f8ff,stroke:#6495ed,stroke-width:2px
