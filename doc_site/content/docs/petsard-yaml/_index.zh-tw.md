@@ -36,7 +36,7 @@ weight: 100
 
 ## 什麼是 YAML？
 
-YAML（YAML Ain't Markup Language）是一種人類可讀的資料序列化語言，專為配置檔案和資料交換而設計。
+YAML（YAML Ain't Markup Language）是一種人類可讀的資料序列化格式，PETsARD 使用它來進行實驗設定。本文件說明如何有效地組織您的 YAML 設定。
 
 - **易讀易寫**：使用縮排和簡潔的語法，不需要程式設計背景也能理解
 - **結構清晰**：透過縮排表達層級關係，視覺上一目了然
@@ -54,33 +54,87 @@ PETsARD 採用 YAML 作為主要配置方式，讓您不需要撰寫 Python 程�
 
 ## PETsARD YAML 基本結構
 
-PETsARD 的 YAML 設定檔由幾個主要區塊組成：
+PETsARD 的 YAML 設定採用三層架構：
 
 ```yaml
-# PETsARD YAML 設定檔基本結構
-Loader:
-  # 定義如何載入資料
-
-Synthesizer:
-  # 定義如何合成資料
-
-Evaluator:
-  # 定義如何評估合成資料品質
+模組名稱:             # 第一層：模組
+    實驗名稱:         # 第二層：實驗
+        參數1: 數值   # 第三層：參數
+        參數2: 數值
 ```
 
-### 簡單範例
+### 模組層級
+
+最上層定義了按執行順序排列的處理模組：
+
+- **Executor**：執行設定（日誌、工作目錄等）
+- **Loader**：資料讀取
+- **Splitter**：資料分割
+- **Preprocessor**：資料前處理
+- **Synthesizer**：資料合成
+- **Postprocessor**：資料後處理
+- **Constrainer**：資料約束
+- **Evaluator**：結果評估
+- **Reporter**：報告產生
+
+### 實驗層級
+
+每個模組可以有多個實驗設定。實驗名稱自訂，可根據用途命名：
+
+```yaml
+Synthesizer:
+    gaussian-copula:   # 使用高斯 Copula 方法
+        method: 'sdv-single_table-gaussiancopula'
+    ctgan:             # 使用 CTGAN 方法
+        method: 'sdv-single_table-ctgan'
+        epochs: 100
+    tvae:              # 使用 TVAE 方法
+        method: 'sdv-single_table-tvae'
+        epochs: 200
+```
+
+同一模組中的多個實驗會依序執行，讓您可以：
+- 比較不同方法的效果
+- 測試不同參數設定
+- 進行批次處理
+
+### 參數層級
+
+每個實驗包含具體的參數設定。不同的方法有不同的參數需求。
+
+## 完整範例
 
 ```yaml
 # 一個完整的 PETsARD 設定範例
 Loader:
   data:
     filepath: 'benchmark/adult-income.csv'
-
-Synthesizer:
+Preprocessor:
   demo:
     method: 'default'
-
+Synthesizer:
+  gaussian-copula:
+    method: 'sdv-single_table-gaussiancopula'
+  ctgan:
+    method: 'sdv-single_table-ctgan'
+  tvae:
+    method: 'sdv-single_table-tvae'
+Postprocessor:
+  demo:
+    method: 'default'
 Evaluator:
-  demo-diagnostic:
-    method: 'sdmetrics-diagnosticreport'
+  quality-report:
+    method: 'sdmetrics-qualityreport'
+Reporter:
+  save-data:
+    method: 'save_data'
+    source: 'Synthesizer'
 ```
+
+這個範例展示了：
+1. 載入資料（Loader）
+2. 預設的資料前處理（Preprocessor）
+3. 使用兩種不同方法合成資料（Synthesizer）
+4. 資料後處理（Postprocessor）
+5. 評估合成資料品質（Evaluator）
+6. 儲存結果（Reporter）
