@@ -22,6 +22,7 @@ YAML configuration file format for the Loader module.
 | **CSV** | `.csv`, `.tsv` | Comma/tab-separated files | - |
 | **Excel** | `.xlsx`, `.xls` | Excel spreadsheets | Requires `openpyxl` |
 | **OpenDocument** | `.ods`, `.odf`, `.odt` | OpenDocument formats | Requires `openpyxl` |
+| **Benchmark** | `benchmark://` | Benchmark dataset protocol | Requires network (first download) |
 
 \* Excel and OpenDocument formats require the `openpyxl` package, see installation instructions.
 
@@ -56,6 +57,16 @@ Loader:
   load_csv:
     filepath: data/users.csv
 ```
+
+### Loading Benchmark Dataset
+
+```yaml
+Loader:
+  load_benchmark:
+    filepath: benchmark://adult-income
+```
+
+For detailed usage of benchmark datasets, see [benchmark:// documentation](benchmark-protocol).
 
 ### Using External Schema
 

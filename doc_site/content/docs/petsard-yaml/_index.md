@@ -87,10 +87,8 @@ Synthesizer:
         method: 'sdv-single_table-gaussiancopula'
     ctgan:             # Using CTGAN method
         method: 'sdv-single_table-ctgan'
-        epochs: 100
-    tvae:              # Using TVAE method  
+    tvae:              # Using TVAE method
         method: 'sdv-single_table-tvae'
-        epochs: 200
 ```
 
 Multiple experiments within the same module execute sequentially, allowing you to:

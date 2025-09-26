@@ -1,6 +1,6 @@
 ---
 title: "Loader API"
-weight: 310
+weight: 340
 ---
 
 資料載入模組，支援多種檔案格式的資料載入。
@@ -43,7 +43,7 @@ data, schema = loader.load()
 Loader(
     filepath: str,
     column_types: dict = None,  # 已棄用 - 改用 schema
-    header_names: list = None,
+    header_names: list = None,  # 已棄用 - 將在 v2.0.0 移除
     na_values: Any = None,       # 已棄用 - 改用 schema
     schema: Schema | dict | str = None
 )
@@ -52,7 +52,6 @@ Loader(
 #### 參數說明
 
 - `filepath`: 資料檔案路徑
-- `header_names`: 無標題列資料的欄位名稱
 - `schema`: Schema 配置（可為 Schema 物件、字典或 YAML 路徑）
 
 詳細參數配置請參閱 Loader YAML 文檔。
@@ -70,12 +69,13 @@ Loader 的內部配置類別，包含檔案路徑解析與驗證邏輯。
 - **CSV**: `.csv`, `.tsv`
 - **Excel**: `.xlsx`, `.xls`, `.xlsm`, `.xlsb` *
 - **OpenDocument**: `.ods`, `.odf`, `.odt` *
+- **Benchmark**: `benchmark://` 協議
 
-\* 使用 Excel 和 OpenDocument 格式需要安裝額外套件，請參閱安裝說明。
+\* 使用 Excel 和 OpenDocument 格式需要安裝額外套件，請參閱 Loader YAML 文檔了解詳細配置。
 
 ## 注意事項
 
-- `column_types` 和 `na_values` 參數已棄用，將在 v2.0.0 移除
+- `column_types`、`na_values` 和 `header_names` 參數已棄用，將在 v2.0.0 移除
 - 建議使用 Schema 來定義資料結構
 - Schema 詳細設定請參閱 Metadater API 文檔
 - Excel 格式需要安裝 `openpyxl` 套件

@@ -1,6 +1,6 @@
 ---
 title: "Loader API"
-weight: 310
+weight: 340
 ---
 
 Data loading module that supports various file formats.
@@ -43,7 +43,7 @@ Main data loading class.
 Loader(
     filepath: str,
     column_types: dict = None,  # Deprecated - use schema instead
-    header_names: list = None,
+    header_names: list = None,  # Deprecated - will be removed in v2.0.0
     na_values: Any = None,       # Deprecated - use schema instead
     schema: Schema | dict | str = None
 )
@@ -52,7 +52,6 @@ Loader(
 #### Parameters
 
 - `filepath`: Data file path
-- `header_names`: Column names for headerless data
 - `schema`: Schema configuration (can be Schema object, dictionary, or YAML path)
 
 For detailed parameter configuration, please refer to the Loader YAML documentation.
@@ -70,12 +69,13 @@ File extension mapping class for determining file types.
 - **CSV**: `.csv`, `.tsv`
 - **Excel**: `.xlsx`, `.xls`, `.xlsm`, `.xlsb` *
 - **OpenDocument**: `.ods`, `.odf`, `.odt` *
+- **Benchmark**: `benchmark://` protocol
 
-\* Excel and OpenDocument formats require additional packages, see installation instructions.
+\* Excel and OpenDocument formats require additional packages, see Loader YAML documentation for detailed configuration.
 
 ## Notes
 
-- `column_types` and `na_values` parameters are deprecated and will be removed in v2.0.0
+- `column_types`, `na_values`, and `header_names` parameters are deprecated and will be removed in v2.0.0
 - Recommend using Schema to define data structure
 - For detailed Schema configuration, refer to Metadater API documentation
 - Excel format requires `openpyxl` package

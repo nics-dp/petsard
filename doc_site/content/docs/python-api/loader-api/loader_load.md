@@ -1,6 +1,6 @@
 ---
-title: "load"
-weight: 312
+title: "load()"
+weight: 342
 ---
 
 Load data and return DataFrame and Schema.

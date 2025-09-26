@@ -1,0 +1,68 @@
+classDiagram
+    class BaseAdapter {
+        <<abstract>>
+        +module_name: str
+        +config: dict
+        +input: dict
+        +__init__(config: dict)
+        +run(input: dict)
+        +set_input(status) dict
+        +get_result()
+        +get_metadata() Schema
+    }
+    
+    class LoaderAdapter {
+        +is_benchmark: bool
+        +benchmarker_config: BenchmarkerConfig
+        +loader: Loader
+        +__init__(config: dict)
+        +run(input: dict)
+        +get_result() DataFrame
+        +get_metadata() Schema
+    }
+    
+    class BenchmarkerConfig {
+        +benchmark_name: str
+        +filepath_raw: str
+        +benchmark_filename: str
+        +__init__(benchmark_name, filepath_raw)
+        +get_benchmarker_config() dict
+    }
+    
+    class BenchmarkerRequests {
+        +config: dict
+        +__init__(config: dict)
+        +download() void
+    }
+    
+    class Loader {
+        +filepath: str
+        +schema: Schema
+        +load() tuple[DataFrame, Schema]
+    }
+    
+    class Schema {
+        +id: str
+        +name: str
+        +attributes: dict
+    }
+    
+    BaseAdapter <|-- LoaderAdapter
+    LoaderAdapter *-- BenchmarkerConfig
+    LoaderAdapter ..> BenchmarkerRequests
+    LoaderAdapter *-- Loader
+    LoaderAdapter ..> Schema
+    BenchmarkerConfig ..> BenchmarkerRequests
+    Loader ..> Schema
+    
+    note for LoaderAdapter "Handles benchmark:// protocol\nautomatically downloads datasets"
+    note for BenchmarkerConfig "Manages benchmark dataset\nconfiguration and paths"
+    note for BenchmarkerRequests "Downloads benchmark datasets\nfrom remote sources"
+
+    %% 樣式標示
+    style BaseAdapter fill:#e6f3ff,stroke:#4a90e2,stroke-width:3px
+    style LoaderAdapter fill:#fff2e6,stroke:#ff9800,stroke-width:2px
+    style BenchmarkerConfig fill:#f3e6ff,stroke:#9966cc,stroke-width:2px
+    style BenchmarkerRequests fill:#f3e6ff,stroke:#9966cc,stroke-width:2px
+    style Loader fill:#e6f3ff,stroke:#4a90e2,stroke-width:3px
+    style Schema fill:#f3e6ff,stroke:#9966cc,stroke-width:2px

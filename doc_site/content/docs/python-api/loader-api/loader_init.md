@@ -1,6 +1,6 @@
 ---
-title: "init"
-weight: 311
+title: "__init__"
+weight: 341
 ---
 
 Initialize a data loader instance.
