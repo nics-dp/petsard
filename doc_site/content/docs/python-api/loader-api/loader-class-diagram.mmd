@@ -62,7 +62,7 @@ classDiagram
 
     LoaderBase <|-- LoaderPandasCsv
     LoaderBase <|-- LoaderPandasExcel
-    
+
     Loader *-- LoaderConfig
     Loader ..> Schema
     LoaderConfig *-- Schema
@@ -73,7 +73,7 @@ classDiagram
     Loader ..> LoaderFileExt
     Loader ..> SchemaMetadater
     LoaderConfig ..> LoaderFileExt
-    
+
     %% 樣式標示
     style Loader fill:#e6f3ff,stroke:#4a90e2,stroke-width:3px
     style LoaderBase fill:#f3e6ff,stroke:#9966cc,stroke-width:2px

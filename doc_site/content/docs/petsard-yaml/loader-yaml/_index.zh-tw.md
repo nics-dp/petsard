@@ -22,6 +22,7 @@ Loader 模組的 YAML 設定檔案格式。
 | **CSV** | `.csv`, `.tsv` | 逗號/製表符分隔檔案 | - |
 | **Excel** | `.xlsx`, `.xls` | Excel 試算表 | 需安裝 `openpyxl` |
 | **OpenDocument** | `.ods`, `.odf`, `.odt` | OpenDocument 格式 | 需安裝 `openpyxl` |
+| **Benchmark** | `benchmark://` | 基準資料集協議 | 需網路連線（首次下載） |
 
 \* 使用 Excel 和 OpenDocument 格式需要安裝 `openpyxl` 套件，請參閱安裝說明。
 
@@ -56,6 +57,16 @@ Loader:
   load_csv:
     filepath: data/users.csv
 ```
+
+### 載入基準資料集
+
+```yaml
+Loader:
+  load_benchmark:
+    filepath: benchmark://adult-income
+```
+
+詳細的基準資料集使用方式，請參閱 [benchmark:// 文檔](benchmark-protocol)。
 
 ### 使用外部 Schema
 

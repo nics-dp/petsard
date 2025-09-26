@@ -1,6 +1,6 @@
 ---
-title: "init"
-weight: 311
+title: "__init__"
+weight: 341
 ---
 
 初始化資料載入器實例。

@@ -1,6 +1,6 @@
 ---
 title: "from_data"
-weight: 361
+weight: 321
 ---
 
 從資料自動推斷並建立詮釋資料結構。
