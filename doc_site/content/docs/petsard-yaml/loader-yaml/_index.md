@@ -13,7 +13,7 @@ YAML configuration file format for the Loader module.
 
 - **schema** (`string | dict`, optional)
   - Data structure definition
-  - Can be external file path or inline definition
+  - Can be a local YAML file path (string) or complete Schema YAML (dict)
 
 - **header_names** (`list`, optional)
   - Column names for headerless data
@@ -40,7 +40,7 @@ YAML configuration file format for the Loader module.
 
 | Parameter | Type | Description | Example |
 |-----------|------|-------------|---------|
-| `schema` | `string\|dict` | Data structure definition | `schemas/user.yaml` |
+| `schema` | `string\|dict` | Data structure definition | `schemas/user.yaml` or inline dict |
 | `header_names` | `list` | Column names for headerless data | See examples below |
 
 ### Deprecated Parameters
@@ -90,17 +90,11 @@ Loader:
   load_with_inline_schema:
     filepath: data/employees.csv
     schema:
+      # Complete Schema YAML structure
+      # For detailed configuration, refer to Schema YAML documentation
       id: employee_schema
       name: Employee Data Schema
-      attributes:
-        id:
-          type: int64
-          enable_null: false
-        name:
-          type: string
-        salary:
-          type: float64
-          precision: 2
+      # ... other Schema configurations
 ```
 
 ### Multiple Loading Experiments
@@ -123,7 +117,7 @@ Loader:
     schema: schemas/data_schema.yaml
 ```
 
-### Complete Example
+### Complete Example with Schema
 
 ```yaml
 Loader:
@@ -137,44 +131,28 @@ Loader:
       - registration_date
       - city
       - vip_status
+    # Using external Schema file
+    schema: schemas/customer_schema.yaml
+    
+  # Or using inline Schema
+  employee_data_loader:
+    filepath: data/employees.csv
     schema:
-      id: customer_schema
-      name: Customer Data Schema
-      description: Schema for customer data
-      attributes:
-        id:
-          type: int64
-          enable_null: false
-        name:
-          type: string
-          enable_null: false
-        age:
-          type: int64
-          min: 0
-          max: 120
-        income:
-          type: float64
-          precision: 2
-          min: 0
-        registration_date:
-          type: datetime64
-        city:
-          type: category
-          logical_type: category
-        vip_status:
-          type: boolean
-          enable_null: false
+      # Place complete Schema YAML structure here
+      # For specific Schema configuration, refer to Schema YAML documentation
 ```
 
 ## Schema Configuration
 
-Schema defines the structure and types of data, which can be provided in three ways:
+The schema parameter accepts two formats:
 
-1. **External YAML file**: Provide file path
-2. **Inline definition**: Define directly in YAML
-3. **Auto-inference**: System auto-infers when not provided
+1. **String**: Path to an external Schema YAML file
+   - Example: `schema: schemas/data_schema.yaml`
 
-For detailed Schema configuration, refer to Metadater YAML documentation.
+2. **Dictionary**: Inline complete Schema YAML structure
+   - Define the complete Schema directly in the Loader configuration
+
+For detailed Schema configuration, available parameters, and attribute definitions, refer to the Schema YAML documentation.
 
 ## Execution Notes
 
@@ -189,3 +167,4 @@ For detailed Schema configuration, refer to Metadater YAML documentation.
 - CSV files without headers must provide `header_names` parameter
 - `column_types` and `na_values` parameters are deprecated, use `schema` instead
 - Excel and OpenDocument formats require the `openpyxl` package
+- For detailed Schema configuration, refer to the Schema YAML documentation
