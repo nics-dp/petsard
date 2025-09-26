@@ -13,7 +13,7 @@ Loader 模組的 YAML 設定檔案格式。
 
 - **schema** (`string | dict`, 選用)
   - 資料結構定義
-  - 可為外部檔案路徑或內嵌定義
+  - 可為外部 YAML 檔案路徑（string）或內嵌的完整 Schema YAML（dict）
 
 - **header_names** (`list`, 選用)
   - 無標題列的欄位名稱
@@ -40,7 +40,7 @@ Loader 模組的 YAML 設定檔案格式。
 
 | 參數 | 類型 | 說明 | 範例 |
 |------|------|------|------|
-| `schema` | `string\|dict` | 資料結構定義 | `schemas/user.yaml` |
+| `schema` | `string\|dict` | 資料結構定義 | `schemas/user.yaml` 或內嵌 dict |
 | `header_names` | `list` | 無標題列的欄位名稱 | 見下方範例 |
 
 ### 已棄用參數
@@ -90,17 +90,11 @@ Loader:
   load_with_inline_schema:
     filepath: data/employees.csv
     schema:
+      # 完整的 Schema YAML 結構
+      # 詳細設定請參閱 Schema YAML 文檔
       id: employee_schema
       name: Employee Data Schema
-      attributes:
-        id:
-          type: int64
-          enable_null: false
-        name:
-          type: string
-        salary:
-          type: float64
-          precision: 2
+      # ... 其他 Schema 設定
 ```
 
 ### 多個載入實驗
@@ -123,7 +117,7 @@ Loader:
     schema: schemas/data_schema.yaml
 ```
 
-### 完整範例
+### 使用 Schema 的完整範例
 
 ```yaml
 Loader:
@@ -137,44 +131,28 @@ Loader:
       - registration_date
       - city
       - vip_status
+    # 使用外部 Schema 檔案
+    schema: schemas/customer_schema.yaml
+    
+  # 或使用內嵌 Schema
+  employee_data_loader:
+    filepath: data/employees.csv
     schema:
-      id: customer_schema
-      name: Customer Data Schema
-      description: Schema for customer data
-      attributes:
-        id:
-          type: int64
-          enable_null: false
-        name:
-          type: string
-          enable_null: false
-        age:
-          type: int64
-          min: 0
-          max: 120
-        income:
-          type: float64
-          precision: 2
-          min: 0
-        registration_date:
-          type: datetime64
-        city:
-          type: category
-          logical_type: category
-        vip_status:
-          type: boolean
-          enable_null: false
+      # 這裡放置完整的 Schema YAML 結構
+      # 具體 Schema 設定方式請參閱 Schema YAML 文檔
 ```
 
-## Schema 配置
+## Schema 配置說明
 
-Schema 定義了資料的結構與類型，可透過三種方式提供：
+Schema 參數接受兩種格式：
 
-1. **外部 YAML 檔案**：提供檔案路徑
-2. **內嵌定義**：直接在 YAML 中定義
-3. **自動推論**：不提供時由系統自動推論
+1. **字串（string）**：外部 Schema YAML 檔案的路徑
+   - 範例：`schema: schemas/data_schema.yaml`
 
-詳細 Schema 配置請參閱 Metadater YAML 文檔。
+2. **字典（dict）**：內嵌的完整 Schema YAML 結構
+   - 直接在 Loader 配置中定義完整的 Schema
+
+Schema 的具體設定方式、可用參數和屬性定義等詳細資訊，請參閱 Schema YAML 文檔。
 
 ## 執行說明
 
@@ -189,3 +167,4 @@ Schema 定義了資料的結構與類型，可透過三種方式提供：
 - CSV 檔案若無標題列，必須提供 `header_names` 參數
 - `column_types` 和 `na_values` 參數已棄用，請改用 `schema`
 - Excel 和 OpenDocument 格式需要安裝 `openpyxl` 套件
+- Schema 的詳細設定請參閱 Schema YAML 文檔
