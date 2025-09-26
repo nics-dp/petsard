@@ -1,7 +1,7 @@
 ---
 title: API 文件
 type: docs
-weight: 50
+weight: 1050
 prev: docs/best-practices
 next: docs/developer-guide
 sidebar:
