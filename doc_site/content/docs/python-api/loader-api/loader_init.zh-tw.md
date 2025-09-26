@@ -10,32 +10,35 @@ weight: 311
 ```python
 def __init__(
     filepath: str = None,
-    method: str = None,
     column_types: dict = None,
     header_names: list = None,
     na_values: str | list | dict = None,
-    schema: SchemaConfig | dict | str = None,
-    **kwargs
+    schema: Schema | dict | str = None
 )
 ```
 
 ## 參數
 
-- **filepath** : str, optional
-    - 資料檔案路徑或 benchmark 資料集名稱
+- **filepath** : str, required
+    - 資料檔案路徑
+    - 必要參數
+
+- **column_types** : dict, optional
+    - **已棄用** - 將在 v2.0.0 移除
+    - 請改用 `schema` 參數
+
+- **header_names** : list, optional
+    - 無標題列資料的欄位名稱
     - 預設值：`None`
 
-- **method** : str, optional
-    - 載入方法名稱
-    - 預設值：`None`（根據檔案副檔名自動判斷）
+- **na_values** : str | list | dict, optional
+    - **已棄用** - 將在 v2.0.0 移除
+    - 請改用 `schema` 參數
 
-- **schema** : SchemaConfig | dict | str, optional
+- **schema** : Schema | dict | str, optional
     - 資料結構定義配置
+    - 可為 Schema 物件、字典或 YAML 檔案路徑
     - 預設值：`None`（自動推論）
-
-- **kwargs** : dict
-    - 依據不同檔案格式的額外參數
-    - 詳細參數請參考 YAML 配置文件中的 Loader 章節
 
 ## 返回值
 
@@ -50,17 +53,22 @@ from petsard import Loader
 # 載入 CSV 檔案
 loader = Loader('data.csv')
 
-# 載入 benchmark 資料集
-loader = Loader('benchmark://adult-income')
-
-# 使用 schema
+# 使用 schema YAML
 loader = Loader('data.csv', schema='schema.yaml')
+
+# 使用 schema 字典
+schema_dict = {
+    'id': 'my_schema',
+    'name': 'My Schema'
+}
+loader = Loader('data.csv', schema=schema_dict)
 ```
 
 ## 注意事項
 
 - 建議使用 YAML 配置檔而非直接使用 Python API
 - 檔案路徑支援相對路徑和絕對路徑
-- 支援的檔案格式和詳細參數請參考 YAML 配置文件中的 Loader 章節
+- 支援的檔案格式請參考 Loader YAML 文檔
 - 初始化只建立配置，實際載入資料需呼叫 `load()` 方法
+- Excel 格式需要安裝 `openpyxl` 套件
 - 本段文件僅供開發團隊內部參考，不保證向後相容
