@@ -28,6 +28,7 @@ def __init__(
     - 請改用 `schema` 參數
 
 - **header_names** : list, optional
+    - **已棄用** - 將在 v2.0.0 移除
     - 無標題列資料的欄位名稱
     - 預設值：`None`
 

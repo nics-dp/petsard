@@ -28,6 +28,7 @@ def __init__(
     - Use `schema` parameter instead
 
 - **header_names** : list, optional
+    - **Deprecated** - will be removed in v2.0.0
     - Column names for headerless data
     - Default: `None`
 

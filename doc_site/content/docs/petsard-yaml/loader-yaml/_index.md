@@ -15,9 +15,6 @@ YAML configuration file format for the Loader module.
   - Data structure definition
   - Can be a local YAML file path (string) or complete Schema YAML (dict)
 
-- **header_names** (`list`, optional)
-  - Column names for headerless data
-
 ## Supported File Formats
 
 | Format | Extensions | Description | Requirements |
@@ -41,7 +38,6 @@ YAML configuration file format for the Loader module.
 | Parameter | Type | Description | Example |
 |-----------|------|-------------|---------|
 | `schema` | `string\|dict` | Data structure definition | `schemas/user.yaml` or inline dict |
-| `header_names` | `list` | Column names for headerless data | See examples below |
 
 ### Deprecated Parameters
 
@@ -49,6 +45,7 @@ YAML configuration file format for the Loader module.
 |-----------|-------------|-----------------|
 | `column_types` | Use `schema` | v2.0.0 |
 | `na_values` | Use `schema` | v2.0.0 |
+| `header_names` | Use header row in data file | v2.0.0 |
 
 ## Usage Examples
 
@@ -67,20 +64,6 @@ Loader:
   load_with_schema:
     filepath: data/customers.csv
     schema: schemas/customer_schema.yaml
-```
-
-### Headerless CSV
-
-```yaml
-Loader:
-  load_no_header:
-    filepath: data/no_header.csv
-    header_names:
-      - id
-      - name
-      - age
-      - salary
-      - department
 ```
 
 ### Inline Schema Definition
@@ -105,12 +88,12 @@ Loader:
   load_train:
     filepath: data/train.csv
     schema: schemas/data_schema.yaml
-    
+
   # Load test data
   load_test:
     filepath: data/test.csv
     schema: schemas/data_schema.yaml
-    
+
   # Load validation data
   load_validation:
     filepath: data/validation.csv
@@ -121,17 +104,9 @@ Loader:
 
 ```yaml
 Loader:
+  # Using external Schema file
   customer_data_loader:
     filepath: data/customers.csv
-    header_names:
-      - id
-      - name
-      - age
-      - income
-      - registration_date
-      - city
-      - vip_status
-    # Using external Schema file
     schema: schemas/customer_schema.yaml
     
   # Or using inline Schema
@@ -164,7 +139,6 @@ For detailed Schema configuration, available parameters, and attribute definitio
 
 - File paths support both relative and absolute paths
 - Schema configuration priority: parameter specification > auto-inference
-- CSV files without headers must provide `header_names` parameter
-- `column_types` and `na_values` parameters are deprecated, use `schema` instead
+- `column_types`, `na_values`, and `header_names` parameters are deprecated, will be removed in v2.0.0
 - Excel and OpenDocument formats require the `openpyxl` package
 - For detailed Schema configuration, refer to the Schema YAML documentation
