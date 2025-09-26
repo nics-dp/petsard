@@ -1,7 +1,7 @@
 ---
 title: Developer Guide
 type: docs
-weight: 400
+weight: 1400
 prev: docs/api
 next: docs/experimental-new-format
 sidebar:
