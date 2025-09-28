@@ -3,7 +3,7 @@ title: Custom Evaluation
 type: docs
 weight: 34
 prev: docs/tutorial/use-cases/ml-utility
-next: docs/tutorial/use-cases/benchmark-datasets
+next: docs/tutorial/use-cases/timing
 ---
 
 
