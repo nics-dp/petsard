@@ -71,12 +71,6 @@ When developing privacy-preserving data synthesis workflows, you may encounter s
 
 ## **Workflow improvement**
 
-### **Workflow Validation: [Benchmark Datasets]({{< ref "benchmark-datasets" >}})**
-
-  - Test your synthesis workflow on benchmark data
-  - Verify synthesis parameter settings
-  - Provide reliable reference standards
-
 ### **Performance Analysis: [Timing]({{< ref "timing" >}})**
 
   - Monitor execution time for each module in your pipeline

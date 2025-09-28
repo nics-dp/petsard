@@ -3,7 +3,7 @@ title: 自定義評測
 type: docs
 weight: 34
 prev: docs/tutorial/use-cases/ml-utility
-next: docs/tutorial/use-cases/benchmark-datasets
+next: docs/tutorial/use-cases/timing
 ---
 
 
