@@ -344,20 +344,44 @@ python -c "from tests.loader.test_loader import run_stress_demo; run_stress_demo
 
 > tests/loader/test_benchmarker.py
 
-測試基準資料集處理：
+測試基準資料集處理與錯誤處理：
+
+#### 基礎功能測試
 
 - `test_basebenchmarker_init`：驗證 BaseBenchmarker 作為抽象類別無法被實例化
 - `test_benchmarker_requests_init`：使用模擬的檔案系統操作測試 BenchmarkerRequests 初始化
 - `test_download_success`：測試成功下載的情境，包含：
   - 模擬 HTTP 請求
   - 模擬檔案操作
-  - SHA256 驗證檢查
-- `test_verify_file_mismatch`：使用模擬的檔案內容測試 SHA256 驗證失敗的處理
+  - SHA256 驗證記錄
 - `test_download_request_fails`：測試下載請求失敗（HTTP 404 等）的處理方式
 - `test_file_already_exists_hash_match`：測試檔案已存在且哈希值匹配的情境，確認直接使用本地檔案
-- `test_verify_file_remove_fails`：測試在驗證過程中刪除檔案失敗的處理機制
 - `test_init_file_exists_hash_match`：測試初始化時檔案存在且哈希值匹配的處理邏輯
-- `test_file_content_change`：測試檔案內容變更後的哈希驗證機制，確保能正確檢測變更
+
+#### SHA-256 驗證測試（更新於 2025/9）
+
+- `test_verify_file_mismatch_logs_warning`：測試 SHA256 驗證失敗時記錄警告而非拋出錯誤：
+  - 驗證警告訊息包含預期和實際的 SHA-256 值
+  - 確認程式繼續執行而不中斷
+- `test_verify_file_match`：測試 SHA256 驗證成功時的記錄訊息
+- `test_file_content_change`：測試檔案內容變更後的哈希驗證機制：
+  - 正確檢測變更並記錄警告
+  - 允許使用修改後的本地檔案
+
+#### LoaderAdapter 整合測試
+
+- `test_loaderadapter_benchmark_download_success`：測試 LoaderAdapter 成功下載 benchmark 檔案
+- `test_loaderadapter_benchmark_download_failure`：測試 LoaderAdapter 處理 benchmark 下載失敗：
+  - 驗證錯誤訊息包含詳細的失敗原因
+  - 確認拋出 BenchmarkDatasetsError
+- `test_loaderadapter_schema_benchmark_download_failure`：測試 LoaderAdapter 處理 schema benchmark 下載失敗
+- `test_loaderadapter_benchmark_protocol_case_insensitive`：測試 benchmark:// 協議大小寫不敏感
+- `test_loaderadapter_unsupported_benchmark`：測試不支援的 benchmark 資料集錯誤處理
+- `test_loaderadapter_sha256_mismatch_warning`：測試 SHA-256 不匹配時的警告處理：
+  - 確認程式繼續執行
+  - 驗證警告訊息正確記錄
+
+> **重要更新**：從 2025 年 9 月起，SHA-256 驗證失敗改為記錄警告而非拋出錯誤，允許開發者使用修改過的本地 benchmark 檔案進行測試。這個改變提升了開發體驗，同時仍保留完整性檢查的資訊記錄。
 
 #### `BenchmarkerConfig`
 
@@ -641,17 +665,39 @@ python -c "from tests.loader.test_loader import run_stress_demo; run_stress_demo
 - `test_get_result`：測試結果取得
 - `test_get_metadata`：測試元資料取得
 
-**Benchmark 協議處理測試（4 個測試）：**
-- `test_init_benchmark_protocol`：測試 benchmark:// 協議初始化：
+**Benchmark 協議處理測試（11 個測試）：**
+- `test_init_benchmark_protocol`：測試 filepath 使用 benchmark:// 協議初始化：
   - 驗證 `is_benchmark` 屬性正確設置為 True
   - 確認 `benchmarker_config` 正確建立
   - 測試檔案路徑從 benchmark:// 格式轉換
-- `test_run_benchmark_protocol`：測試 benchmark:// 協議執行（包含下載）：
+- `test_run_benchmark_protocol`：測試 filepath 使用 benchmark:// 協議執行（包含下載）：
   - 模擬 BenchmarkerRequests 的下載行為
   - 驗證檔案路徑正確轉換為本地路徑
   - 確認 Loader 接收正確的本地檔案路徑
-- `test_benchmark_download_failure`：測試 benchmark 下載失敗處理
-- `test_benchmark_protocol_case_insensitive`：測試協議大小寫不敏感
+- `test_benchmark_download_failure`：測試 filepath benchmark 下載失敗處理
+- `test_benchmark_protocol_case_insensitive`：測試 filepath 協議大小寫不敏感
+- `test_init_schema_benchmark_protocol`：測試 schema 使用 benchmark:// 協議初始化：
+  - 驗證 `is_schema_benchmark` 屬性正確設置為 True
+  - 確認 `schema_benchmarker_config` 正確建立
+  - 測試 schema 路徑從 benchmark:// 格式轉換為本地路徑
+- `test_init_both_benchmark_protocol`：測試 filepath 和 schema 都使用 benchmark:// 協議：
+  - 兩個 BenchmarkerConfig 物件分別建立
+  - filepath 和 schema 都轉換為本地路徑
+  - 正確設置 `is_benchmark` 和 `is_schema_benchmark` 屬性
+- `test_init_schema_non_string`：測試 schema 為非字串類型（如 dict）的處理：
+  - schema 保持原樣不進行轉換
+  - `is_schema_benchmark` 為 False
+  - 不建立 `schema_benchmarker_config`
+- `test_run_schema_benchmark_protocol`：測試 schema 使用 benchmark:// 協議執行（包含下載）：
+  - 模擬 schema 檔案的 BenchmarkerRequests 下載
+  - 驗證 schema 路徑正確轉換為本地路徑
+  - 確認 Loader 接收正確的本地 schema 路徑
+- `test_run_both_benchmark_protocol`：測試 filepath 和 schema 都使用 benchmark:// 協議執行：
+  - 兩次 BenchmarkerRequests 下載（filepath 和 schema）
+  - 兩個檔案都下載到本地 benchmark/ 目錄
+  - Loader 接收兩個本地路徑
+- `test_schema_benchmark_download_failure`：測試 schema benchmark 下載失敗處理：
+  - 拋出包含 "Failed to download benchmark schema" 訊息的 BenchmarkDatasetsError
 
 #### SplitterAdapter 測試
 
@@ -719,7 +765,7 @@ python -c "from tests.loader.test_loader import run_stress_demo; run_stress_demo
 > - 透過 `set_input()` 和 `get_result()` 方法管理資料流
 > - 支援計時記錄和日誌記錄功能
 >
-> LoaderAdapter 特別實現了 benchmark:// 協議處理，實現 Loader 與 Benchmarker 的解耦。
+> LoaderAdapter 特別實現了 benchmark:// 協議處理，實現 Loader 與 Benchmarker 的解耦。從 v2.0.0 開始，LoaderAdapter 支援 filepath 和 schema 參數都使用 benchmark:// 協議，能夠自動下載 benchmark 資料集和 schema 檔案（如 YAML 格式的 metadata 定義）到本地 benchmark/ 目錄。
 
 ### `Splitter`
 

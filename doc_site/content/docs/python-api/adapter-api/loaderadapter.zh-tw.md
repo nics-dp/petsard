@@ -3,7 +3,7 @@ title: "LoaderAdapter"
 weight: 341
 ---
 
-LoaderAdapter 負責資料載入，並自動處理 `benchmark://` 協議的基準資料集下載。
+LoaderAdapter 負責資料載入，並自動處理 `benchmark://` 協議的基準資料集和 schema 檔案下載。
 
 ## 類別架構
 
@@ -20,9 +20,10 @@ LoaderAdapter 負責資料載入，並自動處理 `benchmark://` 協議的基�
 ## 主要功能
 
 - 資料載入的統一介面
-- 自動偵測並處理 `benchmark://` 協議
+- 自動偵測並處理 `benchmark://` 協議（同時支援資料和 schema）
 - 整合 Loader 與 Benchmarker 功能
 - 返回資料與 Schema metadata
+- 支援 CSV 資料檔案和 YAML schema 檔案
 
 ## 方法說明
 
@@ -37,10 +38,11 @@ LoaderAdapter 負責資料載入，並自動處理 `benchmark://` 協議的基�
   - 支援 `benchmark://` 協議
 
 **內部處理：**
-1. **協議檢測**：檢查 filepath 是否使用 `benchmark://` 協議
+1. **協議檢測**：檢查 filepath 或 schema 是否使用 `benchmark://` 協議
 2. **Benchmarker 配置**：若為 benchmark 協議，建立 BenchmarkerConfig
 3. **路徑轉換**：將 benchmark:// 路徑轉換為本地路徑
-4. **Loader 初始化**：使用處理後的配置建立 Loader 實例
+4. **Schema 處理**：若 schema 使用 benchmark:// 協議，單獨處理
+5. **Loader 初始化**：使用處理後的配置建立 Loader 實例
 
 ### `run(input: dict)`
 
@@ -53,7 +55,9 @@ LoaderAdapter 負責資料載入，並自動處理 `benchmark://` 協議的基�
 
 **執行流程：**
 1. **Benchmark 處理**（若使用 benchmark:// 協議）
-   - 下載基準資料集
+   - 下載基準資料集（CSV）
+   - 下載基準 schema（YAML）若有指定
+   - 驗證 SHA-256 完整性（不匹配時記錄警告）
    - 儲存至本地 `benchmark/` 目錄
    
 2. **資料載入**
@@ -104,10 +108,16 @@ metadata = adapter.get_metadata()
 ### Benchmark 資料集載入
 
 ```python
-# 使用 benchmark:// 協議
+# 僅資料使用 benchmark:// 協議
 adapter = LoaderAdapter({
     "filepath": "benchmark://adult-income",
     "schema": "schemas/adult-income.yaml"
+})
+
+# 資料和 schema 都使用 benchmark:// 協議
+adapter = LoaderAdapter({
+    "filepath": "benchmark://adult-income",
+    "schema": "benchmark://adult-income_schema"
 })
 
 # 自動下載並載入
@@ -132,14 +142,16 @@ except Exception as e:
 
 目前支援以下基準資料集：
 
-- `benchmark://adult-income` - UCI Adult Income 資料集
+- `benchmark://adult-income` - UCI Adult Income 資料集（CSV）
+- `benchmark://adult-income_schema` - Adult Income schema（YAML）
 
 ## 工作流程
 
-1. **協議偵測**：檢查是否使用 `benchmark://` 協議
+1. **協議偵測**：檢查 filepath/schema 是否使用 `benchmark://` 協議
 2. **Benchmarker 處理**（若為 benchmark 協議）
-   - 建立 BenchmarkerConfig
-   - 下載資料集到本地
+   - 為資料/schema 建立 BenchmarkerConfig
+   - 下載檔案到本地
+   - 驗證 SHA-256（不匹配時警告）
    - 轉換路徑為本地路徑
 3. **Loader 初始化**：使用處理後的配置建立 Loader
 4. **資料載入**：呼叫 Loader.load() 載入資料
@@ -149,8 +161,10 @@ except Exception as e:
 - 此為內部 API，不建議直接使用
 - 優先使用 YAML 配置檔和 Executor
 - benchmark:// 協議不區分大小寫
-- 資料集會下載到 `benchmark/` 目錄
+- 資料集和 schema 檔案會下載到 `benchmark/` 目錄
 - 首次使用需要網路連線
-- Benchmark 資料集首次下載後會快取
+- Benchmark 檔案首次下載後會快取
 - 大型資料集下載可能需要較長時間
 - `method` 參數已棄用，會自動移除
+- SHA-256 驗證失敗會記錄警告但不會阻擋執行（v2.0.0+）
+- 支援 CSV 資料檔案和 YAML schema 檔案

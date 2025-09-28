@@ -342,20 +342,44 @@ python -c "from tests.loader.test_loader import run_stress_demo; run_stress_demo
 
 > tests/loader/test_benchmarker.py
 
-Tests for benchmark dataset handling:
+Tests for benchmark dataset handling and error handling:
+
+#### Core Functionality Tests
 
 - `test_basebenchmarker_init`: Verifies BaseBenchmarker cannot be instantiated as it's an abstract class
 - `test_benchmarker_requests_init`: Tests BenchmarkerRequests initialization with mocked filesystem operations
 - `test_download_success`: Tests successful download scenario with:
   - Mocked HTTP requests
   - Mocked file operations
-  - SHA256 verification checks
-- `test_verify_file_mismatch`: Tests SHA256 verification failure handling using mocked file content
+  - SHA256 verification logging
 - `test_download_request_fails`: Tests handling of download request failures (HTTP 404, etc.)
 - `test_file_already_exists_hash_match`: Tests scenario where file already exists with matching hash, confirming local file is used
-- `test_verify_file_remove_fails`: Tests error handling when file removal fails during verification
 - `test_init_file_exists_hash_match`: Tests initialization logic when file exists with matching hash
-- `test_file_content_change`: Tests hash verification mechanism after file content changes, ensuring changes are properly detected
+
+#### SHA-256 Verification Tests (Updated Sept 2025)
+
+- `test_verify_file_mismatch_logs_warning`: Tests SHA256 verification failure logs warning instead of raising error:
+  - Verifies warning message includes expected and actual SHA-256 values
+  - Confirms execution continues without interruption
+- `test_verify_file_match`: Tests SHA256 verification success logging
+- `test_file_content_change`: Tests hash verification mechanism after file content changes:
+  - Properly detects changes and logs warning
+  - Allows using modified local files
+
+#### LoaderAdapter Integration Tests
+
+- `test_loaderadapter_benchmark_download_success`: Tests LoaderAdapter successful benchmark file download
+- `test_loaderadapter_benchmark_download_failure`: Tests LoaderAdapter handling of benchmark download failure:
+  - Verifies error message includes detailed failure reason
+  - Confirms BenchmarkDatasetsError is raised
+- `test_loaderadapter_schema_benchmark_download_failure`: Tests LoaderAdapter handling of schema benchmark download failure
+- `test_loaderadapter_benchmark_protocol_case_insensitive`: Tests benchmark:// protocol case insensitivity
+- `test_loaderadapter_unsupported_benchmark`: Tests unsupported benchmark dataset error handling
+- `test_loaderadapter_sha256_mismatch_warning`: Tests SHA-256 mismatch warning handling:
+  - Confirms execution continues
+  - Verifies warning is properly logged
+
+> **Important Update**: Starting September 2025, SHA-256 verification failures now log warnings instead of raising errors, allowing developers to use modified local benchmark files for testing. This change improves development experience while still maintaining integrity check information logging.
 
 #### `BenchmarkerConfig`
 
@@ -639,17 +663,39 @@ Tests for all Adapter layer functionality, including adapter implementations for
 - `test_get_result`: Tests result retrieval
 - `test_get_metadata`: Tests metadata retrieval
 
-**Benchmark Protocol Handling Tests (4 tests):**
-- `test_init_benchmark_protocol`: Tests benchmark:// protocol initialization:
+**Benchmark Protocol Handling Tests (11 tests):**
+- `test_init_benchmark_protocol`: Tests filepath using benchmark:// protocol initialization:
   - Verifies `is_benchmark` attribute is correctly set to True
   - Confirms `benchmarker_config` is properly created
   - Tests filepath conversion from benchmark:// format
-- `test_run_benchmark_protocol`: Tests benchmark:// protocol execution with download:
+- `test_run_benchmark_protocol`: Tests filepath using benchmark:// protocol execution with download:
   - Simulates BenchmarkerRequests download behavior
   - Verifies filepath is correctly converted to local path
   - Confirms Loader receives the correct local filepath
-- `test_benchmark_download_failure`: Tests benchmark download failure handling
-- `test_benchmark_protocol_case_insensitive`: Tests protocol case insensitivity
+- `test_benchmark_download_failure`: Tests filepath benchmark download failure handling
+- `test_benchmark_protocol_case_insensitive`: Tests filepath protocol case insensitivity
+- `test_init_schema_benchmark_protocol`: Tests schema using benchmark:// protocol initialization:
+  - Verifies `is_schema_benchmark` attribute is correctly set to True
+  - Confirms `schema_benchmarker_config` is properly created
+  - Tests schema path conversion from benchmark:// format to local path
+- `test_init_both_benchmark_protocol`: Tests both filepath and schema using benchmark:// protocol:
+  - Two separate BenchmarkerConfig objects are created
+  - Both filepath and schema are converted to local paths
+  - Both `is_benchmark` and `is_schema_benchmark` attributes are correctly set
+- `test_init_schema_non_string`: Tests schema as non-string type (e.g., dict) handling:
+  - Schema remains unchanged without conversion
+  - `is_schema_benchmark` is False
+  - No `schema_benchmarker_config` is created
+- `test_run_schema_benchmark_protocol`: Tests schema using benchmark:// protocol execution with download:
+  - Simulates BenchmarkerRequests download for schema file
+  - Verifies schema path is correctly converted to local path
+  - Confirms Loader receives the correct local schema path
+- `test_run_both_benchmark_protocol`: Tests both filepath and schema using benchmark:// protocol execution:
+  - Two BenchmarkerRequests downloads (filepath and schema)
+  - Both files are downloaded to local benchmark/ directory
+  - Loader receives both local paths
+- `test_schema_benchmark_download_failure`: Tests schema benchmark download failure handling:
+  - Raises BenchmarkDatasetsError with "Failed to download benchmark schema" message
 
 #### SplitterAdapter Tests
 
@@ -717,7 +763,7 @@ Tests for all Adapter layer functionality, including adapter implementations for
 > - Manages data flow through `set_input()` and `get_result()` methods
 > - Supports timing logging and general logging functionality
 >
-> LoaderAdapter specifically implements benchmark:// protocol handling, achieving decoupling between Loader and Benchmarker.
+> LoaderAdapter specifically implements benchmark:// protocol handling, achieving decoupling between Loader and Benchmarker. Starting from v2.0.0, LoaderAdapter supports both filepath and schema parameters using the benchmark:// protocol, enabling automatic download of benchmark datasets and schema files (such as YAML format metadata definitions) to the local benchmark/ directory.
 
 ### `Splitter`
 
