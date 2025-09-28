@@ -15,7 +15,11 @@ Loader:
 
 ## Usage Examples
 
-### Loading Adult Income Dataset
+Click the below button to run this example in Colab:
+
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/nics-tw/petsard/blob/main/demo/petsard-yaml/loader-yaml/benchmark-protocol.ipynb)
+
+### Loading Benchmark Dataset
 
 ```yaml
 Loader:
@@ -23,13 +27,22 @@ Loader:
     filepath: benchmark://adult-income
 ```
 
-### Using with Schema
+### Loading Benchmark Dataset with Benchmark Schema
 
 ```yaml
 Loader:
-  load_with_schema:
+  load_benchmark_with_schema:
     filepath: benchmark://adult-income
-    schema: schemas/adult-income.yaml
+    schema: benchmark://adult-income_schema
+```
+
+### Using with Local Schema
+
+```yaml
+Loader:
+  load_with_local_schema:
+    filepath: benchmark://adult-income
+    schema: benchmark/adult-income_schema.yaml
 ```
 
 ## Available Benchmark Datasets
@@ -39,6 +52,7 @@ Loader:
 | Dataset Name | Protocol Path | Description |
 |-------------|---------------|-------------|
 | Adult Income | `benchmark://adult-income` | UCI Adult Income census dataset (48,842 rows, 15 columns) |
+| Adult Income Schema | `benchmark://adult-income_schema` | Schema definition for Adult Income dataset |
 | Adult Income (Original) | `benchmark://adult-income_ori` | Original training data (for demo) |
 | Adult Income (Control) | `benchmark://adult-income_control` | Control group data (for demo) |
 | Adult Income (Synthetic) | `benchmark://adult-income_syn` | SDV Gaussian Copula synthetic data (for demo) |
@@ -52,42 +66,6 @@ Loader:
 | Multi-table Tracking | `benchmark://best-practices_multi-table_tracking` | Multi-table example - Tracking data |
 | Multi-timestamp | `benchmark://best-practices_multi-table` | Multi-timestamp example data |
 | Categorical & High-cardinality | `benchmark://best-practices_categorical_high-cardinality` | Categorical and high-cardinality example data |
-
-## Complete Pipeline Example
-
-```yaml
----
-Loader:
-  # Using benchmark dataset
-  benchmark:
-    filepath: benchmark://adult-income
-    
-Preprocessor:
-  preprocess:
-    method: default
-    
-Synthesizer:
-  synthesize:
-    method: sdv-single-table
-    model: gaussian_copula
-    
-Postprocessor:
-  postprocess:
-    method: default
-    
-Evaluator:
-  quality_report:
-    method: sdmetrics-qualityreport
-    
-Reporter:
-  save_synthetic:
-    method: save_data
-    output_path: output/synthetic_adult.csv
-  save_report:
-    method: save_report
-    granularity: global
-...
-```
 
 ## How It Works
 

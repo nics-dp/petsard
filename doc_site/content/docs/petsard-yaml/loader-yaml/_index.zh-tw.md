@@ -40,105 +40,54 @@ Loader 模組的 YAML 設定檔案格式。
 |------|------|------|------|
 | `schema` | `string\|dict` | 資料結構定義 | `schemas/user.yaml` 或內嵌 dict |
 
-### 已棄用參數
-
-| 參數 | 替代方案 | 移除版本 |
-|------|----------|----------|
-| `column_types` | 使用 `schema` | v2.0.0 |
-| `na_values` | 使用 `schema` | v2.0.0 |
-| `header_names` | 改用資料檔案中的標題列 | v2.0.0 |
-
 ## 使用範例
+
+請點擊下方按鈕在 Colab 中執行範例：
+
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/nics-tw/petsard/blob/main/demo/petsard-yaml/loader-yaml/loader-yaml.ipynb)
 
 ### 基本載入
 
 ```yaml
 Loader:
   load_csv:
-    filepath: data/users.csv
+    filepath: benchmark/adult-income.csv
 ```
 
-### 載入基準資料集
-
-```yaml
-Loader:
-  load_benchmark:
-    filepath: benchmark://adult-income
-```
-
-詳細的基準資料集使用方式，請參閱 [benchmark:// 文檔](benchmark-protocol)。
-
-### 使用外部 Schema
+### 使用表詮釋資料檔案
+表詮釋資料就是 Schema，用於定義資料的結構與類型。
 
 ```yaml
 Loader:
   load_with_schema:
-    filepath: data/customers.csv
-    schema: schemas/customer_schema.yaml
+    filepath: benchmark/adult-income.csv
+    schema: benchmark/adult-income_schema.yaml
 ```
 
-### 內嵌 Schema 定義
+### 多個資料載入
 
 ```yaml
 Loader:
-  load_with_inline_schema:
-    filepath: data/employees.csv
-    schema:
-      # 完整的 Schema YAML 結構
-      # 詳細設定請參閱 Schema YAML 文檔
-      id: employee_schema
-      name: Employee Data Schema
-      # ... 其他 Schema 設定
-```
-
-### 多個載入實驗
-
-```yaml
-Loader:
-  # 載入訓練資料
+  # Load training data
   load_train:
-    filepath: data/train.csv
-    schema: schemas/data_schema.yaml
+    filepath: benchmark/adult-income_ori.csv
+    schema: benchmark/adult-income_schema.yaml
 
-  # 載入測試資料
+  # Load test data
   load_test:
-    filepath: data/test.csv
-    schema: schemas/data_schema.yaml
+    filepath: benchmark/adult-income_control.csv
+    schema: benchmark/adult-income_schema.yaml
 
-  # 載入驗證資料
-  load_validation:
-    filepath: data/validation.csv
-    schema: schemas/data_schema.yaml
+  # Load synthesizing data
+  load_synthesizer:
+    filepath: benchmark/adult-income_syn.csv
+    schema: benchmark/adult-income_schema.yaml
 ```
 
-### 使用 Schema 的完整範例
+## 相關說明
 
-```yaml
-Loader:
-  # 使用外部 Schema 檔案
-  customer_data_loader:
-    filepath: data/customers.csv
-    schema: schemas/customer_schema.yaml
-
-  # 或使用內嵌 Schema
-  employee_data_loader:
-    filepath: data/employees.csv
-    schema:
-      # 這裡放置完整的 Schema YAML 結構
-      # 具體 Schema 設定方式請參閱 Schema YAML 文檔
-```
-
-## Schema 配置說明
-
-Schema 參數接受兩種格式：
-
-1. **字串（string）**：外部 Schema YAML 檔案的路徑
-   - 範例：`schema: schemas/data_schema.yaml`
-
-2. **字典（dict）**：內嵌的完整 Schema YAML 結構
-   - 直接在 Loader 配置中定義完整的 Schema
-
-Schema 的具體設定方式、可用參數和屬性定義等詳細資訊，請參閱 Schema YAML 文檔。
+- **基準資料集**：使用 benchmark:// 協議可自動下載並載入標準化的資料集，詳見 benchmark:// 文檔。
+- **表詮釋資料**：Schema 用於定義資料的結構、類型和約束條件，詳見 Schema YAML 文檔。
 
 ## 執行說明
 

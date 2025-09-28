@@ -15,7 +15,11 @@ Loader:
 
 ## 使用範例
 
-### 載入 Adult Income 資料集
+請點擊下方按鈕在 Colab 中執行範例：
+
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/nics-tw/petsard/blob/main/demo/petsard-yaml/loader-yaml/benchmark-protocol.ipynb)
+
+### 載入基準資料集
 
 ```yaml
 Loader:
@@ -23,13 +27,22 @@ Loader:
     filepath: benchmark://adult-income
 ```
 
-### 配合 Schema 使用
+### 載入基準資料集與基準資料集詮釋資料
 
 ```yaml
 Loader:
-  load_with_schema:
+  load_benchmark_with_schema:
     filepath: benchmark://adult-income
-    schema: schemas/adult-income.yaml
+    schema: benchmark://adult-income_schema
+```
+
+### 配合本地詮釋資料使用
+
+```yaml
+Loader:
+  load_with_local_schema:
+    filepath: benchmark://adult-income
+    schema: benchmark/adult-income_schema.yaml
 ```
 
 ## 可用的基準資料集
@@ -39,6 +52,7 @@ Loader:
 | 資料集名稱 | 協議路徑 | 說明 |
 |-----------|---------|------|
 | Adult Income | `benchmark://adult-income` | UCI Adult Income 人口普查資料集（48,842 筆，15 欄位） |
+| Adult Income Schema | `benchmark://adult-income_schema` | Adult Income 資料集的詮釋資料定義 |
 | Adult Income (Original) | `benchmark://adult-income_ori` | 原始訓練資料（用於 demo） |
 | Adult Income (Control) | `benchmark://adult-income_control` | 控制組資料（用於 demo） |
 | Adult Income (Synthetic) | `benchmark://adult-income_syn` | SDV Gaussian Copula 合成資料（用於 demo） |
@@ -52,42 +66,6 @@ Loader:
 | Multi-table Tracking | `benchmark://best-practices_multi-table_tracking` | 多表格範例 - 追蹤資料 |
 | Multi-timestamp | `benchmark://best-practices_multi-table` | 多時間戳範例資料 |
 | Categorical & High-cardinality | `benchmark://best-practices_categorical_high-cardinality` | 類別型與高基數範例資料 |
-
-## 完整管線範例
-
-```yaml
----
-Loader:
-  # 使用基準資料集
-  benchmark:
-    filepath: benchmark://adult-income
-    
-Preprocessor:
-  preprocess:
-    method: default
-    
-Synthesizer:
-  synthesize:
-    method: sdv-single-table
-    model: gaussian_copula
-    
-Postprocessor:
-  postprocess:
-    method: default
-    
-Evaluator:
-  quality_report:
-    method: sdmetrics-qualityreport
-    
-Reporter:
-  save_synthetic:
-    method: save_data
-    output_path: output/synthetic_adult.csv
-  save_report:
-    method: save_report
-    granularity: global
-...
-```
 
 ## 工作原理
 
