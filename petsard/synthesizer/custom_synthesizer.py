@@ -51,24 +51,12 @@ class CustomSynthesizer(BaseSynthesizer):
 
         synthesizer_class: callable = None
 
-        # Use demo-specific module loading for better path resolution
-        try:
-            from demo.utils import load_demo_module
-
-            _, synthesizer_class = load_demo_module(
-                module_path=self.config["module_path"],
-                class_name=self.config["class_name"],
-                logger=self._logger,
-                required_methods=self.REQUIRED_METHODS,
-            )
-        except ImportError:
-            # Fallback to core function if demo utils not available
-            _, synthesizer_class = load_external_module(
-                module_path=self.config["module_path"],
-                class_name=self.config["class_name"],
-                logger=self._logger,
-                required_methods=self.REQUIRED_METHODS,
-            )
+        _, synthesizer_class = load_external_module(
+            module_path=self.config["module_path"],
+            class_name=self.config["class_name"],
+            logger=self._logger,
+            required_methods=self.REQUIRED_METHODS,
+        )
 
         self._impl = synthesizer_class(config=config, metadata=metadata)
 
