@@ -40,105 +40,54 @@ YAML configuration file format for the Loader module.
 |-----------|------|-------------|---------|
 | `schema` | `string\|dict` | Data structure definition | `schemas/user.yaml` or inline dict |
 
-### Deprecated Parameters
-
-| Parameter | Alternative | Removal Version |
-|-----------|-------------|-----------------|
-| `column_types` | Use `schema` | v2.0.0 |
-| `na_values` | Use `schema` | v2.0.0 |
-| `header_names` | Use header row in data file | v2.0.0 |
-
 ## Usage Examples
+
+Click the below button to run this example in Colab:
+
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/nics-tw/petsard/blob/main/demo/petsard-yaml/loader-yaml/loader-yaml.ipynb)
 
 ### Basic Loading
 
 ```yaml
 Loader:
   load_csv:
-    filepath: data/users.csv
+    filepath: benchmark/adult-income.csv
 ```
 
-### Loading Benchmark Dataset
-
-```yaml
-Loader:
-  load_benchmark:
-    filepath: benchmark://adult-income
-```
-
-For detailed usage of benchmark datasets, see [benchmark:// documentation](benchmark-protocol).
-
-### Using External Schema
+### Using Schema File
+Schema defines the structure and types of the data.
 
 ```yaml
 Loader:
   load_with_schema:
-    filepath: data/customers.csv
-    schema: schemas/customer_schema.yaml
+    filepath: benchmark/adult-income.csv
+    schema: benchmark/adult-income_schema.yaml
 ```
 
-### Inline Schema Definition
-
-```yaml
-Loader:
-  load_with_inline_schema:
-    filepath: data/employees.csv
-    schema:
-      # Complete Schema YAML structure
-      # For detailed configuration, refer to Schema YAML documentation
-      id: employee_schema
-      name: Employee Data Schema
-      # ... other Schema configurations
-```
-
-### Multiple Loading Experiments
+### Multiple Data Loading
 
 ```yaml
 Loader:
   # Load training data
   load_train:
-    filepath: data/train.csv
-    schema: schemas/data_schema.yaml
+    filepath: benchmark/adult-income_ori.csv
+    schema: benchmark/adult-income_schema.yaml
 
   # Load test data
   load_test:
-    filepath: data/test.csv
-    schema: schemas/data_schema.yaml
+    filepath: benchmark/adult-income_control.csv
+    schema: benchmark/adult-income_schema.yaml
 
-  # Load validation data
-  load_validation:
-    filepath: data/validation.csv
-    schema: schemas/data_schema.yaml
+  # Load synthesizing data
+  load_synthesizer:
+    filepath: benchmark/adult-income_syn.csv
+    schema: benchmark/adult-income_schema.yaml
 ```
 
-### Complete Example with Schema
+## Related Information
 
-```yaml
-Loader:
-  # Using external Schema file
-  customer_data_loader:
-    filepath: data/customers.csv
-    schema: schemas/customer_schema.yaml
-    
-  # Or using inline Schema
-  employee_data_loader:
-    filepath: data/employees.csv
-    schema:
-      # Place complete Schema YAML structure here
-      # For specific Schema configuration, refer to Schema YAML documentation
-```
-
-## Schema Configuration
-
-The schema parameter accepts two formats:
-
-1. **String**: Path to an external Schema YAML file
-   - Example: `schema: schemas/data_schema.yaml`
-
-2. **Dictionary**: Inline complete Schema YAML structure
-   - Define the complete Schema directly in the Loader configuration
-
-For detailed Schema configuration, available parameters, and attribute definitions, refer to the Schema YAML documentation.
+- **Benchmark Datasets**: Use the benchmark:// protocol to automatically download and load standardized datasets, see benchmark:// documentation.
+- **Schema**: Schema defines the structure, types, and constraints of the data, see Schema YAML documentation.
 
 ## Execution Notes
 

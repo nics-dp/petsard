@@ -1,0 +1,3 @@
+Loader:
+  load_benchmark:
+    filepath: benchmark://adult-income
