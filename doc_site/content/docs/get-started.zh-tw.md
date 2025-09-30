@@ -41,7 +41,7 @@ pip install petsard[dev]
 
 ```bash
 # 複製儲存庫
-git clone https://github.com/nics-tw/petsard.git
+git clone https://github.com/nics-dp/petsard.git
 cd petsard
 
 # 使用 pyproject.toml 安裝（推薦）

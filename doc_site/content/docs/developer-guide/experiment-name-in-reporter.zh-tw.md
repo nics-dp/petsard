@@ -10,7 +10,7 @@ PETsARD 採用統一的實驗命名規範，用於識別和追蹤實驗過程。
 
 請點擊下方按鈕在 Colab 中執行範例：
 
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/nics-tw/petsard/blob/main/demo/developer-guide/experiment-name-in-reporter.ipynb)
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/nics-dp/petsard/blob/main/demo/developer-guide/experiment-name-in-reporter.ipynb)
 
 ## 命名策略概述
 

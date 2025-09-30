@@ -330,8 +330,8 @@ workflow_run:
 ### 註冊表發布
 
 映像檔發布到 GitHub Container Registry：
-- `ghcr.io/nics-tw/petsard:latest`
-- `ghcr.io/nics-tw/petsard:v1.4.0`
+- `ghcr.io/nics-dp/petsard:latest`
+- `ghcr.io/nics-dp/petsard:v1.4.0`
 
 ## 除錯問題
 
