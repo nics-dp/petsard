@@ -41,7 +41,7 @@ For development or custom builds:
 
 ```bash
 # Clone the repository
-git clone https://github.com/nics-tw/petsard.git
+git clone https://github.com/nics-dp/petsard.git
 cd petsard
 
 # Install with pyproject.toml (recommended)

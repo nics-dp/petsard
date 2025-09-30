@@ -1,37 +1,14 @@
 # Hugo configuration file
 title: PETsARD
-baseURL: "https://nics-tw.github.io/petsard/"
+baseURL: "https://nics-dp.github.io/petsard/"
 
 theme: hextra
 
-defaultContentLanguage: en
+defaultContentLanguage: zh-tw
 languages:
-  en:
-    languageName: English
-    weight: 1
-    menu:
-      main:
-        - name: Docs
-          pageRef: /docs
-          weight: 1
-        - name: About
-          pageRef: /about
-          weight: 2
-        - name: Contact ↗
-          url: "https://github.com/nics-tw"
-          weight: 3
-        - name: Search
-          weight: 4
-          params:
-            type: search
-        - name: GitHub
-          weight: 5
-          url: "https://github.com/nics-tw/petsard"
-          params:
-            icon: github
   zh-tw:
     languageName: 繁體中文
-    weight: 2
+    weight: 1
     menu:
       main:
         - name: 文件
@@ -41,7 +18,7 @@ languages:
           pageRef: /about
           weight: 2
         - name: 聯絡 ↗
-          url: "https://github.com/nics-tw"
+          url: "https://github.com/nics-dp"
           weight: 3
         - name: 搜尋
           weight: 4
@@ -49,7 +26,30 @@ languages:
             type: search
         - name: GitHub
           weight: 5
-          url: "https://github.com/nics-tw/petsard"
+          url: "https://github.com/nics-dp/petsard"
+          params:
+            icon: github
+  en:
+    languageName: English
+    weight: 2
+    menu:
+      main:
+        - name: Docs
+          pageRef: /docs
+          weight: 1
+        - name: About
+          pageRef: /about
+          weight: 2
+        - name: Contact ↗
+          url: "https://github.com/nics-dp"
+          weight: 3
+        - name: Search
+          weight: 4
+          params:
+            type: search
+        - name: GitHub
+          weight: 5
+          url: "https://github.com/nics-dp/petsard"
           params:
             icon: github
 
