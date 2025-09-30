@@ -12,7 +12,7 @@ This document explains the experiment naming system used in PETsARD's Reporter m
 
 Click the below button to run this example in Colab:
 
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/nics-tw/petsard/blob/main/demo/developer-guide/experiment-name-in-reporte.ipynb)
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/nics-dp/petsard/blob/main/demo/developer-guide/experiment-name-in-reporte.ipynb)
 
 ## Overview
 

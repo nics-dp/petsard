@@ -14,10 +14,10 @@ PETsARD 提供預先建置的 Docker 容器和本地開發環境。本指南將�
 
 ```bash
 # 拉取最新版本
-docker pull ghcr.io/nics-tw/petsard:latest
+docker pull ghcr.io/nics-dp/petsard:latest
 
 # 運行互動式容器
-docker run -it --rm ghcr.io/nics-tw/petsard:latest
+docker run -it --rm ghcr.io/nics-dp/petsard:latest
 ```
 
 ### 選項 2：本地開發環境
@@ -26,7 +26,7 @@ docker run -it --rm ghcr.io/nics-tw/petsard:latest
 
 ```bash
 # 複製儲存庫（如果尚未完成）
-git clone https://github.com/nics-tw/petsard.git
+git clone https://github.com/nics-dp/petsard.git
 cd petsard
 
 # 建置標準版本（預設 - 不含 Jupyter）
@@ -48,7 +48,7 @@ docker run -it -p 8888:8888 \
 # 使用預先建置的容器（標準版本）
 docker run -it --entrypoint /opt/venv/bin/python3 \
   -v $(pwd):/app/data \
-  ghcr.io/nics-tw/petsard:latest
+  ghcr.io/nics-dp/petsard:latest
 
 # 使用本地 Jupyter 環境
 docker build --build-arg INCLUDE_JUPYTER=true -t petsard:jupyter .
@@ -73,7 +73,7 @@ docker run -it -p 8888:8888 \
 docker run -it --rm \
   -v $(pwd):/workspace \
   -w /workspace \
-  ghcr.io/nics-tw/petsard:latest \
+  ghcr.io/nics-dp/petsard:latest \
   python -m petsard.executor demo/tutorial/use-cases/data-constraining.yaml
 ```
 
@@ -83,7 +83,7 @@ docker run -it --rm \
 # 啟動互動式 Python 會話
 docker run -it --entrypoint /opt/venv/bin/python3 \
   -v $(pwd):/app/data \
-  ghcr.io/nics-tw/petsard:latest
+  ghcr.io/nics-dp/petsard:latest
 
 # 在容器內，您可以運行：
 # import petsard
@@ -97,7 +97,7 @@ docker run -it --entrypoint /opt/venv/bin/python3 \
 docker run -it --rm \
   -v $(pwd)/configs:/app/configs \
   -v $(pwd)/output:/app/output \
-  ghcr.io/nics-tw/petsard:latest \
+  ghcr.io/nics-dp/petsard:latest \
   bash -c "
     for config in /app/configs/*.yaml; do
       echo \"正在處理 \$config\"
@@ -178,7 +178,7 @@ docker run -it --entrypoint /opt/venv/bin/python3 \
 docker run -it --rm \
   -e PYTHONPATH=/workspace:/app \
   -v $(pwd):/workspace \
-  ghcr.io/nics-tw/petsard:latest \
+  ghcr.io/nics-dp/petsard:latest \
   python your_script.py
 ```
 
@@ -202,7 +202,7 @@ docker run -it --rm \
 docker run -it --rm \
   --user $(id -u):$(id -g) \
   -v $(pwd):/workspace \
-  ghcr.io/nics-tw/petsard:latest \
+  ghcr.io/nics-dp/petsard:latest \
   bash
 ```
 
@@ -212,14 +212,14 @@ docker run -it --rm \
 # 如需要可增加記憶體限制
 docker run -it --rm \
   --memory=4g \
-  ghcr.io/nics-tw/petsard:latest
+  ghcr.io/nics-dp/petsard:latest
 ```
 
 ### 健康檢查
 
 ```bash
 # 驗證容器是否正常運作
-docker run --rm ghcr.io/nics-tw/petsard:latest python -c "
+docker run --rm ghcr.io/nics-dp/petsard:latest python -c "
 import petsard
 print('✅ PETsARD 載入成功')
 from petsard.executor import Executor
