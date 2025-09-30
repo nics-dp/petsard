@@ -335,8 +335,8 @@ workflow_run:
 ### Registry Publishing
 
 Images are published to GitHub Container Registry:
-- `ghcr.io/nics-tw/petsard:latest`
-- `ghcr.io/nics-tw/petsard:v1.4.0`
+- `ghcr.io/nics-dp/petsard:latest`
+- `ghcr.io/nics-dp/petsard:v1.4.0`
 
 ## Debugging Issues
 

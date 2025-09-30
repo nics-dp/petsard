@@ -18,11 +18,11 @@ The following outlines the design of the experiment workflow and the package str
 
 ## Release History
 
-- [Milestone](https://github.com/nics-tw/PETsARD/releases/latest)
+- [Milestone](https://github.com/nics-dp/PETsARD/releases/latest)
   - The Milestone document provide detailed information about the latest version of `PETsARD`.
-- [Release Note](https://github.com/nics-tw/petsard/releases)
+- [Release Note](https://github.com/nics-dp/petsard/releases)
   - Release note provides information of each version of `PETsARD`.
-- [CHANGELOG.md](https://github.com/nics-tw/petsard/blob/main/CHANGELOG.md)
+- [CHANGELOG.md](https://github.com/nics-dp/petsard/blob/main/CHANGELOG.md)
   - Changelog provides evolution of the `PETsARD` over time.
 
 ## Contributing

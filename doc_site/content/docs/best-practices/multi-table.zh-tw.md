@@ -193,7 +193,7 @@ denorm_data = denorm_data\
 
 請點擊下方按鈕在 Colab 中執行範例：
 
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/nics-tw/petsard/blob/main/demo/best-practices/multi-table.ipynb)
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/nics-dp/petsard/blob/main/demo/best-practices/multi-table.ipynb)
 
 PETsARD 簡單地用最預設的設定執行
 
