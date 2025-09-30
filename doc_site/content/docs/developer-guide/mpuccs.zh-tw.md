@@ -14,7 +14,7 @@ mpUCCs (Maximal Partial Unique Column Combinations，最大部分唯一欄位組
 
 請點擊下方按鈕在 Colab 中執行範例：
 
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/nics-tw/petsard/blob/main/demo/developer-guide/mpuccs.ipynb)
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/nics-dp/petsard/blob/main/demo/developer-guide/mpuccs.ipynb)
 
 ```yaml
 ---

@@ -13,7 +13,7 @@ mpUCCs (Maximal Partial Unique Column Combinations) is an experimental privacy r
 
 Click the below button to run this example in Colab:
 
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/nics-tw/petsard/blob/main/demo/developer-guide/mpuccs.ipynb)
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/nics-dp/petsard/blob/main/demo/developer-guide/mpuccs.ipynb)
 
 ```yaml
 ---
