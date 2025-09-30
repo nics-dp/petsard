@@ -12,7 +12,7 @@ The `schema` parameter in `Loader` leverages the powerful **Metadater** componen
 
 Click the button below to run the example in Colab:
 
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/nics-tw/petsard/blob/main/demo/tutorial/use-cases/specify-schema.ipynb)
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/nics-dp/petsard/blob/main/demo/tutorial/use-cases/specify-schema.ipynb)
 
 ```yaml
 ---

@@ -14,10 +14,10 @@ PETsARD provides both pre-built Docker containers and local development environm
 
 ```bash
 # Pull the latest version
-docker pull ghcr.io/nics-tw/petsard:latest
+docker pull ghcr.io/nics-dp/petsard:latest
 
 # Run interactive container
-docker run -it --rm ghcr.io/nics-tw/petsard:latest
+docker run -it --rm ghcr.io/nics-dp/petsard:latest
 ```
 
 ### Option 2: Local Development Environment
@@ -26,7 +26,7 @@ If you have the PETsARD source code locally, you can build and run containers:
 
 ```bash
 # Clone the repository (if not already done)
-git clone https://github.com/nics-tw/petsard.git
+git clone https://github.com/nics-dp/petsard.git
 cd petsard
 
 # Build standard version (default - without Jupyter)
@@ -48,7 +48,7 @@ docker run -it -p 8888:8888 \
 # Using pre-built container (standard version)
 docker run -it --entrypoint /opt/venv/bin/python3 \
   -v $(pwd):/app/data \
-  ghcr.io/nics-tw/petsard:latest
+  ghcr.io/nics-dp/petsard:latest
 
 # Using local Jupyter environment
 docker build --build-arg INCLUDE_JUPYTER=true -t petsard:jupyter .
@@ -73,7 +73,7 @@ docker run -it -p 8888:8888 \
 docker run -it --rm \
   -v $(pwd):/workspace \
   -w /workspace \
-  ghcr.io/nics-tw/petsard:latest \
+  ghcr.io/nics-dp/petsard:latest \
   python -m petsard.executor demo/tutorial/use-cases/data-constraining.yaml
 ```
 
@@ -83,7 +83,7 @@ docker run -it --rm \
 # Start interactive Python session
 docker run -it --entrypoint /opt/venv/bin/python3 \
   -v $(pwd):/app/data \
-  ghcr.io/nics-tw/petsard:latest
+  ghcr.io/nics-dp/petsard:latest
 
 # Inside container, you can run:
 # import petsard
@@ -97,7 +97,7 @@ docker run -it --entrypoint /opt/venv/bin/python3 \
 docker run -it --rm \
   -v $(pwd)/configs:/app/configs \
   -v $(pwd)/output:/app/output \
-  ghcr.io/nics-tw/petsard:latest \
+  ghcr.io/nics-dp/petsard:latest \
   bash -c "
     for config in /app/configs/*.yaml; do
       echo \"Processing \$config\"
@@ -178,7 +178,7 @@ The container supports these environment variables:
 docker run -it --rm \
   -e PYTHONPATH=/workspace:/app \
   -v $(pwd):/workspace \
-  ghcr.io/nics-tw/petsard:latest \
+  ghcr.io/nics-dp/petsard:latest \
   python your_script.py
 ```
 
@@ -202,7 +202,7 @@ docker run -it --rm \
 docker run -it --rm \
   --user $(id -u):$(id -g) \
   -v $(pwd):/workspace \
-  ghcr.io/nics-tw/petsard:latest \
+  ghcr.io/nics-dp/petsard:latest \
   bash
 ```
 
@@ -212,14 +212,14 @@ docker run -it --rm \
 # Increase memory limit if needed
 docker run -it --rm \
   --memory=4g \
-  ghcr.io/nics-tw/petsard:latest
+  ghcr.io/nics-dp/petsard:latest
 ```
 
 ### Health Check
 
 ```bash
 # Verify container is working correctly
-docker run --rm ghcr.io/nics-tw/petsard:latest python -c "
+docker run --rm ghcr.io/nics-dp/petsard:latest python -c "
 import petsard
 print('✅ PETsARD loaded successfully')
 from petsard.executor import Executor

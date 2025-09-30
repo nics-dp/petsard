@@ -29,8 +29,8 @@ ARG VCS_REF
 LABEL maintainer="matheme.justyn@gmail.com" \
 	description="PETsARD Production Environment" \
 	com.nvidia.volumes.needed="nvidia_driver" \
-	org.opencontainers.image.source="https://github.com/nics-tw/petsard" \
-	org.opencontainers.image.documentation="https://nics-tw.github.io/petsard/" \
+	org.opencontainers.image.source="https://github.com/nics-dp/petsard" \
+	org.opencontainers.image.documentation="https://nics-dp.github.io/petsard/" \
 	org.opencontainers.image.licenses="MIT" \
 	org.opencontainers.image.created=${BUILD_DATE} \
 	org.opencontainers.image.revision=${VCS_REF} \

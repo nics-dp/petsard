@@ -1,6 +1,6 @@
 services:
   petsard:
-    image: ghcr.io/nics-tw/petsard:main
+    image: ghcr.io/nics-dp/petsard:main
     platform: linux/amd64
     restart: unless-stopped
     # privileged: true
