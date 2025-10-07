@@ -53,7 +53,7 @@ class LoaderConfig(BaseConfig):
         _logger (logging.Logger): The logger object.
         filepath (str): The fullpath of dataset.
         column_types (dict): The dictionary of column types and their corresponding column names.
-        header_names (list): Specifies a list of headers for the data without header.
+        header_names (list): **DEPRECATED in v2.0.0 - will be removed** Specifies a list of headers for the data without header.
         na_values (str | list | dict): Extra string to recognized as NA/NaN.
         schema (Schema): Schema configuration object with field definitions and global parameters.
         schema_path (str): The path to schema file if loaded from YAML file.
@@ -68,7 +68,9 @@ class LoaderConfig(BaseConfig):
     column_types: dict[str, list[str]] | None = (
         None  # TODO: Deprecated in v2.0.0 - will be removed
     )
-    header_names: list[str] | None = None
+    header_names: list[str] | None = (
+        None  # TODO: Deprecated in v2.0.0 - will be removed
+    )
     na_values: str | list[str] | dict[str, str] | None = (
         None  # TODO: Deprecated in v2.0.0 - will be removed
     )
@@ -166,7 +168,7 @@ class Loader:
         self,
         filepath: str = None,
         column_types: dict[str, list[str]] | None = None,  # TODO: Deprecated in v2.0.0
-        header_names: list[str] | None = None,
+        header_names: list[str] | None = None,  # TODO: Deprecated in v2.0.0
         na_values: str
         | list[str]
         | dict[str, str]
@@ -183,7 +185,7 @@ class Loader:
                 - 'category': The column(s) will be treated as categorical.
                 - 'datetime': The column(s) will be treated as datetime.
                 Default is None, indicating no custom column types will be applied.
-            header_names (list ,optional):
+            header_names (list ,optional): **DEPRECATED in v2.0.0 - will be removed**
                 Specifies a list of headers for the data without header.
                 Default is None, indicating no custom headers will be applied.
             na_values (str | list | dict ,optional): **DEPRECATED in v2.0.0 - will be removed**

@@ -1,6 +1,6 @@
 ---
 title: "init"
-weight: 341
+weight: 381
 ---
 
 初始化評估器實例。

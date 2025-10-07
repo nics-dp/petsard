@@ -1,7 +1,7 @@
 ---
 title: Best practices
 type: docs
-weight: 40
+weight: 1040
 prev: docs/tutorial
 next: docs/api
 sidebar:

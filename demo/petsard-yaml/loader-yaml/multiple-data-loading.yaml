@@ -1,0 +1,15 @@
+Loader:
+  # Load training data
+  load_train:
+    filepath: benchmark/adult-income_ori.csv
+    schema: benchmark/adult-income_schema.yaml
+
+  # Load test data
+  load_test:
+    filepath: benchmark/adult-income_control.csv
+    schema: benchmark/adult-income_schema.yaml
+
+  # Load synthesizing data
+  load_synthesizer:
+    filepath: benchmark/adult-income_syn.csv
+    schema: benchmark/adult-income_schema.yaml

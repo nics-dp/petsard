@@ -2,7 +2,7 @@
 title: Metadater
 type: docs
 weight: 53
-prev: docs/api/loader
+prev: docs/api/executor
 next: docs/api/splitter
 ---
 

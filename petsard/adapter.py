@@ -169,6 +169,10 @@ class LoaderAdapter(BaseAdapter):
                 Whether the filepath uses benchmark:// protocol.
             benchmarker_config (BenchmarkerConfig):
                 Configuration for benchmark dataset if applicable.
+            is_schema_benchmark (bool):
+                Whether the schema uses benchmark:// protocol.
+            schema_benchmarker_config (BenchmarkerConfig):
+                Configuration for schema benchmark dataset if applicable.
         """
         super().__init__(config)
 
@@ -185,18 +189,31 @@ class LoaderAdapter(BaseAdapter):
             import re
             from pathlib import Path
 
+            from petsard.exceptions import UnsupportedMethodError
             from petsard.loader.benchmarker import BenchmarkerConfig
 
             benchmark_name = re.sub(
                 r"^benchmark://", "", filepath, flags=re.IGNORECASE
             ).lower()
 
-            self._logger.info(f"Detected benchmark protocol: {benchmark_name}")
+            self._logger.info(
+                f"Detected benchmark protocol for filepath: {benchmark_name}"
+            )
 
             # Create BenchmarkerConfig
-            self.benchmarker_config = BenchmarkerConfig(
-                benchmark_name=benchmark_name, filepath_raw=filepath
-            )
+            try:
+                self.benchmarker_config = BenchmarkerConfig(
+                    benchmark_name=benchmark_name, filepath_raw=filepath
+                )
+            except UnsupportedMethodError as e:
+                # Convert UnsupportedMethodError to BenchmarkDatasetsError
+                from petsard.exceptions import BenchmarkDatasetsError
+
+                error_msg = (
+                    f"Unsupported benchmark dataset '{benchmark_name}': {str(e)}"
+                )
+                self._logger.error(error_msg)
+                raise BenchmarkDatasetsError(error_msg) from e
 
             # Update filepath in config to local path
             local_filepath = Path("benchmark").joinpath(
@@ -206,10 +223,118 @@ class LoaderAdapter(BaseAdapter):
 
             self._logger.debug(f"Updated filepath to local path: {local_filepath}")
 
+            # Download benchmark data file BEFORE initializing Loader
+            self._logger.info(
+                f"Downloading benchmark dataset in __init__: {benchmark_name}"
+            )
+            try:
+                from petsard.exceptions import BenchmarkDatasetsError
+                from petsard.loader.benchmarker import BenchmarkerRequests
+
+                benchmarker = BenchmarkerRequests(
+                    self.benchmarker_config.get_benchmarker_config()
+                )
+                benchmarker.download()
+                self._logger.debug(
+                    "Benchmark dataset downloaded successfully in __init__"
+                )
+            except BenchmarkDatasetsError as e:
+                error_msg = f"Failed to download benchmark dataset '{benchmark_name}' during initialization: {str(e)}"
+                self._logger.error(error_msg)
+                raise BenchmarkDatasetsError(error_msg) from e
+            except ImportError as e:
+                error_msg = (
+                    f"Cannot download benchmark dataset '{benchmark_name}': "
+                    f"requests library is required. Install with: pip install petsard[load-benchmark]"
+                )
+                self._logger.error(error_msg)
+                raise BenchmarkDatasetsError(error_msg) from e
+            except Exception as e:
+                error_msg = f"Failed to download benchmark dataset '{benchmark_name}' during initialization: {str(e)}"
+                self._logger.error(error_msg)
+                raise BenchmarkDatasetsError(error_msg) from e
+
+        # Check if schema uses benchmark:// protocol
+        schema = config.get("schema", "")
+        self.is_schema_benchmark = isinstance(
+            schema, str
+        ) and schema.lower().startswith("benchmark://")
+        self.schema_benchmarker_config = None
+
+        if self.is_schema_benchmark:
+            # If benchmark protocol detected for schema, prepare benchmarker
+            import re
+            from pathlib import Path
+
+            from petsard.exceptions import UnsupportedMethodError
+            from petsard.loader.benchmarker import BenchmarkerConfig
+
+            schema_benchmark_name = re.sub(
+                r"^benchmark://", "", schema, flags=re.IGNORECASE
+            ).lower()
+
+            self._logger.info(
+                f"Detected benchmark protocol for schema: {schema_benchmark_name}"
+            )
+
+            # Create BenchmarkerConfig for schema
+            try:
+                self.schema_benchmarker_config = BenchmarkerConfig(
+                    benchmark_name=schema_benchmark_name, filepath_raw=schema
+                )
+            except UnsupportedMethodError as e:
+                # Convert UnsupportedMethodError to BenchmarkDatasetsError
+                from petsard.exceptions import BenchmarkDatasetsError
+
+                error_msg = (
+                    f"Unsupported benchmark schema '{schema_benchmark_name}': {str(e)}"
+                )
+                self._logger.error(error_msg)
+                raise BenchmarkDatasetsError(error_msg) from e
+
+            # Update schema in config to local path
+            local_schema_path = Path("benchmark").joinpath(
+                self.schema_benchmarker_config.benchmark_filename
+            )
+            config["schema"] = str(local_schema_path)
+
+            self._logger.debug(f"Updated schema to local path: {local_schema_path}")
+
+            # Download benchmark schema file BEFORE initializing Loader
+            self._logger.info(
+                f"Downloading benchmark schema in __init__: {schema_benchmark_name}"
+            )
+            try:
+                from petsard.exceptions import BenchmarkDatasetsError
+                from petsard.loader.benchmarker import BenchmarkerRequests
+
+                benchmarker = BenchmarkerRequests(
+                    self.schema_benchmarker_config.get_benchmarker_config()
+                )
+                benchmarker.download()
+                self._logger.debug(
+                    "Benchmark schema downloaded successfully in __init__"
+                )
+            except BenchmarkDatasetsError as e:
+                error_msg = f"Failed to download benchmark schema '{schema_benchmark_name}' during initialization: {str(e)}"
+                self._logger.error(error_msg)
+                raise BenchmarkDatasetsError(error_msg) from e
+            except ImportError as e:
+                error_msg = (
+                    f"Cannot download benchmark schema '{schema_benchmark_name}': "
+                    f"requests library is required. Install with: pip install petsard[load-benchmark]"
+                )
+                self._logger.error(error_msg)
+                raise BenchmarkDatasetsError(error_msg) from e
+            except Exception as e:
+                error_msg = f"Failed to download benchmark schema '{schema_benchmark_name}' during initialization: {str(e)}"
+                self._logger.error(error_msg)
+                raise BenchmarkDatasetsError(error_msg) from e
+
         # Remove method parameter if exists, as Loader no longer accepts it
         config.pop("method", None)
 
-        # Create Loader instance with possibly updated config
+        # Initialize Loader with the updated config
         self.loader = Loader(**config)
         self._schema_metadata = None  # Store the Schema
 
@@ -227,26 +352,52 @@ class LoaderAdapter(BaseAdapter):
         """
         self._logger.debug("Starting data loading process")
 
-        # If benchmark protocol, download dataset first
+        # Note: Benchmark files are already downloaded in __init__
+        # We can skip the download here since they were downloaded before Loader initialization
         if self.is_benchmark and self.benchmarker_config:
-            self._logger.info(
-                f"Downloading benchmark dataset: {self.benchmarker_config.benchmark_name}"
+            self._logger.debug(
+                f"Benchmark dataset already downloaded in __init__: {self.benchmarker_config.benchmark_name}"
             )
-            try:
-                from petsard.exceptions import BenchmarkDatasetsError
-                from petsard.loader.benchmarker import BenchmarkerRequests
 
-                BenchmarkerRequests(
-                    self.benchmarker_config.get_benchmarker_config()
-                ).download()
-                self._logger.debug("Benchmark dataset downloaded successfully")
-            except Exception as e:
-                error_msg = f"Failed to download benchmark dataset: {str(e)}"
-                self._logger.error(error_msg)
-                raise BenchmarkDatasetsError(error_msg) from e
+        if self.is_schema_benchmark and self.schema_benchmarker_config:
+            self._logger.debug(
+                f"Benchmark schema already downloaded in __init__: {self.schema_benchmarker_config.benchmark_name}"
+            )
 
         # Load data (regardless of whether it's benchmark or not)
-        self.data, self._schema_metadata = self.loader.load()
+        try:
+            self.data, self._schema_metadata = self.loader.load()
+        except FileNotFoundError as e:
+            from petsard.exceptions import BenchmarkDatasetsError
+
+            # Check if this is a benchmark file that failed to download
+            if self.is_benchmark:
+                error_msg = (
+                    f"Benchmark dataset file not found after download attempt: {str(e)}. "
+                    f"This may indicate download failure or SHA-256 verification failure."
+                )
+            elif self.is_schema_benchmark:
+                error_msg = (
+                    f"Benchmark schema file not found after download attempt: {str(e)}. "
+                    f"This may indicate download failure or SHA-256 verification failure."
+                )
+            else:
+                error_msg = f"File not found: {str(e)}"
+            self._logger.error(error_msg)
+            raise BenchmarkDatasetsError(error_msg) from e
+        except Exception as e:
+            # Handle any other loading errors
+            if "Schema file not found" in str(e):
+                if self.is_schema_benchmark:
+                    from petsard.exceptions import BenchmarkDatasetsError
+
+                    error_msg = (
+                        f"Benchmark schema file not found: {self.schema_benchmarker_config.benchmark_filename}. "
+                        f"The download may have failed or the file may be corrupted."
+                    )
+                    self._logger.error(error_msg)
+                    raise BenchmarkDatasetsError(error_msg) from e
+            raise
 
         # Use Schema directly
         self._logger.debug("Using Schema from Metadater")

@@ -1,7 +1,7 @@
 ---
 title: Tutorial
 type: docs
-weight: 5
+weight: 1005
 prev: docs/get-started
 next: docs/best-practices
 sidebar:

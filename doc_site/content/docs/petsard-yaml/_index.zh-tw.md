@@ -87,10 +87,8 @@ Synthesizer:
         method: 'sdv-single_table-gaussiancopula'
     ctgan:             # 使用 CTGAN 方法
         method: 'sdv-single_table-ctgan'
-        epochs: 100
     tvae:              # 使用 TVAE 方法
         method: 'sdv-single_table-tvae'
-        epochs: 200
 ```
 
 同一模組中的多個實驗會依序執行，讓您可以：

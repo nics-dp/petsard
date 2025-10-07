@@ -1,0 +1,33 @@
+classDiagram
+    class BenchmarkerConfig {
+        +benchmark_name: str
+        +filepath_raw: str
+        +benchmark_filename: str
+        +__init__(benchmark_name, filepath_raw)
+        +get_benchmarker_config() dict
+    }
+    
+    class BenchmarkerRequests {
+        +config: dict
+        +__init__(config: dict)
+        +download() void
+        -_get_download_url() str
+        -_download_file(url, path) void
+    }
+    
+    class BenchmarkDatasetsError {
+        <<exception>>
+        +message: str
+    }
+    
+    BenchmarkerConfig ..> BenchmarkerRequests
+    BenchmarkerRequests ..> BenchmarkDatasetsError
+    
+    note for BenchmarkerConfig "Manages benchmark dataset\nconfiguration and paths"
+    note for BenchmarkerRequests "Downloads benchmark datasets\nfrom remote sources"
+    note for BenchmarkDatasetsError "Raised when dataset\ndownload fails"
+
+    %% 樣式標示
+    style BenchmarkerConfig fill:#f3e6ff,stroke:#9966cc,stroke-width:2px
+    style BenchmarkerRequests fill:#e6f3ff,stroke:#4a90e2,stroke-width:3px
+    style BenchmarkDatasetsError fill:#ffe6e6,stroke:#ff6666,stroke-width:2px

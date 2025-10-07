@@ -209,39 +209,56 @@ class BaseBenchmarker(ABC):
     def _verify_file(self, already_exist: bool = True):
         """
         Verify the exist file is match to records
+        Raises BenchmarkDatasetsError if SHA-256 verification fails
 
         Args:
             already_exist (bool) If the file already exist. Default is True.
               False means verify under download process.
         """
         file_sha256hash = digest_sha256(self.config["filepath"])
+        expected_sha256 = self.config["benchmark_sha256"]
 
-        if file_sha256hash == self.config["benchmark_sha256"]:
+        # Always log the SHA-256 comparison
+        self._logger.info(
+            f"SHA-256 verification for: {self.config['filepath']}\n"
+            f"  Expected SHA-256: {expected_sha256}\n"
+            f"  Actual SHA-256:   {file_sha256hash}"
+        )
+
+        if file_sha256hash == expected_sha256:
             self.config["benchmark_already_exist"] = True
+            self._logger.info(
+                f"SHA-256 verification PASSED for: {self.config['filepath']}"
+            )
         else:
+            # Raise error on SHA-256 mismatch
             if already_exist:
-                self._logger.error(f"SHA-256 mismatch: {self.config['filepath']}")
-                raise BenchmarkDatasetsError(
-                    f"SHA-256 mismatch: {self.config['filepath']}. "
+                error_msg = (
+                    f"SHA-256 verification FAILED for existing file: {self.config['filepath']}\n"
+                    f"  Expected SHA-256: {expected_sha256}\n"
+                    f"  Actual SHA-256:   {file_sha256hash}\n"
+                    f"The existing file may be outdated or modified. Please delete it and retry."
                 )
+                self._logger.error(error_msg)
+                raise BenchmarkDatasetsError(error_msg)
             else:
+                error_msg = (
+                    f"SHA-256 verification FAILED for downloaded file: {self.config['benchmark_filename']}\n"
+                    f"  Source: {self.config['benchmark_bucket_name']}\n"
+                    f"  Expected SHA-256: {expected_sha256}\n"
+                    f"  Actual SHA-256:   {file_sha256hash}\n"
+                    f"The download may be corrupted. Please try again."
+                )
+                self._logger.error(error_msg)
+                # Delete the corrupted file
                 try:
                     os.remove(self.config["filepath"])
-                    self._logger.error(
-                        f"Downloaded file SHA-256 mismatch: {self.config['benchmark_filename']} from "
-                        f"{self.config['benchmark_bucket_name']}. "
-                    )
-                    raise BenchmarkDatasetsError(
-                        f"Downloaded file SHA-256 mismatch: {self.config['benchmark_filename']} from "
-                        f"{self.config['benchmark_bucket_name']}. "
+                    self._logger.debug(
+                        f"Removed corrupted file: {self.config['filepath']}"
                     )
                 except OSError as e:
-                    self._logger.error(
-                        f"Failed to remove file: {self.config['filepath']}. Please delete it manually."
-                    )
-                    raise OSError(
-                        f"Failed to remove file: {self.config['filepath']}. Please delete it manually."
-                    ) from e
+                    self._logger.debug(f"Failed to remove corrupted file: {e}")
+                raise BenchmarkDatasetsError(error_msg)
 
 
 class BenchmarkerRequests(BaseBenchmarker):
@@ -265,15 +282,16 @@ class BenchmarkerRequests(BaseBenchmarker):
         try:
             import requests
         except ImportError as e:
-            from petsard.exceptions import ConfigError
-
-            raise ConfigError(
-                "requests is required for benchmark dataset downloading. "
-                "Please install it with: pip install petsard[load-benchmark]"
-            ) from e
+            error_msg = (
+                f"Cannot download benchmark file '{self.config['benchmark_filename']}': "
+                f"The 'requests' library is required for downloading benchmark datasets.\n"
+                f"Please install it with: pip install petsard[load-benchmark]"
+            )
+            self._logger.error(error_msg)
+            raise BenchmarkDatasetsError(error_msg) from e
 
         if self.config["benchmark_already_exist"]:
-            self._logger.info(f"Using local file: {self.config['filepath']}")
+            self._logger.info(f"Using existing local file: {self.config['filepath']}")
         else:
             url = (
                 f"https://"
@@ -281,21 +299,88 @@ class BenchmarkerRequests(BaseBenchmarker):
                 f".s3.amazonaws.com/"
                 f"{self.config['benchmark_filename']}"
             )
-            self._logger.info(f"Downloading from: {url}")
-            with requests.get(url, stream=True) as response:
-                if response.status_code == 200:
-                    with open(self.config["filepath"], "wb") as f:
-                        # load 8KB at one time
-                        for chunk in response.iter_content(chunk_size=8192):
-                            f.write(chunk)
-                    self._logger.info(
-                        f"Download completed: {self.config['benchmark_filename']}"
-                    )
-                else:
-                    self._logger.error(
-                        f"Download failed: status={response.status_code}, url={url}"
-                    )
-                    raise BenchmarkDatasetsError(
-                        f"Download failed: status={response.status_code}, url={url}"
-                    )
+            self._logger.info(f"Downloading benchmark file from: {url}")
+
+            try:
+                with requests.get(url, stream=True, timeout=300) as response:
+                    if response.status_code == 200:
+                        total_size = int(response.headers.get("content-length", 0))
+                        downloaded_size = 0
+
+                        with open(self.config["filepath"], "wb") as f:
+                            # load 8KB at one time
+                            for chunk in response.iter_content(chunk_size=8192):
+                                if chunk:
+                                    f.write(chunk)
+                                    downloaded_size += len(chunk)
+
+                                    # Log progress for large files
+                                    if (
+                                        total_size > 0
+                                        and downloaded_size % (1024 * 1024) == 0
+                                    ):
+                                        progress = (downloaded_size / total_size) * 100
+                                        self._logger.debug(
+                                            f"Download progress: {downloaded_size / (1024 * 1024):.1f}MB / "
+                                            f"{total_size / (1024 * 1024):.1f}MB ({progress:.1f}%)"
+                                        )
+
+                        self._logger.info(
+                            f"Download completed: {self.config['benchmark_filename']} "
+                            f"({downloaded_size / (1024 * 1024):.1f}MB)"
+                        )
+                    elif response.status_code == 404:
+                        error_msg = (
+                            f"Benchmark file not found on server: {self.config['benchmark_filename']}\n"
+                            f"  URL: {url}\n"
+                            f"The file may have been removed or the URL may be incorrect."
+                        )
+                        self._logger.error(error_msg)
+                        raise BenchmarkDatasetsError(error_msg)
+                    else:
+                        error_msg = (
+                            f"Failed to download benchmark file: {self.config['benchmark_filename']}\n"
+                            f"  HTTP Status: {response.status_code}\n"
+                            f"  URL: {url}\n"
+                            f"Please check your internet connection and try again."
+                        )
+                        self._logger.error(error_msg)
+                        raise BenchmarkDatasetsError(error_msg)
+            except requests.exceptions.Timeout as e:
+                error_msg = (
+                    f"Download timeout for benchmark file: {self.config['benchmark_filename']}\n"
+                    f"The file may be too large or the connection may be slow.\n"
+                    f"Please try again with a better connection."
+                )
+                self._logger.error(error_msg)
+                raise BenchmarkDatasetsError(error_msg) from e
+            except requests.exceptions.ConnectionError as e:
+                error_msg = (
+                    f"Connection error while downloading benchmark file: {self.config['benchmark_filename']}\n"
+                    f"Please check your internet connection and try again.\n"
+                    f"Error details: {str(e)}"
+                )
+                self._logger.error(error_msg)
+                raise BenchmarkDatasetsError(error_msg) from e
+            except Exception as e:
+                # Clean up partial download
+                if os.path.exists(self.config["filepath"]):
+                    try:
+                        os.remove(self.config["filepath"])
+                        self._logger.debug(
+                            f"Removed partial download: {self.config['filepath']}"
+                        )
+                    except OSError as remove_error:
+                        self._logger.debug(
+                            f"Failed to remove partial download: {remove_error}"
+                        )
+
+                error_msg = (
+                    f"Unexpected error downloading benchmark file: {self.config['benchmark_filename']}\n"
+                    f"Error: {str(e)}"
+                )
+                self._logger.error(error_msg)
+                raise BenchmarkDatasetsError(error_msg) from e
+
+            # Verify the downloaded file
             self._verify_file(already_exist=False)

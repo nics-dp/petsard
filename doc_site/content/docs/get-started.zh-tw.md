@@ -1,7 +1,7 @@
 ---
 title: 入門指南
 type: docs
-weight: 2
+weight: 1002
 prev: docs
 next: docs/tutorial
 ---

@@ -1,7 +1,7 @@
 ---
 title: API 文件
 type: docs
-weight: 50
+weight: 1050
 prev: docs/best-practices
 next: docs/developer-guide
 sidebar:
@@ -14,7 +14,7 @@ sidebar:
 | 模組 | 物件名稱 | 建立方法 | 主要方法 |
 |------|----------|----------|----------|
 | [Executor]({{< ref "docs/api/executor" >}}) | `Executor` | `Executor(config)` | `run()`, `get_result()`, `get_timing()` |
-| [Loader]({{< ref "docs/api/loader" >}}) | `Loader` | `Loader(filepath, **kwargs)` | `load()` |
+| Loader | `Loader` | `Loader(filepath, **kwargs)` | `load()` |
 | [Metadater]({{< ref "docs/api/metadater" >}}) | `Metadater` | `Metadater.create_schema()` | `create_schema()`, `validate_schema()` |
 | [Splitter]({{< ref "docs/api/splitter" >}}) | `Splitter` | `Splitter(**kwargs)` | `split()` |
 | [Processor]({{< ref "docs/api/processor" >}}) | `Processor` | `Processor(metadata, config)` | `fit()`, `transform()`, `inverse_transform()` |
@@ -35,7 +35,7 @@ sidebar:
 - [Metadater]({{< ref "docs/api/metadater" >}}) - 資料集架構和詮釋資料管理
 
 ## 管線組件
-- [Loader]({{< ref "docs/api/loader" >}}) - 資料載入和處理
+- Loader - 資料載入和處理
 - [Splitter]({{< ref "docs/api/splitter" >}}) - 實驗資料分割
 - [Processor]({{< ref "docs/api/processor" >}}) - 資料前處理和後處理
 - [Synthesizer]({{< ref "docs/api/synthesizer" >}}) - 合成資料生成
