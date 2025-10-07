@@ -36,14 +36,7 @@ Loader:
     schema: benchmark://adult-income_schema
 ```
 
-### Using with Local Schema
-
-```yaml
-Loader:
-  load_with_local_schema:
-    filepath: benchmark://adult-income
-    schema: benchmark/adult-income_schema.yaml
-```
+Either local or benchmark-provided filepath and schema can be used interchangeably.
 
 ## Available Benchmark Datasets
 
