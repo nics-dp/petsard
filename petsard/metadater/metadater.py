@@ -376,14 +376,18 @@ class SchemaMetadater:
                 )
                 attributes[field_name] = AttributeMetadater.from_dict(attr_config)
 
-        # 建立 v2 Schema 格式
+        # 建立 v2 Schema 格式，支援 compute_stats 和 title
         return Schema(
             id=config.get("schema_id", "default"),
-            name=config.get("name", "Default Schema"),
+            name=config.get(
+                "title", config.get("name", "Default Schema")
+            ),  # 優先使用 title
             description=config.get("description", ""),
             attributes=attributes,
             primary_key=config.get("primary_key", []),
             foreign_keys=config.get("foreign_keys", {}),
+            enable_stats=config.get("compute_stats", True),  # 支援 compute_stats
+            sample_size=config.get("sample_size"),  # 支援 sample_size
         )
 
     @staticmethod
@@ -435,8 +439,22 @@ class SchemaMetadater:
     @classmethod
     def from_dict(cls, config: dict[str, Any]) -> Schema:
         """從字典建立 Schema（v2.0 理想格式）"""
-        # 將 fields 對應到內部的 attributes
-        if "fields" in config:
+        # 處理 attributes 或 fields
+        if "attributes" in config:
+            # 將 attributes 中的 dict 轉換成 Attribute 物件
+            attributes = {}
+            for attr_name, attr_config in config["attributes"].items():
+                if isinstance(attr_config, dict):
+                    # 確保有 name 欄位
+                    if "name" not in attr_config:
+                        attr_config["name"] = attr_name
+                    attributes[attr_name] = AttributeMetadater.from_dict(attr_config)
+                else:
+                    # 如果已經是 Attribute 物件，直接使用
+                    attributes[attr_name] = attr_config
+            config["attributes"] = attributes
+        elif "fields" in config:
+            # 向後相容：將 fields 對應到內部的 attributes
             attributes = {}
             for field_name, field_config in config["fields"].items():
                 attributes[field_name] = AttributeMetadater.from_dict(field_config)

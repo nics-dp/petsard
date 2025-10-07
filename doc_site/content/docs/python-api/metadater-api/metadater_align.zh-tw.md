@@ -1,6 +1,6 @@
 ---
 title: "align"
-weight: 364
+weight: 324
 ---
 
 根據詮釋資料定義對齊資料結構。

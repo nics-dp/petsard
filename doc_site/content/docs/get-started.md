@@ -1,7 +1,7 @@
 ---
 title: Get Started
 type: docs
-weight: 2
+weight: 1002
 prev: docs
 next: docs/tutorial
 ---

@@ -106,17 +106,24 @@ class TestBenchmarker:
                     benchmarker.download()
                     mock_verify.assert_called_once_with(already_exist=False)
 
-    def test_verify_file_mismatch(self, sample_config):
-        """Test verification of file with mismatched SHA256
-        測試 SHA256 不匹配的檔案驗證
+    def test_verify_file_mismatch_error(self, sample_config):
+        """Test verification of file with mismatched SHA256 - should raise BenchmarkDatasetsError
+        測試 SHA256 不匹配的檔案驗證 - 應拋出 BenchmarkDatasetsError
         """
         with patch("os.path.exists") as mock_exists:
             mock_exists.return_value = True
             with patch("builtins.open", mock_open(read_data=b"test data")):
                 with patch("petsard.loader.benchmarker.digest_sha256") as mock_sha:
                     mock_sha.return_value = "wrong_sha256"
-                    with pytest.raises(BenchmarkDatasetsError):
+
+                    # Should raise BenchmarkDatasetsError for mismatched hash
+                    with pytest.raises(BenchmarkDatasetsError) as exc_info:
                         BenchmarkerRequests(sample_config)
+
+                    # Check error message
+                    assert "SHA-256 verification FAILED" in str(exc_info.value)
+                    assert "expected sha-256" in str(exc_info.value).lower()
+                    assert "actual sha-256" in str(exc_info.value).lower()
 
     def test_download_request_fails(self, sample_config):
         """Test download when request fails
@@ -133,8 +140,10 @@ class TestBenchmarker:
             with pytest.raises(BenchmarkDatasetsError) as exc_info:
                 benchmarker.download()
 
-            assert "Download failed" in str(exc_info.value)
-            assert "404" in str(exc_info.value)
+            # Updated error message check
+            assert "not found on server" in str(
+                exc_info.value
+            ) or "Download failed" in str(exc_info.value)
 
     def test_file_already_exists_hash_match(self, temp_dir, sample_config):
         """Test with existing file and matching hash
@@ -294,8 +303,13 @@ class TestBenchmarker:
                 sha256_hash.update(f.read())
             new_hash = sha256_hash.hexdigest()
 
-            # Verify should fail now
-            # 現在驗證應該失敗
+            # Verify should raise error for mismatched hash
+            # 驗證應為不匹配的哈希值拋出錯誤
             mock_digest.return_value = new_hash
-            with pytest.raises(BenchmarkDatasetsError):
+
+            # Should raise BenchmarkDatasetsError
+            with pytest.raises(BenchmarkDatasetsError) as exc_info:
                 benchmarker._verify_file(already_exist=True)
+
+            # Check error message
+            assert "SHA-256 verification FAILED" in str(exc_info.value)

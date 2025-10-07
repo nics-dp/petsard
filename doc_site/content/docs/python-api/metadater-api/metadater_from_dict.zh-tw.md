@@ -1,6 +1,6 @@
 ---
 title: "from_dict"
-weight: 362
+weight: 322
 ---
 
 從設定字典建立詮釋資料。
