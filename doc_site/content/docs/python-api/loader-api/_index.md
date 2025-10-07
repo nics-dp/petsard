@@ -31,38 +31,76 @@ loader = Loader('data.csv', schema='schema.yaml')
 data, schema = loader.load()
 ```
 
-## Main Classes
+## Constructor (__init__)
 
-### Loader
+Initialize a data loader instance.
 
-Main data loading class.
-
-#### Constructor
+### Syntax
 
 ```python
-Loader(
-    filepath: str,
-    column_types: dict = None,  # Deprecated - use schema instead
-    header_names: list = None,  # Deprecated - will be removed in v2.0.0
-    na_values: Any = None,       # Deprecated - use schema instead
+def __init__(
+    filepath: str = None,
+    column_types: dict = None,
+    header_names: list = None,
+    na_values: str | list | dict = None,
     schema: Schema | dict | str = None
 )
 ```
 
-#### Parameters
+### Parameters
 
-- `filepath`: Data file path
-- `schema`: Schema configuration (can be Schema object, dictionary, or YAML path)
+- **filepath** : str, required
+    - Data file path
+    - Required parameter
+    - Supports both relative and absolute paths
+
+- **column_types** : dict, optional
+    - **Deprecated** - will be removed in v2.0.0
+    - Use `schema` parameter instead
+
+- **header_names** : list, optional
+    - **Deprecated** - will be removed in v2.0.0
+    - Column names for headerless data
+    - Default: `None`
+
+- **na_values** : str | list | dict, optional
+    - **Deprecated** - will be removed in v2.0.0
+    - Use `schema` parameter instead
+
+- **schema** : Schema | dict | str, optional
+    - Data structure definition configuration
+    - Can be Schema object, dictionary, or YAML file path
+    - Default: `None` (auto-inferred)
+    - For detailed Schema configuration, refer to Metadater API documentation
+
+### Returns
+
+- **Loader**
+    - Initialized loader instance
+
+### Examples
+
+```python
+from petsard import Loader
+
+# Basic usage - Load CSV file
+loader = Loader('data.csv')
+
+# Use schema YAML configuration file
+loader = Loader('data.csv', schema='schema.yaml')
+
+# Use schema dictionary
+schema_dict = {
+    'id': 'my_schema',
+    'name': 'My Schema'
+}
+loader = Loader('data.csv', schema=schema_dict)
+
+# Load data
+data, schema = loader.load()
+```
 
 For detailed parameter configuration, please refer to the Loader YAML documentation.
-
-### LoaderConfig
-
-Loader's internal configuration class containing file path parsing and validation logic.
-
-### LoaderFileExt
-
-File extension mapping class for determining file types.
 
 ## Supported Formats
 
@@ -75,7 +113,10 @@ File extension mapping class for determining file types.
 
 ## Notes
 
-- `column_types`, `na_values`, and `header_names` parameters are deprecated and will be removed in v2.0.0
-- Recommend using Schema to define data structure
-- For detailed Schema configuration, refer to Metadater API documentation
-- Excel format requires `openpyxl` package
+- **Deprecated parameters**: `column_types`, `na_values`, and `header_names` parameters are deprecated and will be removed in v2.0.0
+- **Recommendation**: Use YAML configuration file rather than direct Python API
+- **Schema usage**: Recommend using Schema to define data structure, for detailed configuration refer to Metadater API documentation
+- **Loading process**: Initialization only creates configuration, actual data loading requires calling `load()` method
+- **Excel support**: Excel format requires `openpyxl` package
+- **Documentation note**: This documentation is for internal development team reference only, backward compatibility is not guaranteed
+- **File formats**: For supported file formats, refer to Loader YAML documentation

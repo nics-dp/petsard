@@ -31,38 +31,76 @@ loader = Loader('data.csv', schema='schema.yaml')
 data, schema = loader.load()
 ```
 
-## 主要類別
+## 建構函式 (__init__)
 
-### Loader
+初始化資料載入器實例。
 
-主要的資料載入類別。
-
-#### 建構函式
+### 語法
 
 ```python
-Loader(
-    filepath: str,
-    column_types: dict = None,  # 已棄用 - 改用 schema
-    header_names: list = None,  # 已棄用 - 將在 v2.0.0 移除
-    na_values: Any = None,       # 已棄用 - 改用 schema
+def __init__(
+    filepath: str = None,
+    column_types: dict = None,
+    header_names: list = None,
+    na_values: str | list | dict = None,
     schema: Schema | dict | str = None
 )
 ```
 
-#### 參數說明
+### 參數
 
-- `filepath`: 資料檔案路徑
-- `schema`: Schema 配置（可為 Schema 物件、字典或 YAML 路徑）
+- **filepath** : str, required
+    - 資料檔案路徑
+    - 必要參數
+    - 支援相對路徑和絕對路徑
+
+- **column_types** : dict, optional
+    - **已棄用** - 將在 v2.0.0 移除
+    - 請改用 `schema` 參數
+
+- **header_names** : list, optional
+    - **已棄用** - 將在 v2.0.0 移除
+    - 無標題列資料的欄位名稱
+    - 預設值：`None`
+
+- **na_values** : str | list | dict, optional
+    - **已棄用** - 將在 v2.0.0 移除
+    - 請改用 `schema` 參數
+
+- **schema** : Schema | dict | str, optional
+    - 資料結構定義配置
+    - 可為 Schema 物件、字典或 YAML 檔案路徑
+    - 預設值：`None`（自動推論）
+    - Schema 詳細設定請參閱 Metadater API 文檔
+
+### 返回值
+
+- **Loader**
+    - 初始化後的載入器實例
+
+### 使用範例
+
+```python
+from petsard import Loader
+
+# 基本使用 - 載入 CSV 檔案
+loader = Loader('data.csv')
+
+# 使用 schema YAML 配置檔
+loader = Loader('data.csv', schema='schema.yaml')
+
+# 使用 schema 字典
+schema_dict = {
+    'id': 'my_schema',
+    'name': 'My Schema'
+}
+loader = Loader('data.csv', schema=schema_dict)
+
+# 載入資料
+data, schema = loader.load()
+```
 
 詳細參數配置請參閱 Loader YAML 文檔。
-
-### LoaderConfig
-
-Loader 的內部配置類別，包含檔案路徑解析與驗證邏輯。
-
-### LoaderFileExt
-
-檔案副檔名對應類別，用於判斷檔案類型。
 
 ## 支援格式
 
@@ -75,7 +113,10 @@ Loader 的內部配置類別，包含檔案路徑解析與驗證邏輯。
 
 ## 注意事項
 
-- `column_types`、`na_values` 和 `header_names` 參數已棄用，將在 v2.0.0 移除
-- 建議使用 Schema 來定義資料結構
-- Schema 詳細設定請參閱 Metadater API 文檔
-- Excel 格式需要安裝 `openpyxl` 套件
+- **已棄用參數**：`column_types`、`na_values` 和 `header_names` 參數已棄用，將在 v2.0.0 移除
+- **建議作法**：使用 YAML 配置檔而非直接使用 Python API
+- **Schema 使用**：建議使用 Schema 來定義資料結構，詳細設定請參閱 Metadater API 文檔
+- **載入流程**：初始化只建立配置，實際載入資料需呼叫 `load()` 方法
+- **Excel 支援**：Excel 格式需要安裝 `openpyxl` 套件
+- **文件說明**：本段文件僅供開發團隊內部參考，不保證向後相容
+- **檔案格式**：支援的檔案格式請參考 Loader YAML 文檔
