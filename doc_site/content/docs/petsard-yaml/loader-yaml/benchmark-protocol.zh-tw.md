@@ -36,14 +36,7 @@ Loader:
     schema: benchmark://adult-income_schema
 ```
 
-### 配合本地詮釋資料使用
-
-```yaml
-Loader:
-  load_with_local_schema:
-    filepath: benchmark://adult-income
-    schema: benchmark/adult-income_schema.yaml
-```
+本地或基準資料所提供的 filepath 跟 schema 都可以交替使用。
 
 ## 可用的基準資料集
 
