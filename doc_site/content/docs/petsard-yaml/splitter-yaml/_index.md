@@ -15,10 +15,6 @@ YAML configuration format for the Splitter module.
   - Ratio of data for training set
   - Default: 0.8
 
-- **max_overlap_ratio** (`float`, optional)
-  - Maximum allowed overlap ratio between samples
-  - Default: 1.0 (allows complete overlap)
-
 ## Parameter Details
 
 ### Required Parameters
@@ -40,122 +36,69 @@ Splitter has no required parameters, all parameters are optional.
 ### Basic Splitting
 
 ```yaml
+Loader:
+  load_benchmark_with_schema:
+    filepath: benchmark://adult-income
+    schema: benchmark://adult-income_schema
 Splitter:
   basic_split:
     num_samples: 3
     train_split_ratio: 0.8
 ```
 
-### Strict Overlap Control
+### Controlled Overlap
 
 ```yaml
+Loader:
+  load_benchmark_with_schema:
+    filepath: benchmark://adult-income
+    schema: benchmark://adult-income_schema
 Splitter:
-  strict_overlap:
-    num_samples: 5
-    train_split_ratio: 0.7
-    max_overlap_ratio: 0.1  # Maximum 10% overlap
-    max_attempts: 50
+  controlled_overlap:
+    num_samples: 10
+    train_split_ratio: 0.8
+    max_overlap_ratio: 0.8  # Allow 80% overlap
+    max_attempts: 500
     random_state: 42
 ```
 
 ### No Overlap Splitting
 
 ```yaml
+Loader:
+  load_benchmark_with_schema:
+    filepath: benchmark://adult-income
+    schema: benchmark://adult-income_schema
 Splitter:
   no_overlap:
-    num_samples: 4
-    train_split_ratio: 0.75
+    num_samples: 2
+    train_split_ratio: 0.01
     max_overlap_ratio: 0.0  # Completely non-overlapping
-    max_attempts: 100
-    random_state: "reproducible"
+    max_attempts: 100000
+    random_state: 42
 ```
 
-### Complete Pipeline Example
-
-```yaml
-# Complete experiment pipeline
-Loader:
-  load_data:
-    filepath: benchmark/adult-income.csv
-    schema: benchmark/adult-income_schema.yaml
-
-Splitter:
-  split_data:
-    num_samples: 5
-    train_split_ratio: 0.8
-    max_overlap_ratio: 0.0  # No overlap for privacy evaluation
-    random_state: 12345
-
-Synthesizer:
-  generate_synthetic:
-    method: ctgan
-    epochs: 100
-
-Evaluator:
-  privacy_evaluation:
-    metrics: ["anonymeter"]
-  utility_evaluation:
-    metrics: ["correlation", "ks_test"]
-```
+{{< callout type="warning" >}}
+**Note**: This example demonstrates the no-overlap configuration. Since this package uses a sampling-then-comparison algorithm, achieving complete non-overlap (`max_overlap_ratio: 0.0`) is extremely difficult. This feature aims to provide sampling diversity. In practice, we recommend allowing minimal overlap (e.g., `max_overlap_ratio: 0.8`) to ensure execution efficiency.
+{{< /callout >}}
 
 ## Use Cases
 
-### Privacy Evaluation
-
-For privacy evaluation tasks like Anonymeter, use non-overlapping splits:
-
-```yaml
-Splitter:
-  privacy_split:
-    num_samples: 5
-    train_split_ratio: 0.8
-    max_overlap_ratio: 0.0  # Ensure sample independence
-    random_state: 12345
-```
-
-### Cross-Validation
-
-Controlled overlap for statistical validation:
-
-```yaml
-Splitter:
-  cross_validation:
-    num_samples: 10
-    train_split_ratio: 0.7
-    max_overlap_ratio: 0.3  # Allow 30% overlap
-    random_state: "cross_val"
-```
-
-### Imbalanced Datasets
-
-For imbalanced datasets, use larger sample sizes:
-
-```yaml
-Splitter:
-  imbalanced_data:
-    num_samples: 20
-    train_split_ratio: 0.85
-    max_overlap_ratio: 0.5
-    max_attempts: 50
-```
+The Splitter module is primarily designed to meet the requirements of the Evaluator module for splitting datasets into training and test sets. For detailed post-split evaluation configuration, please refer to the Evaluator YAML documentation.
 
 ## Related Documentation
 
 - **Bootstrap Sampling**: Splitter uses bootstrap sampling to generate multiple train/validation splits.
 - **Overlap Control**: The `max_overlap_ratio` parameter precisely controls the degree of overlap between samples.
-- **Sample Independence**: Privacy evaluation tasks typically require `max_overlap_ratio: 0.0` to ensure complete sample independence.
+- **Sample Independence**: For more complete experimental split testing, you can set `max_overlap_ratio` based on `train_split_ratio` (e.g., `train_split_ratio: 0.8` can use `max_overlap_ratio: 0.8`).
 
 ## Execution Notes
 
-- Experiment names (second level) can be freely named, descriptive names are recommended
 - Multiple split experiments can be defined and will be executed sequentially
 - Split results are passed to the next module (e.g., Synthesizer)
 - Sample numbering starts from 1 (not 0)
 
 ## Important Notes
 
-- Setting `max_overlap_ratio` to 0.0 ensures completely non-overlapping samples
 - Overly strict overlap constraints may cause sampling failures, adjust `max_attempts` accordingly
-- For small datasets, use lower `max_overlap_ratio` to ensure diversity
-- Always set `random_state` for reproducible results
-- For imbalanced data, increase `num_samples` for better representation
+- Set `random_state` for reproducible results
