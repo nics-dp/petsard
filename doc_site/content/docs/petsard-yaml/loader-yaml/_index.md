@@ -30,15 +30,15 @@ YAML configuration file format for the Loader module.
 
 ### Required Parameters
 
-| Parameter | Type | Description | Example |
-|-----------|------|-------------|---------|
-| `filepath` | `string` | Data file path | `data/users.csv` |
+| Parameter | Type | Default | Description | Example |
+|-----------|------|---------|-------------|---------|
+| `filepath` | `string` | N/A | Data file path | `data/users.csv` |
 
 ### Optional Parameters
 
-| Parameter | Type | Description | Example |
-|-----------|------|-------------|---------|
-| `schema` | `string\|dict` | Data structure definition | `schemas/user.yaml` or inline dict |
+| Parameter | Type | Default | Description | Example |
+|-----------|------|---------|-------------|---------|
+| `schema` | `string\|dict` | `null` | Data structure definition | `schemas/user.yaml` or inline dict |
 
 ## Usage Examples
 
