@@ -16,7 +16,7 @@ sidebar:
 | [Executor]({{< ref "docs/api/executor" >}}) | `Executor` | `Executor(config)` | `run()`, `get_result()`, `get_timing()` |
 | Loader | `Loader` | `Loader(filepath, **kwargs)` | `load()` |
 | [Metadater]({{< ref "docs/api/metadater" >}}) | `Metadater` | `Metadater.create_schema()` | `create_schema()`, `validate_schema()` |
-| [Splitter]({{< ref "docs/api/splitter" >}}) | `Splitter` | `Splitter(**kwargs)` | `split()` |
+| Splitter | `Splitter` | `Splitter(**kwargs)` | `split()` |
 | [Processor]({{< ref "docs/api/processor" >}}) | `Processor` | `Processor(metadata, config)` | `fit()`, `transform()`, `inverse_transform()` |
 | [Synthesizer]({{< ref "docs/api/synthesizer" >}}) | `Synthesizer` | `Synthesizer(**kwargs)` | `create()`, `fit_sample()` |
 | [Constrainer]({{< ref "docs/api/constrainer" >}}) | `Constrainer` | `Constrainer(config)` | `apply()`, `resample_until_satisfy()` |
@@ -36,7 +36,7 @@ sidebar:
 
 ## Pipeline Components
 - Loader - Data loading and handling
-- [Splitter]({{< ref "docs/api/splitter" >}}) - Data splitting for experiments
+- Splitter - Data splitting for experiments
 - [Processor]({{< ref "docs/api/processor" >}}) - Data preprocessing and postprocessing
 - [Synthesizer]({{< ref "docs/api/synthesizer" >}}) - Synthetic data generation
 - [Constrainer]({{< ref "docs/api/constrainer" >}}) - Data constraint handler for synthetic data

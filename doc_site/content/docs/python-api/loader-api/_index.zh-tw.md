@@ -102,15 +102,6 @@ data, schema = loader.load()
 
 詳細參數配置請參閱 Loader YAML 文檔。
 
-## 支援格式
-
-- **CSV**: `.csv`, `.tsv`
-- **Excel**: `.xlsx`, `.xls`, `.xlsm`, `.xlsb` *
-- **OpenDocument**: `.ods`, `.odf`, `.odt` *
-- **Benchmark**: `benchmark://` 協議
-
-\* 使用 Excel 和 OpenDocument 格式需要安裝額外套件，請參閱 Loader YAML 文檔了解詳細配置。
-
 ## 注意事項
 
 - **已棄用參數**：`column_types`、`na_values` 和 `header_names` 參數已棄用，將在 v2.0.0 移除
