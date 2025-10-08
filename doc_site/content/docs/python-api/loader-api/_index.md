@@ -102,15 +102,6 @@ data, schema = loader.load()
 
 For detailed parameter configuration, please refer to the Loader YAML documentation.
 
-## Supported Formats
-
-- **CSV**: `.csv`, `.tsv`
-- **Excel**: `.xlsx`, `.xls`, `.xlsm`, `.xlsb` *
-- **OpenDocument**: `.ods`, `.odf`, `.odt` *
-- **Benchmark**: `benchmark://` protocol
-
-\* Excel and OpenDocument formats require additional packages, see Loader YAML documentation for detailed configuration.
-
 ## Notes
 
 - **Deprecated parameters**: `column_types`, `na_values`, and `header_names` parameters are deprecated and will be removed in v2.0.0
