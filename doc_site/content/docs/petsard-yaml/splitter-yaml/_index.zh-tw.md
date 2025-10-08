@@ -15,10 +15,6 @@ Splitter 模組的 YAML 設定檔案格式。
   - 訓練集的資料比例
   - 預設值：0.8
 
-- **max_overlap_ratio** (`float`, 選用)
-  - 樣本間允許的最大重疊比率
-  - 預設值：1.0（允許完全重疊）
-
 ## 參數詳細說明
 
 ### 必要參數
@@ -40,122 +36,69 @@ Splitter 沒有必要參數，所有參數皆為選用。
 ### 基本分割
 
 ```yaml
+Loader:
+  load_benchmark_with_schema:
+    filepath: benchmark://adult-income
+    schema: benchmark://adult-income_schema
 Splitter:
   basic_split:
     num_samples: 3
     train_split_ratio: 0.8
 ```
 
-### 嚴格重疊控制
+### 控制重疊比例
 
 ```yaml
+Loader:
+  load_benchmark_with_schema:
+    filepath: benchmark://adult-income
+    schema: benchmark://adult-income_schema
 Splitter:
-  strict_overlap:
-    num_samples: 5
-    train_split_ratio: 0.7
-    max_overlap_ratio: 0.1  # 最大 10% 重疊
-    max_attempts: 50
+  controlled_overlap:
+    num_samples: 10
+    train_split_ratio: 0.8
+    max_overlap_ratio: 0.8  # 允許 80% 重疊
+    max_attempts: 500
     random_state: 42
 ```
 
 ### 無重疊分割
 
 ```yaml
+Loader:
+  load_benchmark_with_schema:
+    filepath: benchmark://adult-income
+    schema: benchmark://adult-income_schema
 Splitter:
   no_overlap:
-    num_samples: 4
-    train_split_ratio: 0.75
-    max_overlap_ratio: 0.0  # 完全無重疊
-    max_attempts: 100
-    random_state: "reproducible"
+    num_samples: 2
+    train_split_ratio: 0.01
+    max_overlap_ratio: 0.0  # 完全不重疊
+    max_attempts: 100000
+    random_state: 42
 ```
 
-### 完整管線範例
-
-```yaml
-# 完整實驗管線
-Loader:
-  load_data:
-    filepath: benchmark/adult-income.csv
-    schema: benchmark/adult-income_schema.yaml
-
-Splitter:
-  split_data:
-    num_samples: 5
-    train_split_ratio: 0.8
-    max_overlap_ratio: 0.0  # 用於隱私評估的無重疊分割
-    random_state: 12345
-
-Synthesizer:
-  generate_synthetic:
-    method: ctgan
-    epochs: 100
-
-Evaluator:
-  privacy_evaluation:
-    metrics: ["anonymeter"]
-  utility_evaluation:
-    metrics: ["correlation", "ks_test"]
-```
+{{< callout type="warning" >}}
+**注意**：此範例僅示範無重疊設定。由於本套件採用隨機抽樣後比較的演算法，實現完全無重疊（`max_overlap_ratio: 0.0`）極為困難。此功能旨在提供抽樣多樣性，實務上建議保留適度重疊（如 `max_overlap_ratio: 0.8`）以確保執行效率。
+{{< /callout >}}
 
 ## 使用場景
 
-### 隱私評估
-
-對於 Anonymeter 等隱私評估任務，建議使用無重疊分割：
-
-```yaml
-Splitter:
-  privacy_split:
-    num_samples: 5
-    train_split_ratio: 0.8
-    max_overlap_ratio: 0.0  # 確保樣本獨立性
-    random_state: 12345
-```
-
-### 交叉驗證
-
-用於統計驗證的控制重疊：
-
-```yaml
-Splitter:
-  cross_validation:
-    num_samples: 10
-    train_split_ratio: 0.7
-    max_overlap_ratio: 0.3  # 允許 30% 重疊
-    random_state: "cross_val"
-```
-
-### 不平衡資料集
-
-處理不平衡資料集時，建議使用較大的樣本數：
-
-```yaml
-Splitter:
-  imbalanced_data:
-    num_samples: 20
-    train_split_ratio: 0.85
-    max_overlap_ratio: 0.5
-    max_attempts: 50
-```
+Splitter 模組主要是為了配合 Evaluator 評測需求而設計，用於將資料集拆分為訓練集和測試集。詳細的分割後評測設定，請參考 Evaluator YAML 說明文件。
 
 ## 相關說明
 
 - **拔靴法抽樣**：Splitter 使用拔靴法（bootstrap sampling）生成多個訓練/驗證分割。
 - **重疊控制**：透過 `max_overlap_ratio` 參數精確控制樣本間的重疊程度。
-- **樣本獨立性**：隱私評估任務通常需要 `max_overlap_ratio: 0.0` 以確保樣本完全獨立。
+- **樣本獨立性**：如需更完整的實驗拆分測試，可根據 `train_split_ratio` 設定 `max_overlap_ratio`（例如 `train_split_ratio: 0.8` 可設定 `max_overlap_ratio: 0.8`）。
 
 ## 執行說明
 
-- 實驗名稱（第二層）可自由命名，建議使用描述性名稱
 - 可定義多個分割實驗，系統會依序執行
 - 分割結果會傳遞給下一個模組（如 Synthesizer）使用
 - 樣本編號從 1 開始（非 0）
 
 ## 注意事項
 
-- `max_overlap_ratio` 設為 0.0 時確保樣本完全無重疊
 - 重疊約束過於嚴格可能導致抽樣失敗，請適當調整 `max_attempts`
-- 對於小型資料集，建議使用較低的 `max_overlap_ratio` 以確保多樣性
-- 始終設定 `random_state` 以確保結果可重現
-- 不平衡資料集建議增加 `num_samples` 以獲得更好的代表性
+- 設定 `random_state` 以確保結果可重現
