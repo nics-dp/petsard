@@ -4,34 +4,11 @@ baseURL: "https://nics-dp.github.io/petsard/"
 
 theme: hextra
 
-defaultContentLanguage: zh-tw
+defaultContentLanguage: en
 languages:
-  zh-tw:
-    languageName: 繁體中文
-    weight: 1
-    menu:
-      main:
-        - name: 文件
-          pageRef: /docs
-          weight: 1
-        - name: 關於
-          pageRef: /about
-          weight: 2
-        - name: 聯絡 ↗
-          url: "https://github.com/nics-dp"
-          weight: 3
-        - name: 搜尋
-          weight: 4
-          params:
-            type: search
-        - name: GitHub
-          weight: 5
-          url: "https://github.com/nics-dp/petsard"
-          params:
-            icon: github
   en:
     languageName: English
-    weight: 2
+    weight: 1
     menu:
       main:
         - name: Docs
@@ -44,6 +21,29 @@ languages:
           url: "https://github.com/nics-dp"
           weight: 3
         - name: Search
+          weight: 4
+          params:
+            type: search
+        - name: GitHub
+          weight: 5
+          url: "https://github.com/nics-dp/petsard"
+          params:
+            icon: github
+  zh-tw:
+    languageName: 繁體中文
+    weight: 2
+    menu:
+      main:
+        - name: 文件
+          pageRef: /docs
+          weight: 1
+        - name: 關於
+          pageRef: /about
+          weight: 2
+        - name: 聯絡 ↗
+          url: "https://github.com/nics-dp"
+          weight: 3
+        - name: 搜尋
           weight: 4
           params:
             type: search
