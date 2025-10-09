@@ -1,6 +1,6 @@
 ---
 title: "Benchmarker API"
-weight: 390
+weight: 315
 ---
 
 ## Overview
