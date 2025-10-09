@@ -17,12 +17,13 @@ Click the below button to run this example in Colab:
 Synthesizer:
   external_data:
     method: custom_data
-    filepath: path/to/your-synthetic-data.csv
+    filepath: benchmark://adult-income
+    schema: benchmark://adult-income_schema
 ```
 
 This example demonstrates `custom_data` usage with other modules:
 - **Synthesizer**: Uses `custom_data` to import external synthetic data
-- **Other modules**: Loader and Evaluator are used together for complete evaluation workflow
+- **Other modules**: Loader, Splitter, and Evaluator are used together for complete evaluation workflow
 
 {{< callout type="info" >}}
 When using `custom_data`, the `filepath` parameter supports all Loader formats, including `benchmark://` protocol and regular file paths.
