@@ -1,6 +1,6 @@
 ---
 title: "Synthesizer API"
-weight: 360
+weight: 350
 ---
 
 Synthetic data generation module supporting multiple synthesis methods and providing data generation capabilities.
