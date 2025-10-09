@@ -18,7 +18,7 @@ sidebar:
 | [Metadater]({{< ref "docs/api/metadater" >}}) | `Metadater` | `Metadater.create_schema()` | `create_schema()`, `validate_schema()` |
 | Splitter | `Splitter` | `Splitter(**kwargs)` | `split()` |
 | [Processor]({{< ref "docs/api/processor" >}}) | `Processor` | `Processor(metadata, config)` | `fit()`, `transform()`, `inverse_transform()` |
-| [Synthesizer]({{< ref "docs/api/synthesizer" >}}) | `Synthesizer` | `Synthesizer(**kwargs)` | `create()`, `fit_sample()` |
+| Synthesizer | `Synthesizer` | `Synthesizer(**kwargs)` | `create()`, `fit_sample()` |
 | [Constrainer]({{< ref "docs/api/constrainer" >}}) | `Constrainer` | `Constrainer(config)` | `apply()`, `resample_until_satisfy()` |
 | [Evaluator]({{< ref "docs/api/evaluator" >}}) | `Evaluator` | `Evaluator(**kwargs)` | `create()`, `eval()` |
 | [Describer]({{< ref "docs/api/describer" >}}) | `Describer` | `Describer(**kwargs)` | `create()`, `eval()` |
@@ -38,7 +38,7 @@ sidebar:
 - Loader - 資料載入和處理
 - Splitter - 實驗資料分割
 - [Processor]({{< ref "docs/api/processor" >}}) - 資料前處理和後處理
-- [Synthesizer]({{< ref "docs/api/synthesizer" >}}) - 合成資料生成
+- Synthesizer - 合成資料生成
 - [Constrainer]({{< ref "docs/api/constrainer" >}}) - 合成資料的資料約束處理器
 - [Evaluator]({{< ref "docs/api/evaluator" >}}) - 隱私、保真度和效用評估
 - [Describer]({{< ref "docs/api/describer" >}}) - 描述性資料摘要
