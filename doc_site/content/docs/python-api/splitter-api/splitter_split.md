@@ -53,7 +53,7 @@ The method performs the following operations:
 4. Updates metadata if provided
 5. Returns results as immutable data structures
 
-## Basic Example
+## Example
 
 ```python
 from petsard import Splitter
@@ -75,28 +75,6 @@ for i in range(1, 4):
     train_df = split_data[i]['train']
     val_df = split_data[i]['validation']
     print(f"Sample {i}: Train={len(train_df)}, Val={len(val_df)}")
-```
-
-## Advanced Example
-
-### Split with Metadata
-
-```python
-from petsard import Splitter, SchemaMetadata
-
-# Create metadata
-metadata = SchemaMetadata.from_data(df)
-
-# Split with metadata
-splitter = Splitter(num_samples=3, train_split_ratio=0.75)
-split_data, metadata_dict, train_indices = splitter.split(
-    data=df,
-    metadata=metadata
-)
-
-# Access split metadata
-train_meta = metadata_dict[1]['train']
-val_meta = metadata_dict[1]['validation']
 ```
 
 ## Notes
