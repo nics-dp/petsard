@@ -510,14 +510,54 @@ class Loader:
                 self._logger.error(error_msg)
                 raise UnableToFollowMetadataError(error_msg) from e
 
-        # 對齊資料與 schema
+        # Validate data and schema consistency and handle differences
+        if schema and schema.attributes:
+            # Compare schema with data to find differences
+            diff_result = SchemaMetadater.diff(schema, data)
+
+            # Log differences but don't raise errors, let align handle it
+            if diff_result["missing_columns"]:
+                self._logger.warning(
+                    f"Schema defines columns not in data (will be added with default values): "
+                    f"{diff_result['missing_columns']}"
+                )
+
+            if diff_result["extra_columns"]:
+                self._logger.info(
+                    f"Data contains columns not in schema (will be added to schema): "
+                    f"{diff_result['extra_columns']}"
+                )
+
+                # Create Attributes for extra columns and add to schema
+                for col_name in diff_result["extra_columns"]:
+                    if col_name in data.columns:
+                        # Infer attribute from data
+                        from petsard.metadater import AttributeMetadater
+
+                        new_attr = AttributeMetadater.from_data(
+                            data[col_name], enable_stats=schema.enable_stats
+                        )
+                        # Add to schema
+                        schema.attributes[col_name] = new_attr
+                        self._logger.debug(f"Added attribute '{col_name}' to schema")
+
+        # Align data with schema
         try:
-            aligned_data = SchemaMetadater.align(schema, data)
-            # 更新原始 data 參考
+            # Set alignment strategy
+            align_strategy = {
+                "add_missing_columns": True,  # Add default values for columns defined in schema but missing in data
+                "remove_extra_columns": False,  # Keep extra columns in data
+                "reorder_columns": True,  # Reorder columns
+            }
+
+            aligned_data = SchemaMetadater.align(schema, data, align_strategy)
+            # Update original data reference
             data.update(aligned_data)
             self._logger.debug("Data aligned with schema successfully")
         except Exception as e:
-            self._logger.warning(f"Failed to align data with schema: {str(e)}")
-            # 對齊失敗時繼續執行，但記錄警告
+            # Log warning but continue with original data
+            warning_msg = f"Failed to align data with schema: {str(e)}. Continuing with original data."
+            self._logger.warning(warning_msg)
+            # Continue with original data if alignment fails
 
         return schema
