@@ -33,6 +33,10 @@ Splitter 沒有必要參數，所有參數皆為選用。
 
 ## 使用範例
 
+請點擊下方按鈕在 Colab 中執行範例：
+
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/nics-tw/petsard/blob/main/demo/petsard-yaml/splitter-yaml/splitter-yaml.ipynb)
+
 ### 基本分割
 
 ```yaml

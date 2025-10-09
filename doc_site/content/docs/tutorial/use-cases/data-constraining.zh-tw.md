@@ -2,7 +2,6 @@
 title: 資料約束
 type: docs
 weight: 32
-prev: docs/tutorial/use-cases/custom-synthesis
 next: docs/tutorial/use-cases/ml-utility
 ---
 

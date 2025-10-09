@@ -3,7 +3,6 @@ title: Data Preprocessing
 type: docs
 weight: 20
 prev: docs/tutorial/use-cases/data-description
-next: docs/tutorial/use-cases/comparing-synthesizers
 sidebar:
   open: false
 ---
