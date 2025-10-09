@@ -2,7 +2,6 @@
 title: Constrainer
 type: docs
 weight: 57
-prev: docs/api/synthesizer
 next: docs/api/evaluator
 ---
 

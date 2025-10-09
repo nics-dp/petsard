@@ -53,7 +53,7 @@ def split(
 4. 如果提供，更新詮釋資料
 5. 以不可變資料結構回傳結果
 
-## 基本範例
+## 範例
 
 ```python
 from petsard import Splitter
@@ -76,36 +76,6 @@ for i in range(1, 4):
     val_df = split_data[i]['validation']
     print(f"樣本 {i}: 訓練集={len(train_df)}, 驗證集={len(val_df)}")
 ```
-
-## 進階範例
-
-### 含詮釋資料
-
-```python
-from petsard import Splitter, SchemaMetadata
-
-# 建立詮釋資料
-metadata = SchemaMetadata.from_data(df)
-
-# 含詮釋資料的分割
-splitter = Splitter(num_samples=3, train_split_ratio=0.75)
-split_data, metadata_dict, train_indices = splitter.split(
-    data=df,
-    metadata=metadata
-)
-
-# 存取分割的詮釋資料
-train_meta = metadata_dict[1]['train']
-val_meta = metadata_dict[1]['validation']
-```
-
-### 避免與現有樣本重疊
-
-`exist_train_indices` 參數允許您傳遞來自先前執行的現有訓練索引集合列表。提供時，分割器將確保新樣本不會根據 `max_overlap_ratio` 設定與這些現有集合過度重疊。這對於增量實驗或需要在不同實驗執行之間保持分離時特別有用。
-
-### 重疊控制
-
-`max_overlap_ratio` 參數控制樣本間允許的最大重疊。設為 0.0 表示完全無重疊的樣本，或使用如 0.1（最大 10% 重疊）等值進行嚴格控制。分割器將嘗試最多 `max_attempts` 次來產生滿足重疊約束的樣本。此功能對於需要樣本獨立性的隱私評估任務至關重要。
 
 ## 注意事項
 

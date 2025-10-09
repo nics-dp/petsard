@@ -38,17 +38,6 @@ sidebar:
   - 提供遺失值、編碼、極端值等多種處理方法
   - 包含均勻編碼、標準化與離散化等技術
 
-### **合成方法選擇：[比較合成演算法]({{< ref "comparing-synthesizers" >}})**
-
-  - 比較不同合成演算法的效果
-  - 在同一個實驗中使用多種演算法
-  - 包含 Gaussian Copula、CTGAN 與 TVAE
-
-### **客製化合成：[自定義合成]({{< ref "custom-synthesis" >}})**
-
-  - 建立自己的合成方法
-  - 整合進 PETsARD 的合成流程
-
 ### **資料合理性：[資料約束]({{< ref "data-constraining" >}})**
 
   - 確保合成資料符合實際業務規則

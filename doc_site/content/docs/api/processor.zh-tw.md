@@ -3,7 +3,6 @@ title: Processor
 type: docs
 weight: 55
 prev: docs/api/metadater
-next: docs/api/synthesizer
 ---
 
 
