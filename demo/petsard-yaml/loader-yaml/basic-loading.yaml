@@ -1,3 +1,5 @@
+---
 Loader:
   load_csv:
     filepath: benchmark/adult-income.csv
+...

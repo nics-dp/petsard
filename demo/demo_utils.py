@@ -812,7 +812,7 @@ def _display_environment_info(setup: PETsARDSetup, version: str) -> None:
 
 
 def quick_setup(
-    yaml_file: str | list[str] | None = None,
+    config_file: str | list[str] | None = None,
     benchmark_data: list[str] | None = None,
     petsard_branch: str = "main",
     example_files: list[str] | None = None,
@@ -826,7 +826,7 @@ def quick_setup(
     提供一站式的環境設定，包括版本檢查、套件安裝、檔案下載等。
 
     Args:
-        yaml_file: YAML config filename(s) (single or multiple) / YAML 設定檔名稱 (單個或多個)
+        config_file: Configuration filename(s) - YAML or Python (single or multiple) / 設定檔名稱 - YAML 或 Python (單個或多個)
         benchmark_data: List of benchmark datasets to load / 要載入的基準資料集清單
         petsard_branch: PETsARD GitHub branch name, defaults to "main" / PETsARD GitHub 分支名稱，預設為 "main"
         example_files: List of example files to download / 要下載的範例檔案清單
@@ -840,15 +840,15 @@ def quick_setup(
         - yaml_path: YAML file path(s) (single or multiple) / YAML 檔案路徑 (單個或多個)
 
     Examples:
-        >>> # Single YAML file / 單個 YAML 檔案
-        >>> is_colab, branch, yaml_path = quick_setup("config.yaml")
+        >>> # Single configuration file / 單個設定檔
+        >>> is_colab, branch, config_path = quick_setup("config.yaml")
         >>>
-        >>> # Display YAML info separately / 分別顯示 YAML 資訊
-        >>> display_yaml_info(yaml_path)
+        >>> # Display config info separately / 分別顯示設定資訊
+        >>> display_yaml_info(config_path)
 
-        >>> # Multiple YAML files with specific branch / 多個 YAML 檔案，指定特定分支
+        >>> # Multiple configuration files with specific branch / 多個設定檔，指定特定分支
         >>> is_colab, branch, paths = quick_setup(
-        ...     yaml_file=["config1.yaml", "config2.yaml"],
+        ...     config_file=["config1.yaml", "config2.py"],
         ...     benchmark_data=["adult", "census"],
         ...     petsard_branch="develop"
         ... )
@@ -872,36 +872,45 @@ def quick_setup(
     if benchmark_data:
         _load_benchmark_data(benchmark_data)
 
-    # 5. Process YAML files / 處理 YAML 檔案
+    # 5. Add notebook directory to Python path for module imports / 將 notebook 目錄加入 Python 路徑以供模組導入
+    if setup.original_cwd and setup.original_cwd not in [Path(p) for p in sys.path]:
+        # Add the notebook's original directory to sys.path / 將 notebook 的原始目錄加入 sys.path
+        sys.path.insert(0, str(setup.original_cwd))
+        if not setup.is_colab:
+            print(
+                f"🔧 Added to Python path: {setup._get_privacy_path(setup.original_cwd)}"
+            )
+
+    # 6. Process configuration files / 處理設定檔案
     yaml_path = None
-    if yaml_file:
+    if config_file:
         # Auto-detect and display current subfolder location / 自動偵測並顯示當前子資料夾位置
         subfolder = setup._auto_detect_subfolder()
         if subfolder:
-            print(f"📁 Processing YAML files from subfolder: {subfolder}")
+            print(f"📁 Processing configuration files from subfolder: {subfolder}")
 
-        if isinstance(yaml_file, str):
-            # Single YAML file (auto-detect path) / 單個 YAML 檔案（自動偵測路徑）
-            yaml_path = setup.get_yaml_path(yaml_file, petsard_branch)
-            print(f"✅ Found YAML: {setup._get_privacy_path(yaml_path)}")
+        if isinstance(config_file, str):
+            # Single configuration file (auto-detect path) / 單個設定檔（自動偵測路徑）
+            yaml_path = setup.get_yaml_path(config_file, petsard_branch)
+            print(f"✅ Found configuration: {setup._get_privacy_path(yaml_path)}")
 
             # Only show content if requested / 只在要求時顯示內容
             if show_yaml_content:
-                _display_yaml_info(yaml_path, yaml_file)
+                _display_yaml_info(yaml_path, config_file)
 
-        elif isinstance(yaml_file, list):
-            # Multiple YAML files (auto-detect paths) / 多個 YAML 檔案（自動偵測路徑）
+        elif isinstance(config_file, list):
+            # Multiple configuration files (auto-detect paths) / 多個設定檔（自動偵測路徑）
             yaml_path = []
-            for i, single_yaml in enumerate(yaml_file, 1):
-                single_path = setup.get_yaml_path(single_yaml, petsard_branch)
+            for i, single_config in enumerate(config_file, 1):
+                single_path = setup.get_yaml_path(single_config, petsard_branch)
                 yaml_path.append(single_path)
                 print(
-                    f"✅ Found YAML ({i}/{len(yaml_file)}): {setup._get_privacy_path(single_path)}"
+                    f"✅ Found configuration ({i}/{len(config_file)}): {setup._get_privacy_path(single_path)}"
                 )
 
                 # Only show content if requested / 只在要求時顯示內容
                 if show_yaml_content:
-                    _display_yaml_info(single_path, single_yaml, i, len(yaml_file))
+                    _display_yaml_info(single_path, single_config, i, len(config_file))
 
     return setup.is_colab, petsard_branch, yaml_path
 

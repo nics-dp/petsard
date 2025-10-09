@@ -1,3 +1,4 @@
+---
 Loader:
   # Load training data
   load_train:
@@ -13,3 +14,4 @@ Loader:
   load_synthesizer:
     filepath: benchmark/adult-income_syn.csv
     schema: benchmark/adult-income_schema.yaml
+...
