@@ -1,4 +1,5 @@
 import logging
+import sys
 
 import pandas as pd
 
@@ -51,11 +52,14 @@ class CustomSynthesizer(BaseSynthesizer):
 
         synthesizer_class: callable = None
 
+        # Pass sys.path as search_paths to support notebook environments
+        # This allows finding modules in the same directory as the notebook
         _, synthesizer_class = load_external_module(
             module_path=self.config["module_path"],
             class_name=self.config["class_name"],
             logger=self._logger,
             required_methods=self.REQUIRED_METHODS,
+            search_paths=sys.path,  # Include Python path for module search
         )
 
         self._impl = synthesizer_class(config=config, metadata=metadata)
