@@ -38,14 +38,15 @@ def fit(data: pd.DataFrame)
 - **TVAE**：訓練變分自編碼器
 - **自訂方法**：執行自訂的訓練邏輯
 
-## 基本範例
+## 範例
 
 ```python
-from petsard import Synthesizer
+from petsard import Synthesizer, Metadater
 import pandas as pd
 
 # 準備訓練資料
 df = pd.read_csv('training_data.csv')
+metadata = Metadater.from_data(df)
 
 # 初始化並訓練合成器
 synthesizer = Synthesizer(method='default')
@@ -53,48 +54,7 @@ synthesizer.create(metadata=metadata)
 synthesizer.fit(data=df)
 
 # 訓練完成後可以生成合成資料
-synthesizer.sample(sample_num_rows=1000)
-```
-
-## 進階範例
-
-### 使用 CTGAN 訓練
-
-```python
-from petsard import Synthesizer, Metadater
-
-# 載入資料
-df = pd.read_csv('data.csv')
-metadata = Metadater.from_data(df)
-
-# 使用 CTGAN
-synthesizer = Synthesizer(
-    method='sdv-single_table-ctgan',
-    epochs=300,  # CTGAN 特定參數
-    batch_size=500
-)
-synthesizer.create(metadata=metadata)
-
-# 訓練模型
-synthesizer.fit(data=df)
-
-# 生成合成資料
-synthesizer.sample(sample_num_rows=len(df))
-```
-
-### 監控訓練進度
-
-```python
-import logging
-
-# 設定日誌以監控訓練
-logging.basicConfig(level=logging.INFO)
-
-synthesizer = Synthesizer(method='sdv-single_table-ctgan')
-synthesizer.create(metadata=metadata)
-
-# 訓練會輸出進度資訊（如果合成器支援）
-synthesizer.fit(data=df)
+synthetic_data = synthesizer.sample()
 ```
 
 ## 注意事項

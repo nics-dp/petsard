@@ -53,7 +53,7 @@ def split(
 4. 如果提供，更新詮釋資料
 5. 以不可變資料結構回傳結果
 
-## 基本範例
+## 範例
 
 ```python
 from petsard import Splitter
@@ -75,28 +75,6 @@ for i in range(1, 4):
     train_df = split_data[i]['train']
     val_df = split_data[i]['validation']
     print(f"樣本 {i}: 訓練集={len(train_df)}, 驗證集={len(val_df)}")
-```
-
-## 進階範例
-
-### 含詮釋資料的分割
-
-```python
-from petsard import Splitter, SchemaMetadata
-
-# 建立詮釋資料
-metadata = SchemaMetadata.from_data(df)
-
-# 含詮釋資料的分割
-splitter = Splitter(num_samples=3, train_split_ratio=0.75)
-split_data, metadata_dict, train_indices = splitter.split(
-    data=df,
-    metadata=metadata
-)
-
-# 存取分割的詮釋資料
-train_meta = metadata_dict[1]['train']
-val_meta = metadata_dict[1]['validation']
 ```
 
 ## 注意事項

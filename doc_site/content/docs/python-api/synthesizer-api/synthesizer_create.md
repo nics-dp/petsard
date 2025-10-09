@@ -32,7 +32,7 @@ This method performs the following operations:
 3. Initializes the synthesizer's internal state
 4. Prepares the synthesizer for subsequent training (`fit()`) operations
 
-## Basic Example
+## Example
 
 ```python
 from petsard import Synthesizer, Metadater
@@ -47,40 +47,6 @@ synthesizer.create(metadata=metadata)
 
 # Now ready for training
 synthesizer.fit(data=df)
-```
-
-## Advanced Examples
-
-### Using SDV CTGAN
-
-```python
-from petsard import Synthesizer, Metadater
-
-# Prepare metadata
-metadata = Metadater.from_data(df)
-
-# Use CTGAN synthesizer
-synthesizer = Synthesizer(method='sdv-single_table-ctgan')
-synthesizer.create(metadata=metadata)
-
-# Train and generate
-synthesizer.fit_sample(data=df, sample_num_rows=1000)
-```
-
-### Using Custom Synthesizer
-
-```python
-from petsard import Synthesizer
-
-# Use custom synthesizer (requires custom class implementation)
-synthesizer = Synthesizer(
-    method='custom_method',
-    module_path='my_synthesizer.py',
-    class_name='MyCustomSynthesizer'
-)
-
-# Metadata is passed to custom synthesizer
-synthesizer.create(metadata=metadata)
 ```
 
 ## Notes

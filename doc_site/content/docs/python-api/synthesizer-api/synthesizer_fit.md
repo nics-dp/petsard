@@ -38,14 +38,15 @@ The specific training process details depend on the selected synthesis method:
 - **TVAE**: Trains variational autoencoder
 - **Custom methods**: Executes custom training logic
 
-## Basic Example
+## Example
 
 ```python
-from petsard import Synthesizer
+from petsard import Synthesizer, Metadater
 import pandas as pd
 
 # Prepare training data
 df = pd.read_csv('training_data.csv')
+metadata = Metadater.from_data(df)
 
 # Initialize and train synthesizer
 synthesizer = Synthesizer(method='default')
@@ -53,48 +54,7 @@ synthesizer.create(metadata=metadata)
 synthesizer.fit(data=df)
 
 # After training, can generate synthetic data
-synthesizer.sample(sample_num_rows=1000)
-```
-
-## Advanced Examples
-
-### Training with CTGAN
-
-```python
-from petsard import Synthesizer, Metadater
-
-# Load data
-df = pd.read_csv('data.csv')
-metadata = Metadater.from_data(df)
-
-# Use CTGAN
-synthesizer = Synthesizer(
-    method='sdv-single_table-ctgan',
-    epochs=300,  # CTGAN-specific parameter
-    batch_size=500
-)
-synthesizer.create(metadata=metadata)
-
-# Train model
-synthesizer.fit(data=df)
-
-# Generate synthetic data
-synthesizer.sample(sample_num_rows=len(df))
-```
-
-### Monitoring Training Progress
-
-```python
-import logging
-
-# Set up logging to monitor training
-logging.basicConfig(level=logging.INFO)
-
-synthesizer = Synthesizer(method='sdv-single_table-ctgan')
-synthesizer.create(metadata=metadata)
-
-# Training will output progress information (if supported by synthesizer)
-synthesizer.fit(data=df)
+synthetic_data = synthesizer.sample()
 ```
 
 ## Notes

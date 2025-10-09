@@ -32,7 +32,7 @@ def create(metadata: SchemaMetadata = None)
 3. 初始化合成器的內部狀態
 4. 準備合成器以進行後續的訓練（`fit()`）操作
 
-## 基本範例
+## 範例
 
 ```python
 from petsard import Synthesizer, Metadater
@@ -47,40 +47,6 @@ synthesizer.create(metadata=metadata)
 
 # 現在可以進行訓練
 synthesizer.fit(data=df)
-```
-
-## 進階範例
-
-### 使用 SDV CTGAN
-
-```python
-from petsard import Synthesizer, Metadater
-
-# 準備 metadata
-metadata = Metadater.from_data(df)
-
-# 使用 CTGAN 合成器
-synthesizer = Synthesizer(method='sdv-single_table-ctgan')
-synthesizer.create(metadata=metadata)
-
-# 訓練並生成
-synthesizer.fit_sample(data=df, sample_num_rows=1000)
-```
-
-### 使用自訂合成器
-
-```python
-from petsard import Synthesizer
-
-# 使用自訂合成器（需要自訂類別實作）
-synthesizer = Synthesizer(
-    method='custom_method',
-    module_path='my_synthesizer.py',
-    class_name='MyCustomSynthesizer'
-)
-
-# metadata 會傳遞給自訂合成器
-synthesizer.create(metadata=metadata)
 ```
 
 ## 注意事項
