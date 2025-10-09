@@ -3,7 +3,6 @@ title: 資料前處理
 type: docs
 weight: 20
 prev: docs/tutorial/use-cases/data-description
-next: docs/tutorial/use-cases/comparing-synthesizers
 sidebar:
   open: false
 ---
