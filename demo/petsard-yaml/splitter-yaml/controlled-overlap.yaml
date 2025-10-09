@@ -1,3 +1,4 @@
+---
 Loader:
   load_benchmark_with_schema:
     filepath: benchmark://adult-income
@@ -9,3 +10,4 @@ Splitter:
     max_overlap_ratio: 0.8  # Allow 80% overlap
     max_attempts: 500
     random_state: 42
+...

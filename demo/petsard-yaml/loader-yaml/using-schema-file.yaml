@@ -1,4 +1,6 @@
+---
 Loader:
   load_with_schema:
     filepath: benchmark/adult-income.csv
     schema: benchmark/adult-income_schema.yaml
+...

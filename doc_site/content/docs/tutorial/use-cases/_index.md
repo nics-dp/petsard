@@ -38,17 +38,6 @@ When developing privacy-preserving data synthesis workflows, you may encounter s
   - Provide multiple methods for handling missing values, encoding, and outliers
   - Include uniform encoding, standardization, and discretization techniques
 
-### **Synthesis Method Selection: [Comparing Synthesizers]({{< ref "comparing-synthesizers" >}})**
-
-  - Compare effects of different synthesis algorithms
-  - Use multiple algorithms in a single experiment
-  - Includes Gaussian Copula, CTGAN, and TVAE
-
-### **Custom Synthesis: [Custom Synthesis]({{< ref "custom-synthesis" >}})**
-
-  - Create your own synthesis methods
-  - Integrate into PETsARD's synthesis workflow
-
 ### **Data Plausibility: [Data Constraining]({{< ref "data-constraining" >}})**
 
   - Ensure synthetic data complies with real business rules

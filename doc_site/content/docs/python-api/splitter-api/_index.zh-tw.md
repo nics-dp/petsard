@@ -1,6 +1,6 @@
 ---
 title: "Splitter API"
-weight: 350
+weight: 330
 ---
 
 資料分割模組，用於建立訓練集和驗證集，具備重疊控制功能。

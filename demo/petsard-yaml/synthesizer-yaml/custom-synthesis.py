@@ -59,7 +59,8 @@ class MySynthesizer_Shuffle:
                 )
             else:
                 # For non-categorical data, create a copy of values and shuffle
-                values = original_series.values.copy()
+                # Use to_numpy() to ensure we get a proper numpy array, not IntegerArray
+                values = original_series.to_numpy().copy()
                 np.random.shuffle(values)
                 synthetic_data[col] = values
 

@@ -1,6 +1,6 @@
 ---
 title: "Loader API"
-weight: 340
+weight: 310
 ---
 
 資料載入模組，支援多種檔案格式的資料載入。
@@ -102,6 +102,38 @@ data, schema = loader.load()
 
 詳細參數配置請參閱 Loader YAML 文檔。
 
+## 資料與 Schema 自動協調
+
+自 v1.7.0 起，Loader 支援自動協調資料與 schema 之間的差異：
+
+### 功能說明
+
+當載入的資料欄位與 schema 定義不完全相符時，Loader 會自動處理：
+
+1. **資料有額外欄位**：自動將額外欄位加入 schema
+2. **Schema 有缺失欄位**：在資料中添加預設值（通常為 `NA`）
+3. **欄位名稱不一致**：兩者都會保留，並記錄警告訊息
+
+### 範例情境
+
+```python
+# 資料檔案有 'educational-num' 和 'gender' 欄位
+# Schema 定義為 'education-num' 和 'sex'
+loader = Loader('adult-income.csv', schema='adult-income-schema.yaml')
+data, schema = loader.load()
+
+# 系統會：
+# 1. 在資料中添加 'education-num' 和 'sex' 欄位（值為 NA）
+# 2. 將 'educational-num' 和 'gender' 加入 schema
+# 3. 記錄警告訊息說明欄位差異
+```
+
+### 日誌訊息
+
+- **INFO**：資料包含 schema 未定義的欄位（將自動加入）
+- **WARNING**：Schema 定義的欄位在資料中不存在（將使用預設值）
+- **WARNING**：對齊失敗時會繼續使用原始資料
+
 ## 注意事項
 
 - **已棄用參數**：`column_types`、`na_values` 和 `header_names` 參數已棄用，將在 v2.0.0 移除
@@ -109,5 +141,6 @@ data, schema = loader.load()
 - **Schema 使用**：建議使用 Schema 來定義資料結構，詳細設定請參閱 Metadater API 文檔
 - **載入流程**：初始化只建立配置，實際載入資料需呼叫 `load()` 方法
 - **Excel 支援**：Excel 格式需要安裝 `openpyxl` 套件
+- **自動協調**：v1.7.0 起支援資料與 schema 的自動協調，減少因欄位差異導致的錯誤
 - **文件說明**：本段文件僅供開發團隊內部參考，不保證向後相容
 - **檔案格式**：支援的檔案格式請參考 Loader YAML 文檔

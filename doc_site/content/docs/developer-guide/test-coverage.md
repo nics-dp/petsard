@@ -171,6 +171,20 @@ Tests for the main Loader functionality:
 - `test_custom_na_values`: Tests handling of custom NA values in data loading
 - `test_custom_header_names`: Tests loading data with custom column headers
 
+#### Data-Schema Reconciliation Tests
+
+Tests for automatic reconciliation between data columns and schema definitions:
+
+- `test_data_schema_reconciliation_extra_columns`: Tests handling of extra columns in data not defined in schema
+  - Extra data columns are automatically added to schema with inferred types
+  - Schema is updated dynamically to accommodate actual data structure
+  - Ensures no data loss when data has additional columns
+  
+- `test_data_schema_reconciliation_missing_columns`: Tests handling of missing columns defined in schema but not in data
+  - Missing columns are automatically added to data with NA values
+  - Data structure is aligned with schema requirements
+  - Ensures schema completeness without breaking data processing
+
 #### Logical Type System Testing
 
 Tests for the comprehensive logical type inference and validation system:

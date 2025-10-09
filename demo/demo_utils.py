@@ -81,7 +81,7 @@ class PETsARDSetup:
 
         Priority order / 優先順序:
         1. Explicitly provided path / 明確提供的路徑
-        2. Search for .ipynb files in parent directories / 在父目錄中搜尋 .ipynb 檔案
+        2. Get from IPython current notebook / 從 IPython 取得當前 notebook
         3. Use Jupyter API if available / 如果可用，使用 Jupyter API
         4. Check stored path from previous run / 檢查之前執行儲存的路徑
         5. Use current working directory / 使用當前工作目錄
@@ -92,7 +92,56 @@ class PETsARDSetup:
         if notebook_path:
             return Path(notebook_path).resolve()
 
-        # Method 2: Search for .ipynb files in parent directories / 在父目錄中搜尋 .ipynb 檔案
+        # Method 2: Try to get current notebook path from IPython / 嘗試從 IPython 取得當前 notebook 路徑
+        try:
+            from IPython import get_ipython
+
+            ipython = get_ipython()
+
+            if ipython and hasattr(ipython, "user_ns"):
+                # Try to get notebook name from IPython magic / 嘗試從 IPython magic 取得 notebook 名稱
+                import re
+
+                # Get the notebook name from Jupyter session / 從 Jupyter session 取得 notebook 名稱
+                try:
+                    import ipykernel
+                    import requests
+                    from notebook.notebookapp import list_running_servers
+
+                    # Get kernel id / 取得 kernel id
+                    kernel_id = re.search(
+                        "kernel-(.*).json", ipykernel.get_connection_file()
+                    ).group(1)
+
+                    # Find the notebook using kernel id / 使用 kernel id 尋找 notebook
+                    servers = list(list_running_servers())
+                    for server in servers:
+                        try:
+                            response = requests.get(
+                                f"{server['url']}api/sessions",
+                                headers={
+                                    "Authorization": f"token {server.get('token', '')}"
+                                },
+                            )
+                            if response.status_code == 200:
+                                sessions = response.json()
+                                for sess in sessions:
+                                    if sess["kernel"]["id"] == kernel_id:
+                                        # Found the notebook! / 找到 notebook 了！
+                                        nb_path = sess["notebook"]["path"]
+                                        full_path = (
+                                            Path(server["notebook_dir"]) / nb_path
+                                        )
+                                        if full_path.exists():
+                                            return full_path.parent.resolve()
+                        except Exception:
+                            continue
+                except Exception:
+                    pass
+        except Exception:
+            pass
+
+        # Method 3: Search for .ipynb files in parent directories / 在父目錄中搜尋 .ipynb 檔案
         # This works even if we're in demo directory / 即使在 demo 目錄中也能運作
         search_paths = []
 
@@ -104,29 +153,7 @@ class PETsARDSetup:
         else:
             search_paths.extend([current_path] + list(current_path.parents)[:5])
 
-        # Look for directories that contain .ipynb files / 尋找包含 .ipynb 檔案的目錄
-        for search_dir in search_paths:
-            # Check common demo subdirectories / 檢查常見的 demo 子目錄
-            demo_dir = search_dir / "demo"
-            if demo_dir.exists():
-                # Search for .ipynb files in demo subdirectories / 在 demo 子目錄中搜尋 .ipynb 檔案
-                for subdir in demo_dir.rglob("*"):
-                    if subdir.is_dir():
-                        ipynb_files = list(subdir.glob("*.ipynb"))
-                        if ipynb_files:
-                            # Check if any .ipynb file has been recently modified / 檢查是否有 .ipynb 檔案最近被修改
-                            # (indicates it might be the active notebook) / （表示它可能是活動的 notebook）
-                            for nb_file in ipynb_files:
-                                try:
-                                    # Check if file was modified in last 5 minutes / 檢查檔案是否在過去 5 分鐘內被修改
-                                    import time
-
-                                    if (time.time() - nb_file.stat().st_mtime) < 300:
-                                        return nb_file.parent.resolve()
-                                except Exception:
-                                    pass
-
-        # Method 3: Try to get from Jupyter/IPython environment / 嘗試從 Jupyter/IPython 環境取得
+        # Method 4: Try alternative Jupyter API approach / 嘗試替代的 Jupyter API 方法
         try:
             from IPython import get_ipython
 
@@ -160,27 +187,10 @@ class PETsARDSetup:
                 except Exception:
                     pass
 
-                # Fallback: Try to find based on kernel connection / 備用：嘗試基於 kernel 連線尋找
-                try:
-                    connection_file = ipython.kernel.config["IPKernelApp"][
-                        "connection_file"
-                    ]
-                    kernel_id = connection_file.split("-", 1)[1].split(".")[0]
-
-                    # Search for notebook files / 搜尋 notebook 檔案
-                    for p in search_paths:
-                        for nb_file in p.glob("**/*.ipynb"):
-                            # Check if notebook name or kernel id matches / 檢查 notebook 名稱或 kernel id 是否匹配
-                            if kernel_id in str(nb_file) or nb_file.stem in str(
-                                connection_file
-                            ):
-                                return nb_file.parent.resolve()
-                except Exception:
-                    pass
         except Exception:
             pass
 
-        # Method 4: Check stored path from previous run / 檢查之前執行儲存的路徑
+        # Method 5: Check stored path from previous run / 檢查之前執行儲存的路徑
         if (
             hasattr(PETsARDSetup, "_notebook_original_path")
             and PETsARDSetup._notebook_original_path
@@ -190,15 +200,8 @@ class PETsARDSetup:
             if stored_path.exists() and "demo" in str(stored_path):
                 return stored_path
 
-        # Method 5: Last resort - use current directory / 最後手段 - 使用當前目錄
-        # But if we're in demo root, try to guess the subfolder / 但如果在 demo 根目錄，嘗試猜測子資料夾
-        if current_path.name == "demo":
-            # Look for directories with .ipynb files / 尋找有 .ipynb 檔案的目錄
-            for subdir in current_path.iterdir():
-                if subdir.is_dir():
-                    if list(subdir.glob("*.ipynb")):
-                        return subdir.resolve()
-
+        # Method 6: Last resort - use current directory / 最後手段 - 使用當前目錄
+        # If we're in demo root and can't detect, return current path / 如果在 demo 根目錄且無法偵測，回傳當前路徑
         return current_path
 
     def _calculate_subfolder(self):
@@ -809,7 +812,7 @@ def _display_environment_info(setup: PETsARDSetup, version: str) -> None:
 
 
 def quick_setup(
-    yaml_file: str | list[str] | None = None,
+    config_file: str | list[str] | None = None,
     benchmark_data: list[str] | None = None,
     petsard_branch: str = "main",
     example_files: list[str] | None = None,
@@ -823,7 +826,7 @@ def quick_setup(
     提供一站式的環境設定，包括版本檢查、套件安裝、檔案下載等。
 
     Args:
-        yaml_file: YAML config filename(s) (single or multiple) / YAML 設定檔名稱 (單個或多個)
+        config_file: Configuration filename(s) - YAML or Python (single or multiple) / 設定檔名稱 - YAML 或 Python (單個或多個)
         benchmark_data: List of benchmark datasets to load / 要載入的基準資料集清單
         petsard_branch: PETsARD GitHub branch name, defaults to "main" / PETsARD GitHub 分支名稱，預設為 "main"
         example_files: List of example files to download / 要下載的範例檔案清單
@@ -837,15 +840,15 @@ def quick_setup(
         - yaml_path: YAML file path(s) (single or multiple) / YAML 檔案路徑 (單個或多個)
 
     Examples:
-        >>> # Single YAML file / 單個 YAML 檔案
-        >>> is_colab, branch, yaml_path = quick_setup("config.yaml")
+        >>> # Single configuration file / 單個設定檔
+        >>> is_colab, branch, config_path = quick_setup("config.yaml")
         >>>
-        >>> # Display YAML info separately / 分別顯示 YAML 資訊
-        >>> display_yaml_info(yaml_path)
+        >>> # Display config info separately / 分別顯示設定資訊
+        >>> display_yaml_info(config_path)
 
-        >>> # Multiple YAML files with specific branch / 多個 YAML 檔案，指定特定分支
+        >>> # Multiple configuration files with specific branch / 多個設定檔，指定特定分支
         >>> is_colab, branch, paths = quick_setup(
-        ...     yaml_file=["config1.yaml", "config2.yaml"],
+        ...     config_file=["config1.yaml", "config2.py"],
         ...     benchmark_data=["adult", "census"],
         ...     petsard_branch="develop"
         ... )
@@ -869,36 +872,45 @@ def quick_setup(
     if benchmark_data:
         _load_benchmark_data(benchmark_data)
 
-    # 5. Process YAML files / 處理 YAML 檔案
+    # 5. Add notebook directory to Python path for module imports / 將 notebook 目錄加入 Python 路徑以供模組導入
+    if setup.original_cwd and setup.original_cwd not in [Path(p) for p in sys.path]:
+        # Add the notebook's original directory to sys.path / 將 notebook 的原始目錄加入 sys.path
+        sys.path.insert(0, str(setup.original_cwd))
+        if not setup.is_colab:
+            print(
+                f"🔧 Added to Python path: {setup._get_privacy_path(setup.original_cwd)}"
+            )
+
+    # 6. Process configuration files / 處理設定檔案
     yaml_path = None
-    if yaml_file:
+    if config_file:
         # Auto-detect and display current subfolder location / 自動偵測並顯示當前子資料夾位置
         subfolder = setup._auto_detect_subfolder()
         if subfolder:
-            print(f"📁 Processing YAML files from subfolder: {subfolder}")
+            print(f"📁 Processing configuration files from subfolder: {subfolder}")
 
-        if isinstance(yaml_file, str):
-            # Single YAML file (auto-detect path) / 單個 YAML 檔案（自動偵測路徑）
-            yaml_path = setup.get_yaml_path(yaml_file, petsard_branch)
-            print(f"✅ Found YAML: {setup._get_privacy_path(yaml_path)}")
+        if isinstance(config_file, str):
+            # Single configuration file (auto-detect path) / 單個設定檔（自動偵測路徑）
+            yaml_path = setup.get_yaml_path(config_file, petsard_branch)
+            print(f"✅ Found configuration: {setup._get_privacy_path(yaml_path)}")
 
             # Only show content if requested / 只在要求時顯示內容
             if show_yaml_content:
-                _display_yaml_info(yaml_path, yaml_file)
+                _display_yaml_info(yaml_path, config_file)
 
-        elif isinstance(yaml_file, list):
-            # Multiple YAML files (auto-detect paths) / 多個 YAML 檔案（自動偵測路徑）
+        elif isinstance(config_file, list):
+            # Multiple configuration files (auto-detect paths) / 多個設定檔（自動偵測路徑）
             yaml_path = []
-            for i, single_yaml in enumerate(yaml_file, 1):
-                single_path = setup.get_yaml_path(single_yaml, petsard_branch)
+            for i, single_config in enumerate(config_file, 1):
+                single_path = setup.get_yaml_path(single_config, petsard_branch)
                 yaml_path.append(single_path)
                 print(
-                    f"✅ Found YAML ({i}/{len(yaml_file)}): {setup._get_privacy_path(single_path)}"
+                    f"✅ Found configuration ({i}/{len(config_file)}): {setup._get_privacy_path(single_path)}"
                 )
 
                 # Only show content if requested / 只在要求時顯示內容
                 if show_yaml_content:
-                    _display_yaml_info(single_path, single_yaml, i, len(yaml_file))
+                    _display_yaml_info(single_path, single_config, i, len(config_file))
 
     return setup.is_colab, petsard_branch, yaml_path
 

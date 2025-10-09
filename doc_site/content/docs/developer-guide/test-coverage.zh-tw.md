@@ -171,6 +171,19 @@ next: docs/developer-guide/docker-development
 - `test_custom_na_values`：測試自定義空值的處理
 - `test_custom_header_names`：測試使用自定義欄位標題載入資料
 
+#### 資料-Schema 自動協調測試
+
+測試資料與 schema 之間的自動協調功能：
+
+- `test_data_schema_reconciliation_extra_columns`：測試資料有額外欄位時的自動處理：
+  - 自動將額外欄位加入 schema
+  - 使用 `AttributeMetadater.from_data` 推斷欄位類型
+  - 驗證 schema 正確更新包含新欄位
+- `test_data_schema_reconciliation_missing_columns`：測試 schema 定義但資料缺少欄位時的處理：
+  - 使用 `SchemaMetadater.align` 添加缺失欄位
+  - 缺失欄位填充預設值（通常為 NA）
+  - 驗證對齊策略正確應用
+
 #### 邏輯型態系統測試
 
 測試全面的邏輯型態推斷和驗證系統：

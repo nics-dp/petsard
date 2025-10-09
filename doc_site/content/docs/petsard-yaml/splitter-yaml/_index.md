@@ -33,6 +33,10 @@ Splitter has no required parameters, all parameters are optional.
 
 ## Usage Examples
 
+Click the below button to run this example in Colab:
+
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/nics-tw/petsard/blob/main/demo/petsard-yaml/splitter-yaml/splitter-yaml.ipynb)
+
 ### Basic Splitting
 
 ```yaml

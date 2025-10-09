@@ -37,13 +37,6 @@ Initializes LoaderAdapter instance with automatic benchmark:// protocol handling
   - Must contain `filepath` key
   - Supports `benchmark://` protocol
 
-**Internal Processing:**
-1. **Protocol Detection**: Checks if filepath or schema uses `benchmark://` protocol
-2. **Benchmarker Configuration**: Creates BenchmarkerConfig for benchmark protocol
-3. **Path Conversion**: Converts benchmark:// path to local path
-4. **Schema Handling**: Separately processes schema if using benchmark:// protocol
-5. **Loader Initialization**: Creates Loader instance with processed configuration
-
 ### `run(input: dict)`
 
 Executes data loading, including automatic benchmark dataset download.
@@ -53,22 +46,8 @@ Executes data loading, including automatic benchmark dataset download.
   - Input parameter dictionary
   - LoaderAdapter typically receives empty dictionary `{}`
 
-**Execution Flow:**
-1. **Benchmark Processing** (if using benchmark:// protocol)
-   - Downloads benchmark dataset (CSV)
-   - Downloads benchmark schema (YAML) if specified
-   - Verifies SHA-256 integrity (logs warning on mismatch)
-   - Saves to local `benchmark/` directory
-   
-2. **Data Loading**
-   - Calls internal Loader instance's load() method
-   - Loads data and obtains Schema metadata
-
 **Returns:**
-
-No direct return value. Data is stored in internal attributes:
-- Use `get_result()` to get data
-- Use `get_metadata()` to get metadata
+No direct return value. Use `get_result()` and `get_metadata()` to get results.
 
 ### `get_result()`
 
@@ -84,9 +63,7 @@ Gets the data's Schema metadata.
 **Returns:**
 - `Schema`: Data metadata
 
-## Usage Examples
-
-### Basic Loading
+## Usage Example
 
 ```python
 from petsard.adapter import LoaderAdapter
@@ -97,6 +74,12 @@ adapter = LoaderAdapter({
     "schema": "schemas/user.yaml"
 })
 
+# Or using benchmark:// protocol
+# adapter = LoaderAdapter({
+#     "filepath": "benchmark://adult-income",
+#     "schema": "benchmark://adult-income_schema"
+# })
+
 # Execute loading
 adapter.run({})
 
@@ -105,66 +88,18 @@ data = adapter.get_result()
 metadata = adapter.get_metadata()
 ```
 
-### Benchmark Dataset Loading
-
-```python
-# Using benchmark:// protocol for data only
-adapter = LoaderAdapter({
-    "filepath": "benchmark://adult-income",
-    "schema": "schemas/adult-income.yaml"
-})
-
-# Using benchmark:// protocol for both data and schema
-adapter = LoaderAdapter({
-    "filepath": "benchmark://adult-income",
-    "schema": "benchmark://adult-income_schema"
-})
-
-# Automatically download and load
-adapter.run({})
-data = adapter.get_result()
-metadata = adapter.get_metadata()
-```
-
-### Error Handling
-
-```python
-try:
-    adapter = LoaderAdapter(config)
-    adapter.run({})
-except BenchmarkDatasetsError as e:
-    print(f"Failed to download benchmark dataset: {e}")
-except Exception as e:
-    print(f"Loading failed: {e}")
-```
-
-## Supported Benchmark Datasets
-
-Currently supports the following benchmark datasets:
-
-- `benchmark://adult-income` - UCI Adult Income dataset (CSV)
-- `benchmark://adult-income_schema` - Adult Income schema (YAML)
-
 ## Workflow
 
 1. **Protocol Detection**: Check if filepath/schema uses `benchmark://` protocol
 2. **Benchmarker Processing** (for benchmark protocol)
-   - Create BenchmarkerConfig for data/schema
    - Download files locally
    - Verify SHA-256 (warning on mismatch)
    - Convert paths to local paths
-3. **Loader Initialization**: Create Loader with processed configuration
-4. **Data Loading**: Call Loader.load() to load data
+3. **Data Loading**: Load data and metadata
 
 ## Notes
 
 - This is an internal API, not recommended for direct use
 - Prefer using YAML configuration files and Executor
-- benchmark:// protocol is case-insensitive
-- Datasets and schema files are downloaded to `benchmark/` directory
-- First use requires network connection
 - Benchmark files are cached after first download
-- Large dataset downloads may take considerable time
-- `method` parameter is deprecated and will be automatically removed
-- SHA-256 verification failures log warnings but don't block execution (v2.0.0+)
-- Supports both CSV data files and YAML schema files
+- Results are cached until next run() call
