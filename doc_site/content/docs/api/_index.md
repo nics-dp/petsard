@@ -18,7 +18,7 @@ sidebar:
 | [Metadater]({{< ref "docs/api/metadater" >}}) | `Metadater` | `Metadater.create_schema()` | `create_schema()`, `validate_schema()` |
 | Splitter | `Splitter` | `Splitter(**kwargs)` | `split()` |
 | [Processor]({{< ref "docs/api/processor" >}}) | `Processor` | `Processor(metadata, config)` | `fit()`, `transform()`, `inverse_transform()` |
-| [Synthesizer]({{< ref "docs/api/synthesizer" >}}) | `Synthesizer` | `Synthesizer(**kwargs)` | `create()`, `fit_sample()` |
+| Synthesizer | `Synthesizer` | `Synthesizer(**kwargs)` | `create()`, `fit_sample()` |
 | [Constrainer]({{< ref "docs/api/constrainer" >}}) | `Constrainer` | `Constrainer(config)` | `apply()`, `resample_until_satisfy()` |
 | [Evaluator]({{< ref "docs/api/evaluator" >}}) | `Evaluator` | `Evaluator(**kwargs)` | `create()`, `eval()` |
 | [Describer]({{< ref "docs/api/describer" >}}) | `Describer` | `Describer(**kwargs)` | `create()`, `eval()` |
@@ -38,7 +38,7 @@ sidebar:
 - Loader - Data loading and handling
 - Splitter - Data splitting for experiments
 - [Processor]({{< ref "docs/api/processor" >}}) - Data preprocessing and postprocessing
-- [Synthesizer]({{< ref "docs/api/synthesizer" >}}) - Synthetic data generation
+- Synthesizer - Synthetic data generation
 - [Constrainer]({{< ref "docs/api/constrainer" >}}) - Data constraint handler for synthetic data
 - [Evaluator]({{< ref "docs/api/evaluator" >}}) - Privacy, fidelity, and utility assessment
 - [Describer]({{< ref "docs/api/describer" >}}) - Descriptive data summary
