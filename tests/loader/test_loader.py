@@ -759,6 +759,108 @@ class TestLoaderMetadataFeature:
                 column_types=column_types,
             )
 
+    def test_data_schema_reconciliation_extra_columns(self):
+        """Test automatic reconciliation when data has extra columns
+        測試資料有額外欄位時的自動協調
+        """
+        # Create test data with extra columns
+        test_data = pd.DataFrame(
+            {"defined_col": [1, 2, 3], "extra_col": ["a", "b", "c"]}
+        )
+
+        # Create schema with only one column defined
+        schema = Schema(
+            id="test_schema",
+            name="Test Schema",
+            attributes={"defined_col": Attribute(name="defined_col", type="int")},
+        )
+
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".csv", delete=False) as f:
+            test_data.to_csv(f.name, index=False)
+
+            loader = Loader(filepath=f.name, schema=schema)
+
+            with patch("pandas.read_csv") as mock_read_csv:
+                mock_read_csv.return_value = test_data
+
+                # Mock SchemaMetadater.diff to return extra columns
+                with patch.object(SchemaMetadater, "diff") as mock_diff:
+                    mock_diff.return_value = {
+                        "missing_columns": [],
+                        "extra_columns": ["extra_col"],
+                        "type_mismatches": {},
+                    }
+
+                    # Mock AttributeMetadater.from_data
+                    from petsard.metadater import AttributeMetadater
+
+                    with patch.object(
+                        AttributeMetadater, "from_data"
+                    ) as mock_from_data:
+                        mock_from_data.return_value = Attribute(
+                            name="extra_col", type="string"
+                        )
+
+                        # Mock SchemaMetadater.align
+                        with patch.object(SchemaMetadater, "align") as mock_align:
+                            mock_align.return_value = test_data
+
+                            data, result_schema = loader.load()
+
+                            # Verify extra column was added to schema
+                            assert "extra_col" in result_schema.attributes
+                            assert (
+                                result_schema.attributes["extra_col"].type == "string"
+                            )
+
+    def test_data_schema_reconciliation_missing_columns(self):
+        """Test automatic reconciliation when schema has missing columns
+        測試 schema 有缺失欄位時的自動協調
+        """
+        # Create test data
+        test_data = pd.DataFrame({"col1": [1, 2, 3]})
+
+        # Create schema with additional columns
+        schema = Schema(
+            id="test_schema",
+            name="Test Schema",
+            attributes={
+                "col1": Attribute(name="col1", type="int"),
+                "col2": Attribute(name="col2", type="string"),
+            },
+        )
+
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".csv", delete=False) as f:
+            test_data.to_csv(f.name, index=False)
+
+            loader = Loader(filepath=f.name, schema=schema)
+
+            with patch("pandas.read_csv") as mock_read_csv:
+                mock_read_csv.return_value = test_data
+
+                # Mock SchemaMetadater.diff to return missing columns
+                with patch.object(SchemaMetadater, "diff") as mock_diff:
+                    mock_diff.return_value = {
+                        "missing_columns": ["col2"],
+                        "extra_columns": [],
+                        "type_mismatches": {},
+                    }
+
+                    # Mock SchemaMetadater.align to add missing columns with defaults
+                    expected_data = test_data.copy()
+                    expected_data["col2"] = pd.NA
+
+                    with patch.object(SchemaMetadater, "align") as mock_align:
+                        mock_align.return_value = expected_data
+
+                        data, result_schema = loader.load()
+
+                        # Verify align was called with correct strategy
+                        mock_align.assert_called_once()
+                        align_strategy = mock_align.call_args[0][2]
+                        assert align_strategy["add_missing_columns"] is True
+                        assert align_strategy["remove_extra_columns"] is False
+
 
 class TestLoaderAmbiguousDataFeatures:
     """Test cases for ambiguous data type processing features
