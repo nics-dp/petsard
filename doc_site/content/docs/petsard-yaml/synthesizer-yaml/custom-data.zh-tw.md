@@ -17,12 +17,13 @@ weight: 132
 Synthesizer:
   external_data:
     method: custom_data
-    filepath: path/to/your-synthetic-data.csv
+    filepath: benchmark://adult-income
+    schema: benchmark://adult-income_schema
 ```
 
 此範例展示 `custom_data` 與其他模組的搭配用法：
 - **Synthesizer**：使用 `custom_data` 匯入外部合成資料
-- **其他模組**：Loader 和 Evaluator 搭配使用以完成完整的評測流程
+- **其他模組**：Loader、Splitter 和 Evaluator 搭配使用以完成完整的評測流程
 
 {{< callout type="info" >}}
 使用 `custom_data` 時，`filepath` 參數支援所有 Loader 格式，包括 `benchmark://` 協定和一般檔案路徑。
