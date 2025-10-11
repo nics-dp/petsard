@@ -5,9 +5,27 @@ weight: 141
 
 檢查合成資料是否準確反映原始資料的基本特性和結構。
 
-## 配置範例
+## 使用範例
+
+請點擊下方按鈕在 Colab 中執行範例：
+
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/nics-tw/petsard/blob/main/demo/petsard-yaml/evaluator-yaml/diagnostic.ipynb)
 
 ```yaml
+Splitter:
+  external_split:
+    method: custom_data
+    filepath:
+      ori: benchmark://adult-income_ori
+      control: benchmark://adult-income_control
+    schema:
+      ori: benchmark://adult-income_schema
+      control: benchmark://adult-income_schema
+Synthesizer:
+  external_data:
+    method: custom_data
+    filepath: benchmark://adult-income
+    schema: benchmark://adult-income_schema
 Evaluator:
   validity_check:
     method: sdmetrics-diagnosticreport
@@ -82,3 +100,4 @@ Evaluator:
   - 如果移除直接識別欄位後才訓練合成資料
   - 應該比較「移除直接識別欄位版本」的原始資料
   - 而非比較資料庫版本的原始資料
+- 如果是外部合成資料，給定統一的表詮釋資料
