@@ -1077,34 +1077,17 @@ Tests for custom evaluator functionality:
 
 > tests/evaluator/test_mlutility.py
 
-Tests for machine learning utility evaluation (original version, 7 tests):
-
-- `test_init`: Tests MLUtility evaluator initialization
-- `test_eval_classification`: Tests classification task evaluation (using mock)
-- `test_eval_regression`: Tests regression task evaluation (using mock)
-- `test_eval_cluster`: Tests clustering task evaluation (using mock)
-- `test_preprocessing`: Tests data preprocessing functionality
-- `test_invalid_method`: Tests error handling for invalid evaluation methods
-- `test_missing_target`: Tests error handling for missing target column
-
-**Fixed Issues:**
-- Fixed import typo on line 7: `mlutlity` → `mlutility`
-
-#### `MLUtility V2`
-
-> tests/evaluator/test_mlutility_v2.py
-
-Tests for MLUtility V2 extended functionality (new version, 23 tests):
+Tests for machine learning utility evaluation (23 tests):
 
 **TaskType Tests (2 tests):**
 - `test_task_type_from_string`: Tests task type string conversion (classification, regression, clustering)
 - `test_task_type_invalid`: Tests error handling for invalid task types
 
 **MetricRegistry Tests (4 tests):**
-- `test_default_metrics`: Tests default metrics for each task type
+- `test_default_metrics`: Tests default metrics for each task type (Classification: MCC, F1, ROC AUC, accuracy; Regression: R2, RMSE; Clustering: Silhouette Score)
 - `test_metric_compatibility`: Tests metric compatibility with task types
 - `test_register_custom_metric`: Tests custom metric registration
-- `test_confusion_matrix_metrics`: Tests confusion matrix derived metrics calculation
+- `test_confusion_matrix_metrics`: Tests confusion matrix derived metrics calculation (sensitivity, specificity, precision, recall)
 
 **MLUtilityConfig Tests (6 tests):**
 - `test_config_initialization`: Tests configuration initialization
@@ -1114,30 +1097,34 @@ Tests for MLUtility V2 extended functionality (new version, 23 tests):
 - `test_clustering_no_target`: Tests that clustering tasks don't require target column
 - `test_metric_compatibility_validation`: Tests metric compatibility validation
 
-**MLUtility V2 Main Functionality Tests (11 tests):**
+**MLUtility Main Functionality Tests (11 tests):**
 - `test_classification_with_extended_metrics`: Tests extended classification metrics (MCC, F1, precision, recall, specificity)
 - `test_regression_with_custom_metrics`: Tests custom regression metrics (R2, RMSE, MAPE)
 - `test_clustering_evaluation`: Tests clustering evaluation (Silhouette Score)
 - `test_domain_transfer_experiment`: Tests domain transfer experiment design
 - `test_xgb_params_configuration`: Tests XGBoost parameter configuration
 - `test_multiclass_classification`: Tests multi-class classification
-- `test_resampling_smote_enn`: Tests SMOTE-ENN imbalanced data handling
-- `test_categorical_encoding`: Tests categorical variable encoding (OneHotEncoder)
+- `test_resampling_smote_enn`: Tests SMOTE-ENN imbalanced data handling (configuration setup testing)
+- `test_categorical_encoding`: Tests categorical variable encoding handling (OneHotEncoder)
 - `test_empty_data_handling`: Tests empty data handling
 - `test_missing_target_column`: Tests missing target column handling
-- `test_end_to_end_workflow`: Tests end-to-end workflow
+- `test_end_to_end_workflow`: Tests end-to-end workflow integration
 
-**New Features:**
+**Key Features:**
 - **Extended Evaluation Metrics**: Supports full sklearn.metrics metric set
 - **Experiment Design Modes**:
   - dual_model_control: Dual model control group (ori and syn trained separately, tested on control)
   - domain_transfer: Domain transfer (syn trained, tested on ori)
 - **Imbalanced Data Handling**: Integrates SMOTE-ENN and SMOTE-Tomek (requires imbalanced-learn)
 - **XGBoost Integration**: Uses XGBoost for classification and regression tasks
-- **Automatic Categorical Encoding**: Uses OneHotEncoder for categorical variables
+- **Data Preprocessing**:
+  - Automatic categorical feature encoding (OneHotEncoder with handle_unknown='ignore')
+  - Conservative column type detection (checks all datasets)
+  - Feature standardization (StandardScaler)
+  - Data alignment and missing value handling
 - **Numeric/Datetime Precision**: Automatic detection and handling of field precision
 
-> **Architecture Enhancement**: MLUtility V2 (`mlutility_v2.py`) provides a completely redesigned machine learning utility evaluation system with richer metrics, flexible experiment design, imbalanced data handling support, and better type handling capabilities. It coexists with the original MLUtility to maintain backward compatibility.
+> **Architecture Enhancement**: MLUtility provides a comprehensive machine learning utility evaluation system with rich metrics, flexible experiment design, imbalanced data handling support, and robust type handling capabilities. The system can automatically handle mixed data types including categorical feature encoding and data standardization.
 
 #### `MPUCCs`
 
