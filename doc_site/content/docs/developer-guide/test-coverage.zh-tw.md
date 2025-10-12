@@ -1105,34 +1105,17 @@ python -c "from tests.loader.test_loader import run_stress_demo; run_stress_demo
 
 > tests/evaluator/test_mlutility.py
 
-測試機器學習效用評估（原版，7 個測試）：
-
-- `test_init`：測試 MLUtility 評估器的初始化
-- `test_eval_classification`：測試分類任務評估（使用 mock）
-- `test_eval_regression`：測試回歸任務評估（使用 mock）
-- `test_eval_cluster`：測試聚類任務評估（使用 mock）
-- `test_preprocessing`：測試資料前處理功能
-- `test_invalid_method`：測試無效評估方法的錯誤處理
-- `test_missing_target`：測試缺少目標欄位的錯誤處理
-
-**修復的問題：**
-- 修正了第 7 行的 import 拼字錯誤：`mlutlity` → `mlutility`
-
-#### `MLUtility V2`
-
-> tests/evaluator/test_mlutility_v2.py
-
-測試 MLUtility V2 的擴展功能（新版本，23 個測試）：
+測試機器學習效用評估（23 個測試）：
 
 **TaskType 測試（2 個測試）：**
 - `test_task_type_from_string`：測試任務類型字串轉換（classification、regression、clustering）
 - `test_task_type_invalid`：測試無效任務類型的錯誤處理
 
 **MetricRegistry 測試（4 個測試）：**
-- `test_default_metrics`：測試各任務類型的預設指標
+- `test_default_metrics`：測試各任務類型的預設指標（分類：MCC、F1、ROC AUC、accuracy；回歸：R2、RMSE；聚類：Silhouette Score）
 - `test_metric_compatibility`：測試指標與任務類型的相容性
 - `test_register_custom_metric`：測試自定義指標註冊
-- `test_confusion_matrix_metrics`：測試混淆矩陣衍生指標計算
+- `test_confusion_matrix_metrics`：測試混淆矩陣衍生指標計算（敏感度、特異性、精確率、召回率）
 
 **MLUtilityConfig 測試（6 個測試）：**
 - `test_config_initialization`：測試配置初始化
@@ -1142,30 +1125,34 @@ python -c "from tests.loader.test_loader import run_stress_demo; run_stress_demo
 - `test_clustering_no_target`：測試聚類任務不需要目標欄位
 - `test_metric_compatibility_validation`：測試指標相容性驗證
 
-**MLUtility V2 主要功能測試（11 個測試）：**
+**MLUtility 主要功能測試（11 個測試）：**
 - `test_classification_with_extended_metrics`：測試擴展分類指標（MCC、F1、精確率、召回率、特異性）
 - `test_regression_with_custom_metrics`：測試自定義回歸指標（R2、RMSE、MAPE）
 - `test_clustering_evaluation`：測試聚類評估（Silhouette Score）
 - `test_domain_transfer_experiment`：測試領域遷移實驗設計
 - `test_xgb_params_configuration`：測試 XGBoost 參數配置
 - `test_multiclass_classification`：測試多類別分類
-- `test_resampling_smote_enn`：測試 SMOTE-ENN 不平衡處理
-- `test_categorical_encoding`：測試類別變數編碼（OneHotEncoder）
+- `test_resampling_smote_enn`：測試 SMOTE-ENN 不平衡處理（測試配置設置）
+- `test_categorical_encoding`：測試類別變數編碼處理（OneHotEncoder）
 - `test_empty_data_handling`：測試空資料處理
 - `test_missing_target_column`：測試缺失目標欄位
-- `test_end_to_end_workflow`：測試端到端工作流程
+- `test_end_to_end_workflow`：測試端到端工作流程整合
 
-**新功能特色：**
+**主要功能特色：**
 - **擴展的評估指標**：支援完整的 sklearn.metrics 指標集
 - **實驗設計模式**：
   - dual_model_control：雙模型控制組（ori 和 syn 分別訓練，在 control 測試）
   - domain_transfer：領域遷移（syn 訓練，在 ori 測試）
 - **不平衡資料處理**：整合 SMOTE-ENN 和 SMOTE-Tomek（需要 imbalanced-learn）
 - **XGBoost 整合**：使用 XGBoost 進行分類和回歸任務
-- **自動類別編碼**：使用 OneHotEncoder 處理類別變數
+- **資料前處理**：
+  - 類別特徵自動編碼（OneHotEncoder with handle_unknown='ignore'）
+  - 保守的欄位類型檢測（檢查所有資料集）
+  - 特徵標準化（StandardScaler）
+  - 資料對齊和缺失值處理
 - **數值/日期時間精度**：自動檢測和處理欄位精度
 
-> **架構增強**：MLUtility V2（`mlutility_v2.py`）提供了完全重新設計的機器學習效用評估系統，具有更豐富的指標、靈活的實驗設計、不平衡處理支援，以及更好的類型處理能力。與原版 MLUtility 並存，保持向後相容性。
+> **架構增強**：MLUtility 提供了完整的機器學習效用評估系統，具有豐富的指標、靈活的實驗設計、不平衡處理支援，以及健全的類型處理能力。系統能夠自動處理混合資料類型，包含類別特徵編碼和資料標準化。
 
 #### `MPUCCs`
 
