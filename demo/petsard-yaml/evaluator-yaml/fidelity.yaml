@@ -14,6 +14,6 @@ Synthesizer:
     filepath: benchmark://adult-income
     schema: benchmark://adult-income_schema
 Evaluator:
-  quality_check:
+  fidelity_check:
     method: sdmetrics-qualityreport
 ...
