@@ -653,11 +653,48 @@ def display_results(results: dict, max_rows: int = 3) -> None:
             print(
                 f"📦 Dictionary with {len(value)} keys / 包含 {len(value)} 個鍵的字典"
             )
-            for k, v in list(value.items())[:5]:
-                print(f"  • {k}: {type(v).__name__}")
-            if len(value) > 5:
+
+            # Separate DataFrame and non-DataFrame items / 分離 DataFrame 和非 DataFrame 項目
+            df_items = []
+            non_df_items = []
+
+            for k, v in value.items():
+                if hasattr(v, "head") and hasattr(v, "shape"):
+                    df_items.append((k, v))
+                else:
+                    non_df_items.append((k, v))
+
+            # Display DataFrames first with full details / 先顯示 DataFrames 的完整資訊
+            for k, v in df_items:
+                rows, cols = v.shape
+                print(f"\n  • {k}: DataFrame ({rows:,} rows × {cols} columns)")
                 print(
-                    f"  ... and {len(value) - 5} more keys / ... 還有 {len(value) - 5} 個鍵"
+                    f"    📋 Showing first {min(max_rows, rows)} rows / 顯示前 {min(max_rows, rows)} 行:"
+                )
+
+                # Display first few rows with indentation / 顯示前幾行（帶縮排）
+                display_df = v.head(max_rows)
+                df_string = display_df.to_string()
+                # Add indentation to each line / 為每行添加縮排
+                indented_df = "\n".join(f"    {line}" for line in df_string.split("\n"))
+                print(indented_df)
+
+                if rows > max_rows:
+                    print(
+                        f"    ... ({rows - max_rows:,} more rows) / ... (還有 {rows - max_rows:,} 行)"
+                    )
+
+                # Show column info / 顯示欄位資訊
+                print(f"    📝 Columns / 欄位: {', '.join(v.columns.tolist())}")
+
+            # Display non-DataFrame items (only first 5) / 顯示非 DataFrame 項目（只顯示前 5 個）
+            for k, v in non_df_items[:5]:
+                print(f"  • {k}: {type(v).__name__}")
+
+            # Show count of remaining non-DataFrame items / 顯示剩餘非 DataFrame 項目數
+            if len(non_df_items) > 5:
+                print(
+                    f"  ... and {len(non_df_items) - 5} more non-DataFrame keys / ... 還有 {len(non_df_items) - 5} 個非 DataFrame 鍵"
                 )
 
         elif isinstance(value, (list, tuple)):
