@@ -75,7 +75,7 @@ Evaluator:
     method: anonymeter-linkability
     max_n_attacks: true      # 使用控制資料集大小（預設：true）
     n_neighbors: 1           # 最近鄰數量（預設：1）
-    aux_cols:
+    aux_cols:                # 輔助欄位（預設：None）
       -                      # 第一組：公開資料欄位
         - workclass
         - education
@@ -96,13 +96,8 @@ Evaluator:
 Evaluator:
   inference_risk:
     method: anonymeter-inference
-    n_attacks: 2000          # 攻擊次數（max_n_attacks=true 時會被忽略）
     max_n_attacks: true      # 使用控制資料集大小（預設：true）
-    secret: sensitive_column # 要推論的敏感欄位（必要）
-    aux_cols:                # 用於推論的欄位（選用，預設：除 secret 外的所有欄位）
-      - col1
-      - col2
-      - col3
+    secret: income           # 要推論的敏感欄位（必要）
 ```
 
 ## 參數說明
@@ -131,7 +126,7 @@ Evaluator:
 | **method** | `string` | 必要 | - | 固定值：`anonymeter-linkability` |
 | **n_attacks** | `integer` | 選用 | None | 攻擊執行次數<br>當 max_n_attacks=true 時可省略<br>**注意**：當 max_n_attacks 為 true 時會被忽略 |
 | **max_n_attacks** | `boolean` | 選用 | true | 是否自動調整 n_attacks 以符合控制資料集大小<br>**設為 false**：使用設定的 n_attacks 值（必須指定 n_attacks）<br>**設為 true（預設）**：忽略 n_attacks 設定，改用控制資料集大小 |
-| **aux_cols** | `array` | 選用 | - | 輔助資訊欄位<br>格式：兩個互不重複的列表，模擬不同單位持有資料<br>**欄位選擇指引**：將資料欄位名稱分成兩個列表，分法主要基於對相關系統、功能和業務的理解。這種分法模擬了資料被不同單位持有或釋出的情境，其中攻擊者試圖連結這兩部分資料之間的關係。不需要包含所有變數，但建議至少應涵蓋關鍵變數。這種設置有助於評估在實際場景中，資料可能面臨的連結性攻擊風險。 |
+| **aux_cols** | `array` | 選用 | None | 輔助資訊欄位<br>格式：兩個互不重複的列表，模擬不同單位持有資料<br>**欄位選擇指引**：將資料欄位名稱分成兩個列表，分法主要基於對相關系統、功能和業務的理解。這種分法模擬了資料被不同單位持有或釋出的情境，其中攻擊者試圖連結這兩部分資料之間的關係。不需要包含所有變數，但建議至少應涵蓋關鍵變數。這種設置有助於評估在實際場景中，資料可能面臨的連結性攻擊風險。 |
 | **n_neighbors** | `integer` | 選用 | 1 | 考慮的最近鄰數量<br>**建議**：設為最嚴格的 1。連結性屬於較困難的攻擊模式，在查找最接近的資料失敗後，其他較不接近的資料似無立即風險。 |
 
 ### 推論性風險參數

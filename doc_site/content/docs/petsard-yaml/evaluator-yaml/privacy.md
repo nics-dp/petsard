@@ -75,7 +75,7 @@ Evaluator:
     method: anonymeter-linkability
     max_n_attacks: true      # Use control dataset size (default: true)
     n_neighbors: 1           # Nearest neighbors (default: 1)
-    aux_cols:
+    aux_cols:                # Auxiliary columns (default: None)
       -                      # First list: Public data columns
         - workclass
         - education
@@ -97,7 +97,7 @@ Evaluator:
   inference_risk:
     method: anonymeter-inference
     max_n_attacks: true      # Use control dataset size (default: true)
-    secret: income.          # Sensitive column to infer (required)
+    secret: income           # Sensitive column to infer (required)
 ```
 
 ## Parameter Description
@@ -126,7 +126,7 @@ Evaluator:
 | **method** | `string` | Required | - | Fixed value: `anonymeter-linkability` |
 | **n_attacks** | `integer` | Optional | None | Number of attack executions<br>Can be omitted when max_n_attacks=true<br>**Note**: Ignored when max_n_attacks is true |
 | **max_n_attacks** | `boolean` | Optional | true | Whether to automatically adjust n_attacks to match control dataset size<br>**When false**: Uses the configured n_attacks value (n_attacks must be specified)<br>**When true (default)**: Ignores n_attacks setting and uses control dataset size instead |
-| **aux_cols** | `array` | Optional | - | Auxiliary information columns<br>Format: Two non-overlapping lists, simulating data held by different entities<br>**Selection guideline**: Divide column names into two lists based on understanding of systems, functions, and business logic. This simulates scenarios where data is held or released by different entities. Not all variables need to be included, but key variables should be covered. The division is relatively subjective and aims to assess linkability attack risks in realistic scenarios. |
+| **aux_cols** | `array` | Optional | None | Auxiliary information columns<br>Format: Two non-overlapping lists, simulating data held by different entities<br>**Selection guideline**: Divide column names into two lists based on understanding of systems, functions, and business logic. This simulates scenarios where data is held or released by different entities. Not all variables need to be included, but key variables should be covered. The division is relatively subjective and aims to assess linkability attack risks in realistic scenarios. |
 | **n_neighbors** | `integer` | Optional | 1 | Number of nearest neighbors to consider<br>**Recommendation**: Set to 1 for strictest evaluation. Since linkability is a difficult attack mode, after failing to find the closest match, other less similar records pose no immediate risk. |
 
 ### Inference Risk Parameters
