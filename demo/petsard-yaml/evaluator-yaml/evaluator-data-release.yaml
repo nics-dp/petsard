@@ -1,0 +1,47 @@
+---
+Splitter:
+  external_split:
+    method: custom_data
+    filepath:
+      ori: benchmark://adult-income_ori
+      control: benchmark://adult-income_control
+    schema:
+      ori: benchmark://adult-income_schema
+      control: benchmark://adult-income_schema
+Synthesizer:
+  external_data:
+    method: custom_data
+    filepath: benchmark://adult-income
+    schema: benchmark://adult-income_schema
+Evaluator:
+  # Step 1: Data validity diagnosis (should be close to 1.0)
+  validity_check:
+    method: sdmetrics-diagnosticreport
+  # Step 2: Privacy protection assessment (risk should be < 0.09)
+  singling_out_risk:
+    method: anonymeter-singlingout
+    n_attacks: 400
+    max_attempts: 4000
+  linkability_risk:
+    method: anonymeter-linkability
+    aux_cols:
+      -
+        - workclass
+        - education
+        - occupation
+        - race
+        - gender
+      -
+        - age
+        - marital-status
+        - relationship
+        - native-country
+        - income
+  inference_risk:
+    method: anonymeter-inference
+    secret: income
+  # Focus: Pursue high fidelity (higher score is better)
+  fidelity_assessment:
+    method: sdmetrics-qualityreport
+  # Utility evaluation is optional (not necessary)
+...

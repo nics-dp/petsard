@@ -14,13 +14,9 @@ sidebar:
 | Module | Object Name | Creation Method | Main Methods |
 |--------|-------------|-----------------|--------------|
 | [Executor]({{< ref "docs/api/executor" >}}) | `Executor` | `Executor(config)` | `run()`, `get_result()`, `get_timing()` |
-| Loader | `Loader` | `Loader(filepath, **kwargs)` | `load()` |
 | [Metadater]({{< ref "docs/api/metadater" >}}) | `Metadater` | `Metadater.create_schema()` | `create_schema()`, `validate_schema()` |
-| Splitter | `Splitter` | `Splitter(**kwargs)` | `split()` |
 | [Processor]({{< ref "docs/api/processor" >}}) | `Processor` | `Processor(metadata, config)` | `fit()`, `transform()`, `inverse_transform()` |
-| Synthesizer | `Synthesizer` | `Synthesizer(**kwargs)` | `create()`, `fit_sample()` |
 | [Constrainer]({{< ref "docs/api/constrainer" >}}) | `Constrainer` | `Constrainer(config)` | `apply()`, `resample_until_satisfy()` |
-| [Evaluator]({{< ref "docs/api/evaluator" >}}) | `Evaluator` | `Evaluator(**kwargs)` | `create()`, `eval()` |
 | [Describer]({{< ref "docs/api/describer" >}}) | `Describer` | `Describer(**kwargs)` | `create()`, `eval()` |
 | [Reporter]({{< ref "docs/api/reporter" >}}) | `Reporter` | `Reporter(method, **kwargs)` | `create()`, `report()` |
 | [Adapter]({{< ref "docs/api/adapter" >}}) | `*Adapter` | `*Adapter(config)` | `run()`, `set_input()`, `get_result()` |
@@ -35,12 +31,8 @@ sidebar:
 - [Metadater]({{< ref "docs/api/metadater" >}}) - Dataset schema and metadata management
 
 ## Pipeline Components
-- Loader - Data loading and handling
-- Splitter - Data splitting for experiments
 - [Processor]({{< ref "docs/api/processor" >}}) - Data preprocessing and postprocessing
-- Synthesizer - Synthetic data generation
 - [Constrainer]({{< ref "docs/api/constrainer" >}}) - Data constraint handler for synthetic data
-- [Evaluator]({{< ref "docs/api/evaluator" >}}) - Privacy, fidelity, and utility assessment
 - [Describer]({{< ref "docs/api/describer" >}}) - Descriptive data summary
 - [Reporter]({{< ref "docs/api/reporter" >}}) - Results export and reporting
 

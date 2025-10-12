@@ -2,7 +2,6 @@
 title: Describer
 type: docs
 weight: 59
-prev: docs/api/evaluator
 next: docs/api/reporter
 ---
 

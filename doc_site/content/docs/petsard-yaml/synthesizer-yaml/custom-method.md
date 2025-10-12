@@ -1,6 +1,6 @@
 ---
 title: "Custom Synthesis Method"
-weight: 131
+weight: 133
 ---
 
 To create your own synthesizer, you need to implement a Python class with three required methods and configure the YAML file to use it.
