@@ -2,7 +2,6 @@
 title: 資料約束
 type: docs
 weight: 32
-next: docs/tutorial/use-cases/ml-utility
 ---
 
 透過欄位值規則、欄位組合、欄位比例和空值處理策略來約束合成資料。
