@@ -1,0 +1,27 @@
+---
+Splitter:
+  external_split:
+    method: custom_data
+    filepath:
+      ori: benchmark://adult-income_ori
+      control: benchmark://adult-income_control
+    schema:
+      ori: benchmark://adult-income_schema
+      control: benchmark://adult-income_schema
+Synthesizer:
+  external_data:
+    method: custom_data
+    filepath: benchmark://adult-income
+    schema: benchmark://adult-income_schema
+Evaluator:
+  mpuccs_assessment:
+    method: mpuccs
+    n_cols:        # Combination sizes to evaluate (default: null = all sizes from 1 to total columns)
+      - 1
+      - 2
+    min_entropy_delta: 0.01     # Minimum entropy gain threshold (default: 0.0)
+    field_decay_factor: 0.5     # Field combination weighting decay (default: 0.5)
+    renyi_alpha: 2.0            # Rényi entropy parameter (default: 2.0)
+    numeric_precision: null     # Auto-detect or specify decimal places (default: null)
+    datetime_precision: null    # Auto-detect or specify time precision (default: null)
+...
