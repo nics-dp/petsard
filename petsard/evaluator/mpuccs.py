@@ -440,9 +440,34 @@ class MPUCCs(BaseEvaluator):
 
         for field, value in zip(fields, values, strict=True):
             if pd.isna(value):
-                current_mask = data[field].isna().values
+                # Handle NA values comparison
+                current_mask = data[field].isna().to_numpy(dtype=bool)
             else:
-                current_mask = data[field].values == value
+                # Get the column data
+                field_series = data[field]
+
+                # Use element-wise comparison that handles NA properly
+                # fillna(False) ensures NA values become False in the mask
+                try:
+                    # For nullable dtypes, use the nullable comparison
+                    comparison = field_series == value
+                    # Fill NA with False and convert to numpy bool array
+                    current_mask = comparison.fillna(False).to_numpy(dtype=bool)
+                except (TypeError, AttributeError):
+                    # Fallback for edge cases - iterate through values
+                    field_values = field_series.to_numpy()
+                    current_mask = np.zeros(len(field_values), dtype=bool)
+                    for i in range(len(field_values)):
+                        try:
+                            # Check if not NA and equals value
+                            if (
+                                not pd.isna(field_values[i])
+                                and field_values[i] == value
+                            ):
+                                current_mask[i] = True
+                        except (TypeError, ValueError, AttributeError):
+                            # Any comparison error means False
+                            current_mask[i] = False
 
             mask &= current_mask
 
