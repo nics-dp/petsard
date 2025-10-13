@@ -20,14 +20,6 @@ sidebar:
 
 ## Data Generating
 
-## Data Evaluating
-- [Anonymeter Privacy Risk Assessment]({{< ref "docs/developer-guide/anonymeter" >}})
-  - European standards for privacy risk assessment
-  - Three dimensions of privacy risk measurement
-- [mpUCCs Experimental Feature]({{< ref "docs/developer-guide/mpuccs" >}})
-  - Advanced singling-out risk assessment
-  - Maximal partial unique column combinations theory
-
 ## Configuration and Reporting
 - [Logging Configuration]({{< ref "docs/developer-guide/logging-configuration" >}})
   - Setting log levels and output destinations
