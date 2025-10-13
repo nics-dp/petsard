@@ -20,14 +20,6 @@ sidebar:
 
 ## 資料生成
 
-## 資料評測
-- [Anonymeter 隱私風險評測]({{< ref "docs/developer-guide/anonymeter" >}})
-  - 歐盟隱私風險評估標準
-  - 三個面向的隱私風險量測
-- [mpUCCs 實驗性新功能]({{< ref "docs/developer-guide/mpuccs" >}})
-  - 先進指認性風險評估
-  - 最大部分唯一欄位組合理論
-
 ## 設定與報告
 - [日誌設定]({{< ref "docs/developer-guide/logging-configuration" >}})
   - 設定日誌層級與輸出目標

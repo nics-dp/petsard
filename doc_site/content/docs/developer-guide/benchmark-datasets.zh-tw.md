@@ -3,7 +3,6 @@ title: 基準資料集維護
 type: docs
 weight: 82
 prev: docs/developer-guide/development-guidelines
-next: docs/developer-guide/anonymeter
 ---
 
 本文件說明如何維護 PETsARD 的基準資料集。
