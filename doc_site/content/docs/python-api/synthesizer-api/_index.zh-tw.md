@@ -1,6 +1,6 @@
 ---
 title: "Synthesizer API"
-weight: 350
+weight: 340
 ---
 
 合成資料產生模組，支援多種合成方法並提供資料生成功能。

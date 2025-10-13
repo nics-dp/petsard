@@ -1,6 +1,6 @@
 ---
 title: "sample()"
-weight: 364
+weight: 3
 ---
 
 生成合成資料。

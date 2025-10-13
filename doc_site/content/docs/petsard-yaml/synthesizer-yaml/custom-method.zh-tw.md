@@ -1,6 +1,6 @@
 ---
 title: "自訂合成方法"
-weight: 131
+weight: 133
 ---
 
 要建立自己的合成器，需要實作一個含有三個必要方法的 Python 類別，並設定 YAML 檔案來使用它。
@@ -28,7 +28,7 @@ class YourSynthesizer:
 
 請點擊下方按鈕在 Colab 中執行範例：
 
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/nics-tw/petsard/blob/main/demo/petsard-yaml/synthesizer-yaml/custom-method.ipynb)
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/nics-tw/petsard/blob/main/demo/petsard-yaml/synthesizer-yaml/custom-synthesis.ipynb)
 
 ```yaml
 Loader:

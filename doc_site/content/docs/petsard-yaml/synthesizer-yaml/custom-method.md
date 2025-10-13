@@ -1,6 +1,6 @@
 ---
 title: "Custom Synthesis Method"
-weight: 131
+weight: 133
 ---
 
 To create your own synthesizer, you need to implement a Python class with three required methods and configure the YAML file to use it.
@@ -28,7 +28,7 @@ class YourSynthesizer:
 
 Click the below button to run this example in Colab:
 
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/nics-tw/petsard/blob/main/demo/petsard-yaml/synthesizer-yaml/custom-method.ipynb)
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/nics-tw/petsard/blob/main/demo/petsard-yaml/synthesizer-yaml/custom-synthesis.ipynb)
 
 ```yaml
 Loader:

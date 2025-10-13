@@ -14,13 +14,9 @@ sidebar:
 | 模組 | 物件名稱 | 建立方法 | 主要方法 |
 |------|----------|----------|----------|
 | [Executor]({{< ref "docs/api/executor" >}}) | `Executor` | `Executor(config)` | `run()`, `get_result()`, `get_timing()` |
-| Loader | `Loader` | `Loader(filepath, **kwargs)` | `load()` |
 | [Metadater]({{< ref "docs/api/metadater" >}}) | `Metadater` | `Metadater.create_schema()` | `create_schema()`, `validate_schema()` |
-| Splitter | `Splitter` | `Splitter(**kwargs)` | `split()` |
 | [Processor]({{< ref "docs/api/processor" >}}) | `Processor` | `Processor(metadata, config)` | `fit()`, `transform()`, `inverse_transform()` |
-| Synthesizer | `Synthesizer` | `Synthesizer(**kwargs)` | `create()`, `fit_sample()` |
 | [Constrainer]({{< ref "docs/api/constrainer" >}}) | `Constrainer` | `Constrainer(config)` | `apply()`, `resample_until_satisfy()` |
-| [Evaluator]({{< ref "docs/api/evaluator" >}}) | `Evaluator` | `Evaluator(**kwargs)` | `create()`, `eval()` |
 | [Describer]({{< ref "docs/api/describer" >}}) | `Describer` | `Describer(**kwargs)` | `create()`, `eval()` |
 | [Reporter]({{< ref "docs/api/reporter" >}}) | `Reporter` | `Reporter(method, **kwargs)` | `create()`, `report()` |
 | [Adapter]({{< ref "docs/api/adapter" >}}) | `*Adapter` | `*Adapter(config)` | `run()`, `set_input()`, `get_result()` |
@@ -35,12 +31,8 @@ sidebar:
 - [Metadater]({{< ref "docs/api/metadater" >}}) - 資料集架構和詮釋資料管理
 
 ## 管線組件
-- Loader - 資料載入和處理
-- Splitter - 實驗資料分割
 - [Processor]({{< ref "docs/api/processor" >}}) - 資料前處理和後處理
-- Synthesizer - 合成資料生成
 - [Constrainer]({{< ref "docs/api/constrainer" >}}) - 合成資料的資料約束處理器
-- [Evaluator]({{< ref "docs/api/evaluator" >}}) - 隱私、保真度和效用評估
 - [Describer]({{< ref "docs/api/describer" >}}) - 描述性資料摘要
 - [Reporter]({{< ref "docs/api/reporter" >}}) - 結果匯出和報告
 

@@ -1,6 +1,6 @@
 ---
 title: "create()"
-weight: 362
+weight: 1
 ---
 
 建立並初始化合成器。
