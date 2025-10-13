@@ -2,7 +2,6 @@
 title: mpUCCs 實驗性新功能
 type: docs
 weight: 85
-prev: docs/developer-guide/anonymeter
 next: docs/developer-guide/logging-configuration
 math: true
 ---

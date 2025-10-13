@@ -13,7 +13,6 @@ from petsard.evaluator.customer_evaluator import CustomEvaluator
 from petsard.evaluator.data_describer import DataDescriber
 from petsard.evaluator.evaluator_base import BaseEvaluator
 from petsard.evaluator.mlutility import MLUtility
-from petsard.evaluator.mlutility_v2 import MLUtility as MLUtility_v2
 from petsard.evaluator.mpuccs import MPUCCs
 from petsard.evaluator.sdmetrics import SDMetricsSingleTable
 from petsard.evaluator.stats import Stats
@@ -34,7 +33,6 @@ class EvaluatorMap(Enum):
     STATS: int = auto()
     # Utility
     MLUTILITY: int = auto()
-    MLUTILITY_V2: int = auto()
     # Describer
     DESCRIBE: int = auto()
     # Other
@@ -124,8 +122,7 @@ class Evaluator:
         EvaluatorMap.MPUCCS: MPUCCs,
         EvaluatorMap.SDMETRICS: SDMetricsSingleTable,
         EvaluatorMap.STATS: Stats,
-        EvaluatorMap.MLUTILITY: MLUtility,  # 舊版保留給 mlutility-classification 等
-        EvaluatorMap.MLUTILITY_V2: MLUtility_v2,
+        EvaluatorMap.MLUTILITY: MLUtility,
         EvaluatorMap.DESCRIBE: DataDescriber,
         EvaluatorMap.CUSTOM_METHOD: CustomEvaluator,
     }
@@ -190,10 +187,6 @@ class Evaluator:
         Returns:
             BaseEvaluator: The evaluator object.
         """
-        # 特殊處理：單獨的 'mlutility' 使用 V2 版本
-        if self.config.method.lower() == "mlutility":
-            return MLUtility_v2
-
         return self.EVALUATOR_MAP[self.config.method_code]
 
     def create(self) -> None:

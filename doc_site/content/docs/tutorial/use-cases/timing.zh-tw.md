@@ -2,7 +2,6 @@
 title: 計時
 type: docs
 weight: 36
-prev: docs/tutorial/use-cases/custom-evaluation
 next: docs/tutorial/use-cases
 ---
 

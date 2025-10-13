@@ -1,6 +1,6 @@
 ---
 title: "sample()"
-weight: 364
+weight: 3
 ---
 
 Generate synthetic data.

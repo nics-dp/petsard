@@ -1,43 +1,43 @@
 classDiagram
-    
+
     class BaseAdapter {
         <<abstract>>
         +config: dict
         +name: str
         +run()
     }
-    
+
     class LoaderAdapter {
         +loader: Loader
         +benchmarker: Benchmarker
         +run() tuple[DataFrame, Schema]
     }
-    
+
     class MetadaterAdapter {
         +metadater: SchemaMetadater
         +run() Schema
     }
-    
+
     class DperAdapter {
         +dper: Dper
         +run() DataFrame
     }
-    
+
     class SynthesizerAdapter {
         +synthesizer: Synthesizer
         +run() DataFrame
     }
-    
+
     class EvaluatorAdapter {
         +evaluator: Evaluator
         +run() dict
     }
-    
+
     class VisualizerAdapter {
         +visualizer: Visualizer
         +run() None
     }
-    
+
     class DatalabAdapter {
         +datalab: Datalab
         +run() dict

@@ -1,0 +1,35 @@
+---
+Splitter:
+  external_split:
+    method: custom_data
+    filepath:
+      ori: benchmark://adult-income_ori
+      control: benchmark://adult-income_control
+    schema:
+      ori: benchmark://adult-income_schema
+      control: benchmark://adult-income_schema
+Synthesizer:
+  external_data:
+    method: custom_data
+    filepath: benchmark://adult-income
+    schema: benchmark://adult-income_schema
+Evaluator:
+  classification_utility:
+    method: mlutility
+    task_type: classification
+    target: income                       # Target column (required)
+    experiment_design: domain_transfer   # Experiment design (default: domain_transfer)
+    resampling: None                     # Imbalance handling (default none, omit if not needed)
+    metrics:                             # Evaluation metrics
+      - mcc
+      - f1_score
+      - roc_auc
+      - accuracy
+    random_state: 42                     # Random seed (default: 42)
+    xgb_params:                          # XGBoost parameters (omit if not needed)
+      scale_pos_weight: 3                # Positive class weight ratio (default: 1)
+      max_depth: 5                       # Maximum tree depth (default: 6)
+      min_child_weight: 3                # Minimum sum of instance weight in a child (default: 1)
+      subsample: 0.8                     # Sample ratio per tree (default: 1.0)
+      colsample_bytree: 0.8              # Feature ratio per tree (default: 1.0)
+...

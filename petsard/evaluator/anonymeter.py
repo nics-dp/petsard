@@ -88,8 +88,8 @@ class AnonymeterConfig(BaseConfig):
         default_factory=lambda: ["multivariate", "univariate"]
     )
 
-    n_attacks: int = 2000
-    max_n_attacks: bool = False
+    n_attacks: int = None  # Default to None for linkability/inference (will use control dataset size)
+    max_n_attacks: bool = True  # Default to True for linkability/inference
     max_attempts: int = 500000
     n_cols: int = 3
     mode: str = "multivariate"
@@ -112,10 +112,31 @@ class AnonymeterConfig(BaseConfig):
             self._logger.error(error_msg)
             raise UnsupportedMethodError(error_msg) from e
 
-        if self.n_attacks <= 0:
-            error_msg = "The number of attacks must be greater than 0."
-            self._logger.error(error_msg)
-            raise ConfigError(error_msg)
+        # For SinglingOut, n_attacks must be specified and > 0
+        # For Linkability/Inference with max_n_attacks=True, n_attacks can be None
+        if self.eval_method_code == AnonymeterMap.SINGLINGOUT:
+            if self.n_attacks is None:
+                # Set default for SinglingOut
+                self.n_attacks = 2000
+                self._logger.info(
+                    "n_attacks not specified for SinglingOut, using default: 2000"
+                )
+            elif self.n_attacks <= 0:
+                error_msg = (
+                    "The number of attacks must be greater than 0 for SinglingOut."
+                )
+                self._logger.error(error_msg)
+                raise ConfigError(error_msg)
+        elif self.eval_method_code in [
+            AnonymeterMap.LINKABILITY,
+            AnonymeterMap.INFERENCE,
+        ]:
+            if not self.max_n_attacks and (
+                self.n_attacks is None or self.n_attacks <= 0
+            ):
+                error_msg = "When max_n_attacks is False, n_attacks must be specified and greater than 0."
+                self._logger.error(error_msg)
+                raise ConfigError(error_msg)
 
         if self.n_jobs == 0 or self.n_jobs < -2:
             error_msg = "The number of jobs must be -2, -1, or greater than 0."
@@ -234,19 +255,32 @@ class AnonymeterConfig(BaseConfig):
             AnonymeterMap.LINKABILITY,
             AnonymeterMap.INFERENCE,
         ]:
-            if self.max_n_attacks:
-                ori_n_attacks: int = self.n_attacks
-                self.max_n_attacks = self.control[0]
-                self._logger.info(
-                    f"Adjusted 'n_attacks' from {ori_n_attacks} to {self.n_attacks} "
-                    "due to 'max_n_attacks'"
-                )
-
+            # For Inference, set aux_cols if not specified BEFORE handling missing values
             if self.eval_method_code == AnonymeterMap.INFERENCE:
                 if self.aux_cols is None:
                     self.aux_cols = [
                         col for col in self.ori.columns if col != self.secret
                     ]
+                    self._logger.debug(
+                        f"aux_cols not specified for Inference, using all columns except secret '{self.secret}': {self.aux_cols}"
+                    )
+
+            # Now handle missing values after aux_cols is set
+            self._handle_missing_values()
+
+            if self.max_n_attacks:
+                ori_n_attacks: int = self.n_attacks
+                self.n_attacks = self.control.shape[
+                    0
+                ]  # Fix: should update n_attacks, not max_n_attacks
+                self._logger.debug(
+                    f"max_n_attacks is True: Ignoring configured n_attacks={ori_n_attacks}, "
+                    f"using control dataset size={self.n_attacks} instead"
+                )
+                self._logger.info(
+                    f"Adjusted 'n_attacks' from {ori_n_attacks} to {self.n_attacks} "
+                    "due to 'max_n_attacks' setting"
+                )
 
             all_aux_cols: list[str] = (
                 self.aux_cols[0] + self.aux_cols[1]
@@ -266,6 +300,82 @@ class AnonymeterConfig(BaseConfig):
                     error_msg = f"The secret attribute(s) '{self.secret}' must exist in the original data."
                     self._logger.error(error_msg)
                     raise ConfigError(error_msg)
+
+    def _handle_missing_values(self) -> None:
+        """
+        Handle missing values in the data for Linkability and Inference attacks.
+        Categorical columns: fill with "missing"
+        Numerical columns: convert to float and fill with -999999
+        """
+        # Determine which columns to check based on the method
+        cols_to_check = set()
+
+        if self.eval_method_code == AnonymeterMap.LINKABILITY:
+            if self.aux_cols:
+                cols_to_check.update(self.aux_cols[0])
+                cols_to_check.update(self.aux_cols[1])
+        elif self.eval_method_code == AnonymeterMap.INFERENCE:
+            if self.aux_cols:
+                cols_to_check.update(self.aux_cols)
+            if self.secret:
+                cols_to_check.add(self.secret)
+
+        # Process each dataset
+        for df_name, df in [
+            ("ori", self.ori),
+            ("syn", self.syn),
+            ("control", self.control),
+        ]:
+            if df is None:
+                continue
+
+            for col in cols_to_check:
+                if col not in df.columns:
+                    continue
+
+                # Check if column has missing values or needs type conversion
+                has_na = df[col].isna().any()
+
+                # Try to determine if column should be numeric
+                # Check non-NA values to determine the intended type
+                non_na_values = df[col].dropna()
+
+                if len(non_na_values) > 0:
+                    # Try to convert to numeric if possible
+                    try:
+                        # Attempt to convert non-NA values to float
+                        pd.to_numeric(non_na_values, errors="raise")
+                        is_numeric = True
+                    except (ValueError, TypeError):
+                        is_numeric = False
+                else:
+                    # If all values are NA, check original dtype
+                    is_numeric = pd.api.types.is_numeric_dtype(df[col])
+
+                if is_numeric:
+                    # Numeric column: convert to float and fill with -999999
+                    original_dtype = df[col].dtype
+                    df[col] = pd.to_numeric(df[col], errors="coerce").astype("float64")
+                    na_count = df[col].isna().sum()
+
+                    if na_count > 0:
+                        df[col] = df[col].fillna(-999999)
+                        self._logger.debug(
+                            f"Converted column '{col}' in {df_name} from {original_dtype} to float64 "
+                            f"and filled {na_count} missing values with -999999"
+                        )
+                    else:
+                        self._logger.debug(
+                            f"Converted column '{col}' in {df_name} from {original_dtype} to float64"
+                        )
+                elif has_na:
+                    # Categorical column with missing values: fill with "missing"
+                    na_count = df[col].isna().sum()
+                    df[col] = df[col].fillna("missing")
+                    self._logger.debug(
+                        f"Filled {na_count} missing values in categorical column '{col}' "
+                        f"of {df_name} dataset with 'missing'"
+                    )
 
 
 class Anonymeter(BaseEvaluator):
