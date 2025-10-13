@@ -1,6 +1,6 @@
 ---
 title: "eval()"
-weight: 342
+weight: 2
 ---
 
 執行資料評測並返回評測結果。
