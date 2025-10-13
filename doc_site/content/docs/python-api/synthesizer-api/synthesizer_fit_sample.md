@@ -1,6 +1,6 @@
 ---
 title: "fit_sample()"
-weight: 365
+weight: 4
 ---
 
 Perform training and generation in sequence.

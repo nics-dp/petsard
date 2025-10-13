@@ -1,6 +1,6 @@
 ---
 title: "fit_sample()"
-weight: 365
+weight: 4
 ---
 
 依序執行訓練和生成。

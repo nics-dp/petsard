@@ -1,6 +1,6 @@
 ---
 title: "fit()"
-weight: 363
+weight: 2
 ---
 
 Train the synthesis model.

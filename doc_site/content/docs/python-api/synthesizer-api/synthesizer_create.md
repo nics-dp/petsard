@@ -1,6 +1,6 @@
 ---
 title: "create()"
-weight: 362
+weight: 1
 ---
 
 Create and initialize the synthesizer.

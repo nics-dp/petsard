@@ -1,6 +1,6 @@
 ---
 title: "create()"
-weight: 341
+weight: 1
 ---
 
 初始化評測器實例並準備進行評測。
