@@ -52,22 +52,25 @@ class MPUCCs(BaseEvaluator):
         Args:
             config (dict): Configuration dictionary containing:
                 - eval_method (str): Evaluation method identifier
-                - n_cols (int|list|None): Target combination sizes to evaluate
+                - max_baseline_cols (int|None): Maximum number of columns for evaluation and baseline (default: None = all)
                 - min_entropy_delta (float): Minimum entropy gain threshold for pruning
                 - field_decay_factor (float): Decay factor for field combination weighting
                 - renyi_alpha (float): Alpha parameter for Rényi entropy calculation
                 - numeric_precision (int|None): Precision for numeric field comparison
                 - datetime_precision (str|None): Precision for datetime field comparison
+                - calculate_baseline (bool): Whether to calculate baseline protection metrics
         """
         super().__init__(config)
 
-        # Set default configuration values
-        self.config.setdefault("n_cols", None)
+        # Set default configuration values (max_baseline_cols first)
+        # 設定預設配置值（max_baseline_cols 優先）
+        self.config.setdefault("max_baseline_cols", None)  # None = all columns
         self.config.setdefault("min_entropy_delta", self.DEFAULT_MIN_ENTROPY_DELTA)
         self.config.setdefault("field_decay_factor", self.DEFAULT_FIELD_DECAY_FACTOR)
         self.config.setdefault("renyi_alpha", self.DEFAULT_RENYI_ALPHA)
         self.config.setdefault("numeric_precision", None)
         self.config.setdefault("datetime_precision", None)
+        self.config.setdefault("calculate_baseline", True)
 
     def _detect_numeric_precision(self, data: pd.DataFrame) -> int:
         """
@@ -274,6 +277,113 @@ class MPUCCs(BaseEvaluator):
                 data_copy[col] = data_copy[col].dt.floor(normalized_precision)
 
         return data_copy
+
+    def _calculate_attribute_cardinalities(self, data: pd.DataFrame) -> dict[str, int]:
+        """
+        Calculate unique value counts for each attribute
+        計算每個屬性的唯一值數量
+
+        Args:
+            data: DataFrame to analyze
+
+        Returns:
+            dict: Attribute name to cardinality mapping
+        """
+        cardinalities = {}
+
+        for col in data.columns:
+            # Consider precision for numeric types 考慮數值型態的精度
+            if self.config.get("numeric_precision") and pd.api.types.is_numeric_dtype(
+                data[col]
+            ):
+                if not pd.api.types.is_integer_dtype(data[col]):
+                    processed_col = data[col].round(self.config["numeric_precision"])
+                    cardinalities[col] = processed_col.nunique()
+                else:
+                    cardinalities[col] = data[col].nunique()
+            # Consider precision for datetime types 考慮日期時間型態的精度
+            elif self.config.get(
+                "datetime_precision"
+            ) and pd.api.types.is_datetime64_any_dtype(data[col]):
+                normalized_precision = self._normalize_datetime_precision(
+                    self.config["datetime_precision"]
+                )
+                processed_col = data[col].dt.floor(normalized_precision)
+                cardinalities[col] = processed_col.nunique()
+            else:
+                cardinalities[col] = data[col].nunique()
+
+        return cardinalities
+
+    def _calculate_baseline_success_rate(
+        self, combo: tuple[str, ...], cardinalities: dict[str, int]
+    ) -> float:
+        """
+        Calculate baseline success rate for a specific attribute combination
+        計算特定屬性組合的基線成功率
+
+        Args:
+            combo: Attribute combination (e.g., ('gender', 'age_group'))
+            cardinalities: Attribute cardinality dictionary
+
+        Returns:
+            float: Baseline success rate (between 0 and 1)
+        """
+        # Calculate theoretical maximum combinations 計算理論最大組合數
+        max_combinations = 1
+        for attr in combo:
+            max_combinations *= cardinalities.get(attr, 1)
+
+        # Baseline success rate = 1 / max possible combinations
+        # 基線成功率 = 1 / 最大可能組合數
+        baseline_success_rate = 1.0 / max_combinations if max_combinations > 0 else 0.0
+
+        return baseline_success_rate
+
+    def _calculate_baseline_protection(
+        self, combo: tuple[str, ...], cardinalities: dict[str, int]
+    ) -> float:
+        """
+        Calculate baseline protection rate
+        計算基線保護率
+
+        Args:
+            combo: Attribute combination
+            cardinalities: Attribute cardinality dictionary
+
+        Returns:
+            float: Baseline protection rate (between 0 and 1)
+        """
+        baseline_success_rate = self._calculate_baseline_success_rate(
+            combo, cardinalities
+        )
+        baseline_protection = 1.0 - baseline_success_rate
+
+        return baseline_protection
+
+    def _calculate_overall_protection(
+        self, main_protection: float, baseline_protection: float
+    ) -> float:
+        """
+        Calculate overall protection according to SAFE framework
+        根據 SAFE 框架計算整體保護
+
+        Args:
+            main_protection: Main protection rate (1 - identification_rate)
+            baseline_protection: Baseline protection rate
+
+        Returns:
+            float: Overall protection rate
+        """
+        if baseline_protection == 0:
+            # Avoid division by zero 避免除以零
+            return 0.0
+
+        # According to paper formula: min(main/baseline, 1)
+        # 根據論文公式：min(主要保護/基線保護, 1)
+        overall_protection = min(main_protection / baseline_protection, 1.0)
+
+        return overall_protection
 
     def _get_sorted_columns_by_cardinality(self, data: pd.DataFrame) -> list[str]:
         """Get columns sorted by cardinality in descending order"""
@@ -505,20 +615,25 @@ class MPUCCs(BaseEvaluator):
         # Pruned combination set - pruned combinations will not be considered again
         pruned_combinations = set()
 
-        columns_num = len(sorted_columns)
-        n_cols = self.config.get("n_cols", None)
+        # Calculate cardinalities for baseline protection 計算基線保護的基數
+        ori_cardinalities = {}
+        if self.config.get("calculate_baseline", True):
+            ori_cardinalities = self._calculate_attribute_cardinalities(ori_data)
 
-        # Determine combination sizes to process
-        if n_cols is None:
+        columns_num = len(sorted_columns)
+        max_cols = self.config.get("max_baseline_cols", None)
+
+        # Determine combination sizes to process based on max_baseline_cols
+        # 根據 max_baseline_cols 決定要處理的組合大小
+        if max_cols is None:
+            # Process all possible combination sizes
+            # 處理所有可能的組合大小
             target_sizes = set(range(self.MIN_COMBO_SIZE, columns_num + 1))
-        elif isinstance(n_cols, int):
-            target_sizes = {n_cols} if n_cols <= columns_num else set()
-        elif isinstance(n_cols, list):
-            target_sizes = {size for size in n_cols if size <= columns_num}
         else:
-            raise ValueError(
-                f"Invalid n_cols configuration: {n_cols}. Should be None, int or list[int]."
-            )
+            # Process combinations up to max_cols
+            # 處理到 max_cols 的組合
+            max_cols = min(max_cols, columns_num)  # Limit to actual column count
+            target_sizes = set(range(self.MIN_COMBO_SIZE, max_cols + 1))
 
         # max_target_size should be the maximum value in target_sizes
         max_target_size = max(target_sizes) if target_sizes else columns_num
@@ -618,21 +733,17 @@ class MPUCCs(BaseEvaluator):
                         "field_decay_factor", self.DEFAULT_FIELD_DECAY_FACTOR
                     ) ** (combo_size - 1)
 
+                # Simplified tree record for pruned combinations
+                # 簡化的樹狀記錄（已修剪的組合）
                 tree_record = {
-                    "check_order": len(tree_results) + 1,  # Which check number
-                    "combo_size": combo_size,  # How many fields used
-                    "field_combo": str(combo),  # Field combination
-                    "base_combo": str(base_combo),  # Base field combination
-                    "base_is_pruned": True,  # Base combination is pruned
-                    "combo_entropy": None,  # Don't calculate combination entropy
-                    "base_entropy": None,  # Don't show base entropy
-                    "entropy_gain": None,  # Don't calculate entropy gain
-                    "is_pruned": True,  # Is pruned
-                    "mpuccs_cnt": 0,  # Number of mpUCCs in syn
-                    "mpuccs_collision_cnt": 0,  # How many mpUCCs collisions found
-                    "field_weighted": field_weighted,  # Field weighting
-                    "total_weighted": field_weighted,  # Total weighting = field_weighted
-                    "weighted_mpuccs_collision_cnt": 0.0,  # Weighted mpUCCs collision
+                    "check_order": len(tree_results) + 1,  # Check sequence 檢查順序
+                    "field_combo": str(combo),  # Field combination 欄位組合
+                    "combo_size": combo_size,  # Number of fields 欄位數量
+                    "is_pruned": True,  # Pruning status 修剪狀態
+                    "mpuccs_cnt": 0,  # Unique combinations in syn 合成資料中的唯一組合
+                    "mpuccs_collision_cnt": 0,  # Identified records 識別記錄數
+                    # Technical details 技術細節
+                    "entropy_gain": None,  # No entropy calculation 無熵計算
                 }
                 pruned_combinations.add(combo)
                 tree_results.append(tree_record)
@@ -654,28 +765,35 @@ class MPUCCs(BaseEvaluator):
             # total_weighted now only equals field_weighted
             total_weighted = field_weighted
 
+            # Initialize tree record with simplified structure
+            # 初始化簡化結構的樹狀記錄
             tree_record = {
-                "check_order": len(tree_results) + 1,  # Which check number
-                "combo_size": combo_size,  # How many fields used
-                "field_combo": str(combo),  # Field combination
-                "base_combo": str(base_combo)
-                if base_combo_valid
-                else None,  # Base field combination
-                "base_is_pruned": base_is_pruned,  # Whether base combination is pruned
-                "combo_entropy": combo_entropy,  # Field combination entropy
+                "check_order": len(tree_results) + 1,  # Check sequence 檢查順序
+                "field_combo": str(combo),  # Field combination 欄位組合
+                "combo_size": combo_size,  # Number of fields 欄位數量
+                "is_pruned": False,  # Pruning status (default) 修剪狀態（預設）
+                "mpuccs_cnt": 0,  # To be calculated 待計算
+                "mpuccs_collision_cnt": 0,  # To be calculated 待計算
+            }
+
+            # Store technical details for later use 儲存技術細節供後續使用
+            technical_details = {
+                "combo_entropy": combo_entropy,
                 "base_entropy": all_combinations.get(base_combo, 0.0)
                 if base_combo_valid
-                else None,  # Base field combination entropy
-                "entropy_gain": None,  # Entropy gain (calculated later)
-                "is_pruned": None
-                if not base_combo_valid
-                else False,  # Whether pruned (not applicable when no base_combo)
-                "mpuccs_cnt": 0,  # Number of mpUCCs in syn (calculated later)
-                "mpuccs_collision_cnt": 0,  # How many mpUCCs collisions found
-                "field_weighted": field_weighted,  # Field weighting
-                "total_weighted": total_weighted,  # Total weighting = field_weighted
-                "weighted_mpuccs_collision_cnt": 0.0,  # Weighted mpUCCs collision (calculated later)
+                else None,
+                "field_weighted": field_weighted,
+                "weighted_mpuccs_collision_cnt": 0.0,
             }
+
+            # Calculate baseline protection for this combination 計算此組合的基線保護
+            if self.config.get("calculate_baseline", True):
+                baseline_success_rate = self._calculate_baseline_success_rate(
+                    combo, ori_cardinalities
+                )
+                baseline_protection = 1.0 - baseline_success_rate
+                # Store baseline protection prominently 顯著儲存基線保護
+                tree_record["baseline_protection"] = baseline_protection
 
             # Conditional entropy check (only when there's valid and unpruned base combination)
             should_check_entropy = len(combo) in target_sizes and (
@@ -691,6 +809,7 @@ class MPUCCs(BaseEvaluator):
                     identified_indices,
                     all_combinations,
                 )
+                # Store entropy gain in tree record
                 tree_record["entropy_gain"] = entropy_gain
 
                 # If no entropy gain, prune this combination and all its supersets
@@ -704,10 +823,9 @@ class MPUCCs(BaseEvaluator):
                     tree_record["is_pruned"] = True
                     tree_results.append(tree_record)
                     continue
-            elif should_check_entropy and (not base_combo_valid or base_is_pruned):
-                # When no valid base combination or base combination is pruned, don't check entropy gain
+            else:
+                # No entropy check needed 不需要熵檢查
                 tree_record["entropy_gain"] = None
-                tree_record["is_pruned"] = None
 
             # Detect unique combinations
             unique_combinations = self._detect_unique_combinations_with_cnter(
@@ -743,28 +861,71 @@ class MPUCCs(BaseEvaluator):
                     ):
                         maximal_combinations[syn_idx] = combo
 
+                        # Simplified and reordered details record
+                        # 簡化並重新排序的詳細記錄
                         details_results.append(
                             {
-                                "combo_size": len(combo),
-                                "syn_idx": syn_idx,
-                                "field_combo": str(combo),
+                                "syn_idx": syn_idx,  # Synthetic data index 合成資料索引
+                                "ori_idx": ori_idx,  # Original data index 原始資料索引
+                                "combo_size": len(combo),  # Combination size 組合大小
+                                "field_combo": str(combo),  # Field combination 欄位組合
                                 "value_combo": str(
                                     value_combo
                                     if isinstance(value_combo, tuple)
                                     else (value_combo,)
-                                ),
-                                "ori_idx": ori_idx,
+                                ),  # Actual values 實際值
                             }
                         )
 
                         identified_indices.add(syn_idx)
                         unique_match_count += 1
 
-            # Record found mpuccs_collision_cnt count and weighted values
+            # Record found mpuccs_collision_cnt count
             tree_record["mpuccs_collision_cnt"] = unique_match_count
-            tree_record["weighted_mpuccs_collision_cnt"] = (
-                unique_match_count * tree_record["total_weighted"]
+
+            # Update technical details for weighted calculation
+            technical_details["weighted_mpuccs_collision_cnt"] = (
+                unique_match_count * technical_details["field_weighted"]
             )
+
+            # Calculate combination-level overall protection if baseline is enabled
+            # 如果啟用基線，計算組合層級的整體保護
+            if (
+                self.config.get("calculate_baseline", True)
+                and tree_record["mpuccs_cnt"] > 0
+            ):
+                if unique_match_count > 0:
+                    combo_identification_rate = (
+                        unique_match_count / tree_record["mpuccs_cnt"]
+                    )
+                    combo_main_protection = 1.0 - combo_identification_rate
+                    combo_overall_protection = self._calculate_overall_protection(
+                        combo_main_protection,
+                        tree_record.get("baseline_protection", 1.0),
+                    )
+                else:
+                    combo_overall_protection = (
+                        1.0  # Perfect protection if no collisions
+                    )
+
+                # Place overall protection prominently 顯著放置整體保護
+                tree_record["overall_protection"] = combo_overall_protection
+
+            # Add technical details at the end 在最後添加技術細節
+            if (
+                self.config.get("min_entropy_delta", 0) > 0
+                or self.config.get("field_decay_factor", 0.5) != 0.5
+            ):
+                # Only include technical details if non-default settings
+                # 只在非預設設定時包含技術細節
+                tree_record["entropy"] = technical_details["combo_entropy"]
+                if tree_record.get("entropy_gain") is not None:
+                    tree_record["entropy_gain"] = tree_record.get("entropy_gain")
+                tree_record["field_weight"] = technical_details["field_weighted"]
+                tree_record["weighted_collision"] = technical_details[
+                    "weighted_mpuccs_collision_cnt"
+                ]
+
             tree_results.append(tree_record)
 
             # Only add combinations in target sizes to valid set
@@ -857,48 +1018,177 @@ class MPUCCs(BaseEvaluator):
             total_identified / total_syn_records if total_syn_records > 0 else 0.0
         )
 
-        # Calculate weighted identification rate
-        total_weighted_identified = sum(
-            result["weighted_mpuccs_collision_cnt"] for result in tree_results
-        )
+        # Calculate weighted identification rate if using field decay
+        # 如果使用欄位衰減，計算加權識別率
+        if self.config.get("field_decay_factor", 0.5) != 0.5:
+            # Only calculate if non-default decay factor
+            total_weighted_identified = 0
+            for result in tree_results:
+                # Recalculate from stored values if needed
+                if "weighted_collision" in result:
+                    total_weighted_identified += result["weighted_collision"]
+                elif "field_weight" in result:
+                    total_weighted_identified += (
+                        result["mpuccs_collision_cnt"] * result["field_weight"]
+                    )
+                else:
+                    # Fallback: use unweighted count
+                    total_weighted_identified += result["mpuccs_collision_cnt"]
+        else:
+            # Use unweighted count when decay factor is default
+            total_weighted_identified = sum(
+                result["mpuccs_collision_cnt"] for result in tree_results
+            )
         weighted_identification_rate = (
             total_weighted_identified / total_syn_records
             if total_syn_records > 0
             else 0.0
         )
 
+        # Calculate main protection 計算主要保護
+        main_protection = 1.0 - identification_rate
+        weighted_main_protection = 1.0 - weighted_identification_rate
+
+        # Initialize protection metrics 初始化保護指標
+        overall_baseline_protection = None
+        overall_protection = None
+        weighted_overall_protection = None
+        privacy_risk_score = identification_rate  # Default to identification rate
+        weighted_privacy_risk_score = weighted_identification_rate
+        baseline_protections = {}
+
+        if self.config.get("calculate_baseline", True):
+            # Calculate overall baseline protection (using all columns)
+            # 計算整體基線保護（使用所有欄位）
+            ori_cardinalities = self._calculate_attribute_cardinalities(ori_data)
+
+            # Calculate baseline for different column combination sizes
+            # Use the same max_baseline_cols that was used for evaluation
+            # 計算不同欄位組合大小的基線，使用與評估相同的 max_baseline_cols
+            max_cols = self.config.get("max_baseline_cols")
+
+            if max_cols is None:
+                # Calculate baseline for all evaluated sizes
+                # 計算所有評估大小的基線
+                max_cols = len(sorted_columns)
+            else:
+                # Use the same limit as evaluation
+                # 使用與評估相同的限制
+                max_cols = min(max_cols, len(sorted_columns))
+
+            # Calculate baseline for each evaluated size (1 to max_cols)
+            # 計算每個評估大小的基線（1 到 max_cols）
+            for n_cols in range(1, max_cols + 1):
+                # Use average baseline for this number of columns
+                # 使用此欄位數的平均基線
+                size_combinations = [
+                    combo for combo in tree_results if combo.get("combo_size") == n_cols
+                ]
+                if size_combinations:
+                    avg_baseline = np.mean(
+                        [
+                            combo.get("baseline_protection", 0)
+                            for combo in size_combinations
+                        ]
+                    )
+                    baseline_protections[f"baseline_protection_cols_{n_cols}"] = (
+                        avg_baseline
+                    )
+
+            # Overall baseline using all columns
+            # 使用所有欄位的整體基線
+            all_columns_combo = tuple(sorted_columns)
+            overall_baseline_protection = self._calculate_baseline_protection(
+                all_columns_combo, ori_cardinalities
+            )
+
+            # Calculate overall protection 計算整體保護
+            overall_protection = self._calculate_overall_protection(
+                main_protection, overall_baseline_protection
+            )
+            weighted_overall_protection = self._calculate_overall_protection(
+                weighted_main_protection, overall_baseline_protection
+            )
+
+            # Privacy risk score (inverted from protection) 隱私風險分數（保護的反向）
+            privacy_risk_score = 1.0 - overall_protection
+            weighted_privacy_risk_score = 1.0 - weighted_overall_protection
+
+        # Build global results dictionary - Simplified Plan B with risk score first
+        # 構建全域結果字典 - 簡化方案 B，風險分數優先
+        global_dict = {}
+
+        # Add baseline-related metrics if calculated
+        if self.config.get("calculate_baseline", True):
+            # Privacy risk score FIRST (most important) 隱私風險分數優先（最重要）
+            global_dict["privacy_risk_score"] = privacy_risk_score
+
+            # Three-layer protection (SAFE framework) 三層保護（SAFE框架）
+            global_dict["overall_protection"] = overall_protection
+            global_dict["main_protection"] = main_protection
+            global_dict["baseline_protection"] = overall_baseline_protection
+
+            # Basic statistics 基本統計
+            global_dict["identification_rate"] = identification_rate
+            global_dict["total_identified"] = total_identified
+            global_dict["total_syn_records"] = total_syn_records
+        else:
+            # If baseline not calculated, show identification rate as risk
+            # 如果未計算基線，顯示識別率作為風險
+            global_dict["identification_rate"] = identification_rate
+            global_dict["main_protection"] = main_protection
+            global_dict["total_identified"] = total_identified
+            global_dict["total_syn_records"] = total_syn_records
+
         # Global results
-        global_results = pd.DataFrame(
-            [
-                {
-                    "total_syn_records": total_syn_records,
-                    "total_ori_records": len(ori_data),
-                    "total_identified": total_identified,
-                    "identification_rate": identification_rate,
-                    "weighted_identification_rate": weighted_identification_rate,
-                    "total_combinations_checked": len(tree_results),
-                    "total_combinations_pruned": sum(
-                        1 for r in tree_results if r.get("is_pruned", False)
-                    ),
-                    "config_n_cols": str(self.config.get("n_cols", "None")),
-                    "config_min_entropy_delta": self.config.get(
-                        "min_entropy_delta", self.DEFAULT_MIN_ENTROPY_DELTA
-                    ),
-                    "config_field_decay_factor": self.config.get(
-                        "field_decay_factor", self.DEFAULT_FIELD_DECAY_FACTOR
-                    ),
-                    "config_renyi_alpha": self.config.get(
-                        "renyi_alpha", self.DEFAULT_RENYI_ALPHA
-                    ),
-                    "config_numeric_precision": self.config.get(
-                        "numeric_precision", "None"
-                    ),
-                    "config_datetime_precision": self.config.get(
-                        "datetime_precision", "None"
-                    ),
-                }
-            ]
-        )
+        global_results = pd.DataFrame([global_dict])
+
+        # Process and enhance details results 處理並增強詳細結果
+        if details_results:
+            if self.config.get("calculate_baseline", True):
+                ori_cardinalities = self._calculate_attribute_cardinalities(ori_data)
+
+            for detail in details_results:
+                # Parse field combo from string to tuple
+                combo_str = detail["field_combo"]
+                # Remove parentheses and split by comma
+                combo = tuple(combo_str.strip("()").replace("'", "").split(", "))
+
+                if self.config.get("calculate_baseline", True):
+                    # Calculate baseline protection for this combination
+                    baseline_protection = self._calculate_baseline_protection(
+                        combo, ori_cardinalities
+                    )
+                    detail["baseline_protection"] = baseline_protection
+
+                    # Classify risk level 分類風險等級
+                    if baseline_protection > 0 and len(details_results) > 0:
+                        # Use identification rate for this specific combination
+                        protection_ratio = (
+                            1.0 - (1.0 / len(details_results))
+                        ) / baseline_protection
+                        if protection_ratio < 0.3:
+                            risk_level = "high"
+                        elif protection_ratio < 0.7:
+                            risk_level = "medium"
+                        else:
+                            risk_level = "low"
+                    else:
+                        risk_level = "high"
+                else:
+                    # Without baseline, use simple thresholds
+                    if detail["combo_size"] <= 2:
+                        risk_level = "high"
+                    elif detail["combo_size"] <= 4:
+                        risk_level = "medium"
+                    else:
+                        risk_level = "low"
+
+                # Insert risk_level at the beginning 將風險等級插入開頭
+                reordered_detail = {"risk_level": risk_level}
+                reordered_detail.update(detail)
+                detail.clear()
+                detail.update(reordered_detail)
 
         # Details results
         details_df = (
