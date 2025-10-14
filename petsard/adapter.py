@@ -1133,6 +1133,7 @@ class EvaluatorAdapter(BaseAdapter):
     def set_input(self, status) -> dict:
         """
         Sets the input for the EvaluatorAdapter.
+        Evaluator 使用固定的資料源邏輯：ori, syn, control
 
         Args:
             status (Status): The current status object.
@@ -1141,17 +1142,23 @@ class EvaluatorAdapter(BaseAdapter):
             dict:
                 Evaluator input should contains data (dict) and optional schema.
         """
+        # Evaluator 總是使用固定的資料源邏輯
+        # ori 資料源
         if "Splitter" in status.status:
-            self.input["data"] = {
-                "ori": status.get_result("Splitter")["train"],
-                "syn": status.get_result(status.get_pre_module("Evaluator")),
-                "control": status.get_result("Splitter")["validation"],
-            }
-        else:  # Loader only
-            self.input["data"] = {
-                "ori": status.get_result("Loader"),
-                "syn": status.get_result(status.get_pre_module("Evaluator")),
-            }
+            self.input["data"] = {"ori": status.get_result("Splitter")["train"]}
+        else:
+            self.input["data"] = {"ori": status.get_result("Loader")}
+
+        # syn 資料源
+        self.input["data"]["syn"] = status.get_result(
+            status.get_pre_module("Evaluator")
+        )
+
+        # control 資料源（如果有 Splitter）
+        if "Splitter" in status.status:
+            splitter_result = status.get_result("Splitter")
+            if "validation" in splitter_result:
+                self.input["data"]["control"] = splitter_result["validation"]
 
         # Try to get schema for data alignment
         # Priority: Loader > Splitter > Preprocessor
@@ -1193,21 +1200,141 @@ class DescriberAdapter(BaseAdapter):
         using the configured Describer instance as a decorator.
     """
 
-    INPUT_PRIORITY: list[str] = [
-        "Postprocessor",
-        "Synthesizer",
-        "Preprocessor",
-        "Splitter",
-        "Loader",
-    ]
-
     def __init__(self, config: dict):
         """
         Attributes:
             describer (Describer):
                 An instance of the Describer class initialized with the provided configuration.
+            source: Data source specification (required)
         """
         super().__init__(config)
+
+        # 取得 source 參數（必要參數）
+        self.source = config.pop("source", None)
+        if self.source is None:
+            error_msg = "source parameter is required for Describer"
+            self._logger.error(error_msg)
+            raise ConfigError(error_msg)
+
+        # 處理 source 參數格式
+        if isinstance(self.source, str):
+            # 單一字串轉為列表
+            self.source = [self.source]
+        elif isinstance(self.source, dict):
+            # 字典格式（用於明確指定比較對象）
+            # 例如：{"base": "Splitter.train", "target": "Synthesizer"}
+            # 或向後相容：{"ori": "Splitter.train", "syn": "Synthesizer"}
+            self._logger.info(f"Using explicit source mapping: {self.source}")
+        elif isinstance(self.source, list):
+            # 列表格式轉換為字典格式
+            if len(self.source) == 2:
+                # 對於 compare 模式，將列表轉換為字典
+                self.source = {"base": self.source[0], "target": self.source[1]}
+                self._logger.info(f"Converted list format to dict: {self.source}")
+            elif len(self.source) == 1:
+                # 對於 describe 模式，保持為單一元素列表
+                pass
+            else:
+                error_msg = (
+                    f"source list must have 1 or 2 elements, got {len(self.source)}"
+                )
+                self._logger.error(error_msg)
+                raise ConfigError(error_msg)
+        else:
+            error_msg = (
+                f"source must be a string, list, or dict, got {type(self.source)}"
+            )
+            self._logger.error(error_msg)
+            raise ConfigError(error_msg)
+
+        # 處理 method 參數 (default, describe, compare)
+        method = config.get("method", "default")
+
+        # 根據 method 決定 mode
+        if method == "default":
+            # default: 根據 source 數量自動決定
+            source_count = (
+                len(self.source)
+                if isinstance(self.source, list)
+                else len(self.source.keys())
+                if isinstance(self.source, dict)
+                else 1
+            )
+
+            if source_count == 1:
+                config["mode"] = "describe"
+                config["method"] = "describe"  # 設定實際的 method
+                self._logger.info(
+                    f"Default method resolved to: describe (1 source: {self.source})"
+                )
+            elif source_count == 2:
+                config["mode"] = "compare"
+                config["method"] = "describe"  # Describer 內部仍使用 describe
+                self._logger.info(
+                    f"Default method resolved to: compare (2 sources: {self.source})"
+                )
+            else:
+                error_msg = f"Invalid number of sources for default method: {source_count}. Expected 1 for describe or 2 for compare"
+                self._logger.error(error_msg)
+                raise ConfigError(error_msg)
+        elif method == "describe":
+            # describe: 單一資料集描述
+            config["mode"] = "describe"
+            source_count = (
+                len(self.source)
+                if isinstance(self.source, list)
+                else len(self.source.keys())
+                if isinstance(self.source, dict)
+                else 1
+            )
+
+            if source_count != 1:
+                self._logger.warning(
+                    f"describe method expects 1 source, got {source_count}. Using first source only."
+                )
+                if isinstance(self.source, list):
+                    self.source = [self.source[0]]
+                elif isinstance(self.source, dict):
+                    first_key = next(iter(self.source.keys()))
+                    self.source = {first_key: self.source[first_key]}
+        elif method == "compare":
+            # compare: 資料集比較
+            config["mode"] = "compare"
+            config["method"] = "describe"  # Describer 內部使用 describe
+            source_count = (
+                len(self.source)
+                if isinstance(self.source, list)
+                else len(self.source.keys())
+                if isinstance(self.source, dict)
+                else 1
+            )
+
+            if source_count != 2:
+                error_msg = (
+                    f"compare method requires exactly 2 sources, got {source_count}"
+                )
+                self._logger.error(error_msg)
+                raise ConfigError(error_msg)
+        else:
+            # 其他 method 值保持原樣傳遞
+            # 根據 source 數量決定 mode
+            source_count = (
+                len(self.source)
+                if isinstance(self.source, list)
+                else len(self.source.keys())
+                if isinstance(self.source, dict)
+                else 1
+            )
+
+            if source_count == 1:
+                config["mode"] = "describe"
+            elif source_count == 2:
+                config["mode"] = "compare"
+            else:
+                error_msg = f"Invalid number of sources: {source_count}"
+                self._logger.error(error_msg)
+                raise ConfigError(error_msg)
+
         self.describer = Describer(**config)
         self.description: dict[str, pd.DataFrame] = None
 
@@ -1216,15 +1343,47 @@ class DescriberAdapter(BaseAdapter):
         Executes the data describing using the Describer instance.
 
         Args:
-            input (dict): Describer input should contains data (dict).
+            input (dict): Describer input should contains data (dict) and optional metadata.
 
         Attributes:
             describer.result (dict): An describing result data.
         """
         self._logger.debug("Starting data describing process")
 
+        # 如果有 metadata，使用它來對齊資料類型
+        metadata = None
+        if "metadata" in input and input["metadata"]:
+            self._logger.debug("Metadata found, aligning data types")
+            metadata = input["metadata"]
+
+            # 對每個資料集進行類型對齊
+            aligned_data = {}
+            for key, df in input["data"].items():
+                if df is not None and not df.empty:
+                    self._logger.debug(f"Aligning data type for '{key}' data")
+                    aligned_data[key] = SchemaMetadater.align(metadata, df)
+                else:
+                    aligned_data[key] = df
+            input["data"] = aligned_data
+            self._logger.debug("Data type alignment completed")
+
+            # 移除 metadata，因為 BaseEvaluator 不接受它
+            del input["metadata"]
+
         self.describer.create()
         self._logger.debug("Describing model initialization completed")
+
+        # 如果是 compare 模式且有 metadata，將它儲存在 describer 實例中
+        if self.describer.config.mode == "compare" and metadata:
+            if hasattr(self.describer._impl, "metadata"):
+                self.describer._impl.metadata = metadata
+                self._logger.debug("Metadata set on DescriberCompare instance")
+            else:
+                # 如果 _impl 還沒有 metadata 屬性，動態添加
+                self.describer._impl.metadata = metadata
+                self._logger.debug(
+                    "Metadata dynamically added to DescriberCompare instance"
+                )
 
         self.description = self.describer.eval(**input)
         self._logger.debug("Data describing completed")
@@ -1233,6 +1392,7 @@ class DescriberAdapter(BaseAdapter):
     def set_input(self, status) -> dict:
         """
         Sets the input for the DescriberAdapter.
+        根據 mode 準備不同的資料格式
 
         Args:
             status (Status): The current status object.
@@ -1240,19 +1400,144 @@ class DescriberAdapter(BaseAdapter):
         Returns:
             dict:
                 Describer input should contains data (dict).
+                - For describe mode: {"data": DataFrame}
+                - For compare mode: {"ori": DataFrame, "syn": DataFrame}
         """
 
-        self.input["data"] = None
-        for module in self.INPUT_PRIORITY:
-            if module in status.status:
-                self.input["data"] = {
-                    "data": (
-                        status.get_result("Splitter")["train"]
-                        if module == "Splitter"
-                        else status.get_result(module)
+        # 根據 Describer 的 mode 決定資料格式
+        if self.describer.config.mode == "describe":
+            # describe 模式：單一資料源
+            if len(self.source) != 1:
+                error_msg = (
+                    f"describe mode requires exactly 1 source, got {len(self.source)}"
+                )
+                self._logger.error(error_msg)
+                raise ConfigError(error_msg)
+
+            module_name = self.source[0]
+            data = status.get_data_by_module(module_name)
+            if data:
+                # 取第一個可用的資料
+                first_key = next(iter(data.keys()))
+                self.input["data"] = {"data": data[first_key]}
+                self._logger.debug(
+                    f"Using data from module: {module_name} ({first_key}) for describe mode"
+                )
+
+                # 取得 metadata
+                try:
+                    metadata = status.get_metadata(module_name)
+                    if metadata:
+                        self.input["metadata"] = metadata
+                        self._logger.debug(f"Using metadata from module: {module_name}")
+                except Exception as e:
+                    self._logger.warning(
+                        f"Could not get metadata from {module_name}: {e}"
                     )
-                }
-                break
+            else:
+                error_msg = f"No data found from source: {module_name}"
+                self._logger.error(error_msg)
+                raise ConfigError(error_msg)
+
+        elif self.describer.config.mode == "compare":
+            # compare 模式：兩個資料源
+            if len(self.source) != 2:
+                error_msg = (
+                    f"compare mode requires exactly 2 sources, got {len(self.source)}"
+                )
+                self._logger.error(error_msg)
+                raise ConfigError(error_msg)
+
+            # 取得兩個資料源
+            self.input["data"] = {}
+
+            # 只支援字典格式：{"base": "Splitter.train", "target": "Synthesizer"}
+            # 向後相容：也支援 {"ori": "Splitter.train", "syn": "Synthesizer"}
+
+            if not isinstance(self.source, dict):
+                error_msg = (
+                    f"compare mode requires source to be a dict with 'base' and 'target' keys, "
+                    f"got {type(self.source)}"
+                )
+                self._logger.error(error_msg)
+                raise ConfigError(error_msg)
+
+            # 明確指定格式
+            source_mapping = self.source.copy()
+            # 支援向後相容：如果使用 ori/syn，映射到 base/target
+            if "ori" in source_mapping and "base" not in source_mapping:
+                source_mapping["base"] = source_mapping.pop("ori")
+                self._logger.info("Mapped 'ori' to 'base' for backward compatibility")
+            if "syn" in source_mapping and "target" not in source_mapping:
+                source_mapping["target"] = source_mapping.pop("syn")
+                self._logger.info("Mapped 'syn' to 'target' for backward compatibility")
+
+            # 驗證必要的鍵
+            if "base" not in source_mapping or "target" not in source_mapping:
+                error_msg = (
+                    f"compare mode requires 'base' and 'target' keys in source dict, "
+                    f"got keys: {list(source_mapping.keys())}"
+                )
+                self._logger.error(error_msg)
+                raise ConfigError(error_msg)
+
+            for key, source_spec in source_mapping.items():
+                # 支援 "Module.key" 格式
+                if "." in source_spec:
+                    module_name, data_key = source_spec.split(".", 1)
+                    data = status.get_data_by_module(module_name)
+                    if data:
+                        # 查找特定的鍵
+                        found = False
+                        for available_key, df in data.items():
+                            if (
+                                available_key == f"{module_name}_{data_key}"
+                                or available_key == data_key
+                            ):
+                                self.input["data"][key] = df
+                                self._logger.debug(
+                                    f"Using data from module: {module_name}.{data_key} as '{key}' for compare mode"
+                                )
+                                found = True
+                                break
+
+                        if not found:
+                            error_msg = f"Key '{data_key}' not found in module '{module_name}'. Available keys: {list(data.keys())}"
+                            self._logger.error(error_msg)
+                            raise ConfigError(error_msg)
+                    else:
+                        error_msg = f"No data found from module: {module_name}"
+                        self._logger.error(error_msg)
+                        raise ConfigError(error_msg)
+                else:
+                    # 簡單的模組名稱
+                    data = status.get_data_by_module(source_spec)
+                    if data:
+                        # 取第一個可用的資料
+                        first_key = next(iter(data.keys()))
+                        self.input["data"][key] = data[first_key]
+                        self._logger.debug(
+                            f"Using data from module: {source_spec} ({first_key}) as '{key}' for compare mode"
+                        )
+                    else:
+                        error_msg = (
+                            f"No data found from source: {source_spec} for '{key}'"
+                        )
+                        self._logger.error(error_msg)
+                        raise ConfigError(error_msg)
+
+            # 取得 metadata (優先使用第一個資料源的 metadata)
+            for module_name in self.source:
+                try:
+                    metadata = status.get_metadata(module_name)
+                    if metadata:
+                        self.input["metadata"] = metadata
+                        self._logger.debug(f"Using metadata from module: {module_name}")
+                        break
+                except Exception as e:
+                    self._logger.warning(
+                        f"Could not get metadata from {module_name}: {e}"
+                    )
 
         return self.input
 
@@ -1273,6 +1558,7 @@ class ReporterAdapter(BaseAdapter):
     Attributes:
         reporter (Reporter): Instance of the Reporter class.
         report (dict): Dictionary to store the generated reports.
+        source_filter: Optional source filter for selecting specific data sources
 
     Methods:
         _run(input: dict): Runs the Reporter to create and generate reports.
@@ -1283,6 +1569,10 @@ class ReporterAdapter(BaseAdapter):
 
     def __init__(self, config: dict):
         super().__init__(config)
+
+        # 如果 Reporter 有 source 參數，提取出來
+        # 注意：這個 source 是用於 ReporterSaveData 的，不是用於選擇輸入資料
+        # 所以我們保留原有的 Reporter 初始化邏輯
         self.reporter = Reporter(**config)
         self.report: dict = {}
 
@@ -1353,6 +1643,7 @@ class ReporterAdapter(BaseAdapter):
     def set_input(self, status) -> dict:
         """
         Sets the input data for the Reporter.
+        使用原有邏輯，因為 Reporter 需要完整的模組資訊
 
         Args:
             status: The status object.
@@ -1360,6 +1651,8 @@ class ReporterAdapter(BaseAdapter):
         Returns:
             dict: The input data for the Reporter.
         """
+        # Reporter 的資料源選擇邏輯是在 ReporterSaveData 內部處理的
+        # 這裡保持原有邏輯，因為需要保留完整的 index_tuple 結構
         full_expt = status.get_full_expt()
 
         data = {}
