@@ -3,7 +3,6 @@ title: Specify Data Schema
 type: docs
 weight: 16
 prev: docs/tutorial/use-cases
-next: docs/tutorial/use-cases/data-description
 ---
 
 When processing real-world data, we often encounter data quality issues: custom missing value markers (like '?' or 'unknown'), identifiers that need to preserve leading zeros, inconsistent numerical precision, etc. Traditional data loading methods rely on pandas' automatic type inference, but often make incorrect judgments when dealing with complex data.

@@ -861,3 +861,37 @@ class Status:
         ]
 
         return pd.DataFrame(data)
+
+    def get_data_by_module(self, modules: str | list[str]) -> dict[str, pd.DataFrame]:
+        """
+        根據模組名稱獲取資料
+        專為 Describer 和 Reporter 設計，只使用模組名稱
+
+        Args:
+            modules: 模組名稱或名稱列表
+                - 'Loader', 'Splitter', 'Preprocessor', 'Synthesizer', 'Postprocessor', 'Constrainer'
+                - 'Evaluator', 'Describer' 等
+
+        Returns:
+            dict[str, pd.DataFrame]: key 為模組名稱，value 為資料
+        """
+        if isinstance(modules, str):
+            modules = [modules]
+
+        data_sources = {}
+
+        for module_name in modules:
+            if module_name not in self.status:
+                continue
+
+            result = self.get_result(module_name)
+
+            if isinstance(result, pd.DataFrame):
+                data_sources[module_name] = result
+            elif isinstance(result, dict):
+                # 如果是字典（如 Splitter 的結果），展開為 module_key 格式
+                for key, value in result.items():
+                    if isinstance(value, pd.DataFrame):
+                        data_sources[f"{module_name}_{key}"] = value
+
+        return data_sources

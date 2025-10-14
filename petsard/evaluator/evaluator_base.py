@@ -53,8 +53,10 @@ class EvaluatorInputConfig(BaseConfig):
     Attributes:
         _logger (logging.Logger): The logger object.
         data (pd.DataFrame, optional): The data used for evaluation.
-        ori (pd.DataFrame, optional): The original data.
-        syn (pd.DataFrame, optional): The synthetic data.
+        ori (pd.DataFrame, optional): The original data (legacy, use base instead).
+        syn (pd.DataFrame, optional): The synthetic data (legacy, use target instead).
+        base (pd.DataFrame, optional): The base/reference data for comparison.
+        target (pd.DataFrame, optional): The target data to compare against base.
         control (pd.DataFrame, optional): The control data.
         major_key (str, optional): The major key of the data.
     """
@@ -62,12 +64,22 @@ class EvaluatorInputConfig(BaseConfig):
     data: pd.DataFrame = None
     ori: pd.DataFrame = None
     syn: pd.DataFrame = None
+    base: pd.DataFrame = None
+    target: pd.DataFrame = None
     control: pd.DataFrame = None
     major_key: str = None
 
     def __post_init__(self):
         super().__post_init__()
         self._logger.debug("Initializing EvaluatorInputDataConfig")
+
+        # Handle backward compatibility: map base/target to ori/syn if needed
+        if self.base is not None and self.ori is None:
+            self.ori = self.base
+            self._logger.debug("Mapped 'base' to 'ori' for backward compatibility")
+        if self.target is not None and self.syn is None:
+            self.syn = self.target
+            self._logger.debug("Mapped 'target' to 'syn' for backward compatibility")
 
     def verify_required_inputs(self, required_input_keys: str | list[str]) -> None:
         """
@@ -92,14 +104,22 @@ class EvaluatorInputConfig(BaseConfig):
 
         # 2. Check if no major_key been given
         if self.major_key is None:
-            if not set(required_input_keys).intersection({"ori", "data"}):
+            # Support both legacy (ori/data) and new (base) naming
+            valid_major_keys = {"ori", "data", "base"}
+            if not set(required_input_keys).intersection(valid_major_keys):
                 error_msg = (
-                    "There's mulitple keys in input, but no 'ori' or 'data' for aligning dtypes. "
+                    "There's mulitple keys in input, but no 'ori', 'data', or 'base' for aligning dtypes. "
                     f"Got keys: {required_input_keys}"
                 )
                 self._logger.error(error_msg)
                 raise ConfigError(error_msg)
-            self.major_key = "ori" if "ori" in required_input_keys else "data"
+            # Priority: base > ori > data
+            if "base" in required_input_keys:
+                self.major_key = "base"
+            elif "ori" in required_input_keys:
+                self.major_key = "ori"
+            else:
+                self.major_key = "data"
 
         # 3. Verify input keys
         missing: list[str] = []

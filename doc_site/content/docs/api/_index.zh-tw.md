@@ -17,7 +17,6 @@ sidebar:
 | [Metadater]({{< ref "docs/api/metadater" >}}) | `Metadater` | `Metadater.create_schema()` | `create_schema()`, `validate_schema()` |
 | [Processor]({{< ref "docs/api/processor" >}}) | `Processor` | `Processor(metadata, config)` | `fit()`, `transform()`, `inverse_transform()` |
 | [Constrainer]({{< ref "docs/api/constrainer" >}}) | `Constrainer` | `Constrainer(config)` | `apply()`, `resample_until_satisfy()` |
-| [Describer]({{< ref "docs/api/describer" >}}) | `Describer` | `Describer(**kwargs)` | `create()`, `eval()` |
 | [Reporter]({{< ref "docs/api/reporter" >}}) | `Reporter` | `Reporter(method, **kwargs)` | `create()`, `report()` |
 | [Adapter]({{< ref "docs/api/adapter" >}}) | `*Adapter` | `*Adapter(config)` | `run()`, `set_input()`, `get_result()` |
 | [Config]({{< ref "docs/api/config" >}}) | `Config` | `Config(config_dict)` | 初始化時自動處理 |
@@ -33,7 +32,6 @@ sidebar:
 ## 管線組件
 - [Processor]({{< ref "docs/api/processor" >}}) - 資料前處理和後處理
 - [Constrainer]({{< ref "docs/api/constrainer" >}}) - 合成資料的資料約束處理器
-- [Describer]({{< ref "docs/api/describer" >}}) - 描述性資料摘要
 - [Reporter]({{< ref "docs/api/reporter" >}}) - 結果匯出和報告
 
 ## 系統組件

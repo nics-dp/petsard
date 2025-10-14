@@ -8,14 +8,14 @@ classDiagram
         -_check_overlap_acceptable(new_train_sample, existing_train_sets) bool
         -_update_metadata_with_split_info(metadata, train_rows, validation_rows) Schema
     }
-    
+
     class Schema {
         +id: str
         +attributes: dict
         +description: str
         +stats: TableStats
     }
-    
+
     class DataFrame {
         <<pandas>>
         +index: Index
@@ -23,6 +23,6 @@ classDiagram
         +iloc: IndexingMixin
         +reset_index()
     }
-    
+
     Splitter ..> Schema : uses
     Splitter ..> DataFrame : uses

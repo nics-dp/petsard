@@ -171,9 +171,9 @@ class DataDescriberConfig(BaseConfig):
             raise ConfigError(error_msg)
 
 
-class DataDescriber(BaseEvaluator):
+class DescriberDescribe(BaseEvaluator):
     """
-    Evaluator for Desciber method.
+    Evaluator for Describer method - handles single dataset description.
     """
 
     REQUIRED_INPUT_KEYS: list[str] = ["data"]
