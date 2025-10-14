@@ -10,12 +10,10 @@ import pandas as pd
 from petsard.config_base import BaseConfig
 from petsard.evaluator.anonymeter import Anonymeter
 from petsard.evaluator.customer_evaluator import CustomEvaluator
-from petsard.evaluator.data_describer import DataDescriber
 from petsard.evaluator.evaluator_base import BaseEvaluator
 from petsard.evaluator.mlutility import MLUtility
 from petsard.evaluator.mpuccs import MPUCCs
 from petsard.evaluator.sdmetrics import SDMetricsSingleTable
-from petsard.evaluator.stats import Stats
 from petsard.exceptions import UncreatedError, UnsupportedMethodError
 
 
@@ -30,11 +28,8 @@ class EvaluatorMap(Enum):
     MPUCCS: int = auto()
     # Fidelity
     SDMETRICS: int = auto()
-    STATS: int = auto()
     # Utility
     MLUTILITY: int = auto()
-    # Describer
-    DESCRIBE: int = auto()
     # Other
     CUSTOM_METHOD: int = auto()
 
@@ -121,11 +116,11 @@ class Evaluator:
         EvaluatorMap.ANONYMETER: Anonymeter,
         EvaluatorMap.MPUCCS: MPUCCs,
         EvaluatorMap.SDMETRICS: SDMetricsSingleTable,
-        EvaluatorMap.STATS: Stats,
         EvaluatorMap.MLUTILITY: MLUtility,
-        EvaluatorMap.DESCRIBE: DataDescriber,
         EvaluatorMap.CUSTOM_METHOD: CustomEvaluator,
     }
+    # Note: Stats and Describe functionality are now only available through the Describer class
+    # Use petsard.evaluator.describer.Describer instead
 
     def __init__(self, method: str, **kwargs):
         """
