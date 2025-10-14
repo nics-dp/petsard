@@ -39,8 +39,8 @@ class LoaderPandasCsv(LoaderBase):
             # Default header settings to match original behavior
             pandas_config.update({"header": "infer", "names": None})
 
-        # 3. assign dtype and na_values
-        list_setting = ["dtype", "na_values"]
+        # 3. assign dtype, na_values, and nrows
+        list_setting = ["dtype", "na_values", "nrows"]
         pandas_config.update(
             {k: self.config[k] for k in list_setting if k in self.config}
         )
@@ -98,8 +98,8 @@ class LoaderPandasExcel(LoaderBase):
             # Default header settings to match original behavior
             pandas_config.update({"header": "infer", "names": None})
 
-        # 3. assign dtype and na_values
-        list_setting = ["dtype", "na_values"]
+        # 3. assign dtype, na_values, and nrows
+        list_setting = ["dtype", "na_values", "nrows"]
         pandas_config.update(
             {k: self.config[k] for k in list_setting if k in self.config}
         )
