@@ -51,11 +51,13 @@ class TestCustomEvaluator(unittest.TestCase):
         evaluator = CustomEvaluator(config=self.config)
 
         # Verify load_external_module was called with correct arguments
+        # Note: search_paths is dynamically set to sys.path in the actual implementation
         mock_load_module.assert_called_once_with(
             module_path="/path/to/custom_module.py",
             class_name="MyCustomEvaluator",
             logger=evaluator._logger,
             required_methods=CustomEvaluator.REQUIRED_METHODS,
+            search_paths=unittest.mock.ANY,  # sys.path is dynamic
         )
 
         # Verify properties were set correctly
