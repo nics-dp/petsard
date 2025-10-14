@@ -237,14 +237,11 @@ class StatsNUnique(BaseStats):
             data (dict[str, pd.Series]): The data to be evaluated.
 
         Returns:
-            (bool): True if the data type is bool/string/category/object, False otherwise.
+            (bool): True for all data types - nunique can be calculated for any type.
         """
-        return (
-            is_bool_dtype(data.get("col"))
-            or is_string_dtype(data.get("col"))
-            or isinstance(data.get("col"), pd.CategoricalDtype)
-            or is_object_dtype(data.get("col"))
-        )
+        # nunique 可以計算任何資料類型的唯一值數量
+        # 不再限制資料類型
+        return True
 
     def _eval(self, data: dict[str, pd.Series]) -> int:
         """
@@ -269,23 +266,28 @@ class StatsJSDivergence(BaseStats):
             data (dict[str, pd.Series]): The data to be evaluated.
 
         Returns:
-            (bool): True if the both data type is bool/string/category/object,
-                False otherwise.
+            (bool): True if the both data types are compatible for JS divergence calculation.
+                This includes bool/string/category/object types, as well as numeric types
+                that are treated as categorical (e.g., discrete values).
         """
+        from pandas.api.types import is_categorical_dtype
+
+        col_ori = data.get("col_ori")
+        col_syn = data.get("col_syn")
+
+        # 如果任一欄位不存在，返回 False
+        if col_ori is None or col_syn is None:
+            return False
+
+        # JS divergence 可以計算任何離散型資料
+        # 包括：bool、string、categorical、object 或作為類別使用的數值型態
         return (
-            (is_bool_dtype(data.get("col_ori")) and is_bool_dtype(data.get("col_syn")))
-            or (
-                is_string_dtype(data.get("col_ori"))
-                and is_string_dtype(data.get("col_syn"))
-            )
-            or (
-                isinstance(data.get("col_ori"), pd.CategoricalDtype)
-                and isinstance(data.get("col_syn"), pd.CategoricalDtype)
-            )
-            or (
-                is_object_dtype(data.get("col_ori"))
-                and is_object_dtype(data.get("col_syn"))
-            )
+            (is_bool_dtype(col_ori) and is_bool_dtype(col_syn))
+            or (is_string_dtype(col_ori) and is_string_dtype(col_syn))
+            or (is_categorical_dtype(col_ori) and is_categorical_dtype(col_syn))
+            or (is_object_dtype(col_ori) and is_object_dtype(col_syn))
+            # 允許數值型態（當作類別變數處理）
+            or (is_numeric_dtype(col_ori) and is_numeric_dtype(col_syn))
         )
 
     def _eval(self, data: dict[str, pd.Series]) -> int:
