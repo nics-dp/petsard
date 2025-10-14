@@ -2,7 +2,6 @@
 title: Data Preprocessing
 type: docs
 weight: 20
-prev: docs/tutorial/use-cases/data-description
 sidebar:
   open: false
 ---

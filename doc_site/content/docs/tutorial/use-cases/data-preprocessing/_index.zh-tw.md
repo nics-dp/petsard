@@ -2,7 +2,6 @@
 title: 資料前處理
 type: docs
 weight: 20
-prev: docs/tutorial/use-cases/data-description
 sidebar:
   open: false
 ---
