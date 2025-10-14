@@ -13,12 +13,37 @@ Click the below button to run this example in Colab:
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/nics-tw/petsard/blob/main/demo/petsard-yaml/synthesizer-yaml/petsard-gaussian-copula.ipynb)
 
 ```yaml
+Loader:
+  load_benchmark_with_schema:
+    filepath: benchmark://adult-income
+    schema: benchmark://adult-income_schema
+Preprocessor:
+  default:
+    method: default
+
 Synthesizer:
+
   petsard-gaussian-copula:
     method: petsard-gaussian-copula
     sample_num_rows: 1000  # Number of rows to generate, default: training data row count
     use_gpu: auto          # Device selection, default: auto (automatic)
     gpu_threshold: 50000   # Threshold for auto mode, default: 50,000
+
+  sdv_gaussiancopula:
+    method: custom_method
+    module_path: sdv-custom-methods.py
+    class_name: SDV_GaussianCopula
+
+Postprocessor:
+  default:
+    method: default
+Evaluator:
+  eval_all_methods:
+    method: sdmetrics-qualityreport
+Reporter:
+  save_comparison:
+    method: save_report
+    granularity: global
 ```
 
 ## Parameters

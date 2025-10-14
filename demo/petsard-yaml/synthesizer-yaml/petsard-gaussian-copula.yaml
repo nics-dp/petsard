@@ -3,7 +3,6 @@ Loader:
   load_benchmark_with_schema:
     filepath: benchmark://adult-income
     schema: benchmark://adult-income_schema
-
 Preprocessor:
   default:
     method: default
@@ -12,8 +11,9 @@ Synthesizer:
 
   petsard-gaussian-copula:
     method: petsard-gaussian-copula
-    use_gpu: auto  # 智能選擇 CPU/GPU
-    gpu_threshold: 50000  # 超過 50K rows 才用 GPU
+    sample_num_rows: 1000  # Number of rows to generate, default: training data row count
+    use_gpu: auto          # Device selection, default: auto (automatic)
+    gpu_threshold: 50000   # Threshold for auto mode, default: 50,000
 
   sdv_gaussiancopula:
     method: custom_method
@@ -23,11 +23,9 @@ Synthesizer:
 Postprocessor:
   default:
     method: default
-
 Evaluator:
   eval_all_methods:
     method: sdmetrics-qualityreport
-
 Reporter:
   save_comparison:
     method: save_report
