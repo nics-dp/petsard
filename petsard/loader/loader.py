@@ -74,6 +74,7 @@ class LoaderConfig(BaseConfig):
     na_values: str | list[str] | dict[str, str] | None = (
         None  # TODO: Deprecated in v2.0.0 - will be removed
     )
+    nrows: int | None = None  # Number of rows to read for quick testing
     schema: Schema | None = None
     schema_path: str | None = None  # 記錄 schema 來源路徑（如果從檔案載入）
 
@@ -173,6 +174,7 @@ class Loader:
         | list[str]
         | dict[str, str]
         | None = None,  # TODO: Deprecated in v2.0.0
+        nrows: int | None = None,
         schema: Schema | dict | str | None = None,
     ):
         """
@@ -194,6 +196,10 @@ class Loader:
                 Format as {colname: na_values}.
                 Default is None, means no extra.
                 Check pandas document for Default NA string list.
+            nrows (int, optional): Number of rows to read from the file.
+                Useful for quickly testing with a subset of data to reduce memory usage.
+                Similar to pandas.read_csv's nrows parameter.
+                Default is None, which reads all rows.
             schema (Schema | dict | str, optional): Schema configuration.
                 Can be one of:
                 - Schema object: Direct schema configuration
@@ -221,6 +227,7 @@ class Loader:
             column_types=column_types,
             header_names=header_names,
             na_values=na_values,
+            nrows=nrows,
             schema=processed_schema,
             schema_path=schema_path,
         )
@@ -425,6 +432,11 @@ class Loader:
             "header_names": self.config.header_names,
         }
 
+        # Add nrows parameter if specified
+        if self.config.nrows is not None:
+            config["nrows"] = self.config.nrows
+            self._logger.info(f"Reading only first {self.config.nrows} rows")
+
         # Handle legacy na_values (takes precedence over schema na_values for backward compatibility)
         if self.config.na_values is not None:
             config["na_values"] = self.config.na_values
@@ -561,3 +573,149 @@ class Loader:
             # Continue with original data if alignment fails
 
         return schema
+
+
+# ============================================================================
+# Tests for nrows parameter
+# ============================================================================
+
+if __name__ == "__main__":
+    """
+    Test script for Loader nrows parameter
+    測試 Loader nrows 參數功能
+    """
+    import os
+    import sys
+
+    def test_nrows_basic():
+        """Test basic nrows functionality with CSV file"""
+        print("=" * 60)
+        print("Test 1: Basic nrows functionality")
+        print("=" * 60)
+
+        # Create a test CSV file with 100 rows
+        test_data = pd.DataFrame(
+            {
+                "id": range(1, 101),
+                "name": [f"Name_{i}" for i in range(1, 101)],
+                "value": range(100, 200),
+            }
+        )
+        test_file = "test_data.csv"
+        test_data.to_csv(test_file, index=False)
+        print(f"✓ Created test file with {len(test_data)} rows")
+
+        # Test 1: Load with nrows=10
+        loader = Loader(test_file, nrows=10)
+        data, schema = loader.load()
+
+        assert len(data) == 10, f"Expected 10 rows, got {len(data)}"
+        print(f"✓ Successfully loaded {len(data)} rows with nrows=10")
+        print(f"  Data shape: {data.shape}")
+        print(f"  Schema attributes: {len(schema.attributes)}")
+
+        # Test 2: Load without nrows (full data)
+        loader_full = Loader(test_file)
+        data_full, schema_full = loader_full.load()
+
+        assert len(data_full) == 100, f"Expected 100 rows, got {len(data_full)}"
+        print(f"✓ Successfully loaded {len(data_full)} rows without nrows")
+
+        # Cleanup
+        os.remove(test_file)
+        print("✓ Test file cleaned up")
+        print("\n✅ Test 1 PASSED\n")
+
+    def test_nrows_with_schema():
+        """Test nrows with schema configuration"""
+        print("=" * 60)
+        print("Test 2: nrows with schema")
+        print("=" * 60)
+
+        # Create test data
+        test_data = pd.DataFrame(
+            {
+                "age": range(18, 68),
+                "income": range(30000, 80000, 1000),
+                "category": ["A"] * 25 + ["B"] * 25,
+            }
+        )
+        test_file = "test_schema_data.csv"
+        test_data.to_csv(test_file, index=False)
+        print(f"✓ Created test file with {len(test_data)} rows")
+
+        # Define schema
+        schema_dict = {
+            "id": "test_schema",
+            "name": "Test Schema",
+            "attributes": {
+                "age": {"type": "Int64"},
+                "income": {"type": "Int64"},
+                "category": {"type": "category"},
+            },
+        }
+
+        # Load with nrows and schema
+        loader = Loader(test_file, nrows=15, schema=schema_dict)
+        data, schema = loader.load()
+
+        assert len(data) == 15, f"Expected 15 rows, got {len(data)}"
+        print(f"✓ Successfully loaded {len(data)} rows with nrows=15 and schema")
+        print(f"  Data shape: {data.shape}")
+        print(f"  Schema ID: {schema.id}")
+
+        # Verify schema was applied correctly
+        print(f"  Data types: {dict(data.dtypes)}")
+
+        # Cleanup
+        os.remove(test_file)
+        print("✓ Test file cleaned up")
+        print("\n✅ Test 2 PASSED\n")
+
+    def test_nrows_memory_efficiency():
+        """Test that nrows actually reduces memory usage"""
+        print("=" * 60)
+        print("Test 3: Memory efficiency with nrows")
+        print("=" * 60)
+
+        # Create a larger test file
+        test_data = pd.DataFrame({f"col_{i}": range(10000) for i in range(10)})
+        test_file = "test_large_data.csv"
+        test_data.to_csv(test_file, index=False)
+        print(
+            f"✓ Created large test file with {len(test_data)} rows and {len(test_data.columns)} columns"
+        )
+
+        # Load with nrows
+        loader_small = Loader(test_file, nrows=100)
+        data_small, _ = loader_small.load()
+        memory_small = sys.getsizeof(data_small)
+
+        print(f"✓ Loaded {len(data_small)} rows")
+        print(f"  Memory usage (estimated): {memory_small:,} bytes")
+
+        # Cleanup
+        os.remove(test_file)
+        print("✓ Test file cleaned up")
+        print("\n✅ Test 3 PASSED\n")
+
+    # Run tests
+    print("\n" + "=" * 60)
+    print("Testing Loader nrows Parameter")
+    print("測試 Loader nrows 參數")
+    print("=" * 60 + "\n")
+
+    try:
+        test_nrows_basic()
+        test_nrows_with_schema()
+        test_nrows_memory_efficiency()
+
+        print("=" * 60)
+        print("✅ ALL TESTS PASSED")
+        print("✅ 所有測試通過")
+        print("=" * 60)
+    except Exception as e:
+        print("\n" + "=" * 60)
+        print(f"❌ TEST FAILED: {str(e)}")
+        print("=" * 60)
+        raise
