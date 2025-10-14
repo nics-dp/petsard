@@ -3,7 +3,6 @@ title: 指定資料表架構
 type: docs
 weight: 16
 prev: docs/tutorial/use-cases
-next: docs/tutorial/use-cases/data-description
 ---
 
 在處理真實世界的資料時，我們經常遇到資料品質問題：自訂的缺失值標記（如 '?' 或 'unknown'）、需要保留前導零的識別碼、數值精度不一致等。傳統的資料載入方式依賴 pandas 的自動型別推斷，但面對複雜資料時經常出現誤判。

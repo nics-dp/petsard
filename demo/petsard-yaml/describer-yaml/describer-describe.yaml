@@ -1,0 +1,11 @@
+---
+Synthesizer:
+  external_data:
+    method: custom_data
+    filepath: benchmark://adult-income
+    schema: benchmark://adult-income_schema
+Describer:
+  describer-describe:
+    method: default    # Auto-detects as describe (single source)
+    source: Synthesizer
+...
