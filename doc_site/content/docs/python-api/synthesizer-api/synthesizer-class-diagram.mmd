@@ -10,7 +10,7 @@ classDiagram
         +sample(sample_num_rows: int, reset_sampling: bool, output_file_path: str)
         +fit_sample(data: pd.DataFrame, **kwargs)
     }
-    
+
     class SynthesizerBase {
         <<abstract>>
         +config: dict
@@ -19,7 +19,7 @@ classDiagram
         +sample(**kwargs)
         +fit_sample(data: pd.DataFrame, **kwargs)
     }
-    
+
     class SDVSynthesizer {
         +config: dict
         +synthesizer: object
@@ -30,7 +30,7 @@ classDiagram
         +_create_synthesizer()
         +_convert_metadata()
     }
-    
+
     class CustomSynthesizer {
         +config: dict
         +metadata: SchemaMetadata
@@ -40,7 +40,7 @@ classDiagram
         +sample(sample_num_rows: int, reset_sampling: bool, output_file_path: str)
         +_load_custom_module()
     }
-    
+
     class CustomData {
         +config: dict
         +metadata: SchemaMetadata
@@ -49,34 +49,34 @@ classDiagram
         +sample()
         +_load_custom_data()
     }
-    
+
     class SchemaMetadata {
         <<dataclass>>
         +id: str
         +name: str
         +attributes: list
     }
-    
+
     class Config {
         <<dataclass>>
         +method: str
         +method_code: int
         +kwargs: dict
     }
-    
+
     Synthesizer ..> SynthesizerBase : 使用
     Synthesizer ..> SchemaMetadata : 依賴
     Synthesizer ..> Config : 組合
-    
+
     SynthesizerBase <|-- SDVSynthesizer : 繼承
     SynthesizerBase <|-- CustomSynthesizer : 繼承
     SynthesizerBase <|-- CustomData : 繼承
-    
+
     SDVSynthesizer *-- SchemaMetadata : 組合
     SDVSynthesizer *-- Config : 組合
-    
+
     CustomSynthesizer *-- SchemaMetadata : 組合
     CustomSynthesizer *-- Config : 組合
-    
+
     CustomData *-- SchemaMetadata : 組合
     CustomData *-- Config : 組合

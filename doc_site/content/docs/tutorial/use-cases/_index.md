@@ -19,12 +19,6 @@ When developing privacy-preserving data synthesis workflows, you may encounter s
   - Support custom missing value markers, data type conversion, and numeric precision settings
   - Ensure data quality is guaranteed from the source
 
-### **Data Insights: [Data Description]({{< ref "data-description" >}})**
-
-  - Understand your data before synthesis
-  - Analyze data characteristics at different granularities
-  - Includes global, column-wise, and pairwise statistics
-
 ## **Data Generating**:
 
 - If the synthesis results are not satisfactory, you can:

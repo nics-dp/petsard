@@ -1,0 +1,25 @@
+---
+Loader:
+  load_benchmark_with_schema:
+    filepath: benchmark://adult-income
+    schema: benchmark://adult-income_schema
+Synthesizer:
+  external_data:
+    method: custom_data
+    filepath: benchmark://adult-income_syn
+    schema: benchmark://adult-income_schema
+Describer:
+  custom_comparison:
+    method: compare
+    source:
+      base: Loader
+      target: Synthesizer
+    stats_method:
+      - mean
+      - std
+      - nunique
+      - jsdivergence
+    compare_method: diff  # Use difference instead of percentage change
+    aggregated_method: mean
+    summary_method: mean
+...
