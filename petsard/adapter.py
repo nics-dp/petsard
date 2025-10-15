@@ -907,7 +907,8 @@ class PostprocessorAdapter(BaseAdapter):
 
         Args:
             input (dict):
-                Postprocessor input should contains data (pd.DataFrame) and preprocessor (Processor).
+                Postprocessor input should contains data (pd.DataFrame), preprocessor (Processor),
+                and optional original_schema (Schema).
 
         Attributes:
             processor (Processor):
@@ -921,6 +922,22 @@ class PostprocessorAdapter(BaseAdapter):
         self.data_postproc = self.processor.inverse_transform(data=input["data"])
         self._logger.debug("Data postprocessing completed")
 
+        # CRITICAL FIX: Processor.inverse_transform() may corrupt nullable integer dtypes
+        # (e.g., Int64 → string → float64). We must restore dtypes from original schema.
+        # 關鍵修復：Processor.inverse_transform() 可能破壞 nullable integer dtypes
+        # （例如 Int64 → string → float64）。我們必須從原始 schema 恢復 dtypes。
+        if "original_schema" in input and input["original_schema"]:
+            self._logger.debug("Restoring dtypes from original schema")
+            try:
+                self.data_postproc = SchemaMetadater.align(
+                    input["original_schema"], self.data_postproc
+                )
+                self._logger.info("✓ Successfully restored dtypes after postprocessing")
+            except Exception as e:
+                self._logger.warning(
+                    f"Failed to restore dtypes from original schema: {e}"
+                )
+
     @BaseAdapter.log_and_raise_config_error
     def set_input(self, status) -> dict:
         """
@@ -931,10 +948,44 @@ class PostprocessorAdapter(BaseAdapter):
 
         Returns:
             dict:
-                Postprocessor input should contains data (pd.DataFrame) and preprocessor (Processor).
+                Postprocessor input should contains data (pd.DataFrame), preprocessor (Processor),
+                and optional original_schema (Schema).
         """
         self.input["data"] = status.get_result(status.get_pre_module("Postprocessor"))
         self.input["preprocessor"] = status.get_processor()
+
+        # CRITICAL: Get Preprocessor input schema for dtype restoration after inverse_transform
+        # This solves the many-to-one transformation reversibility problem:
+        # e.g., int64 → scaler_standard → float64 → inverse → ??? (should be int64)
+        #
+        # 關鍵：取得 Preprocessor 輸入 schema 用於 inverse_transform 後恢復 dtype
+        # 這解決了多對一轉換的可逆性問題：
+        # 例如 int64 → scaler_standard → float64 → inverse → ??? （應該是 int64）
+        try:
+            # First try to get the remembered Preprocessor input schema
+            preprocessor_input_schema = status.get_preprocessor_input_schema()
+            if preprocessor_input_schema:
+                self.input["original_schema"] = preprocessor_input_schema
+                self._logger.info(
+                    "✓ 使用記憶的 Preprocessor 輸入 Schema 進行 dtype 還原"
+                )
+            # Fallback to Loader/Splitter schema if preprocessor input schema not available
+            elif "Loader" in status.status:
+                original_schema = status.get_metadata("Loader")
+                self.input["original_schema"] = original_schema
+                self._logger.debug(
+                    "Using original schema from Loader for dtype restoration (fallback)"
+                )
+            elif "Splitter" in status.status:
+                original_schema = status.get_metadata("Splitter")
+                self.input["original_schema"] = original_schema
+                self._logger.debug(
+                    "Using original schema from Splitter for dtype restoration (fallback)"
+                )
+        except Exception as e:
+            self._logger.warning(
+                f"Could not retrieve original schema for dtype restoration: {e}"
+            )
 
         return self.input
 
@@ -1107,14 +1158,24 @@ class EvaluatorAdapter(BaseAdapter):
         """
         self._logger.debug("Starting data evaluating process")
 
-        # Auto-align data types if schema is available
+        # CRITICAL FIX: Auto-align data types BEFORE evaluator.eval() to prevent dtype validation errors
+        # 關鍵修復：在 evaluator.eval() 之前對齊資料型別，以防止 dtype 驗證錯誤
         if "schema" in input and input["schema"]:
-            self._logger.debug("Schema found, aligning data types")
+            self._logger.debug("Schema found, aligning data types before evaluation")
             aligned_data = {}
             for key, df in input["data"].items():
                 if df is not None and not df.empty:
                     self._logger.debug(f"Aligning data type for '{key}' data")
-                    aligned_data[key] = SchemaMetadater.align(input["schema"], df)
+                    try:
+                        aligned_data[key] = SchemaMetadater.align(input["schema"], df)
+                        self._logger.info(
+                            f"✓ Successfully aligned '{key}' data to schema"
+                        )
+                    except Exception as e:
+                        self._logger.warning(
+                            f"Failed to align '{key}' data: {e}. Using original data."
+                        )
+                        aligned_data[key] = df
                 else:
                     aligned_data[key] = df
             input["data"] = aligned_data
@@ -1126,6 +1187,8 @@ class EvaluatorAdapter(BaseAdapter):
         self.evaluator.create()
         self._logger.debug("Evaluation model initialization completed")
 
+        # Now call eval() with aligned data - verification will pass
+        # 現在使用對齊後的資料呼叫 eval() - 驗證將會通過
         self.evaluations = self.evaluator.eval(**input)
         self._logger.debug("Data evaluating completed")
 
