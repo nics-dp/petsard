@@ -8,10 +8,9 @@ SynthesizerAdapter 使用各種生成模型處理合成資料生成，並與管�
 ## 主要功能
 
 - 統一的合成資料生成介面
-- 支援多種合成方法（CTGAN、TVAE、CopulaGAN、GaussianCopula）
+- 支援多種 SDV 合成方法（考量未來 SDV 版本可能變動，不詳列所有內建方法）
 - 自動模型訓練和取樣
 - 詮釋資料和隱私保護支援
-- 與管線系統整合
 
 ## 方法參考
 
@@ -78,21 +77,6 @@ adapter.run({
 
 # 取得結果
 synthetic_data, synthetic_metadata = adapter.get_result()
-```
-
-## 與管線整合
-
-```yaml
-# YAML 管線配置
-pipeline:
-  - module: loader
-    config:
-      filepath: "data.csv"
-  - module: synthesizer
-    config:
-      method: "ctgan"
-      sample_size: 1000
-      epochs: 300
 ```
 
 ## 注意事項
