@@ -5,14 +5,24 @@ weight: 131
 
 PETsARD 整合了 [SDV (Synthetic Data Vault)](https://sdv.dev/) 套件，提供多種先進的合成資料生成演算法。
 
+{{< callout type="info" >}}
+**注意**：本文件說明 PETsARD 內建的 SDV 整合方式。若需要更靈活的使用方式或自訂參數，請參考 [SDV Custom Methods](../sdv-custom-methods)。
+{{< /callout >}}
+
+## 使用範例
+
+請點擊下方按鈕在 Colab 中執行範例：
+
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/nics-tw/petsard/blob/main/demo/petsard-yaml/synthesizer-yaml/sdv-methods.ipynb)
+
 ## 方法一覽表
 
-| 方法名稱 | method 設定值 | 適用情境 | 執行速度 |
+| 方法名稱 | method 設定值 | 適用情境 | GPU 支援 |
 |----------|--------------|----------|----------|
-| GaussianCopula | `default` 或 `sdv-single_table-gaussiancopula` | 快速原型測試、大型資料集 | 快 |
-| CTGAN | `sdv-single_table-ctgan` | 需要高品質合成資料 | 慢 |
-| CopulaGAN | `sdv-single_table-copulagan` | 混合型資料（連續+離散） | 慢 |
-| TVAE | `sdv-single_table-tvae` | 需要穩定訓練過程 | 中 |
+| GaussianCopula | `default` 或 `sdv-single_table-gaussiancopula` | 快速原型測試、大型資料集 | ✗ |
+| CTGAN | `sdv-single_table-ctgan` | 需要高品質合成資料 | ✓ |
+| CopulaGAN | `sdv-single_table-copulagan` | 混合型資料（連續+離散） | ✓ |
+| TVAE | `sdv-single_table-tvae` | 需要穩定訓練過程 | ✓ |
 
 ## 支援的 SDV 方法詳細說明
 
@@ -140,12 +150,24 @@ Synthesizer:
 
 ## 通用參數
 
-所有 SDV 方法都支援以下通用參數：
+### 自動啟用的參數
 
-| 參數 | 類型 | 預設值 | 說明 |
-|------|------|--------|------|
-| `enforce_rounding` | `bool` | `True` | 強制整數欄位四捨五入 |
-| `enforce_min_max_values` | `bool` | `True` | 強制數值範圍限制（僅 TVAE 和 GaussianCopula） |
+PETsARD 內建的 SDV 整合會自動設定以下參數：
+
+| 參數 | 設定值 | 適用方法 | 說明 |
+|------|--------|----------|------|
+| `enforce_rounding` | `True` | 所有方法 | 自動將整數欄位四捨五入為整數 |
+| `enforce_min_max_values` | `True` | TVAE、GaussianCopula | 自動強制數值範圍在原始資料的最小/最大值內 |
+
+### Schema 自動轉換
+
+PETsARD 會自動將內部的 Schema 格式轉換為 SDV 的 Metadata 格式：
+
+- **Numerical columns** 數值欄位：`int*`、`float*` 類型 → SDV `numerical`
+- **Categorical columns** 類別欄位：`category` 邏輯類型 → SDV `categorical`
+- **Boolean columns** 布林欄位：`bool` 類型 → SDV `boolean`
+- **Datetime columns** 日期時間欄位：`datetime*` 類型 → SDV `datetime`
+- **PII columns** 個人識別資訊：`email`、`phone` 邏輯類型 → SDV `pii`
 
 ## 可用的分布類型
 
@@ -211,9 +233,72 @@ Reporter:
     granularity: global
 ```
 
+## GPU 加速
+
+深度學習方法（CTGAN、CopulaGAN、TVAE）會自動偵測並使用 GPU：
+
+```python
+# 內建實現會自動使用 CUDA（如果可用）
+if torch.cuda.is_available():
+    # 使用 GPU 訓練
+else:
+    # 使用 CPU 訓練
+```
+
+{{< callout type="warning" >}}
+**限制**：內建的 SDV 整合不支援手動選擇 CPU/GPU。如需此功能，請使用 [SDV Custom Methods](../sdv-custom-methods)。
+{{< /callout >}}
+
+## 實際參數與預設值
+
+以下是基於 PETsARD 實際實現的參數說明：
+
+### GaussianCopula
+- `enforce_rounding`: 自動啟用
+- `enforce_min_max_values`: 自動啟用
+- 不支援自訂 `default_distribution` 或 `numerical_distributions`
+
+### CTGAN
+- `enforce_rounding`: 自動啟用
+- 其他參數使用 SDV 預設值：
+  - `epochs`: 300
+  - `batch_size`: 500
+  - `generator_lr`: 0.0002
+  - `discriminator_lr`: 0.0002
+
+### CopulaGAN
+- `enforce_rounding`: 自動啟用
+- 其他參數使用 SDV 預設值：
+  - `epochs`: 300
+  - `batch_size`: 500
+  - `default_distribution`: beta
+
+### TVAE
+- `enforce_rounding`: 自動啟用
+- `enforce_min_max_values`: 自動啟用
+- 其他參數使用 SDV 預設值：
+  - `epochs`: 300
+  - `batch_size`: 500
+  - `compress_dims`: (128, 128)
+  - `decompress_dims`: (128, 128)
+
+## 限制與建議
+
+### 內建整合的限制
+
+1. **參數無法自訂**：無法調整 epochs、batch_size 等訓練參數
+2. **分布無法指定**：GaussianCopula 和 CopulaGAN 的分布類型固定
+3. **設備無法選擇**：無法手動選擇使用 CPU 或 GPU
+
+### 使用建議
+
+- **快速測試**：內建整合適合快速測試和預設配置
+- **進階使用**：需要調整參數時，請使用 [SDV Custom Methods](../sdv-custom-methods)
+- **GPU 訓練**：深度學習方法建議在有 NVIDIA GPU 的環境執行
+
 ## 注意事項
 
-1. **計算資源**：深度學習方法（CTGAN、CopulaGAN、TVAE）需要 GPU 加速
-2. **訓練時間**：深度學習方法可能需要數小時訓練
+1. **計算資源**：深度學習方法（CTGAN、CopulaGAN、TVAE）在 GPU 上訓練更快
+2. **訓練時間**：使用預設 300 epochs，CPU 訓練可能需要較長時間
 3. **記憶體使用**：大型資料集配合深度學習方法可能需要大量記憶體
-4. **參數調校**：深度學習方法的參數對結果影響較大，建議仔細調校
+4. **參數固定**：內建整合使用固定參數，無法調整
