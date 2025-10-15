@@ -8,10 +8,9 @@ SynthesizerAdapter handles synthetic data generation using various generative mo
 ## Main Features
 
 - Unified interface for synthetic data generation
-- Support for multiple synthesis methods (CTGAN, TVAE, CopulaGAN, GaussianCopula)
+- Support for multiple SDV synthesis methods (built-in methods not listed due to potential SDV version changes)
 - Automatic model training and sampling
 - Metadata and privacy preservation support
-- Integration with pipeline system
 
 ## Method Reference
 
@@ -78,21 +77,6 @@ adapter.run({
 
 # Get results
 synthetic_data, synthetic_metadata = adapter.get_result()
-```
-
-## Integration with Pipeline
-
-```yaml
-# YAML pipeline configuration
-pipeline:
-  - module: loader
-    config:
-      filepath: "data.csv"
-  - module: synthesizer
-    config:
-      method: "ctgan"
-      sample_size: 1000
-      epochs: 300
 ```
 
 ## Notes
