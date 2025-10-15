@@ -11,6 +11,7 @@ from petsard.adapter import BaseAdapter
 from petsard.exceptions import SnapshotError, StatusError, TimingError, UnexecutedError
 from petsard.metadater.metadata import Metadata, Schema
 from petsard.metadater.metadater import SchemaMetadater
+from petsard.metadater.schema_inferencer import SchemaInferencer
 from petsard.processor import Processor
 from petsard.synthesizer import Synthesizer
 
@@ -152,6 +153,14 @@ class Status:
         # 狀態儲存 - 保持與原有介面相容
         self.status: dict = {}
         self.metadata: dict[str, Schema] = {}
+
+        # Schema 推論器 - 用於推論 pipeline 各階段的 Schema
+        self.schema_inferencer = SchemaInferencer()
+        self.inferred_schemas: dict[str, Schema] = {}  # 儲存推論出的 Schema
+
+        # Preprocessor input metadata 記憶 - 用於 Postprocessor 的多對一轉換還原
+        # 儲存 Preprocessor 的輸入 Schema，以便 Postprocessor 知道原始的 dtype
+        self.preprocessor_input_schema: Schema | None = None
 
         # 優化的快照功能 - 使用 deque 限制大小
         self.max_snapshots = max_snapshots
@@ -517,6 +526,26 @@ class Status:
         if module in ["Loader", "Splitter", "Preprocessor"]:
             new_metadata = operator.get_metadata()
 
+            # CRITICAL: 對於 Preprocessor，記憶其 input schema 供 Postprocessor 使用
+            # 這解決了多對一轉換（如 int64/float64 → float64）的可逆性問題
+            if module == "Preprocessor":
+                # 儲存 Preprocessor 的輸入 Schema（來自 Loader 或 Splitter）
+                pre_module = self.get_pre_module("Preprocessor")
+                if pre_module and pre_module in self.metadata:
+                    self.preprocessor_input_schema = self.metadata[pre_module]
+                    self._logger.info(
+                        f"記憶 Preprocessor 輸入 Schema（來自 {pre_module}）"
+                    )
+
+                # 如果有推論的 Schema，使用推論的而非實際的
+                # 這確保了 Synthesizer 等後續模組能獲得正確的轉換後 Schema
+                if module in self.inferred_schemas:
+                    inferred_metadata = self.inferred_schemas[module]
+                    self._logger.info(
+                        f"使用推論的 Preprocessor Schema（{len(inferred_metadata.attributes)} 個欄位）"
+                    )
+                    new_metadata = inferred_metadata
+
             # 使用 SchemaMetadater.diff 追蹤變更
             if metadata_before is not None and hasattr(operator, "get_data"):
                 # 計算差異
@@ -656,6 +685,18 @@ class Status:
         if module not in self.metadata:
             raise UnexecutedError
         return self.metadata[module]
+
+    def get_preprocessor_input_schema(self) -> Schema | None:
+        """
+        取得 Preprocessor 的輸入 Schema
+
+        這用於 Postprocessor 的多對一轉換還原，
+        例如 int64 → scaler → float64 → inverse → int64
+
+        Returns:
+            Preprocessor 的輸入 Schema，如果不存在則返回 None
+        """
+        return self.preprocessor_input_schema
 
     def get_synthesizer(self) -> Synthesizer:
         """取得合成器實例"""

@@ -43,6 +43,7 @@ def __init__(
     column_types: dict = None,
     header_names: list = None,
     na_values: str | list | dict = None,
+    nrows: int = None,
     schema: Schema | dict | str = None
 )
 ```
@@ -66,6 +67,12 @@ def __init__(
 - **na_values** : str | list | dict, optional
     - **已棄用** - 將在 v2.0.0 移除
     - 請改用 `schema` 參數
+
+- **nrows** : int, optional
+    - 從檔案讀取的資料列數
+    - 用於快速測試資料子集，減少記憶體使用
+    - 類似於 pandas.read_csv 的 nrows 參數
+    - 預設值：`None`（讀取全部列）
 
 - **schema** : Schema | dict | str, optional
     - 資料結構定義配置
@@ -95,6 +102,9 @@ schema_dict = {
     'name': 'My Schema'
 }
 loader = Loader('data.csv', schema=schema_dict)
+
+# 快速測試 - 只載入前 1000 列
+loader = Loader('large_data.csv', nrows=1000)
 
 # 載入資料
 data, schema = loader.load()

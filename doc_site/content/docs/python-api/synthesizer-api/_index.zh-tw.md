@@ -54,11 +54,7 @@ def __init__(
     - 必要參數
     - 支援的方法：
         - `'default'`：使用 SDV-GaussianCopula
-        - `'sdv-single_table-{method}'`：使用 SDV 提供的方法
-            - `'copulagan'`：CopulaGAN 生成模型
-            - `'ctgan'`：CTGAN 生成模型
-            - `'gaussiancopula'`：高斯耦合模型
-            - `'tvae'`：TVAE 生成模型
+        - `'sdv-single_table-{method}'`：使用 SDV 提供的單表方法（考量未來 SDV 版本可能變動，不詳列所有內建方法）
         - `'custom_method'`：自訂合成方法（需要額外參數）
 
 - **kwargs** : dict, optional

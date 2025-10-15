@@ -1,6 +1,6 @@
 ---
 title: "自訂資料"
-weight: 132
+weight: 2
 ---
 
 要評測由外部工具生成的合成資料，請使用 `custom_data` 方法。

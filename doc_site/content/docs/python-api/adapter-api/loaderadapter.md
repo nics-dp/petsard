@@ -36,6 +36,10 @@ Initializes LoaderAdapter instance with automatic benchmark:// protocol handling
   - Configuration parameter dictionary
   - Must contain `filepath` key
   - Supports `benchmark://` protocol
+  - Optional parameters include:
+    - `schema`: Schema file path
+    - `nrows`: Load only specified number of rows (for quick testing)
+    - `delimiter`, `encoding`, `header`, etc. (pandas read parameters)
 
 ### `run(input: dict)`
 
@@ -72,6 +76,13 @@ from petsard.adapter import LoaderAdapter
 adapter = LoaderAdapter({
     "filepath": "data/users.csv",
     "schema": "schemas/user.yaml"
+})
+
+# Using nrows parameter for quick testing
+adapter = LoaderAdapter({
+    "filepath": "data/large_dataset.csv",
+    "schema": "schemas/data.yaml",
+    "nrows": 1000  # Load only first 1000 rows
 })
 
 # Or using benchmark:// protocol

@@ -36,6 +36,10 @@ LoaderAdapter 處理資料載入，並自動處理 `benchmark://` 協定以下�
   - 配置參數字典
   - 必須包含 `filepath` 鍵
   - 支援 `benchmark://` 協定
+  - 可選參數包括：
+    - `schema`：Schema 檔案路徑
+    - `nrows`：僅載入指定數量的資料列（用於快速測試）
+    - `delimiter`、`encoding`、`header` 等 pandas 讀取參數
 
 ### `run(input: dict)`
 
@@ -72,6 +76,13 @@ from petsard.adapter import LoaderAdapter
 adapter = LoaderAdapter({
     "filepath": "data/users.csv",
     "schema": "schemas/user.yaml"
+})
+
+# 使用 nrows 參數進行快速測試
+adapter = LoaderAdapter({
+    "filepath": "data/large_dataset.csv",
+    "schema": "schemas/data.yaml",
+    "nrows": 1000  # 僅載入前 1000 列
 })
 
 # 或使用 benchmark:// 協定
