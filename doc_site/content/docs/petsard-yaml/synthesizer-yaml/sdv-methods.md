@@ -1,6 +1,6 @@
 ---
 title: "SDV Methods"
-weight: 131
+weight: 5
 ---
 
 PETsARD integrates the [SDV (Synthetic Data Vault)](https://sdv.dev/) package, providing various advanced synthetic data generation algorithms.
@@ -23,13 +23,13 @@ Loader:
 Synthesizer:
   gaussian:
     method: sdv-single_table-gaussiancopula
-  
+
   ctgan:
     method: sdv-single_table-ctgan
-  
+
   copulagan:
     method: sdv-single_table-copulagan
-  
+
   tvae:
     method: sdv-single_table-tvae
 
@@ -111,15 +111,7 @@ VAE-based generative model with stable training process.
 
 ### Schema Conversion
 
-PETsARD automatically converts internal Schema to SDV Metadata:
-
-| PETsARD Type | SDV Type |
-|--------------|----------|
-| `int*`, `float*` | numerical |
-| `category` | categorical |
-| `bool` | boolean |
-| `datetime*` | datetime |
-| `email`, `phone` | pii |
+PETsARD automatically converts internal Schema to SDV Metadata
 
 ### Automatic Parameters
 
@@ -159,12 +151,6 @@ GaussianCopula and CopulaGAN support:
 - ✗ Cannot adjust training parameters (epochs, batch_size, etc.)
 - ✗ Cannot specify distribution types
 - ✗ Cannot manually select CPU/GPU
-
-### Usage Recommendations
-
-- Quick testing: Use built-in integration
-- Need parameter tuning: Use [SDV Custom Methods](../sdv-custom-methods)
-- GPU training: Recommend using NVIDIA GPU
 
 ## Important Notes
 

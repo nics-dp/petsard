@@ -1,6 +1,6 @@
 ---
 title: "SDV Custom Methods"
-weight: 132
+weight: 4
 ---
 
 使用 custom_method 方式靈活運用 SDV 合成方法，完全控制所有參數設定，包括 CPU/GPU 選擇、訓練參數調整等。
@@ -20,22 +20,111 @@ Loader:
   load_benchmark_with_schema:
     filepath: benchmark://adult-income
     schema: benchmark://adult-income_schema
+    nrows: 100 # 載入前 100 筆資料以加快測試速度
+Preprocessor:
+  default:
+    method: default
 
 Synthesizer:
-  exp_gaussiancopula:
+  # 方法 1: GaussianCopula
+  exp1_gaussiancopula:
     method: custom_method
     module_path: sdv-custom-methods.py
     class_name: SDV_GaussianCopula
-    device: cpu                      # 指定計算設備
-    default_distribution: truncnorm  # 自訂分布類型
-    enforce_rounding: true
+    # 可選參數：
+    # device: cpu                      # 計算設備（預設：cpu）
+    # default_distribution: truncnorm  # 數值欄位的預設分布（預設：truncnorm）
+    # enforce_min_max_values: true     # 強制最小/最大值限制（預設：true）
+    # enforce_rounding: true           # 整數欄位四捨五入（預設：true）
+    # numerical_distributions:         # 欄位特定分布（預設：{}）
+    #   age: beta
+    #   hours-per-week: gamma
 
+  # 方法 2: CTGAN
+  exp2_ctgan:
+    method: custom_method
+    module_path: sdv-custom-methods.py
+    class_name: SDV_CTGAN
+    epochs: 2                       # 訓練輪數（預設：300）
+    batch_size: 50                  # 批次大小（預設：500）⚠️ 重要：必須可被 'pac' 整除（預設 pac=10）
+    verbose: true                   # 顯示訓練進度（預設：false）
+    generator_dim:                  # 生成器層大小（預設：(256, 256)）
+      - 16
+      - 16
+    discriminator_dim:              # 判別器層大小（預設：(256, 256)）
+      - 16
+      - 16
+    # 可選參數：
+    # device: cpu                   # 計算設備（預設：cpu）
+    # pac: 10                       # PAC（打包）大小（預設：10）
+    # discriminator_steps: 1        # 每次生成器更新的判別器更新次數（預設：1）
+    # generator_lr: 0.0002          # 生成器學習率（預設：0.0002）
+    # discriminator_lr: 0.0002      # 判別器學習率（預設：0.0002）
+    # enforce_rounding: true        # 整數欄位四捨五入（預設：true）
+
+  # 方法 3: CopulaGAN
+  exp3_copulagan:
+    method: custom_method
+    module_path: sdv-custom-methods.py
+    class_name: SDV_CopulaGAN
+    epochs: 2                       # 訓練輪數（預設：300）
+    batch_size: 50                  # 批次大小（預設：500）
+                                    # ⚠️ 重要：必須可被 'pac' 整除（預設 pac=10）
+                                    # 有效值：10, 20, 30, 40, 50, 60, 70, 80, 90, 100 等
+    # pac: 10                       # PAC（打包）大小（預設：10）
+                                    # 控制樣本如何打包在一起
+                                    # batch_size 必須可被此值整除
+    verbose: true                   # 顯示訓練進度（預設：false）
+    generator_dim:                  # 生成器層大小（預設：(256, 256)）
+      - 16
+      - 16
+    discriminator_dim:              # 判別器層大小（預設：(256, 256)）
+      - 16
+      - 16
+    # 可選參數：
+    # device: cpu                   # 計算設備（預設：cpu）
+    # default_distribution: beta    # 數值欄位的預設分布（預設：beta）
+    # discriminator_steps: 1        # 每次生成器更新的判別器更新次數（預設：1）
+    # generator_lr: 0.0002          # 生成器學習率（預設：0.0002）
+    # discriminator_lr: 0.0002      # 判別器學習率（預設：0.0002）
+    # enforce_rounding: true        # 整數欄位四捨五入（預設：true）
+    # numerical_distributions:      # 欄位特定分布（預設：{}）
+    #   age: beta
+
+  # 方法 4: TVAE
+  exp4_tvae:
+    method: custom_method
+    module_path: sdv-custom-methods.py
+    class_name: SDV_TVAE
+    epochs: 2                       # 訓練輪數（預設：300）
+    batch_size: 50                  # 批次大小（預設：500）
+                                    # 注意：TVAE 不使用 'pac'，但保持 batch_size=50 以保持一致性
+    verbose: true                   # 顯示訓練進度（預設：false）
+    encoder_layers:                 # 編碼器層大小（預設：(128, 128)）
+      - 16
+      - 16
+    decoder_layers:                 # 解碼器層大小（預設：(128, 128)）
+      - 16
+      - 16
+    embedding_dim: 32               # 嵌入維度（預設：128）
+    # 可選參數：
+    # device: cpu                   # 計算設備（預設：cpu）
+    # encoder_layers: [128, 128]    # 編碼器層大小（預設：(128, 128)）
+    # decoder_layers: [128, 128]    # 解碼器層大小（預設：(128, 128)）
+    # enforce_min_max_values: true  # 強制最小/最大值限制（預設：true）
+    # enforce_rounding: true        # 整數欄位四捨五入（預設：true）
+    # verbose: false                # 顯示訓練進度（預設：false）
+    # l2scale: 0.00001              # L2 正則化係數（預設：1e-5）
+    # loss_factor: 2                # 重建損失因子（預設：2）
+
+Postprocessor:
+  default:
+    method: default
 Evaluator:
-  eval_quality:
-    method: sdmetrics-single_table-quality_report
-
+  eval_all_methods:
+    method: sdmetrics-qualityreport
 Reporter:
-  save_report:
+  save_comparison:
     method: save_report
     granularity: global
 ```
@@ -51,12 +140,6 @@ pip install sdv
 ### 2. 下載腳本
 
 下載 [`sdv-custom-methods.py`](https://github.com/nics-tw/petsard/blob/main/demo/petsard-yaml/synthesizer-yaml/sdv-custom-methods.py) 到與 YAML 檔案相同的目錄。
-
-### 3. 檢查 CUDA 可用性（可選）
-
-```bash
-python check_cuda.py
-```
 
 ## 支援的方法
 
@@ -214,31 +297,7 @@ exp_tvae:
 
 ## Device 參數詳解
 
-### CPU 模式（預設）
-
-```yaml
-device: cpu  # 使用 CPU 訓練
-```
-
-**特點：**
-- 無需 GPU 硬體
-- 適合小型資料集
-- 訓練速度較慢
-
-### CUDA 模式（需要 GPU）
-
-```yaml
-device: cuda  # 使用 GPU 訓練
-```
-
-**特點：**
-- 需要 NVIDIA GPU
-- 訓練速度大幅提升（2-10倍）
-- 適合大型資料集和長時間訓練
-
-**CUDA 檢查機制：**
-- 如果指定 `cuda` 但系統不支援，程式會**立即中斷**並顯示錯誤訊息
-- 使用 `check_cuda.py` 可事先檢查 CUDA 可用性
+`device` 參數用於指定計算設備，可選擇使用 CPU 或 GPU（CUDA）進行訓練。
 
 ### 方法支援情況
 
@@ -249,41 +308,7 @@ device: cuda  # 使用 GPU 訓練
 | SDV_CopulaGAN | ✓ | ✓ |
 | SDV_TVAE | ✓ | ✓ |
 
-## 參數調整建議
-
-### 快速測試配置
-
-```yaml
-epochs: 10-50        # 快速看到結果
-batch_size: 500      # 標準批次大小
-verbose: true        # 觀察訓練進度
-```
-
-### 生產環境配置
-
-```yaml
-epochs: 300-500      # 充分訓練
-batch_size: 500-1000 # 根據記憶體調整
-verbose: false       # 減少輸出
-device: cuda         # 使用 GPU 加速（如果可用）
-```
-
-### 記憶體優化
-
-```yaml
-batch_size: 250-500  # 減少批次大小
-epochs: 300          # 維持足夠訓練
-```
-
 ## 常見問題
-
-### Q: 如何知道我的環境是否支援 CUDA？
-
-執行檢查腳本：
-
-```bash
-python check_cuda.py
-```
 
 ### Q: CTGAN/CopulaGAN/TVAE 訓練很慢怎麼辦？
 
@@ -304,15 +329,3 @@ python check_cuda.py
 | 平衡品質與速度 | SDV_CopulaGAN |
 | 訓練穩定性 | SDV_TVAE |
 | 無 GPU 環境 | SDV_GaussianCopula 或降低 epochs |
-
-## 檔案來源
-
-- **腳本**：[`sdv-custom-methods.py`](https://github.com/nics-tw/petsard/blob/main/demo/petsard-yaml/synthesizer-yaml/sdv-custom-methods.py)
-- **YAML 範例**：[`sdv-custom-methods.yaml`](https://github.com/nics-tw/petsard/blob/main/demo/petsard-yaml/synthesizer-yaml/sdv-custom-methods.yaml)
-- **檢查腳本**：[`check_cuda.py`](https://github.com/nics-tw/petsard/blob/main/demo/petsard-yaml/synthesizer-yaml/check_cuda.py)
-- **Jupyter Notebook**：[`sdv-custom-methods.ipynb`](https://github.com/nics-tw/petsard/blob/main/demo/petsard-yaml/synthesizer-yaml/sdv-custom-methods.ipynb)
-
-## 相關文件
-
-- [內建 SDV 方法](../sdv-methods)：使用固定預設值的簡化版本
-- [Custom Method 說明](../custom-synthesis)：自訂合成方法的通用說明

@@ -1,6 +1,6 @@
 ---
 title: "SDV 合成方法"
-weight: 131
+weight: 5
 ---
 
 PETsARD 整合 [SDV (Synthetic Data Vault)](https://sdv.dev/) 套件，提供多種先進的合成資料生成演算法。
@@ -23,13 +23,13 @@ Loader:
 Synthesizer:
   gaussian:
     method: sdv-single_table-gaussiancopula
-  
+
   ctgan:
     method: sdv-single_table-ctgan
-  
+
   copulagan:
     method: sdv-single_table-copulagan
-  
+
   tvae:
     method: sdv-single_table-tvae
 
@@ -111,15 +111,7 @@ Reporter:
 
 ### Schema 轉換
 
-PETsARD 自動將內部 Schema 轉換為 SDV Metadata：
-
-| PETsARD 類型 | SDV 類型 |
-|--------------|----------|
-| `int*`, `float*` | numerical |
-| `category` | categorical |
-| `bool` | boolean |
-| `datetime*` | datetime |
-| `email`, `phone` | pii |
+PETsARD 自動將內部 Schema 轉換為 SDV Metadata
 
 ### 自動參數
 
@@ -159,12 +151,6 @@ GaussianCopula 與 CopulaGAN 支援：
 - ✗ 無法調整訓練參數（epochs、batch_size 等）
 - ✗ 無法指定分布類型
 - ✗ 無法手動選擇 CPU/GPU
-
-### 使用建議
-
-- 快速測試：使用內建整合
-- 需要調參：改用 [SDV Custom Methods](../sdv-custom-methods)
-- GPU 訓練：建議使用 NVIDIA GPU
 
 ## 注意事項
 

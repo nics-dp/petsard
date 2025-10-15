@@ -1,6 +1,6 @@
 ---
 title: "SDV Custom Methods"
-weight: 132
+weight: 4
 ---
 
 Flexibly use SDV synthesis methods via custom_method approach, with full control over all parameters including CPU/GPU selection and training parameters.
@@ -20,22 +20,111 @@ Loader:
   load_benchmark_with_schema:
     filepath: benchmark://adult-income
     schema: benchmark://adult-income_schema
+    nrows: 100 # load first 1K rows for faster testing
+Preprocessor:
+  default:
+    method: default
 
 Synthesizer:
-  exp_gaussiancopula:
+  # Method 1: GaussianCopula
+  exp1_gaussiancopula:
     method: custom_method
     module_path: sdv-custom-methods.py
     class_name: SDV_GaussianCopula
-    device: cpu                      # Specify compute device
-    default_distribution: truncnorm  # Customize distribution type
-    enforce_rounding: true
+    # Optional parameters:
+    # device: cpu                      # Compute device (default: cpu)
+    # default_distribution: truncnorm  # Default distribution for numerical columns (default: truncnorm)
+    # enforce_min_max_values: true     # Enforce min/max constraints (default: true)
+    # enforce_rounding: true           # Round integer columns (default: true)
+    # numerical_distributions:         # Column-specific distributions (default: {})
+    #   age: beta
+    #   hours-per-week: gamma
 
+  # Method 2: CTGAN
+  exp2_ctgan:
+    method: custom_method
+    module_path: sdv-custom-methods.py
+    class_name: SDV_CTGAN
+    epochs: 2                       # Training epochs (default: 300)
+    batch_size: 50                  # Batch size (default: 500) ⚠️ IMPORTANT: Must be divisible by 'pac' (default pac=10)
+    verbose: true                   # Show training progress (default: false)
+    generator_dim:                  # Generator layer sizes (default: (256, 256))
+      - 16
+      - 16
+    discriminator_dim:              # Discriminator layer sizes (default: (256, 256))
+      - 16
+      - 16
+    # Optional parameters:
+    # device: cpu                   # Compute device (default: cpu)
+    # pac: 10                       # PAC (Packing) size (default: 10)
+    # discriminator_steps: 1        # Discriminator updates per generator update (default: 1)
+    # generator_lr: 0.0002          # Generator learning rate (default: 0.0002)
+    # discriminator_lr: 0.0002      # Discriminator learning rate (default: 0.0002)
+    # enforce_rounding: true        # Round integer columns (default: true)
+
+  # Method 3: CopulaGAN
+  exp3_copulagan:
+    method: custom_method
+    module_path: sdv-custom-methods.py
+    class_name: SDV_CopulaGAN
+    epochs: 2                       # Training epochs (default: 300)
+    batch_size: 50                  # Batch size (default: 500)
+                                    # ⚠️ IMPORTANT: Must be divisible by 'pac' (default pac=10)
+                                    # Valid values: 10, 20, 30, 40, 50, 60, 70, 80, 90, 100, etc.
+    # pac: 10                       # PAC (Packing) size (default: 10)
+                                    # Controls how samples are packed together
+                                    # batch_size must be divisible by this value
+    verbose: true                   # Show training progress (default: false)
+    generator_dim:                  # Generator layer sizes (default: (256, 256))
+      - 16
+      - 16
+    discriminator_dim:              # Discriminator layer sizes (default: (256, 256))
+      - 16
+      - 16
+    # Optional parameters:
+    # device: cpu                   # Compute device (default: cpu)
+    # default_distribution: beta    # Default distribution for numerical columns (default: beta)
+    # discriminator_steps: 1        # Discriminator updates per generator update (default: 1)
+    # generator_lr: 0.0002          # Generator learning rate (default: 0.0002)
+    # discriminator_lr: 0.0002      # Discriminator learning rate (default: 0.0002)
+    # enforce_rounding: true        # Round integer columns (default: true)
+    # numerical_distributions:      # Column-specific distributions (default: {})
+    #   age: beta
+
+  # Method 4: TVAE
+  exp4_tvae:
+    method: custom_method
+    module_path: sdv-custom-methods.py
+    class_name: SDV_TVAE
+    epochs: 2                       # Training epochs (default: 300)
+    batch_size: 50                  # Batch size (default: 500) ⚠️ IMPORTANT: Must be divisible by 'pac' (default pac=10)
+                                    # Note: TVAE doesn't use 'pac', but keeping batch_size=50 for consistency
+    verbose: true                   # Show training progress (default: false)
+    encoder_layers:                 # Encoder layer sizes (default: (128, 128))
+      - 16
+      - 16
+    decoder_layers:                 # Decoder layer sizes (default: (128, 128))
+      - 16
+      - 16
+    embedding_dim: 32               # Embedding dimension (default: 128)
+    # Optional parameters:
+    # device: cpu                   # Compute device (default: cpu)
+    # encoder_layers: [128, 128]    # Encoder layer sizes (default: (128, 128))
+    # decoder_layers: [128, 128]    # Decoder layer sizes (default: (128, 128))
+    # enforce_min_max_values: true  # Enforce min/max constraints (default: true)
+    # enforce_rounding: true        # Round integer columns (default: true)
+    # verbose: false                # Show training progress (default: false)
+    # l2scale: 0.00001              # L2 regularization coefficient (default: 1e-5)
+    # loss_factor: 2                # Reconstruction loss factor (default: 2)
+
+Postprocessor:
+  default:
+    method: default
 Evaluator:
-  eval_quality:
-    method: sdmetrics-single_table-quality_report
-
+  eval_all_methods:
+    method: sdmetrics-qualityreport
 Reporter:
-  save_report:
+  save_comparison:
     method: save_report
     granularity: global
 ```
