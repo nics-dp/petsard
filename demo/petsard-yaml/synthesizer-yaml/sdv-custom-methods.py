@@ -98,12 +98,11 @@ def schema_to_sdv(schema: Schema, data: pd.DataFrame = None) -> dict[str, Any]:
 
     # 🔍 DIAGNOSTIC: Show complete SDV metadata structure
     print(f"  Converted to SDV metadata with {len(sdv_metadata['columns'])} columns")
-    print("\n  📋 完整的 SDV Metadata Dictionary:")
-    print("  " + "=" * 70)
-    import json
-
-    print("  " + json.dumps(sdv_metadata, indent=4).replace("\n", "\n  "))
-    print("  " + "=" * 70)
+    # print("\n  📋 完整的 SDV Metadata Dictionary:")
+    # print("  " + "=" * 70)
+    # import json
+    # print("  " + json.dumps(sdv_metadata, indent=4).replace("\n", "\n  "))
+    # print("  " + "=" * 70)
 
     return sdv_metadata
 
@@ -649,7 +648,8 @@ class SDV_CTGAN(BaseSDVSynthesizer):
 
     Supported parameters 支援參數：
         - epochs: Training epochs 訓練輪數 (default 預設 300)
-        - batch_size: Batch size 批次大小 (default 預設 500)
+        - batch_size: Batch size 批次大小 (default 預設 500, must be divisible by pac 必須能被 pac 整除)
+        - pac: PAC (Packing) size PAC 打包大小 (default 預設 10, batch_size must be divisible by this)
         - discriminator_steps: Discriminator training steps 判別器訓練步數 (default 預設 1)
         - generator_lr: Generator learning rate 生成器學習率 (default 預設 0.0002)
         - discriminator_lr: Discriminator learning rate 判別器學習率 (default 預設 0.0002)
@@ -677,6 +677,7 @@ class SDV_CTGAN(BaseSDVSynthesizer):
 
         # Add optional parameters 添加可選參數
         optional_params = [
+            "pac",
             "discriminator_steps",
             "generator_lr",
             "discriminator_lr",
@@ -714,7 +715,8 @@ class SDV_CopulaGAN(BaseSDVSynthesizer):
 
     Supported parameters 支援參數：
         - epochs: Training epochs 訓練輪數 (default 預設 300)
-        - batch_size: Batch size 批次大小 (default 預設 500)
+        - batch_size: Batch size 批次大小 (default 預設 500, must be divisible by pac 必須能被 pac 整除)
+        - pac: PAC (Packing) size PAC 打包大小 (default 預設 10, batch_size must be divisible by this)
         - discriminator_steps: Discriminator training steps 判別器訓練步數 (default 預設 1)
         - generator_lr: Generator learning rate 生成器學習率 (default 預設 0.0002)
         - discriminator_lr: Discriminator learning rate 判別器學習率 (default 預設 0.0002)
@@ -746,6 +748,7 @@ class SDV_CopulaGAN(BaseSDVSynthesizer):
 
         # Add other optional parameters 添加其他可選參數
         optional_params = [
+            "pac",
             "discriminator_steps",
             "generator_lr",
             "discriminator_lr",
