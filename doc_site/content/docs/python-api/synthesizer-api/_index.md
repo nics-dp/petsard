@@ -54,11 +54,7 @@ def __init__(
     - Required parameter
     - Supported methods:
         - `'default'`: Use SDV-GaussianCopula
-        - `'sdv-single_table-{method}'`: Use SDV provided methods
-            - `'copulagan'`: CopulaGAN generative model
-            - `'ctgan'`: CTGAN generative model
-            - `'gaussiancopula'`: Gaussian copula model
-            - `'tvae'`: TVAE generative model
+        - `'sdv-single_table-{method}'`: Use SDV provided single table methods (built-in methods not listed due to potential SDV version changes)
         - `'custom_method'`: Custom synthesis method (requires additional parameters)
 
 - **kwargs** : dict, optional

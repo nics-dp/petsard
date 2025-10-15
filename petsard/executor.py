@@ -3,6 +3,7 @@ import os
 import time
 from dataclasses import dataclass
 from datetime import datetime, timedelta
+from typing import TYPE_CHECKING
 
 import yaml
 
@@ -10,6 +11,9 @@ from petsard.config import Config
 from petsard.config_base import BaseConfig
 from petsard.exceptions import ConfigError
 from petsard.status import Status
+
+if TYPE_CHECKING:
+    from petsard.metadater.metadata import Schema
 
 
 @dataclass
@@ -81,6 +85,9 @@ class Executor:
         self.sequence = self.config.sequence
         self.status = Status(config=self.config)
         self.result: dict = {}
+
+        # 4. 推論 Schema（如果配置中包含 Preprocessor）
+        self._infer_pipeline_schemas(yaml_config)
 
         # Execution state tracking
         # NOTE: This attribute will be removed in v2.0.0 and replaced with run() return value
@@ -187,6 +194,15 @@ class Executor:
 
             self.status.put(module, expt, ops)
 
+            # CRITICAL: 在 Loader/Splitter 執行後立即推論 Preprocessor Schema
+            # 這確保 Synthesizer 等後續模組能獲得正確的 Schema
+            if (
+                module in ["Loader", "Splitter"]
+                and "_preprocessor_config" in self.status.inferred_schemas
+            ):
+                self._logger.info(f"{module} 執行完成，開始推論 Preprocessor Schema")
+                self.infer_preprocessor_schema()
+
             # collect result
             self._set_result(module)
 
@@ -246,3 +262,95 @@ class Executor:
         Use the return value of run() method instead.
         """
         return self._execution_completed
+
+    def _infer_pipeline_schemas(self, yaml_config: dict) -> None:
+        """
+        推論 pipeline 各階段的 Schema
+
+        此方法在 Executor 初始化時被調用，用於預測整個 pipeline 中
+        每個模組的 input 和 output SchemaMetadata
+
+        Args:
+            yaml_config: YAML 配置字典
+        """
+        # 只有當配置中包含 Preprocessor 時才進行推論
+        if "Preprocessor" not in yaml_config:
+            self._logger.debug("配置中沒有 Preprocessor，跳過 Schema 推論")
+            return
+
+        self._logger.info("開始推論 pipeline 各階段的 Schema")
+
+        try:
+            # 從 Loader 配置推論初始 Schema（如果可用）
+            # 注意：實際的 Loader Schema 會在運行時由 Loader 提供
+            # 這裡只是設置推論器準備好接收它
+
+            # 提取 Preprocessor 配置
+            preprocessor_config = yaml_config.get("Preprocessor", {})
+
+            # 將配置儲存到 status，以便後續使用
+            self.status.inferred_schemas["_preprocessor_config"] = preprocessor_config
+
+            self._logger.info(
+                f"Schema 推論配置已準備：將在 Loader 執行後推論 {len(preprocessor_config)} 種處理類型"
+            )
+
+        except Exception as e:
+            self._logger.warning(f"Schema 推論過程中發生錯誤: {e}")
+            self._logger.debug("詳細錯誤", exc_info=True)
+
+    def infer_preprocessor_schema(self) -> None:
+        """
+        在 Loader 執行後，推論 Preprocessor 的輸出 Schema
+
+        此方法應該在 Loader 完成後被調用，以便基於實際的資料 Schema
+        來推論 Preprocessor 會如何改變 Schema
+        """
+        if "Loader" not in self.status.metadata:
+            self._logger.warning("Loader Schema 尚未可用，無法推論 Preprocessor Schema")
+            return
+
+        if "_preprocessor_config" not in self.status.inferred_schemas:
+            self._logger.debug("沒有 Preprocessor 配置，跳過 Schema 推論")
+            return
+
+        try:
+            loader_schema = self.status.get_metadata("Loader")
+            preprocessor_config = self.status.inferred_schemas["_preprocessor_config"]
+
+            self._logger.info("開始推論 Preprocessor 輸出 Schema")
+
+            # 使用 SchemaInferencer 推論
+            inferred_schema = self.status.schema_inferencer.infer_preprocessor_output(
+                input_schema=loader_schema, processor_config=preprocessor_config
+            )
+
+            # 儲存推論結果
+            self.status.inferred_schemas["Preprocessor"] = inferred_schema
+
+            self._logger.info(
+                f"Preprocessor Schema 推論完成：{len(inferred_schema.attributes)} 個欄位"
+            )
+
+            # 記錄推論的詳細資訊
+            inference_history = self.status.schema_inferencer.get_inference_history()
+            if inference_history:
+                last_inference = inference_history[-1]
+                changes_count = len(last_inference.get("changes", []))
+                self._logger.info(f"檢測到 {changes_count} 個欄位的類型轉換")
+
+        except Exception as e:
+            self._logger.error(f"推論 Preprocessor Schema 時發生錯誤: {e}")
+            self._logger.debug("詳細錯誤", exc_info=True)
+
+    def get_inferred_schema(self, module: str) -> "Schema | None":
+        """
+        獲取指定模組的推論 Schema
+
+        Args:
+            module: 模組名稱（如 'Preprocessor'）
+
+        Returns:
+            推論的 Schema，如果不存在則返回 None
+        """
+        return self.status.inferred_schemas.get(module)

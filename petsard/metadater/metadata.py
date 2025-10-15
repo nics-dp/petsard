@@ -18,6 +18,7 @@ class Attribute:
     # 資料類型
     type: str | None = None
     type_attr: dict[str, Any] | None = None
+    category: bool | None = None
     logical_type: str | None = None
 
     # 配置參數 Configuration parameters (inherit or override)

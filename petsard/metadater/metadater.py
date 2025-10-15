@@ -154,8 +154,22 @@ class AttributeMetadater:
         # 型別轉換
         if attribute.type:
             try:
-                if attribute.type == "int64" and aligned.isnull().any():
-                    aligned = aligned.astype("Int64")  # Nullable integer
+                # CRITICAL FIX: Handle both "integer" (schema format) and "int64" (pandas dtype format)
+                # 關鍵修復：處理 "integer"（schema 格式）和 "int64"（pandas dtype 格式）
+                if attribute.type in ("integer", "int64", "int32", "int16", "int8"):
+                    # For integer types, always use nullable Int64 to handle potential NaN values
+                    # 對於整數類型，始終使用 nullable Int64 來處理潛在的 NaN 值
+                    if aligned.isnull().any():
+                        aligned = aligned.astype("Int64")
+                    else:
+                        # No nulls, can use regular int64
+                        # 沒有空值，可以使用普通的 int64
+                        try:
+                            aligned = aligned.astype("int64")
+                        except (ValueError, TypeError):
+                            # If conversion fails, use Int64 anyway
+                            # 如果轉換失敗，仍然使用 Int64
+                            aligned = aligned.astype("Int64")
                 elif attribute.type == "boolean":
                     aligned = aligned.astype("boolean")
                 elif attribute.type == "category":

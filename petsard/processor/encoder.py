@@ -9,6 +9,7 @@ import pandas as pd
 from sklearn.preprocessing import LabelEncoder, OneHotEncoder
 
 from petsard.exceptions import ConfigError, UnfittedError
+from petsard.processor.schema_transform import SchemaTransformMixin, schema_transform
 
 
 def dict_get_na(dictionary: dict, key: str) -> Any:
@@ -137,10 +138,18 @@ class Encoder:
         )
 
 
-class EncoderUniform(Encoder):
+class EncoderUniform(SchemaTransformMixin, Encoder):
     """
     Implement a uniform encoder.
+    將類別資料轉換為均勻分佈的數值 (0-1)
     """
+
+    SCHEMA_TRANSFORM = schema_transform(
+        input_category=True,
+        output_type="float64",
+        output_category=False,
+        description="Uniform encoding: categorical -> uniform distribution (0-1)",
+    )
 
     def __init__(self) -> None:
         super().__init__()
@@ -247,12 +256,20 @@ class EncoderUniform(Encoder):
         return result.replace("pd.NA-PETsARD-impossible", pd.NA)
 
 
-class EncoderLabel(Encoder):
+class EncoderLabel(SchemaTransformMixin, Encoder):
     """
     Implement a label encoder.
+    將類別資料轉換為整數標籤
     """
 
     PROC_TYPE = ("encoder", "discretizing")
+
+    SCHEMA_TRANSFORM = schema_transform(
+        input_category=True,
+        output_type="int64",
+        output_category=False,
+        description="Label encoding: categorical -> integer labels",
+    )
 
     def __init__(self) -> None:
         super().__init__()
@@ -306,10 +323,21 @@ class EncoderLabel(Encoder):
         return self.model.inverse_transform(data)
 
 
-class EncoderOneHot(Encoder):
+class EncoderOneHot(SchemaTransformMixin, Encoder):
     """
     Implement a one-hot encoder.
+    將類別資料轉換為多個二進制欄位 (one-hot encoding)
     """
+
+    SCHEMA_TRANSFORM = schema_transform(
+        input_category=True,
+        output_type="int64",
+        output_category=False,
+        creates_columns=True,
+        removes_columns=True,
+        column_pattern="{column}_{value}",
+        description="One-hot encoding: categorical -> multiple binary columns",
+    )
 
     def __init__(self) -> None:
         super().__init__()
