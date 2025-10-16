@@ -1,6 +1,6 @@
 ---
 title: "Evaluator YAML"
-weight: 140
+weight: 160
 ---
 
 Evaluator 模組的 YAML 設定檔案格式。
@@ -88,7 +88,7 @@ Splitter:
 Synthesizer:
   external_data:
     method: custom_data
-    filepath: benchmark://adult-income
+    filepath: benchmark://adult-income_syn
     schema: benchmark://adult-income_schema
 Evaluator:
   # Step 1: 資料有效性診斷（應接近 1.0）
@@ -140,7 +140,7 @@ Splitter:
 Synthesizer:
   external_data:
     method: custom_data
-    filepath: benchmark://adult-income
+    filepath: benchmark://adult-income_syn
     schema: benchmark://adult-income_schema
 Evaluator:
   # Step 1: 資料有效性診斷（應接近 1.0）

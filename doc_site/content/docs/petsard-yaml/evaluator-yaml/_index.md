@@ -1,6 +1,6 @@
 ---
 title: "Evaluator YAML"
-weight: 140
+weight: 160
 ---
 
 YAML configuration file format for the Evaluator module.
@@ -88,7 +88,7 @@ Splitter:
 Synthesizer:
   external_data:
     method: custom_data
-    filepath: benchmark://adult-income
+    filepath: benchmark://adult-income_syn
     schema: benchmark://adult-income_schema
 Evaluator:
   # Step 1: Data validity diagnosis (should be close to 1.0)
@@ -140,7 +140,7 @@ Splitter:
 Synthesizer:
   external_data:
     method: custom_data
-    filepath: benchmark://adult-income
+    filepath: benchmark://adult-income_syn
     schema: benchmark://adult-income_schema
 Evaluator:
   # Step 1: Data validity diagnosis (should be close to 1.0)
