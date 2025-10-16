@@ -1,0 +1,11 @@
+---
+field_combinations:
+  -
+    - education: income        # Define field mapping: education (source) -> income (target)
+    -
+        Doctorate:             # When education is Doctorate
+          - '>50K'             # income can only be '>50K'
+        Masters:               # When education is Masters
+          - '>50K'             # income can be '>50K'
+          - '<=50K'            # or '<=50K'
+...

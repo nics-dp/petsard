@@ -1,0 +1,13 @@
+---
+Loader:
+  load_benchmark_with_schema:
+    filepath: benchmark://adult-income
+    schema: benchmark://adult-income_schema
+Constrainer:
+  validate_field_constraints:
+    method: auto
+    constraints_yaml: adult-income_constraints_field_constraints.yaml
+Reporter:
+  validation:
+    method: save_validation
+...
