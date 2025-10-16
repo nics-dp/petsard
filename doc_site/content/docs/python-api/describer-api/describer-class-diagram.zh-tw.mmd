@@ -1,0 +1,127 @@
+classDiagram
+    class Describer {
+        -config: DescriberConfig
+        -mode: str
+        +__init__(method: str, mode: str, **kwargs)
+        +create() void
+        +eval(data: dict) dict
+        #_configure_implementation(method: str, **kwargs) void
+        #_create_evaluator_class() BaseEvaluator
+    }
+
+    class DescriberConfig {
+        +DEFAULT_DESCRIBING_METHOD: str
+        +mode: str
+        +method: str
+        +method_code: int
+        +eval_method: str
+        +custom_params: dict
+        +__post_init__() void
+        #_init_eval_method() void
+    }
+
+    class Evaluator {
+        <<abstract>>
+        -config: EvaluatorConfig
+        -_impl: BaseEvaluator
+        +__init__(method: str, **kwargs)
+        +create() void
+        +eval(data: dict) dict
+        #_configure_implementation(method: str, **kwargs) void
+        #_create_evaluator_class() BaseEvaluator
+    }
+
+    class DescriberDescribe {
+        +REQUIRED_INPUT_KEYS: list
+        +EXEC_GRANULARITY_MAP: dict
+        +MODULE_MAP: dict
+        -desc_config: DescriberDescribeConfig
+        +__init__(config: dict)
+        #_eval(data: dict) dict
+        #_get_columnwise(columnwise_desc: list) DataFrame
+    }
+
+    class DescriberCompare {
+        +REQUIRED_INPUT_KEYS: list
+        +COMPARE_METHOD_MAP: dict
+        -base_describer: DescriberDescribe
+        -target_describer: DescriberDescribe
+        +__init__(config: dict)
+        #_eval(data: dict) dict
+        #_apply_comparison(base_df: DataFrame, target_df: DataFrame, method: str) DataFrame
+        #_calculate_jsdivergence(base_df: DataFrame, target_df: DataFrame) dict
+    }
+
+    class BaseEvaluator {
+        <<abstract>>
+        +config: dict
+        +__init__(config: dict)
+        +create() void
+        +eval(data: dict) dict
+        #_eval(data: dict) dict
+    }
+
+    class DescriberDescribeConfig {
+        +eval_method: str
+        +describe_method: list
+        +percentile: float
+        +AVAILABLE_DESCRIBE_METHODS: list
+        +REQUIRED_INPUT_KEYS: list
+        +update_data(data: dict) void
+    }
+
+    class DescriberCompareConfig {
+        +eval_method: str
+        +stats_method: list
+        +compare_method: str
+        +aggregated_method: str
+        +summary_method: str
+        +columns_info: dict
+        +AVAILABLE_STATS_METHODS: list
+        +REQUIRED_INPUT_KEYS: list
+        +update_data(data: dict) void
+    }
+
+    class EvaluatorConfig {
+        <<abstract>>
+        +method: str
+        +method_code: int
+        +eval_method: str
+        +custom_params: dict
+        +__post_init__() void
+        #_init_eval_method() void
+    }
+
+    Evaluator <|-- Describer : extends
+    EvaluatorConfig <|-- DescriberConfig : extends
+    BaseEvaluator <|-- DescriberDescribe : implements
+    BaseEvaluator <|-- DescriberCompare : implements
+    
+    Describer *-- DescriberConfig : uses
+    Describer ..> DescriberDescribe : creates
+    Describer ..> DescriberCompare : creates
+    DescriberDescribe *-- DescriberDescribeConfig : uses
+    DescriberCompare *-- DescriberCompareConfig : uses
+    DescriberCompare ..> DescriberDescribe : reuses
+    
+    DescriberDescribeConfig --|> BaseConfig : extends
+    DescriberCompareConfig --|> BaseConfig : extends
+    DescriberConfig --|> EvaluatorConfig : extends
+
+    class BaseConfig {
+        <<abstract>>
+        #_logger: Logger
+        +__post_init__() void
+    }
+
+    %% 馬卡龍配色方案 - 低彩度柔和色調
+    style Describer fill:#e1f0ff,stroke:#7db8e8,stroke-width:3px
+    style Evaluator fill:#f3e6ff,stroke:#9966cc,stroke-width:2px
+    style BaseEvaluator fill:#f3e6ff,stroke:#9966cc,stroke-width:2px
+    style DescriberDescribe fill:#ffe6d5,stroke:#ffb380,stroke-width:2px
+    style DescriberCompare fill:#ffe6d5,stroke:#ffb380,stroke-width:2px
+    style DescriberConfig fill:#f3e6ff,stroke:#9966cc,stroke-width:2px
+    style EvaluatorConfig fill:#f3e6ff,stroke:#9966cc,stroke-width:2px
+    style DescriberDescribeConfig fill:#f3e6ff,stroke:#9966cc,stroke-width:2px
+    style DescriberCompareConfig fill:#f3e6ff,stroke:#9966cc,stroke-width:2px
+    style BaseConfig fill:#f3e6ff,stroke:#9966cc,stroke-width:2px

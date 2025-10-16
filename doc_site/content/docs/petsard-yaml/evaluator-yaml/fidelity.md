@@ -1,6 +1,6 @@
 ---
 title: "Data Fidelity Assessment"
-weight: 143
+weight: 3
 ---
 
 Measure the similarity between synthetic and original data, evaluating the preservation of data distributions and variable relationships.
@@ -24,14 +24,14 @@ Splitter:
 Synthesizer:
   external_data:
     method: custom_data
-    filepath: benchmark://adult-income
+    filepath: benchmark://adult-income_syn
     schema: benchmark://adult-income_schema
 Evaluator:
   fidelity_check:
     method: sdmetrics-qualityreport
 ```
 
-## Parameter Description
+## Main Parameters
 
 - **method** (`string`, required)
   - Fixed value: `sdmetrics-qualityreport`

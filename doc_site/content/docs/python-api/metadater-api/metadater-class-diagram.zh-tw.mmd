@@ -1,0 +1,74 @@
+classDiagram
+    class Metadater {
+        <<main>>
+        +from_data(data: dict) Metadata
+        +from_dict(config: dict) Metadata
+        +diff(metadata: Metadata, data: dict) dict
+        +align(metadata: Metadata, data: dict) dict
+        +get(metadata: Metadata, name: str) Schema
+        +add(metadata: Metadata, schema: Schema) Metadata
+        +update(metadata: Metadata, schema: Schema) Metadata
+        +remove(metadata: Metadata, name: str) Metadata
+    }
+
+    class SchemaMetadater {
+        <<operation>>
+        +from_data(data: DataFrame) Schema
+        +from_dict(config: dict) Schema
+        +diff(schema: Schema, data: DataFrame) dict
+        +align(schema: Schema, data: DataFrame) DataFrame
+        +get(schema: Schema, name: str) Attribute
+        +add(schema: Schema, attribute: Attribute) Schema
+        +update(schema: Schema, attribute: Attribute) Schema
+        +remove(schema: Schema, name: str) Schema
+    }
+
+    class AttributeMetadater {
+        <<operation>>
+        +from_data(data: Series) Attribute
+        +from_dict(config: dict) Attribute
+        +diff(attribute: Attribute, data: Series) dict
+        +align(attribute: Attribute, data: Series) Series
+        +validate(attribute: Attribute, data: Series) tuple
+    }
+
+    class Metadata {
+        <<dataclass>>
+        +id: str
+        +schemas: dict[str, Schema]
+    }
+
+    class Schema {
+        <<dataclass>>
+        +id: str
+        +attributes: dict[str, Attribute]
+    }
+
+    class Attribute {
+        <<dataclass>>
+        +name: str
+        +type: str
+        +nullable: bool
+        +logical_type: str
+    }
+
+    %% 操作關係
+    Metadater ..> Metadata : creates/operates
+    SchemaMetadater ..> Schema : creates/operates
+    AttributeMetadater ..> Attribute : creates/operates
+    
+    %% 組合關係
+    Metadata *-- Schema : contains
+    Schema *-- Attribute : contains
+    
+    %% 階層呼叫
+    Metadater --> SchemaMetadater : calls
+    SchemaMetadater --> AttributeMetadater : calls
+
+    %% 樣式標示
+    style Metadater fill:#e6f3ff,stroke:#4a90e2,stroke-width:3px
+    style SchemaMetadater fill:#fff2e6,stroke:#ff9800,stroke-width:2px
+    style AttributeMetadater fill:#fff2e6,stroke:#ff9800,stroke-width:2px
+    style Metadata fill:#f0f8ff,stroke:#6495ed,stroke-width:2px
+    style Schema fill:#f0f8ff,stroke:#6495ed,stroke-width:2px
+    style Attribute fill:#f0f8ff,stroke:#6495ed,stroke-width:2px

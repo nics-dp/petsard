@@ -7,7 +7,7 @@ weight: 310
 
 ## 類別架構
 
-{{< mermaid-file file="content/docs/python-api/loader-api/loader-class-diagram.mmd" >}}
+{{< mermaid-file file="content/docs/python-api/loader-api/loader-class-diagram.zh-tw.mmd" >}}
 
 > **圖例說明：**
 > - 藍色框：主要類別

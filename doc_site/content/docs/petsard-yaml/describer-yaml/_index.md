@@ -5,6 +5,85 @@ weight: 150
 
 YAML configuration file format for the Describer module. Provides statistical description and comparison functionality for datasets.
 
+## Usage Examples
+
+Click the button below to run the example in Colab:
+
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/nics-tw/petsard/blob/main/demo/petsard-yaml/describer-yaml/describer.ipynb)
+
+### Single Dataset Description (describe mode)
+
+```yaml
+---
+Synthesizer:
+  external_data:
+    method: custom_data
+    filepath: benchmark://adult-income_syn
+    schema: benchmark://adult-income_schema
+Describer:
+  describer-describe:
+    method: default    # Auto-detects as describe (single source)
+    source: Synthesizer
+...
+```
+
+### Dataset Comparison (compare mode)
+
+```yaml
+---
+Splitter:
+  external_split:
+    method: custom_data
+    filepath:
+      ori: benchmark://adult-income_ori
+      control: benchmark://adult-income_control
+    schema:
+      ori: benchmark://adult-income_schema
+      control: benchmark://adult-income_schema
+Synthesizer:
+  external_data:
+    method: custom_data
+    filepath: benchmark://adult-income_syn
+    schema: benchmark://adult-income_schema
+Describer:
+  describer-compare:
+    method: default         # Auto-detects as compare (two sources)
+    source:
+      base: Splitter.train  # Use Splitter's train output as base
+      target: Synthesizer   # Compare with Synthesizer's output
+...
+```
+
+### Custom Comparison Method
+
+```yaml
+---
+Loader:
+  load_original:
+    filepath: benchmark://adult-income_ori
+    schema: benchmark://adult-income_schema
+Synthesizer:
+  generate_synthetic:
+    method: custom_data
+    filepath: benchmark://adult-income_syn
+    schema: benchmark://adult-income_schema
+Describer:
+  custom_comparison:
+    method: compare           # Explicitly specify compare method
+    source:
+      base: Loader
+      target: Synthesizer
+    stats_method:             # Custom statistical methods
+      - mean
+      - std
+      - nunique
+      - jsdivergence
+    compare_method: diff      # Use difference instead of percentage change
+    aggregated_method: mean
+    summary_method: mean
+...
+```
+
 ## Main Parameters
 
 - **method** (`string`, optional)
@@ -81,95 +160,8 @@ Note: Backward compatibility supports `ori`/`syn` key names, but `base`/`target`
 | `pct_change` | `(target - base) / abs(base)` | View relative change magnitude |
 | `diff` | `target - base` | View absolute change amount |
 
-## Usage Examples
-
-Click the button below to run the example in Colab:
-
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/nics-tw/petsard/blob/main/demo/petsard-yaml/describer-yaml/describer.ipynb)
-
-### Single Dataset Description (describe mode)
-
-```yaml
----
-Synthesizer:
-  external_data:
-    method: custom_data
-    filepath: benchmark://adult-income
-    schema: benchmark://adult-income_schema
-Describer:
-  describer-describe:
-    method: default    # Auto-detects as describe (single source)
-    source: Synthesizer
-...
-```
-
-### Dataset Comparison (compare mode)
-
-```yaml
----
-Splitter:
-  external_split:
-    method: custom_data
-    filepath:
-      ori: benchmark://adult-income_ori
-      control: benchmark://adult-income_control
-    schema:
-      ori: benchmark://adult-income_schema
-      control: benchmark://adult-income_schema
-Synthesizer:
-  external_data:
-    method: custom_data
-    filepath: benchmark://adult-income
-    schema: benchmark://adult-income_schema
-Describer:
-  describer-compare:
-    method: default         # Auto-detects as compare (two sources)
-    source:
-      base: Splitter.train  # Use Splitter's train output as base
-      target: Synthesizer   # Compare with Synthesizer's output
-...
-```
-
-### Custom Comparison Method
-
-```yaml
----
-Loader:
-  load_original:
-    filepath: benchmark://adult-income_ori
-    schema: benchmark://adult-income_schema
-Synthesizer:
-  generate_synthetic:
-    method: custom_data
-    filepath: benchmark://adult-income
-    schema: benchmark://adult-income_schema
-Describer:
-  custom_comparison:
-    method: compare           # Explicitly specify compare method
-    source:
-      base: Loader
-      target: Synthesizer
-    stats_method:             # Custom statistical methods
-      - mean
-      - std
-      - nunique
-      - jsdivergence
-    compare_method: diff      # Use difference instead of percentage change
-    aggregated_method: mean
-    summary_method: mean
-...
-```
-
-## Auto-detection Logic (default method)
-
-- **1 source**: Automatically uses `describe` method
-- **2 sources**: Automatically uses `compare` method (must use dictionary format)
-  - Must explicitly specify `base` and `target` keys
-- **Other counts**: Error
-
 ## Execution Notes
 
-- Experiment names (second level) can be freely named, descriptive names recommended
 - source parameter is required, must explicitly specify data source(s)
 - method parameter can be omitted, defaults to `default` (auto-detection)
 - Statistical methods automatically filtered based on data types

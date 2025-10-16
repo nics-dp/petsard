@@ -1,6 +1,6 @@
 ---
 title: "資料有效性診斷"
-weight: 141
+weight: 1
 ---
 
 檢查合成資料是否準確反映原始資料的基本特性和結構。
@@ -24,14 +24,14 @@ Splitter:
 Synthesizer:
   external_data:
     method: custom_data
-    filepath: benchmark://adult-income
+    filepath: benchmark://adult-income_syn
     schema: benchmark://adult-income_schema
 Evaluator:
   validity_check:
     method: sdmetrics-diagnosticreport
 ```
 
-## 參數說明
+## 主要參數
 
 - **method** (`string`, 必要參數)
   - 固定值：`sdmetrics-diagnosticreport`

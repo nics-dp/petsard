@@ -1,0 +1,19 @@
+graph LR
+    A[Start] --> B{Has Synthesizer?}
+    B -->|No| C[Validate Mode<br/>Verify Data]
+    B -->|Yes| D{Is custom_data?}
+    D -->|Yes| C
+    D -->|No| E[Resample Mode<br/>Iterative Sampling]
+
+    C --> F[Keep All Data<br/>Output Validation Report]
+    E --> G[Filter Non-compliant Data<br/>Resample Until Target Met]
+
+    classDef startNode fill:#e1f5e1,stroke:#4caf50,stroke-width:2px
+    classDef decisionNode fill:#fff3e0,stroke:#ff9800,stroke-width:2px
+    classDef modeNode fill:#e3f2fd,stroke:#2196f3,stroke-width:2px
+    classDef resultNode fill:#f3e5f5,stroke:#9c27b0,stroke-width:2px
+
+    class A startNode
+    class B,D decisionNode
+    class C,E modeNode
+    class F,G resultNode

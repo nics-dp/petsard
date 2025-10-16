@@ -1,0 +1,19 @@
+graph LR
+    A[開始] --> B{有 Synthesizer?}
+    B -->|否| C[Validate 模式<br/>驗證資料]
+    B -->|是| D{是 custom_data?}
+    D -->|是| C
+    D -->|否| E[Resample 模式<br/>反覆抽樣]
+
+    C --> F[保留所有資料<br/>輸出驗證報告]
+    E --> G[過濾不符合資料<br/>重複抽樣直到達標]
+
+    classDef startNode fill:#e1f5e1,stroke:#4caf50,stroke-width:2px
+    classDef decisionNode fill:#fff3e0,stroke:#ff9800,stroke-width:2px
+    classDef modeNode fill:#e3f2fd,stroke:#2196f3,stroke-width:2px
+    classDef resultNode fill:#f3e5f5,stroke:#9c27b0,stroke-width:2px
+
+    class A startNode
+    class B,D decisionNode
+    class C,E modeNode
+    class F,G resultNode

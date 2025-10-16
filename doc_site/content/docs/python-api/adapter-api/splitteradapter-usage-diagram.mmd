@@ -1,0 +1,45 @@
+classDiagram
+
+    class SplitterAdapter {
+        +config: dict
+        +splitter: Splitter
+        +is_custom_data: bool
+        +ori_loader_adapter: LoaderAdapter
+        +ctrl_loader_adapter: LoaderAdapter
+        +__init__(config)
+        +run() tuple~dict, dict, list~
+        -_create_loader_config(config, key) dict
+    }
+
+    class Splitter {
+        +config: dict
+        +num_samples: int
+        +train_split_ratio: float
+        +split(data, metadata) tuple
+        -_bootstrap_with_overlap_control()
+    }
+
+    class LoaderAdapter {
+        +load() tuple~DataFrame, Schema~
+    }
+
+    SplitterAdapter ..> Splitter : uses for data splitting
+    SplitterAdapter ..> LoaderAdapter : uses for custom_data method
+
+    %% Style definitions
+    class SplitterAdapter {
+        <<Main Class>>
+    }
+    style SplitterAdapter fill:#E6E6FA
+
+    class Splitter {
+        <<Core Module>>
+    }
+    style Splitter fill:#4169E1,color:#fff
+
+    class LoaderAdapter {
+        <<Optional: Custom Data>>
+    }
+    style LoaderAdapter fill:#FFE4E1
+
+    note for SplitterAdapter "1. Normal mode: Uses Splitter for bootstrap sampling\n2. Custom data mode: Uses LoaderAdapter for ori/control data\n3. Provides overlap control for multiple samples"

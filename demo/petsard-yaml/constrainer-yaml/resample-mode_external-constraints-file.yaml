@@ -1,0 +1,20 @@
+---
+Loader:
+  load_benchmark_with_schema:
+    filepath: benchmark://adult-income
+    schema: benchmark://adult-income_schema
+Synthesizer:
+  default:
+    method: default
+Constrainer:
+  external_constraints:
+    # Operating mode setting
+    method: auto  # Operating mode, default 'auto' (auto-detect: has Synthesizer and not custom_data → resample)
+    # Constraint conditions (use exclusively with setting)
+    constraints_yaml: adult-income_constraints.yaml
+    # Sampling parameters (resample mode only)
+    target_rows: None        # Target number of output rows, defaults None to input data row count
+    sampling_ratio: 10.0     # Sampling multiplier per attempt, default 10.0
+    max_trials: 300          # Maximum number of attempts, default 300
+    verbose_step: 10         # Progress output interval, default 10
+...

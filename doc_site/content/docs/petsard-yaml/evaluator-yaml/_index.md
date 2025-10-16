@@ -1,45 +1,9 @@
 ---
 title: "Evaluator YAML"
-weight: 140
+weight: 160
 ---
 
 YAML configuration file format for the Evaluator module.
-
-## Main Parameters
-
-- **method** (`string`, required)
-  - Evaluation method name
-  - See supported methods in the table below
-
-## Supported Evaluation Methods
-
-| Type | Method Name | Description | Recommended Standard |
-|------|-------------|-------------|---------------------|
-| **Default Method** | `default` | Default evaluation (equivalent to `sdmetrics-qualityreport`) | Score ≥ 0.75¹ |
-| **Data Validity** | `sdmetrics-diagnosticreport` | Check data structure and basic characteristics | Score ≈ 1.0² |
-| **Privacy Protection** | `anonymeter-singlingout` | Singling out risk assessment | Risk < 0.09³ |
-| | `anonymeter-linkability` | Linkability risk assessment | Risk < 0.09³ |
-| | `anonymeter-inference` | Inference risk assessment | Risk < 0.09³ |
-| **Data Fidelity** | `sdmetrics-qualityreport` | Statistical distribution similarity assessment | Score ≥ 0.75¹ |
-| **Data Utility** | `mlutility` | Machine learning model utility | Task-dependent⁴ |
-| **Custom Assessment** | `custom_method` | Custom evaluation method | - |
-
-### Recommended Standards Notes
-
-¹ **Fidelity Standard** (Score ≥ 0.75): Based on statistical distribution similarity
-
-² **Validity Standard** (Score ≈ 1.0): Data structure integrity check
-
-³ **Privacy Risk Standard** (Risk < 0.09): Based on PDPC Singapore guidelines
-
-⁴ **Utility Standard** (Task-dependent):
-- Classification tasks: MCC ≥ 0.5
-- Regression tasks: R² ≥ 0.7
-- Clustering tasks: Silhouette coefficient ≥ 0.5
-
-> **Default Method**: When `method: default` is used, the system automatically executes `sdmetrics-qualityreport` to evaluate data fidelity.
-
-> **Threshold Adjustment**: The above recommended standards are general reference values. Please adjust appropriate thresholds based on your specific use case and risk tolerance. For detailed theoretical foundations and references for each metric, please refer to the corresponding subdocumentation.
 
 ## Usage Examples
 
@@ -88,7 +52,7 @@ Splitter:
 Synthesizer:
   external_data:
     method: custom_data
-    filepath: benchmark://adult-income
+    filepath: benchmark://adult-income_syn
     schema: benchmark://adult-income_schema
 Evaluator:
   # Step 1: Data validity diagnosis (should be close to 1.0)
@@ -140,7 +104,7 @@ Splitter:
 Synthesizer:
   external_data:
     method: custom_data
-    filepath: benchmark://adult-income
+    filepath: benchmark://adult-income_syn
     schema: benchmark://adult-income_schema
 Evaluator:
   # Step 1: Data validity diagnosis (should be close to 1.0)
@@ -178,6 +142,42 @@ Evaluator:
     task_type: classification  # or regression/clustering
     target: income
 ```
+
+## Main Parameters
+
+- **method** (`string`, required)
+  - Evaluation method name
+  - See supported methods in the table below
+
+## Supported Evaluation Methods
+
+| Type | Method Name | Description | Recommended Standard |
+|------|-------------|-------------|---------------------|
+| **Default Method** | `default` | Default evaluation (equivalent to `sdmetrics-qualityreport`) | Score ≥ 0.75¹ |
+| **Data Validity** | `sdmetrics-diagnosticreport` | Check data structure and basic characteristics | Score ≈ 1.0² |
+| **Privacy Protection** | `anonymeter-singlingout` | Singling out risk assessment | Risk < 0.09³ |
+| | `anonymeter-linkability` | Linkability risk assessment | Risk < 0.09³ |
+| | `anonymeter-inference` | Inference risk assessment | Risk < 0.09³ |
+| **Data Fidelity** | `sdmetrics-qualityreport` | Statistical distribution similarity assessment | Score ≥ 0.75¹ |
+| **Data Utility** | `mlutility` | Machine learning model utility | Task-dependent⁴ |
+| **Custom Assessment** | `custom_method` | Custom evaluation method | - |
+
+### Recommended Standards Notes
+
+¹ **Fidelity Standard** (Score ≥ 0.75): Based on statistical distribution similarity
+
+² **Validity Standard** (Score ≈ 1.0): Data structure integrity check
+
+³ **Privacy Risk Standard** (Risk < 0.09): Based on PDPC Singapore guidelines
+
+⁴ **Utility Standard** (Task-dependent):
+- Classification tasks: MCC ≥ 0.5
+- Regression tasks: R² ≥ 0.7
+- Clustering tasks: Silhouette coefficient ≥ 0.5
+
+> **Default Method**: When `method: default` is used, the system automatically executes `sdmetrics-qualityreport` to evaluate data fidelity.
+
+> **Threshold Adjustment**: The above recommended standards are general reference values. Please adjust appropriate thresholds based on your specific use case and risk tolerance. For detailed theoretical foundations and references for each metric, please refer to the corresponding subdocumentation.
 
 ## Execution Notes
 

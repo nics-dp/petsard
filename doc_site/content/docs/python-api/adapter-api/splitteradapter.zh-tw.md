@@ -1,9 +1,19 @@
 ---
 title: "SplitterAdapter"
-weight: 392
+weight: 2
 ---
 
 SplitterAdapter 處理訓練/驗證集的資料分割，具備重疊控制功能。
+
+## 類別架構
+
+{{< mermaid-file file="content/docs/python-api/adapter-api/splitteradapter-usage-diagram.zh-tw.mmd" >}}
+
+> **圖例：**
+> - 淺紫色框：SplitterAdapter 主類別
+> - 藍色框：核心分割模組
+> - 淺粉色框：自訂資料模式使用的 LoaderAdapter
+> - `..>`：依賴關係
 
 ## 主要功能
 
@@ -77,21 +87,6 @@ adapter.run({
 
 # 取得結果
 split_data, metadata_dict, train_indices = adapter.get_result()
-```
-
-## 與管線整合
-
-```yaml
-# YAML 管線配置
-pipeline:
-  - module: loader
-    config:
-      filepath: "data.csv"
-  - module: splitter
-    config:
-      num_samples: 5
-      train_split_ratio: 0.8
-      max_overlap_ratio: 0.0
 ```
 
 ## 注意事項

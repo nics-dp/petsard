@@ -1,0 +1,50 @@
+classDiagram
+
+    class EvaluatorAdapter {
+        +config: dict
+        +evaluator: Evaluator
+        +__init__(config)
+        +run() dict~str, DataFrame~
+    }
+
+    class Evaluator {
+        +config: dict
+        +method: str
+        +create()
+        +eval(data) dict~str, DataFrame~
+    }
+
+    class BaseEvaluator {
+        <<抽象類別>>
+        +evaluate() dict
+    }
+
+    class EvaluatorSDMetrics {
+        +evaluate() dict
+    }
+
+    class EvaluatorAnonymeter {
+        +evaluate() dict
+    }
+
+    EvaluatorAdapter ..> Evaluator : 用於評估
+    Evaluator --> BaseEvaluator : 創建
+    BaseEvaluator <|-- EvaluatorSDMetrics
+    BaseEvaluator <|-- EvaluatorAnonymeter
+
+    %% 樣式定義
+    class EvaluatorAdapter {
+        <<主要類別>>
+    }
+    style EvaluatorAdapter fill:#E6E6FA
+
+    class Evaluator {
+        <<核心模組>>
+    }
+    style Evaluator fill:#4169E1,color:#fff
+
+    style BaseEvaluator fill:#9370DB,color:#fff
+    style EvaluatorSDMetrics fill:#FFE4E1
+    style EvaluatorAnonymeter fill:#FFE4E1
+
+    note for EvaluatorAdapter "1. 固定資料來源：ori、syn、control\n2. 評估前自動對齊資料型別\n3. 支援多種評估方法\n4. 回傳包含評估結果的字典"

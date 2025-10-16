@@ -1,9 +1,37 @@
 ---
 title: "自訂評測方法"
-weight: 146
+weight: 5
 ---
 
 要建立自己的評測器，需要實作一個含有必要屬性和方法的 Python 類別，並設定 YAML 檔案來使用它。
+
+## 使用範例
+
+請點擊下方按鈕在 Colab 中執行範例：
+
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/nics-tw/petsard/blob/main/demo/petsard-yaml/evaluator-yaml/custom-evaluation.ipynb)
+
+```yaml
+Splitter:
+  external_split:
+    method: custom_data
+    filepath:
+      ori: benchmark://adult-income_ori
+      control: benchmark://adult-income_control
+    schema:
+      ori: benchmark://adult-income_schema
+      control: benchmark://adult-income_schema
+Synthesizer:
+  external_data:
+    method: custom_data
+    filepath: benchmark://adult-income_syn
+    schema: benchmark://adult-income_schema
+Evaluator:
+  your-custom-evaluator:
+    method: custom_method
+    module_path: custom-evaluation.py  # Python 檔案名稱
+    class_name: MyEvaluator_Pushover   # 檔案中的類別名稱
+```
 
 ## 必要實作
 
@@ -26,33 +54,14 @@ class YourEvaluator:
         return results
 ```
 
-## 使用範例
+## 參數說明
 
-請點擊下方按鈕在 Colab 中執行範例：
-
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/nics-tw/petsard/blob/main/demo/petsard-yaml/evaluator-yaml/custom-evaluation.ipynb)
-
-```yaml
-Splitter:
-  external_split:
-    method: custom_data
-    filepath:
-      ori: benchmark://adult-income_ori
-      control: benchmark://adult-income_control
-    schema:
-      ori: benchmark://adult-income_schema
-      control: benchmark://adult-income_schema
-Synthesizer:
-  external_data:
-    method: custom_data
-    filepath: benchmark://adult-income
-    schema: benchmark://adult-income_schema
-Evaluator:
-  your-custom-evaluator:
-    method: custom_method
-    module_path: custom-evaluation.py  # Python 檔案名稱
-    class_name: MyEvaluator_Pushover   # 檔案中的類別名稱
-```
+| 參數 | 類型 | 必要性 | 說明 |
+|-----|------|--------|------|
+| **method** | `string` | 必要 | 固定值：`custom_method` |
+| **module_path** | `string` | 必要 | Python 檔案路徑（相對於專案根目錄） |
+| **class_name** | `string` | 必要 | 類別名稱（必須存在於指定檔案中） |
+| **其他參數** | `any` | 選用 | 傳遞給評測器 `__init__` 的自訂參數 |
 
 ## 實作範例：Pushover 評測器
 
@@ -79,15 +88,6 @@ Evaluator:
 - `columnwise` 必須包含所有欄位
 - `pairwise` 必須包含所有欄位對
 - 索引必須符合預期格式
-
-## 參數說明
-
-| 參數 | 類型 | 必要性 | 說明 |
-|-----|------|--------|------|
-| **method** | `string` | 必要 | 固定值：`custom_method` |
-| **module_path** | `string` | 必要 | Python 檔案路徑（相對於專案根目錄） |
-| **class_name** | `string` | 必要 | 類別名稱（必須存在於指定檔案中） |
-| **其他參數** | `any` | 選用 | 傳遞給評測器 `__init__` 的自訂參數 |
 
 ## 適用情境
 

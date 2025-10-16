@@ -5,6 +5,24 @@ weight: 3
 
 要建立自己的合成器，需要實作一個含有三個必要方法的 Python 類別，並設定 YAML 檔案來使用它。
 
+## 使用範例
+
+請點擊下方按鈕在 Colab 中執行範例：
+
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/nics-tw/petsard/blob/main/demo/petsard-yaml/synthesizer-yaml/custom-synthesis.ipynb)
+
+```yaml
+Loader:
+  load_benchmark_with_schema:
+    filepath: benchmark://adult-income
+    schema: benchmark://adult-income_schema
+Synthesizer:
+  your-custom-method:
+    method: custom_method
+    module_path: custom-synthesis.py  # Python 檔案名稱
+    class_name: MySynthesizer_Shuffle # 檔案中的類別名稱
+```
+
 ## 必要實作
 
 您的 Python 類別必須包含：
@@ -22,24 +40,6 @@ class YourSynthesizer:
     def sample(self) -> pd.DataFrame:
         """生成並回傳合成資料"""
         pass
-```
-
-## 使用範例
-
-請點擊下方按鈕在 Colab 中執行範例：
-
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/nics-tw/petsard/blob/main/demo/petsard-yaml/synthesizer-yaml/custom-synthesis.ipynb)
-
-```yaml
-Loader:
-  load_benchmark_with_schema:
-    filepath: benchmark://adult-income
-    schema: benchmark://adult-income_schema
-Synthesizer:
-  your-custom-method:
-    method: custom_method
-    module_path: custom-synthesis.py  # Python 檔案名稱
-    class_name: MySynthesizer_Shuffle # 檔案中的類別名稱
 ```
 
 ### 範例：Shuffle 合成器

@@ -1,30 +1,9 @@
 ---
 title: "Custom Evaluation Method"
-weight: 146
+weight: 5
 ---
 
 To create your own evaluator, you need to implement a Python class with required attributes and methods, and configure a YAML file to use it.
-
-## Required Implementation
-
-Your Python class must include:
-
-```python
-class YourEvaluator:
-    # Required attributes
-    REQUIRED_INPUT_KEYS = ['ori', 'syn']  # or ['ori', 'syn', 'control']
-    AVAILABLE_SCORES_GRANULARITY = ['global', 'columnwise', 'pairwise', 'details']
-
-    def __init__(self, config):
-        """Initialize evaluator"""
-        self.config = config
-
-    def eval(self, data: dict) -> dict:
-        """Execute evaluation and return results"""
-        # data contains 'ori', 'syn', optionally 'control'
-        # returns dict[str, pd.DataFrame]
-        return results
-```
 
 ## Usage Example
 
@@ -45,13 +24,34 @@ Splitter:
 Synthesizer:
   external_data:
     method: custom_data
-    filepath: benchmark://adult-income
+    filepath: benchmark://adult-income_syn
     schema: benchmark://adult-income_schema
 Evaluator:
   your-custom-evaluator:
     method: custom_method
     module_path: custom-evaluation.py  # Python file name
     class_name: MyEvaluator_Pushover   # Class name in the file
+```
+
+## Required Implementation
+
+Your Python class must include:
+
+```python
+class YourEvaluator:
+    # Required attributes
+    REQUIRED_INPUT_KEYS = ['ori', 'syn']  # or ['ori', 'syn', 'control']
+    AVAILABLE_SCORES_GRANULARITY = ['global', 'columnwise', 'pairwise', 'details']
+
+    def __init__(self, config):
+        """Initialize evaluator"""
+        self.config = config
+
+    def eval(self, data: dict) -> dict:
+        """Execute evaluation and return results"""
+        # data contains 'ori', 'syn', optionally 'control'
+        # returns dict[str, pd.DataFrame]
+        return results
 ```
 
 ## Example Implementation: Pushover Evaluator

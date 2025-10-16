@@ -1,13 +1,13 @@
 ---
 title: "LoaderAdapter"
-weight: 391
+weight: 1
 ---
 
 LoaderAdapter 處理資料載入，並自動處理 `benchmark://` 協定以下載基準資料集和模式檔案。
 
 ## 類別架構
 
-{{< mermaid-file file="content/docs/python-api/adapter-api/loaderadapter-usage-diagram.mmd" >}}
+{{< mermaid-file file="content/docs/python-api/adapter-api/loaderadapter-usage-diagram.zh-tw.mmd" >}}
 
 > **圖例：**
 > - 淺紫色框：LoaderAdapter 主類別

@@ -5,32 +5,6 @@ weight: 120
 
 Splitter 模組的 YAML 設定檔案格式。
 
-## 主要參數
-
-- **num_samples** (`integer`, 選用)
-  - 重複抽樣次數
-  - 預設值：1
-
-- **train_split_ratio** (`float`, 選用)
-  - 訓練集的資料比例
-  - 預設值：0.8
-
-## 參數詳細說明
-
-### 必要參數
-
-Splitter 沒有必要參數，所有參數皆為選用。
-
-### 選用參數
-
-| 參數 | 類型 | 預設值 | 說明 | 範例 |
-|------|------|--------|------|------|
-| `num_samples` | `integer` | `1` | 重複抽樣次數 | `5` |
-| `train_split_ratio` | `float` | `0.8` | 訓練集的資料比例（0.0 到 1.0） | `0.7` |
-| `random_state` | `integer\|string` | `null` | 用於重現結果的隨機種子 | `42` 或 `"exp_v1"` |
-| `max_overlap_ratio` | `float` | `1.0` | 樣本間允許的最大重疊比率（0.0 到 1.0） | `0.1` |
-| `max_attempts` | `integer` | `30` | 重疊控制的最大抽樣嘗試次數 | `50` |
-
 ## 使用範例
 
 請點擊下方按鈕在 Colab 中執行範例：
@@ -85,6 +59,32 @@ Splitter:
 {{< callout type="warning" >}}
 **注意**：此範例僅示範無重疊設定。由於本套件採用隨機抽樣後比較的演算法，實現完全無重疊（`max_overlap_ratio: 0.0`）極為困難。此功能旨在提供抽樣多樣性，實務上建議保留適度重疊（如 `max_overlap_ratio: 0.8`）以確保執行效率。
 {{< /callout >}}
+
+## 主要參數
+
+- **num_samples** (`integer`, 選用)
+  - 重複抽樣次數
+  - 預設值：1
+
+- **train_split_ratio** (`float`, 選用)
+  - 訓練集的資料比例
+  - 預設值：0.8
+
+## 參數詳細說明
+
+### 必要參數
+
+Splitter 沒有必要參數，所有參數皆為選用。
+
+### 選用參數
+
+| 參數 | 類型 | 預設值 | 說明 | 範例 |
+|------|------|--------|------|------|
+| `num_samples` | `integer` | `1` | 重複抽樣次數 | `5` |
+| `train_split_ratio` | `float` | `0.8` | 訓練集的資料比例（0.0 到 1.0） | `0.7` |
+| `random_state` | `integer\|string` | `null` | 用於重現結果的隨機種子 | `42` 或 `"exp_v1"` |
+| `max_overlap_ratio` | `float` | `1.0` | 樣本間允許的最大重疊比率（0.0 到 1.0） | `0.1` |
+| `max_attempts` | `integer` | `30` | 重疊控制的最大抽樣嘗試次數 | `50` |
 
 ## 使用場景
 

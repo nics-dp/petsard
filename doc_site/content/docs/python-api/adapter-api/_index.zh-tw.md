@@ -9,7 +9,7 @@ Adapter 層是 PETsARD 架構中的關鍵組件，負責將各個模組包裝成
 
 ## Adapter 整體架構
 
-{{< mermaid-file file="content/docs/python-api/adapter-api/adapter-overview-diagram.mmd" >}}
+{{< mermaid-file file="content/docs/python-api/adapter-api/adapter-overview-diagram.zh-tw.mmd" >}}
 
 > **圖例說明：**
 > - 灰色框：抽象基底類別

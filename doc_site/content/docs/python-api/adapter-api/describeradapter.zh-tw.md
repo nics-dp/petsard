@@ -7,7 +7,7 @@ DescriberAdapter 處理資料描述和比較，支援單一資料集描述和多
 
 ## 類別架構
 
-{{< mermaid-file file="content/docs/python-api/adapter-api/describeradapter-usage-diagram.mmd" >}}
+{{< mermaid-file file="content/docs/python-api/adapter-api/describeradapter-usage-diagram.zh-tw.mmd" >}}
 
 > **圖例：**
 > - 淺紫色框：DescriberAdapter 主類別
