@@ -183,6 +183,9 @@ class Status:
         if "Reporter" in self.sequence:
             self.report: dict = {}
 
+        # 驗證結果儲存 - 用於 Constrainer validate 模式
+        self._validation_results: dict[str, dict] = {}
+
         # 設置 logging handler 來捕獲時間資訊
         self._timing_handler = TimingLogHandler(self)
         self._timing_handler.setLevel(logging.INFO)
@@ -591,6 +594,13 @@ class Status:
             train_indices = operator.get_train_indices()
             self.update_exist_train_indices(train_indices)
 
+        # Constrainer 處理 - 儲存驗證結果
+        if module == "Constrainer" and hasattr(operator, "get_validation_result"):
+            validation_result = operator.get_validation_result()
+            if validation_result is not None:
+                self.put_validation_result(module, validation_result)
+                self._logger.info(f"已儲存 {module}[{expt}] 的驗證結果")
+
         # 建立執行快照
         metadata_after = self.metadata.get(module)
         self._create_snapshot(
@@ -717,6 +727,46 @@ class Status:
         if not hasattr(self, "report"):
             raise UnexecutedError
         return self.report
+
+    def put_validation_result(self, module: str, validation_result: dict) -> None:
+        """
+        儲存 Constrainer 的驗證結果
+
+        Args:
+            module: 模組名稱（通常是 "Constrainer"）
+            validation_result: 驗證結果字典，包含:
+                - total_rows (int): 總資料筆數
+                - passed_rows (int): 通過所有條件的資料筆數
+                - failed_rows (int): 未通過條件的資料筆數
+                - pass_rate (float): 通過率 (0.0 到 1.0)
+                - is_fully_compliant (bool): 是否百分百符合
+                - constraint_violations (dict): 各條件的違規統計
+                - violation_details (pd.DataFrame, optional): 違規記錄的詳細資訊
+        """
+        if not hasattr(self, "_validation_results"):
+            self._validation_results = {}
+
+        self._validation_results[module] = validation_result
+        self._logger.debug(f"儲存驗證結果: {module}")
+
+    def get_validation_result(self, module: str = None) -> dict | None:
+        """
+        取得 Constrainer 的驗證結果
+
+        Args:
+            module: 模組名稱，如果為 None 則返回所有驗證結果
+
+        Returns:
+            dict: 驗證結果字典，如果不存在則返回 None
+        """
+        if not hasattr(self, "_validation_results"):
+            return None
+
+        if module is None:
+            # 返回所有驗證結果
+            return self._validation_results.copy() if self._validation_results else None
+
+        return self._validation_results.get(module)
 
     # === 新增的快照和變更追蹤方法 ===
 
