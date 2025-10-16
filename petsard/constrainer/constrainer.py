@@ -250,6 +250,10 @@ class Constrainer:
                 - pass_rate (float): 通過率 (0.0 到 1.0)
                 - is_fully_compliant (bool): 是否百分百符合（所有資料都通過）
                 - constraint_violations (dict): 各條件類型下每條具體規則的違規統計
+                    For each constraint type, contains a dict with:
+                        - 'total_failed_count': total violations across all rules
+                        - 'total_fail_rate': overall failure rate for this constraint type
+                        - 'rules': dict of individual rule violations
                 - violation_details (pd.DataFrame, optional): 違規記錄的詳細資訊
 
         Example:
