@@ -1,0 +1,45 @@
+classDiagram
+
+    class SynthesizerAdapter {
+        +config: dict
+        +synthesizer: Synthesizer
+        +is_custom_data: bool
+        +loader_adapter: LoaderAdapter
+        +__init__(config)
+        +run() DataFrame
+        -_extract_loader_config(config) dict
+    }
+
+    class Synthesizer {
+        +config: dict
+        +method: str
+        +model: SDVModel
+        +create(metadata)
+        +fit_sample(data) DataFrame
+        +sample() DataFrame
+    }
+
+    class LoaderAdapter {
+        +load() tuple~DataFrame, Schema~
+    }
+
+    SynthesizerAdapter ..> Synthesizer : uses for data synthesis
+    SynthesizerAdapter ..> LoaderAdapter : uses for custom_data method
+
+    %% Style definitions
+    class SynthesizerAdapter {
+        <<Main Class>>
+    }
+    style SynthesizerAdapter fill:#E6E6FA
+
+    class Synthesizer {
+        <<Core Module>>
+    }
+    style Synthesizer fill:#4169E1,color:#fff
+
+    class LoaderAdapter {
+        <<Optional: Custom Data>>
+    }
+    style LoaderAdapter fill:#FFE4E1
+
+    note for SynthesizerAdapter "1. Normal mode: Uses Synthesizer for data generation\n2. Custom data mode: Uses LoaderAdapter to load pre-generated data\n3. Supports various synthesis methods (CTGAN, GaussianCopula, etc.)"

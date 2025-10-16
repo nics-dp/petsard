@@ -1,9 +1,19 @@
 ---
 title: "SynthesizerAdapter"
-weight: 393
+weight: 3
 ---
 
 SynthesizerAdapter 使用各種生成模型處理合成資料生成，並與管線整合。
+
+## 類別架構
+
+{{< mermaid-file file="content/docs/python-api/adapter-api/synthesizeradapter-usage-diagram.mmd" >}}
+
+> **圖例：**
+> - 淺紫色框：SynthesizerAdapter 主類別
+> - 藍色框：核心合成模組
+> - 淺粉色框：自訂資料模式使用的 LoaderAdapter
+> - `..>`：依賴關係
 
 ## 主要功能
 

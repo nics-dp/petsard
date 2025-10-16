@@ -1,6 +1,6 @@
 ---
 title: "LoaderAdapter"
-weight: 391
+weight: 1
 ---
 
 LoaderAdapter handles data loading and automatically processes `benchmark://` protocol for benchmark dataset and schema file downloads.
