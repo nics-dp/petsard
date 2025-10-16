@@ -1,0 +1,86 @@
+classDiagram
+    class Loader {
+        LoaderConfig config
+        __init__()
+        load() DataFrame~Schema
+    }
+
+    class LoaderBase {
+        dict config
+        __init__()
+        load() DataFrame
+    }
+
+    class LoaderPandasCsv {
+        load() DataFrame
+    }
+
+    class LoaderPandasExcel {
+        load() DataFrame
+    }
+
+    class LoaderConfig {
+        string filepath
+        dict column_types
+        list header_names
+        Schema schema
+        string schema_path
+        string dir_name
+        string base_name
+        string file_name
+        string file_ext
+        int file_ext_code
+    }
+
+    class LoaderFileExt {
+        int CSVTYPE
+        int EXCELTYPE
+        get() int
+    }
+
+    class Schema {
+        string id
+        string name
+        string description
+        dict attributes
+    }
+
+    class Attribute {
+        string name
+        string type
+        string logical_type
+        bool enable_null
+        list na_values
+    }
+
+    class SchemaMetadater {
+        from_dict() Schema
+        from_yaml() Schema
+        from_data() Schema
+        align() DataFrame
+    }
+
+    LoaderBase <|-- LoaderPandasCsv
+    LoaderBase <|-- LoaderPandasExcel
+
+    Loader *-- LoaderConfig
+    Loader ..> Schema
+    LoaderConfig *-- Schema
+    Schema *-- Attribute
+
+    Loader ..> LoaderPandasCsv
+    Loader ..> LoaderPandasExcel
+    Loader ..> LoaderFileExt
+    Loader ..> SchemaMetadater
+    LoaderConfig ..> LoaderFileExt
+
+    %% 樣式標示
+    style Loader fill:#e6f3ff,stroke:#4a90e2,stroke-width:3px
+    style LoaderBase fill:#f3e6ff,stroke:#9966cc,stroke-width:2px
+    style LoaderPandasCsv fill:#fff2e6,stroke:#ff9800,stroke-width:2px
+    style LoaderPandasExcel fill:#fff2e6,stroke:#ff9800,stroke-width:2px
+    style LoaderConfig fill:#f3e6ff,stroke:#9966cc,stroke-width:2px
+    style LoaderFileExt fill:#f3e6ff,stroke:#9966cc,stroke-width:2px
+    style Schema fill:#f3e6ff,stroke:#9966cc,stroke-width:2px
+    style Attribute fill:#f3e6ff,stroke:#9966cc,stroke-width:2px
+    style SchemaMetadater fill:#f3e6ff,stroke:#9966cc,stroke-width:2px

@@ -1,0 +1,154 @@
+classDiagram
+    class Evaluator {
+        EvaluatorConfig config
+        string method
+        __init__(method, **kwargs)
+        create()
+        eval(data) EvalResult
+    }
+
+    class EvaluatorConfig {
+        string method
+        dict params
+        string module_path
+        string class_name
+    }
+
+    class EvalResult {
+        float global
+        dict details
+        DataFrame report
+    }
+
+    %% Privacy Risk Evaluators
+    class Anonymeter {
+        int n_attacks
+        int n_cols
+        eval() EvalResult
+    }
+
+    class SinglingOutEvaluator {
+        eval() EvalResult
+    }
+
+    class LinkabilityEvaluator {
+        list aux_cols
+        eval() EvalResult
+    }
+
+    class InferenceEvaluator {
+        string secret
+        list aux_cols
+        eval() EvalResult
+    }
+
+    %% Data Quality Evaluators
+    class SDMetrics {
+        string report_type
+        eval() EvalResult
+    }
+
+    class DiagnosticReport {
+        eval() EvalResult
+    }
+
+    class QualityReport {
+        eval() EvalResult
+    }
+
+    %% ML Utility Evaluators
+    class MLUtility {
+        string task_type
+        string target
+        string experiment_design
+        string resampling
+        eval() EvalResult
+    }
+
+    class ClassificationUtility {
+        list metrics
+        eval() EvalResult
+    }
+
+    class RegressionUtility {
+        list metrics
+        eval() EvalResult
+    }
+
+    class ClusteringUtility {
+        int n_clusters
+        eval() EvalResult
+    }
+
+    %% Statistical Evaluator
+    class StatsEvaluator {
+        list stats_method
+        string compare_method
+        eval() EvalResult
+    }
+
+    %% Custom Evaluator
+    class CustomEvaluator {
+        string module_path
+        string class_name
+        eval() EvalResult
+    }
+
+    %% Input Data
+    class InputData {
+        DataFrame ori
+        DataFrame syn
+        DataFrame control
+    }
+
+    %% Relationships
+    Evaluator *-- EvaluatorConfig
+    Evaluator ..> EvalResult
+    
+    %% Inheritance for Privacy
+    Anonymeter <|-- SinglingOutEvaluator
+    Anonymeter <|-- LinkabilityEvaluator
+    Anonymeter <|-- InferenceEvaluator
+    
+    %% Inheritance for Quality
+    SDMetrics <|-- DiagnosticReport
+    SDMetrics <|-- QualityReport
+    
+    %% Inheritance for ML Utility
+    MLUtility <|-- ClassificationUtility
+    MLUtility <|-- RegressionUtility
+    MLUtility <|-- ClusteringUtility
+    
+    %% Dependencies
+    Evaluator ..> Anonymeter
+    Evaluator ..> SDMetrics
+    Evaluator ..> MLUtility
+    Evaluator ..> StatsEvaluator
+    Evaluator ..> CustomEvaluator
+    
+    %% Data flow
+    InputData ..> Evaluator
+
+    %% Styling
+    style Evaluator fill:#e6f3ff,stroke:#4a90e2,stroke-width:3px
+    style EvaluatorConfig fill:#f3e6ff,stroke:#9966cc,stroke-width:2px
+    style EvalResult fill:#f3e6ff,stroke:#9966cc,stroke-width:2px
+    
+    style Anonymeter fill:#fff2e6,stroke:#ff9800,stroke-width:2px
+    style SinglingOutEvaluator fill:#fff2e6,stroke:#ff9800,stroke-width:2px
+    style LinkabilityEvaluator fill:#fff2e6,stroke:#ff9800,stroke-width:2px
+    style InferenceEvaluator fill:#fff2e6,stroke:#ff9800,stroke-width:2px
+    
+    style SDMetrics fill:#fff2e6,stroke:#ff9800,stroke-width:2px
+    style DiagnosticReport fill:#fff2e6,stroke:#ff9800,stroke-width:2px
+    style QualityReport fill:#fff2e6,stroke:#ff9800,stroke-width:2px
+    
+    style MLUtility fill:#fff2e6,stroke:#ff9800,stroke-width:2px
+    style ClassificationUtility fill:#fff2e6,stroke:#ff9800,stroke-width:2px
+    style RegressionUtility fill:#fff2e6,stroke:#ff9800,stroke-width:2px
+    style ClusteringUtility fill:#fff2e6,stroke:#ff9800,stroke-width:2px
+    
+    style StatsEvaluator fill:#fff2e6,stroke:#ff9800,stroke-width:2px
+    style CustomEvaluator fill:#fff2e6,stroke:#ff9800,stroke-width:2px
+    
+    style InputData fill:#e6ffe6,stroke:#66cc66,stroke-width:2px

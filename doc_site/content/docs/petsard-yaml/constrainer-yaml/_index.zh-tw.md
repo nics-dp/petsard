@@ -39,7 +39,7 @@ Constrainer 透過 `method` 參數控制運作模式（預設為 `auto` 自動�
 
 method='auto' 時：
 
-{{< mermaid-file file="content/docs/petsard-yaml/constrainer-yaml/mode-decision-tree.mmd" >}}
+{{< mermaid-file file="content/docs/petsard-yaml/constrainer-yaml/mode-decision-tree.zh-tw.mmd" >}}
 
 **圖例說明**：
 - 🟢 **起點**：流程開始
@@ -55,7 +55,7 @@ method='auto' 時：
 
 **運作方式**：
 
-{{< mermaid-file file="content/docs/petsard-yaml/constrainer-yaml/resample-flow.mmd" >}}
+{{< mermaid-file file="content/docs/petsard-yaml/constrainer-yaml/resample-flow.zh-tw.mmd" >}}
 
 **圖例說明**：
 - 🔵 **處理節點**：生成資料、套用約束
@@ -80,7 +80,7 @@ method='auto' 時：
 
 **運作方式**：
 
-{{< mermaid-file file="content/docs/petsard-yaml/constrainer-yaml/validate-flow.mmd" >}}
+{{< mermaid-file file="content/docs/petsard-yaml/constrainer-yaml/validate-flow.zh-tw.mmd" >}}
 
 **圖例說明**：
 - 🔵 **輸入節點**：讀取資料
