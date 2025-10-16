@@ -1,0 +1,52 @@
+classDiagram
+
+    class DescriberAdapter {
+        +config: dict
+        +source: dict
+        +describer: Describer
+        +__init__(config)
+        +run() dict~str, DataFrame~
+    }
+
+    class Describer {
+        +config: dict
+        +mode: str
+        +method: str
+        +create()
+        +eval(data) dict~str, DataFrame~
+    }
+
+    class BaseEvaluator {
+        <<abstract>>
+        +evaluate() dict
+    }
+
+    class DescriberDescribe {
+        +evaluate() dict
+    }
+
+    class DescriberCompare {
+        +evaluate() dict
+    }
+
+    DescriberAdapter ..> Describer : uses for description
+    Describer --> BaseEvaluator : creates
+    BaseEvaluator <|-- DescriberDescribe
+    BaseEvaluator <|-- DescriberCompare
+
+    %% Style definitions
+    class DescriberAdapter {
+        <<Main Class>>
+    }
+    style DescriberAdapter fill:#E6E6FA
+
+    class Describer {
+        <<Core Module>>
+    }
+    style Describer fill:#4169E1,color:#fff
+
+    style BaseEvaluator fill:#9370DB,color:#fff
+    style DescriberDescribe fill:#FFE4E1
+    style DescriberCompare fill:#FFE4E1
+
+    note for DescriberAdapter "1. Describe mode: Single dataset description\n2. Compare mode: Two datasets comparison\n3. Flexible source specification\n4. Auto-aligns data types before description"

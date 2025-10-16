@@ -7,7 +7,7 @@ SplitterAdapter 處理訓練/驗證集的資料分割，具備重疊控制功能
 
 ## 類別架構
 
-{{< mermaid-file file="content/docs/python-api/adapter-api/splitteradapter-usage-diagram.mmd" >}}
+{{< mermaid-file file="content/docs/python-api/adapter-api/splitteradapter-usage-diagram.zh-tw.mmd" >}}
 
 > **圖例：**
 > - 淺紫色框：SplitterAdapter 主類別

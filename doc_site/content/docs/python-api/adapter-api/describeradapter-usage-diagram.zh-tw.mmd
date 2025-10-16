@@ -1,0 +1,52 @@
+classDiagram
+
+    class DescriberAdapter {
+        +config: dict
+        +source: dict
+        +describer: Describer
+        +__init__(config)
+        +run() dict~str, DataFrame~
+    }
+
+    class Describer {
+        +config: dict
+        +mode: str
+        +method: str
+        +create()
+        +eval(data) dict~str, DataFrame~
+    }
+
+    class BaseEvaluator {
+        <<抽象類別>>
+        +evaluate() dict
+    }
+
+    class DescriberDescribe {
+        +evaluate() dict
+    }
+
+    class DescriberCompare {
+        +evaluate() dict
+    }
+
+    DescriberAdapter ..> Describer : 用於描述
+    Describer --> BaseEvaluator : 創建
+    BaseEvaluator <|-- DescriberDescribe
+    BaseEvaluator <|-- DescriberCompare
+
+    %% 樣式定義
+    class DescriberAdapter {
+        <<主要類別>>
+    }
+    style DescriberAdapter fill:#E6E6FA
+
+    class Describer {
+        <<核心模組>>
+    }
+    style Describer fill:#4169E1,color:#fff
+
+    style BaseEvaluator fill:#9370DB,color:#fff
+    style DescriberDescribe fill:#FFE4E1
+    style DescriberCompare fill:#FFE4E1
+
+    note for DescriberAdapter "1. 描述模式：單一資料集描述\n2. 比較模式：兩個資料集比較\n3. 靈活的來源指定\n4. 描述前自動對齊資料型別"

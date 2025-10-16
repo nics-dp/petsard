@@ -7,7 +7,7 @@ weight: 330
 
 ## 類別架構
 
-{{< mermaid-file file="content/docs/python-api/splitter-api/splitter-class-diagram.mmd" >}}
+{{< mermaid-file file="content/docs/python-api/splitter-api/splitter-class-diagram.zh-tw.mmd" >}}
 
 > **圖例說明：**
 > - 藍色方塊：主要類別

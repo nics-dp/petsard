@@ -9,7 +9,7 @@ Benchmarker 模組提供基準測試資料集及其 schema 檔案的下載與管
 
 ## 架構
 
-{{< mermaid-file file="content/docs/python-api/benchmarker-api/benchmarker-class-diagram.mmd" >}}
+{{< mermaid-file file="content/docs/python-api/benchmarker-api/benchmarker-class-diagram.zh-tw.mmd" >}}
 
 > **圖例說明：**
 > - 紫色框：配置類別 (BenchmarkerConfig)

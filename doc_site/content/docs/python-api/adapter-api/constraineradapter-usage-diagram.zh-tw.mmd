@@ -1,0 +1,58 @@
+classDiagram
+
+    class ConstrainerAdapter {
+        +config: dict
+        +constrainer: Constrainer
+        +sample_dict: dict
+        +__init__(config)
+        +run() DataFrame
+        -_transform_field_combinations(config) dict
+    }
+
+    class Constrainer {
+        +config: dict
+        +constrainers: dict
+        +apply(df) DataFrame
+        +resample_until_satisfy() DataFrame
+        +register(name, class)
+    }
+
+    class NaNGroupConstrainer {
+        +apply(df) DataFrame
+    }
+
+    class FieldConstrainer {
+        +apply(df) DataFrame
+    }
+
+    class FieldCombinationConstrainer {
+        +apply(df) DataFrame
+    }
+
+    class FieldProportionsConstrainer {
+        +apply(df) DataFrame
+    }
+
+    ConstrainerAdapter ..> Constrainer : 用於約束處理
+    Constrainer --> NaNGroupConstrainer : 管理
+    Constrainer --> FieldConstrainer : 管理
+    Constrainer --> FieldCombinationConstrainer : 管理
+    Constrainer --> FieldProportionsConstrainer : 管理
+
+    %% 樣式定義
+    class ConstrainerAdapter {
+        <<主要類別>>
+    }
+    style ConstrainerAdapter fill:#E6E6FA
+
+    class Constrainer {
+        <<核心模組>>
+    }
+    style Constrainer fill:#4169E1,color:#fff
+
+    style NaNGroupConstrainer fill:#9370DB,color:#fff
+    style FieldConstrainer fill:#9370DB,color:#fff
+    style FieldCombinationConstrainer fill:#9370DB,color:#fff
+    style FieldProportionsConstrainer fill:#9370DB,color:#fff
+
+    note for ConstrainerAdapter "1. 支援透過 constraints_yaml 參數載入 YAML 檔案\n2. 簡單模式：apply() 直接過濾\n3. 重採樣模式：resample_until_satisfy() 迭代生成\n4. 依序套用約束條件"
