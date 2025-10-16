@@ -1,0 +1,12 @@
+graph LR
+    A[Read Data] --> B[Check Each<br/>Constraint]
+    B --> C[Record Violations<br/>Information]
+    C --> D[Output Original Data<br/>+ Validation Report]
+
+    classDef inputNode fill:#e1f5fe,stroke:#0288d1,stroke-width:2px
+    classDef processNode fill:#fff3e0,stroke:#ff9800,stroke-width:2px
+    classDef resultNode fill:#e8f5e9,stroke:#4caf50,stroke-width:2px
+
+    class A inputNode
+    class B,C processNode
+    class D resultNode

@@ -1,45 +1,9 @@
 ---
 title: "Evaluator YAML"
-weight: 140
+weight: 160
 ---
 
 Evaluator 模組的 YAML 設定檔案格式。
-
-## 主要參數
-
-- **method** (`string`, 必要參數)
-  - 評估方法名稱
-  - 支援的方法見下方表格
-
-## 支援的評估方法
-
-| 類型 | 方法名稱 | 說明 | 建議標準 |
-|------|---------|------|----------|
-| **預設方法** | `default` | 預設評估（等同於 `sdmetrics-qualityreport`） | 分數 ≥ 0.75¹ |
-| **資料有效性** | `sdmetrics-diagnosticreport` | 檢查資料結構和基本特性 | 分數 ≈ 1.0² |
-| **隱私保護力** | `anonymeter-singlingout` | 單挑風險評估 | 風險 < 0.09³ |
-| | `anonymeter-linkability` | 連結性風險評估 | 風險 < 0.09³ |
-| | `anonymeter-inference` | 推論性風險評估 | 風險 < 0.09³ |
-| **資料保真度** | `sdmetrics-qualityreport` | 統計分佈相似度評估 | 分數 ≥ 0.75¹ |
-| **資料實用性** | `mlutility` | 機器學習模型效用 | 依任務類型⁴ |
-| **自訂評估** | `custom_method` | 自訂評估方法 | - |
-
-### 建議標準說明
-
-¹ **保真度標準**（分數 ≥ 0.75）：基於統計分佈相似度
-
-² **有效性標準**（分數 ≈ 1.0）：資料結構完整性檢查
-
-³ **隱私風險標準**（風險 < 0.09）：基於 PDPC Singapore 指引
-
-⁴ **實用性標準**（依任務類型）：
-- 分類任務：MCC ≥ 0.5
-- 迴歸任務：R² ≥ 0.7
-- 聚類任務：輪廓係數 ≥ 0.5
-
-> **預設方法**：當 `method: default` 時，系統會自動執行 `sdmetrics-qualityreport` 評估資料保真度。
-
-> **閾值調整**：以上建議標準為一般參考值，請根據您的具體應用場景和風險容忍度調整適當的閾值。各指標的詳細理論基礎和參考文獻請見對應子文件。
 
 ## 使用範例
 
@@ -88,7 +52,7 @@ Splitter:
 Synthesizer:
   external_data:
     method: custom_data
-    filepath: benchmark://adult-income
+    filepath: benchmark://adult-income_syn
     schema: benchmark://adult-income_schema
 Evaluator:
   # Step 1: 資料有效性診斷（應接近 1.0）
@@ -140,7 +104,7 @@ Splitter:
 Synthesizer:
   external_data:
     method: custom_data
-    filepath: benchmark://adult-income
+    filepath: benchmark://adult-income_syn
     schema: benchmark://adult-income_schema
 Evaluator:
   # Step 1: 資料有效性診斷（應接近 1.0）
@@ -175,6 +139,42 @@ Evaluator:
     task_type: classification  # 或 regression/clustering
     target: income
 ```
+
+## 主要參數
+
+- **method** (`string`, 必要參數)
+  - 評估方法名稱
+  - 支援的方法見下方表格
+
+## 支援的評估方法
+
+| 類型 | 方法名稱 | 說明 | 建議標準 |
+|------|---------|------|----------|
+| **預設方法** | `default` | 預設評估（等同於 `sdmetrics-qualityreport`） | 分數 ≥ 0.75¹ |
+| **資料有效性** | `sdmetrics-diagnosticreport` | 檢查資料結構和基本特性 | 分數 ≈ 1.0² |
+| **隱私保護力** | `anonymeter-singlingout` | 單挑風險評估 | 風險 < 0.09³ |
+| | `anonymeter-linkability` | 連結性風險評估 | 風險 < 0.09³ |
+| | `anonymeter-inference` | 推論性風險評估 | 風險 < 0.09³ |
+| **資料保真度** | `sdmetrics-qualityreport` | 統計分佈相似度評估 | 分數 ≥ 0.75¹ |
+| **資料實用性** | `mlutility` | 機器學習模型效用 | 依任務類型⁴ |
+| **自訂評估** | `custom_method` | 自訂評估方法 | - |
+
+### 建議標準說明
+
+¹ **保真度標準**（分數 ≥ 0.75）：基於統計分佈相似度
+
+² **有效性標準**（分數 ≈ 1.0）：資料結構完整性檢查
+
+³ **隱私風險標準**（風險 < 0.09）：基於 PDPC Singapore 指引
+
+⁴ **實用性標準**（依任務類型）：
+- 分類任務：MCC ≥ 0.5
+- 迴歸任務：R² ≥ 0.7
+- 聚類任務：輪廓係數 ≥ 0.5
+
+> **預設方法**：當 `method: default` 時，系統會自動執行 `sdmetrics-qualityreport` 評估資料保真度。
+
+> **閾值調整**：以上建議標準為一般參考值，請根據您的具體應用場景和風險容忍度調整適當的閾值。各指標的詳細理論基礎和參考文獻請見對應子文件。
 
 ## 執行說明
 

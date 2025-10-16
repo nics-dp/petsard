@@ -1,26 +1,9 @@
 ---
 title: "Privacy Protection Assessment"
-weight: 142
+weight: 2
 ---
 
 Evaluate the privacy protection level of processed data by simulating three privacy attack scenarios. The evaluation uses Anonymeter, a Python library developed by [Statice](https://www.statice.ai/) that implements the anonymization evaluation standards proposed by the Article 29 Working Party (WP29) of EU Data Protection Directive in 2014 and received endorsement from the French Data Protection Authority (CNIL) in 2023.
-
-## Assessment Framework
-
-Anonymeter evaluates privacy risks from three perspectives:
-
-### Singling Out Risk
-Assesses the possibility of identifying specific individuals within the data. For example: "finding an individual with unique characteristics X, Y, and Z."
-
-### Linkability Risk
-Evaluates the possibility of linking records belonging to the same individual across different datasets. For example: "determining that records A and B belong to the same person."
-
-For handling mixed data types, this assessment uses Gower's Distance:
-- Numerical variables: Normalized absolute difference
-- Categorical variables: Distance of 1 if unequal
-
-### Inference Risk
-Measures the possibility of inferring attributes from known characteristics. For example: "determining characteristic Z for individuals with characteristics X and Y."
 
 ## Usage Examples
 
@@ -43,7 +26,7 @@ Splitter:
 Synthesizer:
   external_data:
     method: custom_data
-    filepath: benchmark://adult-income
+    filepath: benchmark://adult-income_syn
     schema: benchmark://adult-income_schema
 Evaluator:
   singling_out_risk:
@@ -68,7 +51,7 @@ Splitter:
 Synthesizer:
   external_data:
     method: custom_data
-    filepath: benchmark://adult-income
+    filepath: benchmark://adult-income_syn
     schema: benchmark://adult-income_schema
 Evaluator:
   linkability_risk:
@@ -100,7 +83,7 @@ Evaluator:
     secret: income           # Sensitive column to infer (required)
 ```
 
-## Parameter Description
+## Main Parameters
 
 ### Singling Out Risk Parameters
 
@@ -172,6 +155,23 @@ Attack `multivariate` could generate only 1 singling out queries out of the requ
 3. **Adjust n_cols**: Try using fewer columns per query (e.g., 2 instead of 3)
 4. **Accept the limitation**: If the warning persists, it indicates the data inherently has limited attack surface, which may actually suggest better privacy protection
 {{< /callout >}}
+
+## Assessment Framework
+
+Anonymeter evaluates privacy risks from three perspectives:
+
+### Singling Out Risk
+Assesses the possibility of identifying specific individuals within the data. For example: "finding an individual with unique characteristics X, Y, and Z."
+
+### Linkability Risk
+Evaluates the possibility of linking records belonging to the same individual across different datasets. For example: "determining that records A and B belong to the same person."
+
+For handling mixed data types, this assessment uses Gower's Distance:
+- Numerical variables: Normalized absolute difference
+- Categorical variables: Distance of 1 if unequal
+
+### Inference Risk
+Measures the possibility of inferring attributes from known characteristics. For example: "determining characteristic Z for individuals with characteristics X and Y."
 
 ## Evaluation Metrics
 

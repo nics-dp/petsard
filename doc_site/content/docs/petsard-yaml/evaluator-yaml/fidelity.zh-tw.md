@@ -1,6 +1,6 @@
 ---
 title: "資料保真度評測"
-weight: 143
+weight: 3
 ---
 
 衡量合成資料與原始資料的相似程度，評估資料分佈和變量關係的保持程度。
@@ -24,14 +24,14 @@ Splitter:
 Synthesizer:
   external_data:
     method: custom_data
-    filepath: benchmark://adult-income
+    filepath: benchmark://adult-income_syn
     schema: benchmark://adult-income_schema
 Evaluator:
   fidelity_check:
     method: sdmetrics-qualityreport
 ```
 
-## 參數說明
+## 主要參數
 
 - **method** (`string`, 必要參數)
   - 固定值：`sdmetrics-qualityreport`

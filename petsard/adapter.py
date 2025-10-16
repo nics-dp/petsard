@@ -1009,29 +1009,156 @@ class ConstrainerAdapter(BaseAdapter):
 
         Args:
             config (dict): Configuration parameters for the Constrainer.
+                Can use one of two approaches:
+                1. constraints_yaml: Path to YAML file containing all constraint configurations
+                2. Individual constraint parameters (nan_groups, field_constraints, etc.)
+
+                Note: Cannot use both approaches simultaneously.
+
+                Additional parameters:
+                - method: 'auto' (default), 'resample', or 'validate'
+                    * 'auto': 自動判斷（有 synthesizer 且非 custom_data 用 resample，否則用 validate）
+                    * 'resample': 強制使用 resample 模式
+                    * 'validate': 強制使用 validate 模式
+                - source: Optional data source specification (for validate mode)
+                    * Single string: "Loader" or "Splitter.train"
+                    * List: ["Loader"] or ["Splitter.train", "Synthesizer"]
+                    * If not specified, uses previous module's data (default behavior)
 
         Attributes:
             constrainer (Constrainer): An instance of the Constrainer class
                 initialized with the provided configuration.
+            validation_result (dict): Validation result when using validate mode.
+            method (str): Constrainter 運作模式 ('auto', 'resample', 'validate')
+            source: Optional data source specification
+
+        Raises:
+            ConfigError: If both constraints_yaml and individual constraint parameters are provided,
+                or if the YAML file is invalid or not found.
         """
+        super().__init__(config)
+        self.validation_result = None  # 初始化驗證結果
+        self.validation_results = {}  # 存儲多個 source 的驗證結果
+
+        # 取得並驗證 method 參數
+        self.method = config.pop("method", "auto").lower()
+        if self.method not in ["auto", "resample", "validate"]:
+            raise ConfigError(
+                f"Invalid method '{self.method}'. Must be 'auto', 'resample', or 'validate'"
+            )
+
+        # 取得 source 參數（可選）
+        self.source = config.pop("source", None)
+        if self.source is not None:
+            # 處理 source 參數格式
+            if isinstance(self.source, str):
+                # 單一字串轉為列表
+                self.source = [self.source]
+            elif isinstance(self.source, list):
+                # 列表格式保持不變
+                pass
+            else:
+                error_msg = f"source must be a string or list, got {type(self.source)}"
+                self._logger.error(error_msg)
+                raise ConfigError(error_msg)
+
+            self._logger.info(
+                f"Constrainer will validate specified sources: {self.source}"
+            )
+
+        # Check if constraints_yaml parameter is provided
+        constraints_yaml = config.pop("constraints_yaml", None)
+
+        if constraints_yaml:
+            # Define constraint parameter keys
+            constraint_keys = {
+                "nan_groups",
+                "field_constraints",
+                "field_combinations",
+                "field_proportions",
+            }
+
+            # Check for conflicting parameters
+            conflicting_keys = constraint_keys.intersection(config.keys())
+
+            if conflicting_keys:
+                error_msg = (
+                    f"Cannot specify both 'constraints_yaml' and individual "
+                    f"constraint parameters: {conflicting_keys}. "
+                    f"Please use either constraints_yaml OR individual parameters, not both."
+                )
+                self._logger.error(error_msg)
+                raise ConfigError(error_msg)
+
+            # Load constraints from YAML file
+            import sys
+            from pathlib import Path
+
+            import yaml
+
+            self._logger.info(f"Loading constraints from YAML file: {constraints_yaml}")
+
+            # Try to find the file in multiple locations
+            # 嘗試在多個位置尋找檔案
+            yaml_path = None
+
+            # First try: relative to current working directory
+            # 首先嘗試：相對於當前工作目錄
+            if Path(constraints_yaml).exists():
+                yaml_path = Path(constraints_yaml)
+            else:
+                # Second try: search in sys.path directories (like Python import)
+                # 第二次嘗試：在 sys.path 目錄中搜尋（類似 Python import）
+                for search_dir in sys.path:
+                    candidate = Path(search_dir) / constraints_yaml
+                    if candidate.exists():
+                        yaml_path = candidate
+                        self._logger.info(
+                            f"Found constraints file in sys.path: {yaml_path}"
+                        )
+                        break
+
+            if yaml_path is None:
+                raise FileNotFoundError(
+                    f"Could not find {constraints_yaml} in current directory or sys.path"
+                )
+
+            try:
+                with open(yaml_path, encoding="utf-8") as f:
+                    yaml_constraints = yaml.safe_load(f)
+
+                if not isinstance(yaml_constraints, dict):
+                    raise ConfigError(
+                        f"Invalid YAML format: expected dict, got {type(yaml_constraints)}"
+                    )
+
+                # Merge YAML constraints into config (preserve sampling parameters)
+                config.update(yaml_constraints)
+                self._logger.debug(
+                    f"Successfully loaded constraints from {constraints_yaml}"
+                )
+
+            except FileNotFoundError as e:
+                error_msg = f"Constraints YAML file not found: {constraints_yaml}"
+                self._logger.error(error_msg)
+                raise ConfigError(error_msg) from e
+            except yaml.YAMLError as e:
+                error_msg = f"Invalid YAML format in {constraints_yaml}: {e}"
+                self._logger.error(error_msg)
+                raise ConfigError(error_msg) from e
+
         # Transform field combinations before initializing
         config = self._transform_field_combinations(config)
-        super().__init__(config)
 
         # Store sampling configuration if provided
+        # 過濾掉 None 值和字串 "None"，讓它們在 _run 時自動偵測
         self.sample_dict = {}
-        self.sample_dict.update(
-            {
-                key: config.pop(key)
-                for key in [
-                    "target_rows",
-                    "sampling_ratio",
-                    "max_trials",
-                    "verbose_step",
-                ]
-                if key in config
-            }
-        )
+        for key in ["target_rows", "sampling_ratio", "max_trials", "verbose_step"]:
+            if key in config:
+                value = config.pop(key)
+                # 只有當值不是 None 且不是字串 "None" 時才加入
+                if value is not None and value != "None":
+                    self.sample_dict[key] = value
 
         self.constrainer = Constrainer(config)
 
@@ -1039,35 +1166,203 @@ class ConstrainerAdapter(BaseAdapter):
         """
         Execute data constraining process using the Constrainer instance.
 
+        支援兩種模式：
+        1. resample 模式：有 synthesizer（且非 custom_data）時，反覆抽樣直到符合條件
+        2. validate 模式：沒有 synthesizer 或使用 custom_data 時，只做驗證檢查
+
+        支援多個 source：
+        - 如果 input["data"] 是字典（多個 source），會分別驗證每個 source
+        - 驗證結果存儲在 self.validation_results 中
+
+        模式選擇邏輯：
+        - method='auto': 自動判斷
+          * 有 synthesizer 且非 custom_data → resample
+          * 其他情況 → validate
+        - method='resample': 強制使用 resample（需要有 synthesizer）
+        - method='validate': 強制使用 validate
+
         Args:
             input (dict): Constrainer input should contain:
-                - data (pd.DataFrame): Data to be constrained
+                - data (pd.DataFrame or dict): Single data or multiple data sources
                 - synthesizer (optional): Synthesizer instance if resampling is needed
                 - postprocessor (optional): Postprocessor instance if needed
+                - is_custom_data (bool, optional): 標記是否為 custom_data
+                - source_names (dict, optional): Mapping of data to source names
 
         Attributes:
             constrained_data (pd.DataFrame): The constrained result data.
+            validation_result (dict, optional): Single validation result when using validate mode.
+            validation_results (dict, optional): Multiple validation results for multiple sources.
         """
         self._logger.debug("Starting data constraining process")
 
-        if "target_rows" not in self.sample_dict:
-            self.sample_dict["target_rows"] = len(input["data"])
+        # 檢查是否為多個 source
+        is_multiple_sources = (
+            isinstance(input["data"], dict) and "source_names" in input
+        )
 
-        if "synthesizer" in input:
-            # Use resample_until_satisfy if sampling parameters and synthesizer are provided
-            self._logger.debug("Using resample_until_satisfy method")
-            self.constrained_data = self.constrainer.resample_until_satisfy(
-                data=input["data"],
-                synthesizer=input["synthesizer"],
-                postprocessor=input.get("postprocessor"),
-                **self.sample_dict,
-            )
+        if is_multiple_sources:
+            # 多個 source 的情況：分別驗證每個 source
+            self._logger.info(f"Validating {len(input['data'])} sources separately")
+
+            for source_name, source_data in input["data"].items():
+                self._logger.info(f"Validating source: {source_name}")
+
+                # 為每個 source 執行驗證
+                validation_result = self.constrainer.validate(
+                    data=source_data, return_details=True
+                )
+
+                # 添加 source 資訊到驗證結果
+                validation_result["source_name"] = source_name
+
+                # 存儲驗證結果
+                self.validation_results[source_name] = validation_result
+
+                # 記錄驗證結果
+                self._logger.info(
+                    f"✓ Source '{source_name}' 驗證完成：總共 {validation_result['total_rows']} 筆資料，"
+                    f"通過 {validation_result['passed_rows']} 筆 "
+                    f"({validation_result['pass_rate']:.2%})，"
+                    f"未通過 {validation_result['failed_rows']} 筆"
+                )
+
+                if validation_result["is_fully_compliant"]:
+                    self._logger.info(
+                        f"✓ Source '{source_name}' 所有資料都符合條件限制（100% 通過）"
+                    )
+                else:
+                    self._logger.warning(
+                        f"⚠ Source '{source_name}' 部分資料不符合條件限制，通過率：{validation_result['pass_rate']:.2%}"
+                    )
+
+            # 對於多 source 的情況，constrained_data 保持原始資料結構
+            self.constrained_data = input["data"]
+            self.validation_result = None  # 多 source 時不使用單一驗證結果
+
         else:
-            # Use simple apply method
-            self._logger.debug("Using apply method")
-            self.constrained_data = self.constrainer.apply(input["data"])
+            # 單一 source 的情況：使用原有邏輯
+            data = input["data"]
+
+            # 如果 target_rows 不存在或為 None，使用資料筆數
+            if (
+                "target_rows" not in self.sample_dict
+                or self.sample_dict.get("target_rows") is None
+            ):
+                self.sample_dict["target_rows"] = len(data)
+
+            # 決定使用哪種模式
+            use_resample_mode = self._should_use_resample_mode(input)
+
+            if use_resample_mode:
+                # Mode 1: Resample mode - 反覆抽樣直到符合條件
+                self._logger.info(
+                    f"使用 resample 模式 (method={self.method})：將進行反覆抽樣直到符合條件"
+                )
+
+                if "synthesizer" not in input or input["synthesizer"] is None:
+                    raise ConfigError(
+                        "Resample mode requires a synthesizer, but no synthesizer was provided. "
+                        "Please check your configuration or use method='validate' instead."
+                    )
+
+                self.constrained_data = self.constrainer.resample_until_satisfy(
+                    data=data,
+                    synthesizer=input["synthesizer"],
+                    postprocessor=input.get("postprocessor"),
+                    **self.sample_dict,
+                )
+                self.validation_result = None
+
+                # 記錄抽樣次數
+                if self.constrainer.resample_trails is not None:
+                    self._logger.info(
+                        f"✓ Resample 完成：經過 {self.constrainer.resample_trails} 次抽樣，"
+                        f"取得 {len(self.constrained_data)} 筆符合條件的資料"
+                    )
+            else:
+                # Mode 2: Validate mode - 只做驗證檢查
+                reason = (
+                    "custom_data" if input.get("is_custom_data") else "無 synthesizer"
+                )
+                self._logger.info(
+                    f"使用 validate 模式 (method={self.method}, 原因={reason})：將只進行條件驗證檢查"
+                )
+
+                # 執行驗證
+                self.validation_result = self.constrainer.validate(
+                    data=data, return_details=True
+                )
+
+                # 記錄驗證結果
+                self._logger.info(
+                    f"✓ Validate 完成：總共 {self.validation_result['total_rows']} 筆資料，"
+                    f"通過 {self.validation_result['passed_rows']} 筆 "
+                    f"({self.validation_result['pass_rate']:.2%})，"
+                    f"未通過 {self.validation_result['failed_rows']} 筆"
+                )
+
+                if self.validation_result["is_fully_compliant"]:
+                    self._logger.info("✓ 所有資料都符合條件限制（100% 通過）")
+                else:
+                    self._logger.warning(
+                        f"⚠ 部分資料不符合條件限制，通過率：{self.validation_result['pass_rate']:.2%}"
+                    )
+
+                    # 記錄各條件的違規統計（新的巢狀結構）
+                    for constraint_type, type_violations in self.validation_result[
+                        "constraint_violations"
+                    ].items():
+                        if isinstance(type_violations, dict):
+                            # 檢查是否有錯誤訊息
+                            if (
+                                "error" in type_violations
+                                and "failed_count" in type_violations
+                            ):
+                                # 舊格式或錯誤格式
+                                self._logger.error(
+                                    f"  - {constraint_type}: 驗證錯誤 - {type_violations.get('error')}"
+                                )
+                            else:
+                                # 新格式：包含多條規則
+                                for rule_name, rule_stats in type_violations.items():
+                                    if (
+                                        isinstance(rule_stats, dict)
+                                        and rule_stats.get("failed_count", 0) > 0
+                                    ):
+                                        self._logger.warning(
+                                            f"  - {constraint_type} - {rule_name}: {rule_stats['failed_count']} 筆違規 "
+                                            f"({rule_stats['fail_rate']:.2%})"
+                                        )
+
+                # 對於 validate 模式，返回所有資料（包含違規的）
+                # 讓使用者可以自行決定如何處理
+                self.constrained_data = data.copy()
 
         self._logger.debug("Data constraining completed")
+
+    def _should_use_resample_mode(self, input: dict) -> bool:
+        """
+        決定是否使用 resample 模式
+
+        Args:
+            input: Constrainer 的輸入字典
+
+        Returns:
+            bool: True 表示使用 resample 模式，False 表示使用 validate 模式
+        """
+        # 如果手動指定模式
+        if self.method == "resample":
+            return True
+        elif self.method == "validate":
+            return False
+
+        # auto 模式：自動判斷
+        # 條件：有 synthesizer 且不是 custom_data
+        has_synthesizer = "synthesizer" in input and input["synthesizer"] is not None
+        is_custom_data = input.get("is_custom_data", False)
+
+        return has_synthesizer and not is_custom_data
 
     @BaseAdapter.log_and_raise_config_error
     def set_input(self, status) -> dict:
@@ -1079,21 +1374,115 @@ class ConstrainerAdapter(BaseAdapter):
 
         Returns:
             dict: Constrainer input should contain:
-                - data (pd.DataFrame)
+                - data (pd.DataFrame or dict): Single data or multiple data sources
                 - synthesizer (optional)
                 - postprocessor (optional)
+                - is_custom_data (bool): 標記是否為 custom_data
+                - source_names (dict, optional): Mapping of data to source names
         """
-        pre_module = status.get_pre_module("Constrainer")
+        # 如果指定了 source，使用 source 指定的資料
+        if self.source is not None:
+            self._logger.info(f"Using specified sources: {self.source}")
+            self.input["data"] = {}
+            self.input["source_names"] = {}
 
-        # Get data from previous module
-        if pre_module == "Splitter":
-            self.input["data"] = status.get_result(pre_module)["train"]
-        else:  # Loader, Preprocessor, Synthesizer, or Postprocessor
-            self.input["data"] = status.get_result(pre_module)
+            for source_spec in self.source:
+                # 支援 "Module.key" 格式
+                if "." in source_spec:
+                    module_name, data_key = source_spec.split(".", 1)
 
-        # Get synthesizer if available
+                    # 別名映射：支援使用者熟悉的名稱
+                    # ori -> train, control -> validation
+                    key_aliases = {
+                        "ori": "train",
+                        "control": "validation",
+                    }
+                    # 創建反向映射以支援雙向查找
+                    reverse_aliases = {v: k for k, v in key_aliases.items()}
+
+                    data = status.get_data_by_module(module_name)
+                    if data:
+                        # 查找特定的鍵
+                        found = False
+                        # 首先嘗試原始鍵名
+                        search_keys = [data_key]
+                        # 如果有別名，也嘗試別名
+                        if data_key in key_aliases:
+                            search_keys.append(key_aliases[data_key])
+                        if data_key in reverse_aliases:
+                            search_keys.append(reverse_aliases[data_key])
+
+                        for available_key, df in data.items():
+                            # 檢查所有可能的鍵名格式
+                            for search_key in search_keys:
+                                if (
+                                    available_key == f"{module_name}_{search_key}"
+                                    or available_key == search_key
+                                ):
+                                    self.input["data"][source_spec] = df
+                                    self.input["source_names"][source_spec] = (
+                                        source_spec
+                                    )
+                                    if search_key != data_key:
+                                        self._logger.debug(
+                                            f"Using data from module: {module_name}.{data_key} "
+                                            f"(mapped to {search_key})"
+                                        )
+                                    else:
+                                        self._logger.debug(
+                                            f"Using data from module: {module_name}.{data_key}"
+                                        )
+                                    found = True
+                                    break
+                            if found:
+                                break
+
+                        if not found:
+                            error_msg = f"Key '{data_key}' not found in module '{module_name}'. Available keys: {list(data.keys())}"
+                            self._logger.error(error_msg)
+                            raise ConfigError(error_msg)
+                    else:
+                        error_msg = f"No data found from module: {module_name}"
+                        self._logger.error(error_msg)
+                        raise ConfigError(error_msg)
+                else:
+                    # 簡單的模組名稱
+                    data = status.get_data_by_module(source_spec)
+                    if data:
+                        # 取第一個可用的資料
+                        first_key = next(iter(data.keys()))
+                        self.input["data"][source_spec] = data[first_key]
+                        self.input["source_names"][source_spec] = source_spec
+                        self._logger.debug(
+                            f"Using data from module: {source_spec} ({first_key})"
+                        )
+                    else:
+                        error_msg = f"No data found from source: {source_spec}"
+                        self._logger.error(error_msg)
+                        raise ConfigError(error_msg)
+        else:
+            # 沒有指定 source，使用預設行為（前一個模組的資料）
+            pre_module = status.get_pre_module("Constrainer")
+
+            # Get data from previous module
+            if pre_module == "Splitter":
+                self.input["data"] = status.get_result(pre_module)["train"]
+            else:  # Loader, Preprocessor, Synthesizer, or Postprocessor
+                self.input["data"] = status.get_result(pre_module)
+
+        # Get synthesizer if available and check if it's custom_data
+        self.input["is_custom_data"] = False
         if "Synthesizer" in status.status:
-            self.input["synthesizer"] = status.get_synthesizer()
+            synthesizer = status.get_synthesizer()
+            self.input["synthesizer"] = synthesizer
+
+            # 檢查是否為 custom_data
+            # SynthesizerAdapter 的 is_custom_data 屬性會標記這個資訊
+            synthesizer_adapter = status.status.get("Synthesizer")
+            if synthesizer_adapter and hasattr(synthesizer_adapter, "is_custom_data"):
+                self.input["is_custom_data"] = synthesizer_adapter.is_custom_data
+                if self.input["is_custom_data"]:
+                    self._logger.debug("Detected custom_data from Synthesizer")
 
         # Get postprocessor if available
         if "Postprocessor" in status.status:
@@ -1106,9 +1495,42 @@ class ConstrainerAdapter(BaseAdapter):
         Retrieve the constraining result.
 
         Returns:
-            pd.DataFrame: The constrained data.
+            pd.DataFrame or dict:
+                - If validate mode: returns validation_result dict
+                - If resample mode: returns constrained data DataFrame
         """
+        # If validation result exists (validate mode), return it
+        # This allows Reporter to access validation results
+        if self.validation_result is not None:
+            return deepcopy(self.validation_result)
+        # Otherwise return constrained data (resample mode)
         return deepcopy(self.constrained_data)
+
+    def get_validation_result(self) -> dict:
+        """
+        Retrieve the validation result (only available in validate mode).
+
+        Returns:
+            dict: Validation result containing:
+                For single source:
+                - total_rows (int): 總資料筆數
+                - passed_rows (int): 通過所有條件的資料筆數
+                - failed_rows (int): 未通過條件的資料筆數
+                - pass_rate (float): 通過率 (0.0 到 1.0)
+                - is_fully_compliant (bool): 是否百分百符合
+                - constraint_violations (dict): 各條件的違規統計
+                - violation_details (pd.DataFrame, optional): 違規記錄的詳細資訊
+
+                For multiple sources:
+                - dict[source_name, validation_result]: 每個 source 的驗證結果
+
+            Returns None if resample mode was used (when synthesizer is available).
+        """
+        # 如果有多 source 的驗證結果，返回多 source 結果
+        if self.validation_results:
+            return deepcopy(self.validation_results)
+        # 否則返回單一驗證結果
+        return deepcopy(self.validation_result) if self.validation_result else None
 
     def _transform_field_combinations(self, config: dict) -> dict:
         """Transform field combinations from YAML list format to tuple format
@@ -1746,6 +2168,35 @@ class ReporterAdapter(BaseAdapter):
             timing_data = status.get_timing_report_data()
             if not timing_data.empty:
                 self.input["data"]["timing_data"] = timing_data
+
+        # Add validation results support - 傳遞 Constrainer 驗證結果給 Reporter
+        if hasattr(status, "get_validation_result"):
+            validation_results = status.get_validation_result()
+            if validation_results:
+                # 將驗證結果加入 data 字典，讓 ReporterSaveValidation 能夠使用
+                for module_name, validation_result in validation_results.items():
+                    # 檢查是否為多 source 的驗證結果（字典中的字典）
+                    if isinstance(validation_result, dict) and all(
+                        isinstance(v, dict) and "source_name" in v
+                        for v in validation_result.values()
+                    ):
+                        # 多 source 的情況：為每個 source 創建獨立的 index_tuple
+                        for source_name, source_validation in validation_result.items():
+                            # 為驗證結果創建特殊的 index_tuple
+                            # 格式: (Module, experiment_name, source_name)
+                            module_expt = status.get_full_expt().get(module_name)
+                            if module_expt:
+                                # 將 source_name 添加到 index_tuple 中
+                                index_tuple = (module_name, module_expt, source_name)
+                                self.input["data"][index_tuple] = source_validation
+                    else:
+                        # 單一 source 的情況：使用原有邏輯
+                        # 為驗證結果創建特殊的 index_tuple
+                        # 格式: (Module, experiment_name)
+                        module_expt = status.get_full_expt().get(module_name)
+                        if module_expt:
+                            index_tuple = (module_name, module_expt)
+                            self.input["data"][index_tuple] = validation_result
 
         return self.input
 

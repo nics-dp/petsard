@@ -1,0 +1,18 @@
+---
+nan_groups:
+  # Required field: delete row if missing
+  workclass: 'delete'
+
+  # Related fields: if occupation is NA, income should also be NA
+  occupation:
+    erase: 'income'
+
+  # Supplementary field: if age is NA, use educational-num to fill
+  age:
+    copy: 'educational-num'
+
+  # Conditional NaN: if workclass is Never-worked, capital-gain should be NA
+  capital-gain:
+    nan_if_condition:
+      workclass: 'Never-worked'
+...

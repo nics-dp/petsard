@@ -5,6 +5,85 @@ weight: 150
 
 Describer 模組的 YAML 設定檔案格式。提供資料集的統計描述與比較功能。
 
+## 使用範例
+
+請點擊下方按鈕在 Colab 中執行範例：
+
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/nics-tw/petsard/blob/main/demo/petsard-yaml/describer-yaml/describer.ipynb)
+
+### 單一資料集描述 (describe 模式)
+
+```yaml
+---
+Synthesizer:
+  external_data:
+    method: custom_data
+    filepath: benchmark://adult-income_syn
+    schema: benchmark://adult-income_schema
+Describer:
+  describer-describe:
+    method: default    # 自動判斷為 describe（因為只有一個 source）
+    source: Synthesizer
+...
+```
+
+### 資料集比較 (compare 模式)
+
+```yaml
+---
+Splitter:
+  external_split:
+    method: custom_data
+    filepath:
+      ori: benchmark://adult-income_ori
+      control: benchmark://adult-income_control
+    schema:
+      ori: benchmark://adult-income_schema
+      control: benchmark://adult-income_schema
+Synthesizer:
+  external_data:
+    method: custom_data
+    filepath: benchmark://adult-income_syn
+    schema: benchmark://adult-income_schema
+Describer:
+  describer-compare:
+    method: default         # 自動判斷為 compare（因為有兩個 source）
+    source:
+      base: Splitter.train  # 使用 Splitter 的 train 輸出作為基準
+      target: Synthesizer   # 比較 Synthesizer 的輸出
+...
+```
+
+### 自訂比較方法
+
+```yaml
+---
+Loader:
+  load_original:
+    filepath: benchmark://adult-income_ori
+    schema: benchmark://adult-income_schema
+Synthesizer:
+  generate_synthetic:
+    method: custom_data
+    filepath: benchmark://adult-income
+    schema: benchmark://adult-income_schema
+Describer:
+  custom_comparison:
+    method: compare           # 明確指定 compare 方法
+    source:
+      base: Loader
+      target: Synthesizer
+    stats_method:             # 自訂統計方法
+      - mean
+      - std
+      - nunique
+      - jsdivergence
+    compare_method: diff      # 使用差值而非百分比變化
+    aggregated_method: mean
+    summary_method: mean
+...
+```
+
 ## 主要參數
 
 - **method** (`string`, 選用)
@@ -81,95 +160,8 @@ source:
 | `pct_change` | `(target - base) / abs(base)` | 檢視相對變化幅度 |
 | `diff` | `target - base` | 檢視絕對變化量 |
 
-## 使用範例
-
-請點擊下方按鈕在 Colab 中執行範例：
-
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/nics-tw/petsard/blob/main/demo/petsard-yaml/describer-yaml/describer.ipynb)
-
-### 單一資料集描述 (describe 模式)
-
-```yaml
----
-Synthesizer:
-  external_data:
-    method: custom_data
-    filepath: benchmark://adult-income
-    schema: benchmark://adult-income_schema
-Describer:
-  describer-describe:
-    method: default    # 自動判斷為 describe（因為只有一個 source）
-    source: Synthesizer
-...
-```
-
-### 資料集比較 (compare 模式)
-
-```yaml
----
-Splitter:
-  external_split:
-    method: custom_data
-    filepath:
-      ori: benchmark://adult-income_ori
-      control: benchmark://adult-income_control
-    schema:
-      ori: benchmark://adult-income_schema
-      control: benchmark://adult-income_schema
-Synthesizer:
-  external_data:
-    method: custom_data
-    filepath: benchmark://adult-income
-    schema: benchmark://adult-income_schema
-Describer:
-  describer-compare:
-    method: default         # 自動判斷為 compare（因為有兩個 source）
-    source:
-      base: Splitter.train  # 使用 Splitter 的 train 輸出作為基準
-      target: Synthesizer   # 比較 Synthesizer 的輸出
-...
-```
-
-### 自訂比較方法
-
-```yaml
----
-Loader:
-  load_original:
-    filepath: benchmark://adult-income_ori
-    schema: benchmark://adult-income_schema
-Synthesizer:
-  generate_synthetic:
-    method: custom_data
-    filepath: benchmark://adult-income
-    schema: benchmark://adult-income_schema
-Describer:
-  custom_comparison:
-    method: compare           # 明確指定 compare 方法
-    source:
-      base: Loader
-      target: Synthesizer
-    stats_method:             # 自訂統計方法
-      - mean
-      - std
-      - nunique
-      - jsdivergence
-    compare_method: diff      # 使用差值而非百分比變化
-    aggregated_method: mean
-    summary_method: mean
-...
-```
-
-## 自動判斷邏輯（default 方法）
-
-- **1 個 source**：自動使用 `describe` 方法
-- **2 個 source**：自動使用 `compare` 方法（必須使用字典格式）
-  - 必須明確指定 `base` 和 `target` 鍵
-- **其他數量**：報錯
-
 ## 執行說明
 
-- 實驗名稱（第二層）可自由命名，建議使用描述性名稱
 - source 參數為必要參數，必須明確指定資料來源
 - method 參數可省略，預設為 `default`（自動判斷）
 - 統計方法會根據資料類型自動篩選適用的計算

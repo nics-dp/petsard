@@ -7,7 +7,7 @@ EvaluatorAdapter 處理資料評估，支援原始、合成和控制資料集的
 
 ## 類別架構
 
-{{< mermaid-file file="content/docs/python-api/adapter-api/evaluatoradapter-usage-diagram.mmd" >}}
+{{< mermaid-file file="content/docs/python-api/adapter-api/evaluatoradapter-usage-diagram.zh-tw.mmd" >}}
 
 > **圖例：**
 > - 淺紫色框：EvaluatorAdapter 主類別

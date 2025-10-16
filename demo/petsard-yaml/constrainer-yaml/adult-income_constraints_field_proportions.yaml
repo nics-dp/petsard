@@ -1,0 +1,10 @@
+---
+field_proportions:
+  - fields: 'education'      # Target field: education
+    mode: 'all'              # Mode: maintain distribution of all values (including NA)
+    tolerance: 0.1           # Tolerance: allow 10% deviation
+
+  - fields: 'workclass'      # Target field: workclass
+    mode: 'missing'          # Mode: only maintain proportion of missing values (NA)
+    tolerance: 0.03          # Tolerance: allow 3% deviation
+...

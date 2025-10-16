@@ -1,9 +1,19 @@
 ---
 title: "SynthesizerAdapter"
-weight: 393
+weight: 3
 ---
 
 SynthesizerAdapter handles synthetic data generation using various generative models with pipeline integration.
+
+## Class Architecture
+
+{{< mermaid-file file="content/docs/python-api/adapter-api/synthesizeradapter-usage-diagram.mmd" >}}
+
+> **Legend:**
+> - Light purple box: SynthesizerAdapter main class
+> - Blue box: Core synthesis module
+> - Light pink box: LoaderAdapter used for custom data mode
+> - `..>`: Dependency relationship
 
 ## Main Features
 

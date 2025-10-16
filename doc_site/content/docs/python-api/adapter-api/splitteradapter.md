@@ -1,9 +1,19 @@
 ---
 title: "SplitterAdapter"
-weight: 392
+weight: 2
 ---
 
 SplitterAdapter handles data splitting for training/validation sets with overlap control functionality.
+
+## Class Architecture
+
+{{< mermaid-file file="content/docs/python-api/adapter-api/splitteradapter-usage-diagram.mmd" >}}
+
+> **Legend:**
+> - Light purple box: SplitterAdapter main class
+> - Blue box: Core splitting module
+> - Light pink box: LoaderAdapter used for custom data mode
+> - `..>`: Dependency relationship
 
 ## Main Features
 
@@ -77,21 +87,6 @@ adapter.run({
 
 # Get results
 split_data, metadata_dict, train_indices = adapter.get_result()
-```
-
-## Integration with Pipeline
-
-```yaml
-# YAML pipeline configuration
-pipeline:
-  - module: loader
-    config:
-      filepath: "data.csv"
-  - module: splitter
-    config:
-      num_samples: 5
-      train_split_ratio: 0.8
-      max_overlap_ratio: 0.0
 ```
 
 ## Notes

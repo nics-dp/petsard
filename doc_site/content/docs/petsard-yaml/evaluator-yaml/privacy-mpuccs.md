@@ -1,6 +1,6 @@
 ---
 title: "mpUCCs Privacy Risk Assessment (Experimental)"
-weight: 147
+weight: 6
 ---
 
 {{< callout type="warning" >}}
@@ -8,6 +8,39 @@ weight: 147
 {{< /callout >}}
 
 Evaluate privacy risks using Maximal Partial Unique Column Combinations (mpUCCs), an advanced singling-out risk assessment algorithm that identifies field combinations capable of uniquely identifying records.
+
+## Usage Example
+
+Click the below button to run this example in Colab:
+
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/nics-tw/petsard/blob/main/demo/petsard-yaml/evaluator-yaml/privacy-mpuccs.ipynb)
+
+```yaml
+Splitter:
+  external_split:
+    method: custom_data
+    filepath:
+      ori: benchmark://adult-income_ori
+      control: benchmark://adult-income_control
+    schema:
+      ori: benchmark://adult-income_schema
+      control: benchmark://adult-income_schema
+Synthesizer:
+  external_data:
+    method: custom_data
+    filepath: benchmark://adult-income_syn
+    schema: benchmark://adult-income_schema
+Evaluator:
+  mpuccs_assessment:
+    method: mpuccs
+    max_baseline_cols: 2        # Maximum columns to evaluate (default: null = all columns)
+    min_entropy_delta: 0.01     # Minimum entropy gain threshold (default: 0.0)
+    field_decay_factor: 0.5     # Field combination weighting decay (default: 0.5)
+    renyi_alpha: 2.0            # Rényi entropy parameter (default: 2.0)
+    numeric_precision: null     # Auto-detect or specify decimal places (default: null)
+    datetime_precision: null    # Auto-detect or specify time precision (default: null)
+    calculate_baseline: true    # Calculate baseline protection metrics (default: true)
+```
 
 ## Overview
 
@@ -26,6 +59,91 @@ MPUCCs (Maximal Partial Unique Column Combinations) implements an advanced priva
    - Main Protection: Direct protection against identification
    - Baseline Protection: Theoretical protection based on attribute distributions
    - Overall Protection: Normalized protection score (0-1)
+
+## Theoretical Foundation
+
+### Core Concepts
+
+#### UCC (Unique Column Combinations)
+A UCC is a field combination where all values are unique across all records in the dataset, with no duplicates.
+
+**Example:**
+For address data, the complete address is a unique value. An address can also be viewed as a unique combination of city, district, street, and house number.
+
+#### pUCC (Partial Unique Column Combinations)
+A pUCC is only unique under specific conditions or for specific values, rather than being unique across the entire dataset.
+
+**Example:**
+In most cases, street names and house numbers are not unique because many towns have streets with the same name. Only (1) special street names or (2) special house numbers are unique values.
+
+#### mpUCCs (Maximal Partial Unique Column Combinations)
+mpUCCs are pUCCs in maximal form, meaning there is no smaller subset that can achieve the same identification effect.
+
+**Example:**
+For "Zhongxiao East Road" "Section 1" "No. 1", since other cities also have Zhongxiao East Road, removing any field attribute would prevent unique identification, making this an mpUCC.
+
+### Key Theoretical Insights
+
+#### mpUCCs = QIDs (Quasi-identifiers)
+The essence of singling-out attacks is:
+1. Identifying a unique field combination in synthetic data
+2. That combination also corresponds to only one unique record in the original data
+
+This is essentially finding pUCCs and then checking if they are also pUCCs in the original data.
+
+#### Self-contained Anonymity
+A dataset is considered anonymized when no feature combination (IDs + QIDs) can uniquely identify an original entity.
+
+**Finding QIDs (Find-QIDs problem) is equivalent to discovering mpUCCs!**
+
+Repeatedly counting non-maximal field combinations overestimates risk - this is the inverse statement of singling-out risk having set-theoretic meaning!
+
+## Algorithm Implementation
+
+### Difficulty of the Find-QIDs Problem
+
+1. For k attributes, there are 2^k - 1 potential QIDs
+2. Proven to be W[2]-complete (Bläsius et al., 2017)
+3. The problem lacks optimal substructure, so dynamic programming doesn't work
+
+**Example:** Knowing that {A, B} and {B, C} have no pUCCs does not mean {A, B, C} has none.
+
+### Our Solution: Heuristic Greedy Cardinality-First Algorithm
+
+#### 1. High Cardinality Fields First
+- Calculate cardinality for all fields
+- For numeric fields, round to lowest precision
+- Field combination breadth-first: from few to many, high cardinality first
+
+#### 2. Set Operations on Field and Value Domain Combinations
+- Use `collections.Counter` to capture synthetic data value combinations with only one occurrence
+- Match original data with the same value combination and only one occurrence
+- Record corresponding original and synthetic data indices
+
+#### 3. Pruning Strategy
+If all value combinations for a field combination are unique and collide, skip its supersets.
+
+#### 4. Masking Mechanism
+For synthetic data already identified by high-cardinality few-field combinations, that row no longer collides.
+
+#### 5. Conditional Entropy-Based Early Stopping
+Based on past research on information entropy for Functional Dependencies (Mandros et al., 2020), we propose:
+
+**For field combinations with k ≥ 2:**
+
+1. **Combination Entropy** H(XY) = entropy(Counter(syn_data[XY]) / syn_n_rows)
+2. **Conditional Entropy** H(Y|X) = Σ p(X = x)*H(Y | X = x), where x ∈ {pUCC, ¬pUCC}
+3. **Mutual Information** I(X; Y) = H(Y) - H(Y|X)
+
+**Early Stopping:** If mutual information is negative, subsequent inherited field combinations are no longer checked.
+
+#### 6. Rényi Entropy (α=2, Collision Entropy)
+We use Rényi entropy instead of Shannon entropy for better collision probability analysis:
+
+- **Theoretical Maximum Entropy** = log(n_rows)
+- **Synthetic Data Maximum Entropy** = scipy.stats.entropy(Counter(syn_data))
+- **Field Combination Entropy** = scipy.stats.entropy(Counter(syn_data[column_combos]))
+- **Normalization** = Synthetic Data Maximum Entropy - Field Combination Entropy
 
 ## Data Preprocessing Details
 
@@ -57,21 +175,6 @@ MPUCCs performs several preprocessing steps to ensure accurate privacy risk asse
 - **Cardinality-based**: Sorts columns by number of unique values (descending)
 - **High Cardinality First**: Processes columns with more unique values first
 - **Efficiency**: This order typically leads to faster identification and better pruning
-
-## Usage Example
-
-```yaml
-Evaluator:
-  mpuccs_assessment:
-    method: mpuccs
-    max_baseline_cols: null     # Maximum columns to evaluate (default: null = all columns)
-    min_entropy_delta: 0.01     # Minimum entropy gain threshold (default: 0.0)
-    field_decay_factor: 0.5     # Field combination weighting decay (default: 0.5)
-    renyi_alpha: 2.0            # Rényi entropy parameter (default: 2.0)
-    numeric_precision: null     # Auto-detect or specify decimal places (default: null)
-    datetime_precision: null    # Auto-detect or specify time precision (default: null)
-    calculate_baseline: true    # Calculate baseline protection metrics (default: true)
-```
 
 ## Parameter Description
 
@@ -176,26 +279,6 @@ These fields appear only when using non-default entropy or decay settings:
 **Simplified Output**: Tree results now prioritize essential information. Technical details are hidden when using default settings to reduce clutter.
 {{< /callout >}}
 
-## Algorithm Details
-
-### Progressive Field Search
-1. Fields are processed in descending order of cardinality
-2. For each field, combinations are built progressively
-3. Entropy-based pruning eliminates ineffective combinations
-4. Only maximal combinations are retained
-
-### Entropy Calculation
-Uses Rényi entropy (α=2, Collision Entropy):
-```
-H₂(X) = -log₂(∑ pᵢ²)
-```
-Normalized to [0, 1] range for comparison
-
-### Weighting Scheme
-- Single field: weight = 1.0
-- Multiple fields: weight = decay_factor^(size-1)
-- Penalizes larger combinations to avoid overestimation
-
 ## Best Practices
 
 1. **Start with Small Combinations**: Begin with `n_cols: [1, 2, 3]` to assess basic risks
@@ -207,6 +290,56 @@ Normalized to [0, 1] range for comparison
    - Focus on `privacy_risk_score` for executive summaries
 
 ## Comparison with Traditional Methods
+## Key Improvements over Anonymeter
+
+### 1. Theoretical Foundation
+- **Clear Theoretical Basis**: mpUCCs = QIDs provides solid mathematical foundation
+- **Avoids Risk Overestimation**: Focuses on maximal form combinations
+- **Set-Theoretic Meaning**: Correctly understands the nature of singling-out risk
+
+### 2. Algorithm Optimization
+- **Progressive Tree-based Search**: Efficient field combination exploration
+- **Entropy-based Pruning**: Intelligent early stopping mechanism
+- **Cardinality-first Processing**: High cardinality fields processed first
+- **Collision-oriented Analysis**: Directly focuses on actual privacy risk
+
+### 3. Precision Handling
+- **Automatic Numeric Precision Detection**: Handles floating-point comparison issues
+- **Datetime Precision Support**: Appropriate handling of time data
+- **Manual Precision Override**: Allows custom precision settings
+
+### 4. Performance Improvements
+- **Faster Execution**: 44 seconds vs 12+ minutes on adult-income dataset
+- **Better Scalability**: Efficiently handles high-dimensional data
+- **Memory Optimization**: Counter-based uniqueness detection
+
+### 5. Comprehensive Progress Tracking
+- **Dual-layer Progress Bars**: Field-level and combination-level progress
+- **Detailed Execution Tree**: Complete audit trail of algorithm decisions
+- **Pruning Statistics**: Transparency of optimization decisions
+
+### Performance Comparison with Anonymeter
+| Metric | Anonymeter | mpUCCs | Improvement |
+|--------|------------|--------|-------------|
+| Execution Time (adult-income, n_cols=3) | 12+ minutes | 44 seconds | 16x faster |
+| Singling-out Attack Detection | ~1,000-2,000 (random sampling) | 7,999 (complete evaluation) | Full coverage |
+| Theoretical Foundation | Heuristic | Mathematical theory | Solid theory |
+| Risk Overestimation | High | Low | Accurate assessment |
+| Progress Visibility | Not supported | Comprehensive | Full transparency |
+| Precision Handling | Not supported | Automatic | Better usability |
+
+## Performance Characteristics
+
+### Computational Complexity
+- **Time Complexity**: Worst case O(2^k), but with significant pruning
+- **Space Complexity**: O(n*k) where n is number of records, k is number of fields
+- **Actual Performance**: Linear to sub-quadratic on real datasets due to pruning
+
+### Scalability
+- **Field Scalability**: Highly scalable through pruning - efficiently handles datasets with many fields
+- **Record Scalability**: Tested on datasets with 100K+ records
+- **Memory Efficiency**: Counter-based operations minimize memory usage
+
 
 | Aspect | MPUCCs | Traditional Singling Out |
 |--------|--------|-------------------------|
@@ -331,3 +464,25 @@ total_identified: 100         # 100 records at risk
 total_syn_records: 1000       # Out of 1000 total
 ```
 **Conclusion**: The synthetic data performs well (85% of theoretical best), with acceptable risk level (0.15).
+
+## Limitations and Future Work
+
+### Current Limitations
+1. **Experimental Status**: Still under active development and validation
+2. **Memory Usage**: May be memory-intensive for very high-dimensional data
+3. **Risk Weighting**: Theoretically sound risk weighting methods are under research, currently set to field_decay_factor = 0.5
+
+### Future Enhancements
+1. **Distributed Computing**: Support for parallel processing of large datasets (nice-to-have)
+
+## References
+
+1. Abedjan, Z., & Naumann, F. (2011). Advancing the discovery of unique column combinations. In Proceedings of the 20th ACM international conference on Information and knowledge management (pp. 1565-1570).
+
+2. Mandros, P., Kaltenpoth, D., Boley, M., & Vreeken, J. (2020). Discovering Functional Dependencies from Mixed-Type Data. In Proceedings of the 26th ACM SIGKDD International Conference on Knowledge Discovery & Data Mining (pp. 1404-1414).
+
+3. Bläsius, T., Friedrich, T., Lischeid, J., Meeks, K., & Schirneck, M. (2017). Efficiently enumerating hitting sets of hypergraphs arising in data profiling. In Proceedings of the 16th International Symposium on Experimental Algorithms (pp. 130-145).
+
+## Support and Feedback
+
+As an experimental feature, mpUCCs is under active development and improvement. We welcome feedback, bug reports, and suggestions for improvement. Please refer to the project's issue tracker to report issues or request features.

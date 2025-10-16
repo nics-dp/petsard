@@ -1,0 +1,82 @@
+classDiagram
+    class Constrainer {
+        dict config
+        dict _constrainers
+        int resample_trails
+        __init__(config)
+        apply(df, target_rows) DataFrame
+        resample_until_satisfy() DataFrame
+        register(name, constraint_class)
+    }
+
+    class BaseConstrainer {
+        <<abstract>>
+        validate_config(df) bool
+        apply(df) DataFrame
+        _check_columns_exist(df, columns) bool
+    }
+
+    class NaNGroupConstrainer {
+        dict constraints
+        __init__(constraints)
+        validate_config(df) None
+        apply(df) DataFrame
+    }
+
+    class FieldConstrainer {
+        list config
+        list COMPARISON_OPS
+        __init__(config)
+        validate_config(df) bool
+        apply(df) DataFrame
+        _tokenize(condition) list
+        _parse_expression() Series
+    }
+
+    class FieldCombinationConstrainer {
+        list constraints
+        __init__(constraints)
+        validate_config(df) None
+        apply(df) DataFrame
+        _validate_constraint_format()
+        _is_na_value(value) bool
+    }
+
+    class FieldProportionsConstrainer {
+        FieldProportionsConfig config
+        int _target_rows
+        __init__(config)
+        validate_config() bool
+        apply(df, target_rows) DataFrame
+        _constraint_filter_field_proportions()
+    }
+
+    class FieldProportionsConfig {
+        list fields
+        str mode
+        float tolerance
+        int _target_rows
+        verify_data(data, target_n_rows)
+        check_proportions(filtered_data)
+    }
+
+    BaseConstrainer <|-- NaNGroupConstrainer
+    BaseConstrainer <|-- FieldConstrainer
+    BaseConstrainer <|-- FieldCombinationConstrainer
+    BaseConstrainer <|-- FieldProportionsConstrainer
+
+    Constrainer ..> NaNGroupConstrainer
+    Constrainer ..> FieldConstrainer
+    Constrainer ..> FieldCombinationConstrainer
+    Constrainer ..> FieldProportionsConstrainer
+    
+    FieldProportionsConstrainer *-- FieldProportionsConfig
+
+    %% 樣式標示
+    style Constrainer fill:#e6f3ff,stroke:#4a90e2,stroke-width:3px
+    style BaseConstrainer fill:#f3e6ff,stroke:#9966cc,stroke-width:2px
+    style NaNGroupConstrainer fill:#fff2e6,stroke:#ff9800,stroke-width:2px
+    style FieldConstrainer fill:#fff2e6,stroke:#ff9800,stroke-width:2px
+    style FieldCombinationConstrainer fill:#fff2e6,stroke:#ff9800,stroke-width:2px
+    style FieldProportionsConstrainer fill:#fff2e6,stroke:#ff9800,stroke-width:2px
+    style FieldProportionsConfig fill:#f3e6ff,stroke:#9966cc,stroke-width:2px

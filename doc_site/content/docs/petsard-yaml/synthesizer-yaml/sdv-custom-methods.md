@@ -1,13 +1,9 @@
 ---
-title: "SDV Custom Methods"
+title: "Custom Method: SDV"
 weight: 4
 ---
 
-Flexibly use SDV synthesis methods via custom_method approach, with full control over all parameters including CPU/GPU selection and training parameters.
-
-{{< callout type="info" >}}
-**Difference from Built-in Integration**: This method provides complete parameter control, while [Built-in SDV Methods](../sdv-methods) use fixed default values.
-{{< /callout >}}
+[SDV (Synthetic Data Vault)](https://sdv.dev/) is a mainstream and widely popular synthetic data generation package in the industry, offering various advanced algorithms. To help users understand how to integrate external packages in PETsARD, we have developed this demonstration showing how to flexibly use SDV's various synthesis methods via the `custom_method` approach, with full control over all parameters including CPU/GPU selection and training parameters. This demonstration not only shows how to use SDV, but more importantly, provides a complete example of customizing external methods, allowing you to easily integrate other third-party packages or your own algorithms.
 
 ## Example Usage
 

@@ -1,0 +1,45 @@
+classDiagram
+
+    class SynthesizerAdapter {
+        +config: dict
+        +synthesizer: Synthesizer
+        +is_custom_data: bool
+        +loader_adapter: LoaderAdapter
+        +__init__(config)
+        +run() DataFrame
+        -_extract_loader_config(config) dict
+    }
+
+    class Synthesizer {
+        +config: dict
+        +method: str
+        +model: SDVModel
+        +create(metadata)
+        +fit_sample(data) DataFrame
+        +sample() DataFrame
+    }
+
+    class LoaderAdapter {
+        +load() tuple~DataFrame, Schema~
+    }
+
+    SynthesizerAdapter ..> Synthesizer : 用於資料合成
+    SynthesizerAdapter ..> LoaderAdapter : 用於 custom_data 方法
+
+    %% 樣式定義
+    class SynthesizerAdapter {
+        <<主要類別>>
+    }
+    style SynthesizerAdapter fill:#E6E6FA
+
+    class Synthesizer {
+        <<核心模組>>
+    }
+    style Synthesizer fill:#4169E1,color:#fff
+
+    class LoaderAdapter {
+        <<選用：自訂資料>>
+    }
+    style LoaderAdapter fill:#FFE4E1
+
+    note for SynthesizerAdapter "1. 正常模式：使用 Synthesizer 生成資料\n2. 自訂資料模式：使用 LoaderAdapter 載入預先生成的資料\n3. 支援多種合成方法（CTGAN、GaussianCopula 等）"
