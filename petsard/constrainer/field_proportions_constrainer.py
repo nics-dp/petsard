@@ -1,5 +1,4 @@
 import itertools
-import warnings
 from dataclasses import dataclass, field
 
 import pandas as pd
@@ -818,10 +817,22 @@ class FieldProportionsConstrainer(BaseConstrainer):
             data_result
         )
         if not final_proportions_satisfied:
-            warnings.warn(
-                f"Final data still has {len(final_violations)} conditions not satisfied",
-                stacklevel=2,
+            import logging
+
+            logger = logging.getLogger("PETsARD.FieldProportionsConstrainer")
+            logger.warning(
+                f"⚠ field_proportions 約束：經過 {iteration} 次迭代後，仍有 {len(final_violations)} 個條件未完全滿足。"
+                f"這可能是因為資料量不足、容忍度設定過嚴，或條件之間存在衝突。"
             )
+            # 記錄詳細的違規資訊
+            for i, violation in enumerate(final_violations[:3], 1):  # 只顯示前3個
+                logger.debug(
+                    f"  違規 {i}: 欄位={violation['欄位']}, 值={violation['值']}, "
+                    f"實際計數={violation['實際計數']}, "
+                    f"預期範圍=[{violation['最小計數']}, {violation['最大計數']}]"
+                )
+            if len(final_violations) > 3:
+                logger.debug(f"  ... 還有 {len(final_violations) - 3} 個違規未顯示")
 
         # 創建操作記錄的 DataFrame
         ops_df = (
@@ -841,4 +852,4 @@ class FieldProportionsConstrainer(BaseConstrainer):
             )
         )
 
-        return data_result.reset_index(drop=True), ops_df
+        return data_result, ops_df

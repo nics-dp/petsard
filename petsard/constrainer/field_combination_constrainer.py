@@ -224,7 +224,7 @@ class FieldCombinationConstrainer:
                 # 更新總掩碼
                 mask &= row_mask
 
-            # 應用掩碼
-            result = result[mask].reset_index(drop=True)
+            # 應用掩碼 - keep original index for validation tracking
+            result = result[mask]
 
         return result

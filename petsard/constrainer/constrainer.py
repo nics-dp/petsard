@@ -39,6 +39,9 @@ class Constrainer:
             resample_trails (int):
                 Number of trials to reach the target number of rows,
                 set after calling resample_until_satisfy
+            validation_result (dict):
+                Validation result from the last validate() call,
+                set after calling validate()
         """
         if not isinstance(config, dict):
             raise ValueError("Config must be a dictionary")
@@ -47,6 +50,7 @@ class Constrainer:
         self._setup_constrainers()
 
         self.resample_trails = None
+        self.validation_result = None
 
     def _setup_constrainers(self):
         """Initialize all constraint instances"""
@@ -79,7 +83,8 @@ class Constrainer:
             if _constraint_type == "field_proportions" and target_rows is not None:
                 constrainer._set_target_rows(target_rows)
             result = constrainer.apply(result)
-        return result
+        # Reset index at the end to ensure clean sequential indexing
+        return result.reset_index(drop=True)
 
     @classmethod
     def register(cls, name: str, constraint_class: type):
@@ -219,3 +224,256 @@ class Constrainer:
                 )
 
         return result_df
+
+    def validate(
+        self,
+        data: pd.DataFrame,
+        return_details: bool = True,
+        max_examples_per_rule: int = 6,
+    ) -> dict:
+        """
+        驗證資料是否符合所有條件限制，不進行重新抽樣。
+
+        此方法用於檢查現有資料（如從檔案讀取或 custom_data）是否符合設定的條件。
+        與 resample_until_satisfy 不同，此方法不會進行重新抽樣，僅進行驗證和記錄。
+
+        Args:
+            data: 要驗證的 DataFrame
+            return_details: 是否返回詳細的違規記錄，預設為 True
+            max_examples_per_rule: 每條規則最多保留的違規範例數，預設為 6
+
+        Returns:
+            dict: 驗證結果，包含以下鍵值：
+                - total_rows (int): 總資料筆數
+                - passed_rows (int): 通過所有條件的資料筆數
+                - failed_rows (int): 未通過條件的資料筆數
+                - pass_rate (float): 通過率 (0.0 到 1.0)
+                - is_fully_compliant (bool): 是否百分百符合（所有資料都通過）
+                - constraint_violations (dict): 各條件類型下每條具體規則的違規統計
+                - violation_details (pd.DataFrame, optional): 違規記錄的詳細資訊
+
+        Example:
+            >>> constrainer = Constrainer(config)
+            >>> result = constrainer.validate(data)
+            >>> print(f"通過率: {result['pass_rate']:.2%}")
+            >>> print(f"是否完全符合: {result['is_fully_compliant']}")
+        """
+        if len(data) == 0:
+            raise ValueError("Empty DataFrame is not allowed")
+
+        total_rows = len(data)
+        result = data.copy()
+        result["__validation_passed__"] = True  # 追蹤每筆資料是否通過
+
+        # 記錄每個條件類型的違規情況（包含每條具體規則）
+        constraint_violations = {}
+
+        # 對每個 constrainer 進行驗證
+        for constraint_type, constrainer in self._constrainers.items():
+            # 取得此 constraint 類型的配置
+            constraint_config = self.config.get(constraint_type)
+
+            # 根據不同的 constraint 類型，分別處理每條具體規則
+            type_violations = {}
+
+            try:
+                if constraint_type == "field_constraints" and isinstance(
+                    constraint_config, list
+                ):
+                    # field_constraints 是規則列表
+                    for rule_idx, rule in enumerate(constraint_config):
+                        rule_name = f"Rule {rule_idx + 1}: {rule}"
+
+                        # 創建臨時 constrainer 只處理這條規則
+                        temp_constrainer = FieldConstrainer([rule])
+                        passed_data = temp_constrainer.apply(result.copy())
+                        passed_indices = set(passed_data.index)
+
+                        # 計算違規數量
+                        failed_indices = result.index[
+                            ~result.index.isin(passed_indices)
+                        ]
+                        failed_count = len(failed_indices)
+
+                        if failed_count > 0:
+                            # 標記違規的資料
+                            column_name = (
+                                f"__violated_{constraint_type}_rule{rule_idx}__"
+                            )
+                            result[column_name] = False
+                            result.loc[failed_indices, column_name] = True
+                            result.loc[failed_indices, "__validation_passed__"] = False
+
+                            # 收集違規範例（最多 max_examples_per_rule 筆）
+                            examples = failed_indices[:max_examples_per_rule].tolist()
+
+                            type_violations[rule_name] = {
+                                "failed_count": failed_count,
+                                "fail_rate": failed_count / total_rows
+                                if total_rows > 0
+                                else 0.0,
+                                "violation_examples": examples,
+                            }
+
+                elif constraint_type == "field_combinations" and isinstance(
+                    constraint_config, list
+                ):
+                    # field_combinations 也是規則列表
+                    for rule_idx, rule in enumerate(constraint_config):
+                        rule_name = f"Rule {rule_idx + 1}: {rule}"
+
+                        # 創建臨時 constrainer 只處理這條規則
+                        temp_constrainer = FieldCombinationConstrainer([rule])
+                        passed_data = temp_constrainer.apply(result.copy())
+                        passed_indices = set(passed_data.index)
+
+                        # 計算違規數量
+                        failed_indices = result.index[
+                            ~result.index.isin(passed_indices)
+                        ]
+                        failed_count = len(failed_indices)
+
+                        if failed_count > 0:
+                            # 標記違規的資料
+                            column_name = (
+                                f"__violated_{constraint_type}_rule{rule_idx}__"
+                            )
+                            result[column_name] = False
+                            result.loc[failed_indices, column_name] = True
+                            result.loc[failed_indices, "__validation_passed__"] = False
+
+                            # 收集違規範例
+                            examples = failed_indices[:max_examples_per_rule].tolist()
+
+                            type_violations[rule_name] = {
+                                "failed_count": failed_count,
+                                "fail_rate": failed_count / total_rows
+                                if total_rows > 0
+                                else 0.0,
+                                "violation_examples": examples,
+                            }
+
+                elif constraint_type == "field_proportions" and isinstance(
+                    constraint_config, list
+                ):
+                    # field_proportions 也是規則列表
+                    for rule_idx, rule in enumerate(constraint_config):
+                        fields = rule.get("fields", "unknown")
+                        mode = rule.get("mode", "all")
+                        tolerance = rule.get("tolerance", 0.0)
+                        rule_name = f"Rule {rule_idx + 1}: {fields} (mode={mode}, tolerance={tolerance})"
+
+                        # 創建臨時 constrainer 只處理這條規則
+                        temp_constrainer = FieldProportionsConstrainer([rule])
+                        temp_constrainer._set_target_rows(total_rows)
+                        passed_data = temp_constrainer.apply(result.copy())
+                        passed_indices = set(passed_data.index)
+
+                        # 計算違規數量
+                        failed_indices = result.index[
+                            ~result.index.isin(passed_indices)
+                        ]
+                        failed_count = len(failed_indices)
+
+                        if failed_count > 0:
+                            # 標記違規的資料
+                            column_name = (
+                                f"__violated_{constraint_type}_rule{rule_idx}__"
+                            )
+                            result[column_name] = False
+                            result.loc[failed_indices, column_name] = True
+                            result.loc[failed_indices, "__validation_passed__"] = False
+
+                            # 收集違規範例
+                            examples = failed_indices[:max_examples_per_rule].tolist()
+
+                            type_violations[rule_name] = {
+                                "failed_count": failed_count,
+                                "fail_rate": failed_count / total_rows
+                                if total_rows > 0
+                                else 0.0,
+                                "violation_examples": examples,
+                            }
+
+                else:
+                    # 其他類型（如 nan_groups）用原來的方法
+                    if constraint_type == "field_proportions":
+                        constrainer._set_target_rows(total_rows)
+
+                    passed_data = constrainer.apply(result.copy())
+                    passed_indices = set(passed_data.index)
+
+                    # 計算違規數量
+                    failed_indices = result.index[~result.index.isin(passed_indices)]
+                    failed_count = len(failed_indices)
+
+                    if failed_count > 0:
+                        # 標記違規的資料
+                        column_name = f"__violated_{constraint_type}__"
+                        result[column_name] = False
+                        result.loc[failed_indices, column_name] = True
+                        result.loc[failed_indices, "__validation_passed__"] = False
+
+                        # 收集違規範例
+                        examples = failed_indices[:max_examples_per_rule].tolist()
+
+                        type_violations[constraint_type] = {
+                            "failed_count": failed_count,
+                            "fail_rate": failed_count / total_rows
+                            if total_rows > 0
+                            else 0.0,
+                            "violation_examples": examples,
+                        }
+
+                # 只有當有違規時才記錄
+                if type_violations:
+                    constraint_violations[constraint_type] = type_violations
+
+            except Exception as e:
+                warnings.warn(
+                    f"Warning: Error validating constraint '{constraint_type}': {str(e)}",
+                    stacklevel=2,
+                )
+                # 如果驗證失敗，標記為未知錯誤
+                constraint_violations[constraint_type] = {
+                    "error": {
+                        "failed_count": 0,
+                        "fail_rate": 0.0,
+                        "error": str(e),
+                    }
+                }
+
+        # 計算統計資訊
+        passed_rows = result["__validation_passed__"].sum()
+        failed_rows = total_rows - passed_rows
+        pass_rate = passed_rows / total_rows if total_rows > 0 else 0.0
+        is_fully_compliant = passed_rows == total_rows
+
+        # 建立返回結果
+        validation_result = {
+            "total_rows": total_rows,
+            "passed_rows": int(passed_rows),
+            "failed_rows": int(failed_rows),
+            "pass_rate": float(pass_rate),
+            "is_fully_compliant": bool(is_fully_compliant),
+            "constraint_violations": constraint_violations,
+        }
+
+        # 如果需要返回詳細資訊
+        if return_details:
+            # 只返回違規的資料及其違規標記
+            violation_columns = [
+                col for col in result.columns if col.startswith("__violated_")
+            ]
+            details_df = result[~result["__validation_passed__"]].copy()
+
+            # 移除內部追蹤欄位，只保留違規標記
+            if "__validation_passed__" in details_df.columns:
+                details_df = details_df.drop(columns=["__validation_passed__"])
+
+            validation_result["violation_details"] = details_df
+
+        # 儲存驗證結果供後續使用
+        self.validation_result = validation_result
+
+        return validation_result

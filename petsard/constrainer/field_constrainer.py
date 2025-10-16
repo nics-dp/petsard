@@ -210,10 +210,10 @@ class FieldConstrainer(BaseConstrainer):
                 )
                 continue
 
-            # Apply the constraint
-            result = result.loc[mask].reset_index(drop=True)
+            # Apply the constraint - keep original index for validation tracking
+            result = result.loc[mask]
 
-        return result.reset_index(drop=True)
+        return result
 
     def _tokenize(self, condition: str) -> list:
         """

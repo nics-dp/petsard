@@ -149,7 +149,7 @@ class NaNGroupConstrainer(BaseConstrainer):
         _ = self.validate_config(df)
         result = df.copy()
 
-        # First apply all delete actions
+        # First apply all delete actions - keep original index for validation tracking
         for main_field, actions in self.constraints.items():
             if actions == "delete" or ("delete" in actions):
                 result = result[~result[main_field].isna()]
@@ -196,4 +196,4 @@ class NaNGroupConstrainer(BaseConstrainer):
                         mask = result[main_field].notna() & result[col].isna()
                         result.loc[mask, col] = result.loc[mask, main_field]
 
-        return result.reset_index(drop=True)
+        return result
