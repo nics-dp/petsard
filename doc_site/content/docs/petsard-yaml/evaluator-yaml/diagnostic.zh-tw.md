@@ -1,6 +1,6 @@
 ---
 title: "資料有效性診斷"
-weight: 141
+weight: 1
 ---
 
 檢查合成資料是否準確反映原始資料的基本特性和結構。
@@ -31,7 +31,7 @@ Evaluator:
     method: sdmetrics-diagnosticreport
 ```
 
-## 參數說明
+## 主要參數
 
 - **method** (`string`, 必要參數)
   - 固定值：`sdmetrics-diagnosticreport`

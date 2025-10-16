@@ -5,14 +5,6 @@ weight: 112
 
 Loader supports using the `benchmark://` protocol to automatically download and load benchmark datasets.
 
-## Protocol Format
-
-```yaml
-Loader:
-  experiment_name:
-    filepath: benchmark://dataset-name
-```
-
 ## Usage Examples
 
 Click the below button to run this example in Colab:

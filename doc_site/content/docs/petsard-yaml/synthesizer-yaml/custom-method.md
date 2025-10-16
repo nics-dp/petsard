@@ -5,6 +5,24 @@ weight: 3
 
 To create your own synthesizer, you need to implement a Python class with three required methods and configure the YAML file to use it.
 
+## Usage Examples
+
+Click the below button to run this example in Colab:
+
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/nics-tw/petsard/blob/main/demo/petsard-yaml/synthesizer-yaml/custom-synthesis.ipynb)
+
+```yaml
+Loader:
+  load_benchmark_with_schema:
+    filepath: benchmark://adult-income
+    schema: benchmark://adult-income_schema
+Synthesizer:
+  your-custom-method:
+    method: custom_method
+    module_path: custom-synthesis.py  # Python file name
+    class_name: MySynthesizer_Shuffle # Class name in the file
+```
+
 ## Required Implementation
 
 Your Python class must have:
@@ -22,24 +40,6 @@ class YourSynthesizer:
     def sample(self) -> pd.DataFrame:
         """Generate and return synthetic data"""
         pass
-```
-
-## Usage Examples
-
-Click the below button to run this example in Colab:
-
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/nics-tw/petsard/blob/main/demo/petsard-yaml/synthesizer-yaml/custom-synthesis.ipynb)
-
-```yaml
-Loader:
-  load_benchmark_with_schema:
-    filepath: benchmark://adult-income
-    schema: benchmark://adult-income_schema
-Synthesizer:
-  your-custom-method:
-    method: custom_method
-    module_path: custom-synthesis.py  # Python file name
-    class_name: MySynthesizer_Shuffle # Class name in the file
 ```
 
 ### Example: Shuffle Synthesizer

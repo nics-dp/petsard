@@ -1,13 +1,9 @@
 ---
-title: "SDV Custom Methods"
+title: "自訂合成方法：SDV"
 weight: 4
 ---
 
-使用 custom_method 方式靈活運用 SDV 合成方法，完全控制所有參數設定，包括 CPU/GPU 選擇、訓練參數調整等。
-
-{{< callout type="info" >}}
-**與內建整合的差異**：此方法提供完整的參數控制，而[內建 SDV 方法](../sdv-methods)使用固定預設值。
-{{< /callout >}}
+[SDV (Synthetic Data Vault)](https://sdv.dev/) 是業界主流且廣受歡迎的合成資料生成套件，提供多種先進的演算法。為了幫助使用者了解如何在 PETsARD 中整合外部套件，我們額外開發了這個示範，展示如何使用 `custom_method` 方式靈活運用 SDV 的各種合成方法，並完全控制所有參數設定，包括 CPU/GPU 選擇、訓練參數調整等。這個示範不僅展示了 SDV 的使用方式，更重要的是提供了自訂外部方法的完整範例，讓您可以輕鬆整合其他第三方套件或自行開發的演算法。
 
 ## 使用範例
 

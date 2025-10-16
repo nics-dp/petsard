@@ -5,82 +5,6 @@ weight: 150
 
 YAML configuration file format for the Describer module. Provides statistical description and comparison functionality for datasets.
 
-## Main Parameters
-
-- **method** (`string`, optional)
-  - Evaluation method
-  - `default`: Automatically determine based on source count (1→describe, 2→compare)
-  - `describe`: Single dataset statistical description
-  - `compare`: Dataset comparison (integrating Stats functionality)
-  - Default: `default`
-
-- **source** (`string | dict`, required)
-  - Specify data source(s)
-  - Single source: For describe method
-  - Two sources: For compare method (must use dictionary format)
-  - Available values: `Loader`, `Splitter`, `Preprocessor`, `Synthesizer`, `Postprocessor`, `Constrainer`
-
-## Supported Methods
-
-| Method | Description | Data Requirements | Output Content |
-|--------|-------------|-------------------|----------------|
-| **default** | Auto-detect mode | Based on source count | Based on detection result |
-| **describe** | Single dataset statistics | One data source | global, columnwise, pairwise |
-| **compare** | Dataset comparison analysis | Two data sources | global (with Score), columnwise |
-
-## Parameter Details
-
-### Common Parameters
-
-| Parameter | Type | Required/Optional | Default | Description | Example |
-|-----------|------|-------------------|---------|-------------|---------|
-| `method` | `string` | Optional | `default` | Evaluation method | `describe`, `compare` |
-| `source` | `string\|dict` | **Required** | None | Data source module(s) | See below |
-
-### Source Parameter Formats
-
-#### 1. Single source (describe method)
-```yaml
-source: Loader
-```
-
-#### 2. Dictionary format (compare method - required)
-```yaml
-source:
-  base: Splitter.train    # Explicitly specify base data
-  target: Synthesizer      # Explicitly specify target for comparison
-```
-
-Note: Backward compatibility supports `ori`/`syn` key names, but `base`/`target` is recommended.
-
-### Compare Method Specific Parameters
-
-| Parameter | Type | Default | Description | Available Values |
-|-----------|------|---------|-------------|------------------|
-| `stats_method` | `list` | All methods | Statistical methods list | `mean`, `std`, `median`, `min`, `max`, `nunique`, `jsdivergence` |
-| `compare_method` | `string` | `pct_change` | Comparison method | `pct_change`, `diff` |
-| `aggregated_method` | `string` | `mean` | Aggregation method | `mean` |
-| `summary_method` | `string` | `mean` | Summary method | `mean` |
-
-### Statistical Methods Explanation
-
-| Method | Applicable Data Type | Description | Execution Level |
-|--------|---------------------|-------------|-----------------|
-| `mean` | Numeric | Mean value | columnwise |
-| `std` | Numeric | Standard deviation | columnwise |
-| `median` | Numeric | Median value | columnwise |
-| `min` | Numeric | Minimum value | columnwise |
-| `max` | Numeric | Maximum value | columnwise |
-| `nunique` | Categorical | Number of unique values | columnwise |
-| `jsdivergence` | Categorical | JS divergence | percolumn |
-
-### Comparison Methods Explanation
-
-| Method | Formula | Use Case |
-|--------|---------|----------|
-| `pct_change` | `(target - base) / abs(base)` | View relative change magnitude |
-| `diff` | `target - base` | View absolute change amount |
-
 ## Usage Examples
 
 Click the button below to run the example in Colab:
@@ -160,16 +84,84 @@ Describer:
 ...
 ```
 
-## Auto-detection Logic (default method)
+## Main Parameters
 
-- **1 source**: Automatically uses `describe` method
-- **2 sources**: Automatically uses `compare` method (must use dictionary format)
-  - Must explicitly specify `base` and `target` keys
-- **Other counts**: Error
+- **method** (`string`, optional)
+  - Evaluation method
+  - `default`: Automatically determine based on source count (1→describe, 2→compare)
+  - `describe`: Single dataset statistical description
+  - `compare`: Dataset comparison (integrating Stats functionality)
+  - Default: `default`
+
+- **source** (`string | dict`, required)
+  - Specify data source(s)
+  - Single source: For describe method
+  - Two sources: For compare method (must use dictionary format)
+  - Available values: `Loader`, `Splitter`, `Preprocessor`, `Synthesizer`, `Postprocessor`, `Constrainer`
+
+## Supported Methods
+
+| Method | Description | Data Requirements | Output Content |
+|--------|-------------|-------------------|----------------|
+| **default** | Auto-detect mode | Based on source count | Based on detection result |
+| **describe** | Single dataset statistics | One data source | global, columnwise, pairwise |
+| **compare** | Dataset comparison analysis | Two data sources | global (with Score), columnwise |
+
+## Parameter Details
+
+### Common Parameters
+
+| Parameter | Type | Required/Optional | Default | Description | Example |
+|-----------|------|-------------------|---------|-------------|---------|
+| `method` | `string` | Optional | `default` | Evaluation method | `describe`, `compare` |
+| `source` | `string\|dict` | **Required** | None | Data source module(s) | See below |
+
+### Source Parameter Formats
+
+#### 1. Single source (describe method)
+```yaml
+source: Loader
+```
+
+#### 2. Dictionary format (compare method - required)
+```yaml
+source:
+  base: Splitter.train    # Explicitly specify base data
+  target: Synthesizer      # Explicitly specify target for comparison
+```
+
+Note: Backward compatibility supports `ori`/`syn` key names, but `base`/`target` is recommended.
+
+### Compare Method Specific Parameters
+
+| Parameter | Type | Default | Description | Available Values |
+|-----------|------|---------|-------------|------------------|
+| `stats_method` | `list` | All methods | Statistical methods list | `mean`, `std`, `median`, `min`, `max`, `nunique`, `jsdivergence` |
+| `compare_method` | `string` | `pct_change` | Comparison method | `pct_change`, `diff` |
+| `aggregated_method` | `string` | `mean` | Aggregation method | `mean` |
+| `summary_method` | `string` | `mean` | Summary method | `mean` |
+
+### Statistical Methods Explanation
+
+| Method | Applicable Data Type | Description | Execution Level |
+|--------|---------------------|-------------|-----------------|
+| `mean` | Numeric | Mean value | columnwise |
+| `std` | Numeric | Standard deviation | columnwise |
+| `median` | Numeric | Median value | columnwise |
+| `min` | Numeric | Minimum value | columnwise |
+| `max` | Numeric | Maximum value | columnwise |
+| `nunique` | Categorical | Number of unique values | columnwise |
+| `jsdivergence` | Categorical | JS divergence | percolumn |
+
+### Comparison Methods Explanation
+
+| Method | Formula | Use Case |
+|--------|---------|----------|
+| `pct_change` | `(target - base) / abs(base)` | View relative change magnitude |
+| `diff` | `target - base` | View absolute change amount |
 
 ## Execution Notes
 
-- Experiment names (second level) can be freely named, descriptive names recommended
 - source parameter is required, must explicitly specify data source(s)
 - method parameter can be omitted, defaults to `default` (auto-detection)
 - Statistical methods automatically filtered based on data types

@@ -5,6 +5,124 @@ weight: 140
 
 The Constrainer module is used to define constraints for synthetic data, supporting two operational modes.
 
+## Usage Examples
+
+Click the button below to run examples in Colab:
+
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/nics-tw/petsard/blob/main/demo/petsard-yaml/constrainer-yaml/constrainer.ipynb)
+
+### Resample Mode: Inline Constraints Configuration
+
+```yaml
+Loader:
+  load_benchmark_with_schema:
+    filepath: benchmark://adult-income
+    schema: benchmark://adult-income_schema
+Synthesizer:
+  default:
+    method: default
+Constrainer:
+  inline_field_constraints:
+    # Operating mode setting
+    method: auto  # Operating mode, default 'auto' (auto-detect: has Synthesizer and not custom_data → resample)
+    # Constraint conditions (use exclusively with constraints_yaml)
+    field_constraints:      # Field constraint conditions, default none
+                            # Age between 18 and 65
+      - "age >= 18 & age <= 65"
+    # Sampling parameters (resample mode only)
+    target_rows: None        # Target number of output rows, optional (defaults to input data row count if not specified or set to None)
+    sampling_ratio: 10.0     # Sampling multiplier per attempt, default 10.0
+    max_trials: 300          # Maximum number of attempts, default 300
+    verbose_step: 10         # Progress output interval, default 10
+```
+
+### Resample Mode: External Constraints File (Recommended)
+
+**Advantages of External Files**:
+- ✅ Better maintainability: Complex constraints independently managed
+- ✅ Reusability: Same constraints can be reused across experiments
+- ✅ Version control: Constraint files can be versioned independently
+- ✅ Clear separation of concerns: Main YAML focuses on pipeline configuration, constraint files focus on data rules
+
+{{< callout type="warning" >}}
+**Important**: Cannot use both `constraints_yaml` and individual constraint parameters simultaneously.
+{{< /callout >}}
+
+### Validate Mode: Single Data Source
+
+Validate constraint compliance for a single data source.
+
+#### Source Parameter Specification
+
+The `source` parameter specifies the data source to validate, supporting the following formats:
+
+**Basic Formats**:
+- **Single Module**: `source: Loader` (uses module's default output)
+- **Module.Key**: `source: Splitter.ori` (specifies module's specific output)
+
+**Splitter Special Notes**:
+- Splitter has two outputs: `ori` (training set) and `control` (validation set)
+- Internally stored as `train` and `validation`, but users can use familiar names
+- Supported aliases:
+  - `Splitter.ori` → `Splitter.train`
+  - `Splitter.control` → `Splitter.validation`
+
+```yaml
+Splitter:
+  external_split:
+    method: custom_data
+    filepath:
+      ori: benchmark://adult-income_ori
+      control: benchmark://adult-income_control
+    schema:
+      ori: benchmark://adult-income_schema
+      control: benchmark://adult-income_schema
+Synthesizer:
+  external_data:
+    method: custom_data
+    filepath: benchmark://adult-income
+    schema: benchmark://adult-income_schema
+Constrainer:
+  inline_field_constraints:
+    method: auto          # Automatically selects validate mode
+    source: Splitter.ori  # Specify single data source (optional if only one source exists)
+    constraints_yaml: adult-income_constraints.yaml
+```
+
+### Validate Mode: Multiple Data Sources
+
+Validate constraint compliance for multiple data sources simultaneously (using list format):
+
+```yaml
+Loader:
+  load_benchmark_with_schema:
+    filepath: benchmark://adult-income
+    schema: benchmark://adult-income_schema
+Splitter:
+  external_split:
+    method: custom_data
+    filepath:
+      ori: benchmark://adult-income_ori
+      control: benchmark://adult-income_control
+    schema:
+      ori: benchmark://adult-income_schema
+      control: benchmark://adult-income_schema
+Synthesizer:
+  external_data:
+    method: custom_data
+    filepath: benchmark://adult-income_syn
+    schema: benchmark://adult-income_schema
+Constrainer:
+  inline_field_constraints:
+    method: auto  # Automatically selects validate mode
+    source:       # Use list format for multiple sources
+      - Loader
+      - Splitter.ori
+      - Splitter.control
+      - Synthesizer
+    constraints_yaml: adult-income_constraints.yaml
+```
+
 ## Main Parameters
 
 - **method** (`string`, optional)
@@ -37,7 +155,7 @@ The Constrainer controls operating mode through the `method` parameter (default 
 
 ### Mode Selection Decision Tree
 
- When method='auto':
+When method='auto':
 
 {{< mermaid-file file="content/docs/petsard-yaml/constrainer-yaml/mode-decision-tree.mmd" >}}
 
@@ -139,197 +257,6 @@ field_proportions (Field proportions)
 ```
 
 For detailed explanations, see respective pages.
-
-## Usage Examples and Configuration
-
-Click the button below to run examples in Colab:
-
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/nics-tw/petsard/blob/main/demo/petsard-yaml/constrainer-yaml/constrainer.ipynb)
-
-### Resample Mode: Inline Constraints Configuration
-
-```yaml
-Loader:
-  load_benchmark_with_schema:
-    filepath: benchmark://adult-income
-    schema: benchmark://adult-income_schema
-Synthesizer:
-  default:
-    method: default
-Constrainer:
-  inline_field_constraints:
-    # Operating mode setting
-    method: auto  # Operating mode, default 'auto' (auto-detect: has Synthesizer and not custom_data → resample)
-    # Constraint conditions (use exclusively with constraints_yaml)
-    field_constraints:      # Field constraint conditions, default none
-                            # Age between 18 and 65
-      - "age >= 18 & age <= 65"
-    # Sampling parameters (resample mode only)
-    target_rows: None        # Target number of output rows, optional (defaults to input data row count if not specified or set to None)
-    sampling_ratio: 10.0     # Sampling multiplier per attempt, default 10.0
-    max_trials: 300          # Maximum number of attempts, default 300
-    verbose_step: 10         # Progress output interval, default 10
-```
-
-### Resample Mode: External Constraints File (Recommended)
-
-**Advantages of External Files**:
-- ✅ Better maintainability: Complex constraints independently managed
-- ✅ Reusability: Same constraints can be reused across experiments
-- ✅ Version control: Constraint files can be versioned independently
-- ✅ Clear separation of concerns: Main YAML focuses on pipeline configuration, constraint files focus on data rules
-
-{{< callout type="warning" >}}
-**Important**: Cannot use both `constraints_yaml` and individual constraint parameters simultaneously.
-{{< /callout >}}
-
-```yaml
-Loader:
-  load_benchmark_with_schema:
-    filepath: benchmark://adult-income
-    schema: benchmark://adult-income_schema
-Synthesizer:
-  default:
-    method: default
-Constrainer:
-  inline_field_constraints:
-    # Operating mode setting
-    method: auto  # Operating mode, default 'auto' (auto-detect: has Synthesizer and not custom_data → resample)
-    # Constraint conditions (use exclusively with setting)
-    constraints_yaml: adult-income_constraints.yaml
-    # Sampling parameters (resample mode only)
-    target_rows: None        # Target number of output rows, defaults None to input data row count
-    sampling_ratio: 10.0     # Sampling multiplier per attempt, default 10.0
-    max_trials: 300          # Maximum number of attempts, default 300
-    verbose_step: 10         # Progress output interval, default 10
-```
-
-### Validate Mode: Single Data Source
-
-Validate constraint compliance for a single data source.
-
-#### Source Parameter Specification
-
-The `source` parameter specifies the data source to validate, supporting the following formats:
-
-**Basic Formats**:
-- **Single Module**: `source: Loader` (uses module's default output)
-- **Module.Key**: `source: Splitter.ori` (specifies module's specific output)
-
-**Splitter Special Notes**:
-- Splitter has two outputs: `ori` (training set) and `control` (validation set)
-- Internally stored as `train` and `validation`, but users can use familiar names
-- Supported aliases:
-  - `Splitter.ori` → `Splitter.train`
-  - `Splitter.control` → `Splitter.validation`
-
-```yaml
-Splitter:
-  external_split:
-    method: custom_data
-    filepath:
-      ori: benchmark://adult-income_ori
-      control: benchmark://adult-income_control
-    schema:
-      ori: benchmark://adult-income_schema
-      control: benchmark://adult-income_schema
-Synthesizer:
-  external_data:
-    method: custom_data
-    filepath: benchmark://adult-income
-    schema: benchmark://adult-income_schema
-Constrainer:
-  inline_field_constraints:
-    method: auto          # Automatically selects validate mode
-    source: Splitter.ori  # Specify single data source (optional if only one source exists)
-    constraints_yaml: adult-income_constraints.yaml
-```
-
-### Validate Mode: Multiple Data Sources
-
-Validate constraint compliance for multiple data sources simultaneously (using list format):
-
-```yaml
-Loader:
-  load_benchmark_with_schema:
-    filepath: benchmark://adult-income
-    schema: benchmark://adult-income_schema
-Splitter:
-  external_split:
-    method: custom_data
-    filepath:
-      ori: benchmark://adult-income_ori
-      control: benchmark://adult-income_control
-    schema:
-      ori: benchmark://adult-income_schema
-      control: benchmark://adult-income_schema
-Synthesizer:
-  external_data:
-    method: custom_data
-    filepath: benchmark://adult-income_syn
-    schema: benchmark://adult-income_schema
-Constrainer:
-  inline_field_constraints:
-    method: auto  # Automatically selects validate mode
-    source:       # Use list format for multiple sources
-      - Loader
-      - Splitter.ori
-      - Splitter.control
-      - Synthesizer
-    constraints_yaml: adult-income_constraints.yaml
-```
-
-### Force Specific Mode
-
-Force validate mode even with Synthesizer-generated data (no resampling):
-
-```yaml
----
-Synthesizer:
-  demo:
-    method: GaussianCopula
-
-Constrainer:
-  demo:
-    method: validate  # Force validate mode (no resampling)
-    source: Synthesizer
-    field_constraints:
-      - "age >= 18"
-...
-```
-
-### External Constraints File Example
-
-For complex constraint configurations, use external YAML files.
-
-**File Example** ([`adult-income_constraints.yaml`](https://github.com/nics-tw/petsard/blob/main/demo/petsard-yaml/constrainer-yaml/adult-income_constraints.yaml)):
-
-```yaml
-nan_groups:
-  workclass: 'delete'
-  occupation:
-    'erase': ['income']
-  age:
-    'copy': 'educational-num'
-
-field_constraints:
-  - "age >= 18 & age <= 65"
-  - "hours-per-week >= 20 & hours-per-week <= 60"
-
-field_combinations:
-  -
-    - education: income
-    - Doctorate: ['>50K']
-      Masters: ['>50K', '<=50K']
-
-field_proportions:
-  - education:
-      mode: 'all'
-      tolerance: 0.1
-  - income:
-      mode: 'all'
-      tolerance: 0.05
-```
 
 ## Important Notes
 

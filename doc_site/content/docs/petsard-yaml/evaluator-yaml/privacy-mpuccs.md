@@ -1,6 +1,6 @@
 ---
 title: "mpUCCs Privacy Risk Assessment (Experimental)"
-weight: 147
+weight: 6
 ---
 
 {{< callout type="warning" >}}
@@ -8,6 +8,39 @@ weight: 147
 {{< /callout >}}
 
 Evaluate privacy risks using Maximal Partial Unique Column Combinations (mpUCCs), an advanced singling-out risk assessment algorithm that identifies field combinations capable of uniquely identifying records.
+
+## Usage Example
+
+Click the below button to run this example in Colab:
+
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/nics-tw/petsard/blob/main/demo/petsard-yaml/evaluator-yaml/privacy-mpuccs.ipynb)
+
+```yaml
+Splitter:
+  external_split:
+    method: custom_data
+    filepath:
+      ori: benchmark://adult-income_ori
+      control: benchmark://adult-income_control
+    schema:
+      ori: benchmark://adult-income_schema
+      control: benchmark://adult-income_schema
+Synthesizer:
+  external_data:
+    method: custom_data
+    filepath: benchmark://adult-income_syn
+    schema: benchmark://adult-income_schema
+Evaluator:
+  mpuccs_assessment:
+    method: mpuccs
+    max_baseline_cols: 2        # Maximum columns to evaluate (default: null = all columns)
+    min_entropy_delta: 0.01     # Minimum entropy gain threshold (default: 0.0)
+    field_decay_factor: 0.5     # Field combination weighting decay (default: 0.5)
+    renyi_alpha: 2.0            # Rényi entropy parameter (default: 2.0)
+    numeric_precision: null     # Auto-detect or specify decimal places (default: null)
+    datetime_precision: null    # Auto-detect or specify time precision (default: null)
+    calculate_baseline: true    # Calculate baseline protection metrics (default: true)
+```
 
 ## Overview
 
@@ -57,21 +90,6 @@ MPUCCs performs several preprocessing steps to ensure accurate privacy risk asse
 - **Cardinality-based**: Sorts columns by number of unique values (descending)
 - **High Cardinality First**: Processes columns with more unique values first
 - **Efficiency**: This order typically leads to faster identification and better pruning
-
-## Usage Example
-
-```yaml
-Evaluator:
-  mpuccs_assessment:
-    method: mpuccs
-    max_baseline_cols: null     # Maximum columns to evaluate (default: null = all columns)
-    min_entropy_delta: 0.01     # Minimum entropy gain threshold (default: 0.0)
-    field_decay_factor: 0.5     # Field combination weighting decay (default: 0.5)
-    renyi_alpha: 2.0            # Rényi entropy parameter (default: 2.0)
-    numeric_precision: null     # Auto-detect or specify decimal places (default: null)
-    datetime_precision: null    # Auto-detect or specify time precision (default: null)
-    calculate_baseline: true    # Calculate baseline protection metrics (default: true)
-```
 
 ## Parameter Description
 

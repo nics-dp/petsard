@@ -5,6 +5,124 @@ weight: 140
 
 Constrainer 模組用於定義合成資料的約束條件，支援兩種運作模式。
 
+## 使用範例
+
+請點擊下方按鈕在 Colab 中執行範例：
+
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/nics-tw/petsard/blob/main/demo/petsard-yaml/constrainer-yaml/constrainer.ipynb)
+
+### 反覆抽樣模式：內嵌約束配置
+
+```yaml
+Loader:
+  load_benchmark_with_schema:
+    filepath: benchmark://adult-income
+    schema: benchmark://adult-income_schema
+Synthesizer:
+  default:
+    method: default
+Constrainer:
+  inline_field_constraints:
+    # 運作模式設定
+    method: auto  # 運作模式，預設 'auto'（自動判斷：有 Synthesizer 且非 custom_data → resample）
+    # 約束條件（與 constraints_yaml 擇一使用）
+    field_constraints:      # 欄位約束條件，預設無
+                            # 年齡介於 18 到 65 歲之間
+      - "age >= 18 & age <= 65"
+    # 抽樣參數（僅 resample 模式使用）
+    target_rows: None        # 目標輸出筆數，選用（不設定或設為 None 時預設為輸入資料筆數）
+    sampling_ratio: 10.0     # 每次採樣倍數，預設 10.0
+    max_trials: 300          # 最大嘗試次數，預設 300
+    verbose_step: 10         # 進度輸出間隔，預設 10
+```
+
+### 反覆抽樣模式：外部約束檔案（推薦）
+
+**使用外部檔案的優勢**：
+- ✅ 更好的可維護性：複雜的約束定義獨立管理
+- ✅ 重複使用：同一組約束可在不同實驗中重複使用
+- ✅ 版本控制：約束檔案可獨立進行版本管理
+- ✅ 清晰的職責分離：主 YAML 專注於流程配置，約束檔案專注於資料規則
+
+{{< callout type="warning" >}}
+**重要**：不可同時使用 `constraints_yaml` 和個別約束參數。
+{{< /callout >}}
+
+### 驗證檢查模式：單一資料來源
+
+驗證單一資料來源的約束符合性。
+
+#### Source 參數說明
+
+`source` 參數用於指定要驗證的資料來源，支援以下格式：
+
+**基本格式**：
+- **單一模組**：`source: Loader`（使用該模組的預設輸出）
+- **模組.鍵名**：`source: Splitter.ori`（指定模組的特定輸出）
+
+**Splitter 特殊說明**：
+- Splitter 有兩個輸出：`ori`（訓練集）和 `control`（驗證集）
+- 底層儲存為 `train` 和 `validation`，但使用者可使用熟悉的名稱
+- 支援的別名：
+  - `Splitter.ori` → `Splitter.train`
+  - `Splitter.control` → `Splitter.validation`
+
+```yaml
+Splitter:
+  external_split:
+    method: custom_data
+    filepath:
+      ori: benchmark://adult-income_ori
+      control: benchmark://adult-income_control
+    schema:
+      ori: benchmark://adult-income_schema
+      control: benchmark://adult-income_schema
+Synthesizer:
+  external_data:
+    method: custom_data
+    filepath: benchmark://adult-income
+    schema: benchmark://adult-income_schema
+Constrainer:
+  inline_field_constraints:
+    method: auto          # 自動選擇 validate 模式
+    source: Splitter.ori  # 指定單一資料來源（如果只有一個來源則可選）
+    constraints_yaml: adult-income_constraints.yaml
+```
+
+### 驗證檢查模式：多個資料來源
+
+同時驗證多個資料來源的約束符合性（使用列表格式）：
+
+```yaml
+Loader:
+  load_benchmark_with_schema:
+    filepath: benchmark://adult-income
+    schema: benchmark://adult-income_schema
+Splitter:
+  external_split:
+    method: custom_data
+    filepath:
+      ori: benchmark://adult-income_ori
+      control: benchmark://adult-income_control
+    schema:
+      ori: benchmark://adult-income_schema
+      control: benchmark://adult-income_schema
+Synthesizer:
+  external_data:
+    method: custom_data
+    filepath: benchmark://adult-income_syn
+    schema: benchmark://adult-income_schema
+Constrainer:
+  inline_field_constraints:
+    method: auto  # 自動選擇 validate 模式
+    source:       # 使用列表格式指定多個來源
+      - Loader
+      - Splitter.ori
+      - Splitter.control
+      - Synthesizer
+    constraints_yaml: adult-income_constraints.yaml
+```
+
 ## 主要參數
 
 - **method** (`string`, 選用)
@@ -139,159 +257,6 @@ field_proportions（欄位比例）
 ```
 
 詳細說明請參閱各專屬頁面
-
-## 使用範例與配置
-
-請點擊下方按鈕在 Colab 中執行範例：
-
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/nics-tw/petsard/blob/main/demo/petsard-yaml/constrainer-yaml/constrainer.ipynb)
-
-### 反覆抽樣模式：內嵌約束配置
-
-```yaml
-Loader:
-  load_benchmark_with_schema:
-    filepath: benchmark://adult-income
-    schema: benchmark://adult-income_schema
-Synthesizer:
-  default:
-    method: default
-Constrainer:
-  inline_field_constraints:
-    # 運作模式設定
-    method: auto  # 運作模式，預設 'auto'（自動判斷：有 Synthesizer 且非 custom_data → resample）
-    # 約束條件（與 constraints_yaml 擇一使用）
-    field_constraints:      # 欄位約束條件，預設無
-                            # 年齡介於 18 到 65 歲之間
-      - "age >= 18 & age <= 65"
-    # 抽樣參數（僅 resample 模式使用）
-    target_rows: None        # 目標輸出筆數，選用（不設定或設為 None 時預設為輸入資料筆數）
-    sampling_ratio: 10.0     # 每次採樣倍數，預設 10.0
-    max_trials: 300          # 最大嘗試次數，預設 300
-    verbose_step: 10         # 進度輸出間隔，預設 10
-```
-
-### 反覆抽樣模式：外部約束檔案（推薦）
-
-**使用外部檔案的優勢**：
-- ✅ 更好的可維護性：複雜的約束定義獨立管理
-- ✅ 重複使用：同一組約束可在不同實驗中重複使用
-- ✅ 版本控制：約束檔案可獨立進行版本管理
-- ✅ 清晰的職責分離：主 YAML 專注於流程配置，約束檔案專注於資料規則
-
-{{< callout type="warning" >}}
-**重要**：不可同時使用 `constraints_yaml` 和個別約束參數。
-{{< /callout >}}
-
-```yaml
----
-Synthesizer:
-  demo:
-    method: GaussianCopula
-    sample_num_rows: 1000
-
-Constrainer:
-  demo:
-    method: auto
-    constraints_yaml: constraints/adult_rules.yaml
-    target_rows: 1000
-    sampling_ratio: 10.0
-...
-```
-
-### 驗證檢查模式：單一資料來源
-
-驗證單一資料來源的約束符合性。
-
-#### Source 參數說明
-
-`source` 參數用於指定要驗證的資料來源，支援以下格式：
-
-**基本格式**：
-- **單一模組**：`source: Loader`（使用該模組的預設輸出）
-- **模組.鍵名**：`source: Splitter.ori`（指定模組的特定輸出）
-
-**Splitter 特殊說明**：
-- Splitter 有兩個輸出：`ori`（訓練集）和 `control`（驗證集）
-- 底層儲存為 `train` 和 `validation`，但使用者可使用熟悉的名稱
-- 支援的別名：
-  - `Splitter.ori` → `Splitter.train`
-  - `Splitter.control` → `Splitter.validation`
-
-```yaml
-Splitter:
-  external_split:
-    method: custom_data
-    filepath:
-      ori: benchmark://adult-income_ori
-      control: benchmark://adult-income_control
-    schema:
-      ori: benchmark://adult-income_schema
-      control: benchmark://adult-income_schema
-Synthesizer:
-  external_data:
-    method: custom_data
-    filepath: benchmark://adult-income
-    schema: benchmark://adult-income_schema
-Constrainer:
-  inline_field_constraints:
-    method: auto          # 自動選擇 validate 模式
-    source: Splitter.ori  # 指定單一資料來源（如果只有一個來源則可選）
-    constraints_yaml: adult-income_constraints.yaml
-```
-
-### 驗證檢查模式：多個資料來源
-
-同時驗證多個資料來源的約束符合性（使用列表格式）：
-
-```yaml
-Loader:
-  load_benchmark_with_schema:
-    filepath: benchmark://adult-income
-    schema: benchmark://adult-income_schema
-Splitter:
-  external_split:
-    method: custom_data
-    filepath:
-      ori: benchmark://adult-income_ori
-      control: benchmark://adult-income_control
-    schema:
-      ori: benchmark://adult-income_schema
-      control: benchmark://adult-income_schema
-Synthesizer:
-  external_data:
-    method: custom_data
-    filepath: benchmark://adult-income_syn
-    schema: benchmark://adult-income_schema
-Constrainer:
-  inline_field_constraints:
-    method: auto  # 自動選擇 validate 模式
-    source:       # 使用列表格式指定多個來源
-      - Loader
-      - Splitter.ori
-      - Splitter.control
-      - Synthesizer
-    constraints_yaml: adult-income_constraints.yaml
-```
-
-### 強制指定模式
-
-即使有 Synthesizer 生成資料，也可強制使用 validate 模式（不進行重採樣）：
-
-```yaml
----
-Synthesizer:
-  demo:
-    method: GaussianCopula
-
-Constrainer:
-  demo:
-    method: validate  # 強制使用 validate 模式（不會重採樣）
-    source: Synthesizer
-    field_constraints:
-      - "age >= 18"
-...
-```
 
 ## 重要注意事項
 

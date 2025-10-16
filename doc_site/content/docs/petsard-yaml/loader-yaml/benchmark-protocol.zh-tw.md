@@ -5,14 +5,6 @@ weight: 112
 
 Loader 支援使用 `benchmark://` 協議自動下載並載入基準資料集。
 
-## 協議格式
-
-```yaml
-Loader:
-  experiment_name:
-    filepath: benchmark://dataset-name
-```
-
 ## 使用範例
 
 請點擊下方按鈕在 Colab 中執行範例：
