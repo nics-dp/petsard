@@ -89,16 +89,26 @@ def test_validate_multiple_violations():
     print(f"通過率: {result['pass_rate']:.2%}")
 
     print("\n各條件違規統計:")
-    for constraint_type, violation_info in result["constraint_violations"].items():
+    for constraint_type, rules_dict in result["constraint_violations"].items():
         print(f"  {constraint_type}:")
-        print(f"    - 違規筆數: {violation_info['failed_count']}")
-        print(f"    - 違規率: {violation_info['fail_rate']:.2%}")
+        for rule_name, rule_info in rules_dict.items():
+            print(f"    {rule_name}:")
+            print(f"      - 違規筆數: {rule_info['failed_count']}")
+            print(f"      - 違規率: {rule_info['fail_rate']:.2%}")
 
     print("\n違規記錄:")
     print(result["violation_details"])
 
     assert result["total_rows"] == 4
     assert result["passed_rows"] == 2
+
+    # 驗證各條規則的違規數量
+    field_constraints = result["constraint_violations"]["field_constraints"]
+    assert "Rule 1: age > 20" in field_constraints
+    assert field_constraints["Rule 1: age > 20"]["failed_count"] == 2
+    assert "Rule 2: income > 40000" in field_constraints
+    assert field_constraints["Rule 2: income > 40000"]["failed_count"] == 1
+
     print("\n✓ 測試通過！")
 
 

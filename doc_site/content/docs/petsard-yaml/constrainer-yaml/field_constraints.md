@@ -65,11 +65,11 @@ field_constraints:
 | Priority | Operator | Description |
 |----------|----------|-------------|
 | 1 (Highest) | `()` | Parentheses |
-| 2 | `&` | Logical AND |
-| 3 | `\|` | Logical OR |
-| 4 (Lowest) | `>`, `>=`, `==`, `!=`, `<`, `<=` | Comparison operators |
+| 2 | `>`, `>=`, `==`, `!=`, `<`, `<=`, `IS`, `IS NOT` | Comparison operators |
+| 3 | `&` | Logical AND |
+| 4 (Lowest) | `\|` | Logical OR |
 
-**Note**: Logical operators (AND, OR) have higher precedence than comparison operators.
+**Note**: Comparison operators have higher precedence than logical operators (AND, OR). This means `age >= 20 & age <= 60` is correctly parsed as `(age >= 20) & (age <= 60)`.
 
 **Recommendation**: Use parentheses to explicitly specify precedence and avoid ambiguity.
 
