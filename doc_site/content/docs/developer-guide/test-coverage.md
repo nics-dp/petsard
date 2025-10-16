@@ -1017,6 +1017,82 @@ Tests for field proportion maintenance constraints (33 tests):
 
 ## Data Evaluating
 
+### `Describer` (October 2025 Update)
+
+#### `DescriberDescribe`
+
+> tests/describer/test_describer_describe.py
+
+Tests for **DescriberDescribe statistical description functionality** with comprehensive coverage (19 tests):
+
+**Initialization Tests (4 tests):**
+- `test_initialization`: Tests DescriberDescribe initialization with configuration validation
+- `test_initialization_invalid_stats_method`: Tests error handling for invalid statistical methods
+- `test_initialization_invalid_granularity`: Tests error handling for invalid granularity parameters
+- `test_initialization_with_all_parameters`: Tests initialization with complete parameter configuration
+
+**Statistical Methods Tests (4 tests):**
+- `test_basic_stats`: Tests basic statistical methods (mean, median, std) calculation
+- `test_percentile_stats`: Tests percentile statistics (p25, p50, p75) computation
+- `test_na_stats`: Tests NA value statistics (na_count, na_rate) calculation
+- `test_cardinality_stats`: Tests cardinality statistics (distinct, count) computation
+
+**Granularity Tests (2 tests):**
+- `test_global_granularity`: Tests global granularity statistics output format and structure
+- `test_columnwise_granularity`: Tests columnwise granularity detailed statistics output
+
+**Edge Cases Tests (6 tests):**
+- `test_empty_dataframe`: Tests handling of empty DataFrames
+- `test_single_row_dataframe`: Tests statistical calculation with single-row DataFrames
+- `test_all_na_column`: Tests statistical handling of all-NA columns
+- `test_extreme_values`: Tests statistical accuracy with extreme values
+- `test_high_cardinality`: Tests performance with high cardinality data
+- `test_percentile_with_insufficient_data`: Tests percentile calculation with insufficient data
+
+**Data Types Tests (3 tests):**
+- `test_numeric_types`: Tests statistics for numeric data types (int, float)
+- `test_categorical_types`: Tests statistical handling of categorical data
+- `test_mixed_types`: Tests handling of mixed data types
+
+> **Test Features**: This test suite covers complete DescriberDescribe functionality including multiple statistical methods, different granularity outputs, various edge cases, and support for different data types. Tests ensure statistical calculation accuracy and robustness.
+
+#### `DescriberCompare`
+
+> tests/describer/test_describer_compare.py
+
+Tests for **refactored DescriberCompare** implementation (6 tests, 1 skipped):
+
+**Core Functionality Tests:**
+- `test_js_divergence_type_validation`: Tests JS Divergence data type validation
+  - Verifies both numeric and categorical data types correctly calculate JS Divergence
+  - Confirms type checking has been properly extended to accept all valid data types
+  
+- `test_describer_compare_initialization`: Tests DescriberCompare initialization
+  - Verifies internal creation of ori_describer and syn_describer instances
+  - Confirms both DescriberDescribe instances are properly configured
+  - Tests jsdivergence is correctly filtered from statistical methods (used only for comparison)
+
+- `test_na_value_handling`: Tests NA value handling (fixed)
+  - Tests handling of data containing pandas.NA values
+  - Verifies field naming changed from `ori`/`syn` to `base`/`target`
+  - Confirms FutureWarning fixed through appropriate pandas options
+
+**Refactored Architecture Tests:**
+- `test_code_reuse`: Verifies DescriberCompare reuses DescriberDescribe
+  - Confirms DescriberCompare uses DescriberDescribe instances internally
+  - Tests statistical calculation delegation to DescriberDescribe
+  - Verifies code reuse rather than duplicate implementation
+
+- `test_separation_of_concerns`: Tests separation of concerns
+  - DescriberDescribe handles statistical calculation (`_eval` method)
+  - DescriberCompare handles comparison logic (`_apply_comparison`, `_calculate_jsdivergence`)
+  - Comparison method mapping (`COMPARE_METHOD_MAP`) correctly implemented
+
+**Integration Tests (skipped):**
+- `test_full_yaml_execution`: Full YAML execution test (marked as integration, requires complete environment)
+
+> **Architecture Improvement (October 2025)**: DescriberCompare has been completely refactored to reuse DescriberDescribe functionality, following the "compare is an extension of describe" principle. This eliminates code duplication, improves maintainability, and ensures consistency in statistical calculations. Parameter naming has also been changed from `ori`/`syn` to `base`/`target` for better semantic clarity.
+
 ### `Evaluator`
 
 #### `SDMetrics`
