@@ -3,6 +3,7 @@ from petsard.reporter.reporter_base import ReporterMethod
 from petsard.reporter.reporter_save_data import ReporterSaveData
 from petsard.reporter.reporter_save_report import ReporterSaveReport
 from petsard.reporter.reporter_save_timing import ReporterSaveTiming
+from petsard.reporter.reporter_save_validation import ReporterSaveValidation
 
 
 class ReporterMap:
@@ -17,6 +18,7 @@ class ReporterMap:
     SAVE_DATA: int = ReporterMethod.SAVE_DATA
     SAVE_REPORT: int = ReporterMethod.SAVE_REPORT
     SAVE_TIMING: int = ReporterMethod.SAVE_TIMING
+    SAVE_VALIDATION: int = ReporterMethod.SAVE_VALIDATION
 
     @classmethod
     def map(cls, method: str) -> int:
@@ -57,5 +59,7 @@ class Reporter:
             return ReporterSaveReport(config)
         elif method_code == ReporterMethod.SAVE_TIMING:
             return ReporterSaveTiming(config)
+        elif method_code == ReporterMethod.SAVE_VALIDATION:
+            return ReporterSaveValidation(config)
         else:
             raise UnsupportedMethodError(f"Unsupported reporter method: {method}")
