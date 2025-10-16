@@ -462,7 +462,11 @@ class FieldConstrainer(BaseConstrainer):
         self, tokens: list, df: pd.DataFrame, involved_columns: list[str]
     ) -> tuple[pd.Series, list[str]]:
         """
-        Parse and evaluate expression
+        Parse and evaluate expression with operator precedence:
+        1. Parentheses (highest)
+        2. Logical AND (&)
+        3. Logical OR (|)
+        4. Comparison operators (lowest)
 
         Args:
             tokens: List of tokens to parse
@@ -495,21 +499,58 @@ class FieldConstrainer(BaseConstrainer):
 
         parser = Parser(tokens)
 
-        def parse_primary(involved_columns: list[str]) -> tuple[pd.Series, list[str]]:
+        def parse_primary(
+            involved_columns: list[str],
+        ) -> tuple[pd.Series | float | str, list[str]]:
+            """Parse primary expressions: parentheses and values"""
             token = parser.peek()
 
             if token == "(":
                 parser.consume()  # Skip '('
-                result, involved_columns = parse_or(involved_columns)
+                result, involved_columns = parse_comparison(involved_columns)
                 if parser.peek() == ")":
                     parser.consume()  # Skip ')'
                     return result, involved_columns
                 raise ConfigError("Expected closing parenthesis")
 
-            left, involved_columns = self._get_value(
+            # Just return the value, don't process IS or comparisons here
+            value, involved_columns = self._get_value(
                 parser.consume(), df, involved_columns
             )
+            return value, involved_columns
 
+        def parse_and(involved_columns: list[str]) -> tuple[pd.Series, list[str]]:
+            """Parse AND expressions (higher precedence than OR, lower than parentheses)"""
+            result, involved_columns = parse_primary(involved_columns)
+
+            # Convert to boolean Series if needed
+            if not isinstance(result, pd.Series):
+                result = pd.Series(result, index=df.index)
+
+            while parser.peek() == "&":
+                parser.consume()
+                right, involved_columns = parse_primary(involved_columns)
+                if not isinstance(right, pd.Series):
+                    right = pd.Series(right, index=df.index)
+                result = result & right
+            return result, involved_columns
+
+        def parse_or(involved_columns: list[str]) -> tuple[pd.Series, list[str]]:
+            """Parse OR expressions (higher precedence than comparisons)"""
+            result, involved_columns = parse_and(involved_columns)
+            while parser.peek() == "|":
+                parser.consume()
+                right, involved_columns = parse_and(involved_columns)
+                result = result | right
+            return result, involved_columns
+
+        def parse_comparison(
+            involved_columns: list[str],
+        ) -> tuple[pd.Series, list[str]]:
+            """Parse comparison expressions (lowest precedence)"""
+            left, involved_columns = parse_or(involved_columns)
+
+            # Handle IS NOT / IS operators
             if parser.peek() == "IS":
                 parser.consume()
                 is_not = False
@@ -523,32 +564,16 @@ class FieldConstrainer(BaseConstrainer):
                         return ~pd.isna(left), involved_columns
                     return pd.isna(left), involved_columns
 
+            # Handle comparison operators
             if parser.peek() in [">", ">=", "==", "!=", "<", "<="]:
                 op = parser.consume()
-                right, involved_columns = self._get_value(
-                    parser.consume(), df, involved_columns
-                )
+                right, involved_columns = parse_or(involved_columns)
                 return self._process_comparison(left, op, right, df), involved_columns
 
+            # If no comparison operator, just return the value as boolean
             if not isinstance(left, pd.Series):
                 return pd.Series(False, index=df.index), involved_columns
 
             return left.notna() & (left != 0), involved_columns
 
-        def parse_and(involved_columns: list[str]) -> tuple[pd.Series, list[str]]:
-            result, involved_columns = parse_primary(involved_columns)
-            while parser.peek() == "&":
-                parser.consume()
-                right, involved_columns = parse_primary(involved_columns)
-                result = result & right
-            return result, involved_columns
-
-        def parse_or(involved_columns: list[str]) -> tuple[pd.Series, list[str]]:
-            result, involved_columns = parse_and(involved_columns)
-            while parser.peek() == "|":
-                parser.consume()
-                right, involved_columns = parse_and(involved_columns)
-                result = result | right
-            return result, involved_columns
-
-        return parse_or(involved_columns)
+        return parse_comparison(involved_columns)
