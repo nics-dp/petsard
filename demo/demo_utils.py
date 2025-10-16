@@ -627,6 +627,28 @@ def display_results(results: dict, max_rows: int = 3) -> None:
         print(f"\n[{i}] {key}")
         print("-" * 60)
 
+        # Special handling for validation results / 特殊處理驗證結果
+        if isinstance(value, dict) and "Reporter" in key:
+            # This is likely a Reporter result
+            print("📋 Reporter output / Reporter 輸出")
+
+            # Check if validation report was saved
+            if not value or all(
+                v is None or (isinstance(v, dict) and not v) for v in value.values()
+            ):
+                print(
+                    "✅ Validation report saved to CSV file / 驗證報告已保存為 CSV 檔案"
+                )
+                print("📁 Check the demo directory for petsard[Validation]_*.csv files")
+                print("   查看 demo 目錄中的 petsard[Validation]_*.csv 檔案")
+                continue
+
+            # Display non-empty Reporter results
+            for report_key, report_value in value.items():
+                if report_value:
+                    print(f"  • {report_key}: {type(report_value).__name__}")
+            continue
+
         # Check if value is a pandas DataFrame / 檢查是否為 pandas DataFrame
         if hasattr(value, "head") and hasattr(value, "shape"):
             # It's a DataFrame / 這是 DataFrame

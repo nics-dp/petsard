@@ -29,13 +29,7 @@ The following scenarios guide you in choosing the right YAML configuration:
   - When you only need basic data synthesis
   - For simple privacy-enhanced synthetic data generation
 
-3. **Data Constraining: [Data Constraining]({{< ref "data-constraining" >}})**
-
-  - When you need to control synthetic data characteristics
-  - Includes field value rules, field combinations, and NA handling
-  - Ensure synthetic data meets business logic
-
-4. **Basic Usage with Evaluation: [Default Synthesis and Evaluation]({{< ref "default-synthesis-default-evaluation" >}})**
+3. **Basic Usage with Evaluation: [Default Synthesis and Evaluation]({{< ref "default-synthesis-default-evaluation" >}})**
 
   - When you need both synthesis and comprehensive evaluation
   - Includes protection, fidelity, and utility assessments

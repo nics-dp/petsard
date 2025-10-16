@@ -1,0 +1,39 @@
+nan_groups:             # NaN handling rules, default none
+                        # Delete entire row when workclass is NA
+  workclass: 'delete'
+                        # Set income to NA when occupation is NA
+  occupation:
+    'erase':
+      - 'income'
+                        # Copy value from educational-num to age when age is NA and educational-num has value
+  age:
+    'copy':
+      'educational-num'
+field_constraints:      # Field constraint conditions, default none
+                        # Age between 18 and 65
+  - "age >= 18 & age <= 65"
+                        # Hours per week between 20 and 60
+  - "hours-per-week >= 20 & hours-per-week <= 60"
+field_combinations:     # Field value pairing relationships, default none
+                        # Doctorate education can only have >50K income
+                        # Masters education can have >50K or <=50K income
+  -
+    - education: income
+    - Doctorate:
+        - '>50K'
+      Masters:
+        - '>50K'
+        - '<=50K'
+field_proportions:      # Field proportion maintenance, default none
+                        # Maintain education distribution, 10% tolerance
+  - fields: 'education'
+    mode: 'all'
+    tolerance: 0.1
+                        # Maintain income distribution, 5% tolerance
+  - fields: 'income'
+    mode: 'all'
+    tolerance: 0.05
+                        # Maintain workclass missing value proportion, 3% tolerance
+  - fields: 'workclass'
+    mode: 'missing'
+    tolerance: 0.03

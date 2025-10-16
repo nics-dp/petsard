@@ -1,0 +1,13 @@
+graph LR
+    A[Synthesizer<br/>生成資料] --> B[套用約束<br/>過濾]
+    B --> C{筆數足夠?}
+    C -->|否| A
+    C -->|是| D[輸出符合<br/>條件的資料]
+
+    classDef processNode fill:#e3f2fd,stroke:#2196f3,stroke-width:2px
+    classDef decisionNode fill:#fff3e0,stroke:#ff9800,stroke-width:2px
+    classDef resultNode fill:#e8f5e9,stroke:#4caf50,stroke-width:2px
+
+    class A,B processNode
+    class C decisionNode
+    class D resultNode
