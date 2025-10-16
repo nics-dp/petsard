@@ -32,12 +32,6 @@ When developing privacy-preserving data synthesis workflows, you may encounter s
   - Provide multiple methods for handling missing values, encoding, and outliers
   - Include uniform encoding, standardization, and discretization techniques
 
-### **Data Plausibility: [Data Constraining]({{< ref "data-constraining" >}})**
-
-  - Ensure synthetic data complies with real business rules
-  - Provide constraints for field values, field combinations, and null values
-  - Include numeric range limits, category relationships, and null handling strategies
-
 ## **Workflow improvement**
 
 ### **Performance Analysis: [Timing]({{< ref "timing" >}})**
