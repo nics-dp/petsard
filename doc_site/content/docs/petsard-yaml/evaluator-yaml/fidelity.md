@@ -1,6 +1,6 @@
 ---
 title: "Data Fidelity Assessment"
-weight: 143
+weight: 3
 ---
 
 Measure the similarity between synthetic and original data, evaluating the preservation of data distributions and variable relationships.
@@ -31,7 +31,7 @@ Evaluator:
     method: sdmetrics-qualityreport
 ```
 
-## Parameter Description
+## Main Parameters
 
 - **method** (`string`, required)
   - Fixed value: `sdmetrics-qualityreport`

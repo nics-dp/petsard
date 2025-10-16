@@ -1,6 +1,6 @@
 ---
 title: "Data Validity Diagnosis"
-weight: 141
+weight: 1
 ---
 
 Check whether synthetic data accurately reflects the basic characteristics and structure of the original data.
@@ -31,7 +31,7 @@ Evaluator:
     method: sdmetrics-diagnosticreport
 ```
 
-## Parameter Description
+## Main Parameters
 
 - **method** (`string`, required)
   - Fixed value: `sdmetrics-diagnosticreport`

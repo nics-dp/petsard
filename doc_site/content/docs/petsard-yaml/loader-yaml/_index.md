@@ -5,41 +5,6 @@ weight: 110
 
 YAML configuration file format for the Loader module.
 
-## Main Parameters
-
-- **filepath** (`string`, required)
-  - Data file path
-  - Supports local file paths
-
-- **schema** (`string | dict`, optional)
-  - Data structure definition
-  - Can be a local YAML file path (string) or complete Schema YAML (dict)
-
-## Supported File Formats
-
-| Format | Extensions | Description | Requirements |
-|--------|------------|-------------|--------------|
-| **CSV** | `.csv`, `.tsv` | Comma/tab-separated files | - |
-| **Excel** | `.xlsx`, `.xls` | Excel spreadsheets | Requires `openpyxl` |
-| **OpenDocument** | `.ods`, `.odf`, `.odt` | OpenDocument formats | Requires `openpyxl` |
-| **Benchmark** | `benchmark://` | Benchmark dataset protocol | Requires network (first download) |
-
-\* Excel and OpenDocument formats require the `openpyxl` package, see installation instructions.
-
-## Parameter Details
-
-### Required Parameters
-
-| Parameter | Type | Default | Description | Example |
-|-----------|------|---------|-------------|---------|
-| `filepath` | `string` | N/A | Data file path | `data/users.csv` |
-
-### Optional Parameters
-
-| Parameter | Type | Default | Description | Example |
-|-----------|------|---------|-------------|---------|
-| `schema` | `string\|dict` | `null` | Data structure definition | `schemas/user.yaml` or inline dict |
-
 ## Usage Examples
 
 Click the below button to run this example in Colab:
@@ -83,6 +48,45 @@ Loader:
     filepath: benchmark/adult-income_syn.csv
     schema: benchmark/adult-income_schema.yaml
 ```
+
+## Main Parameters
+
+- **filepath** (`string`, required)
+  - Data file path
+  - Supports local file paths
+
+- **schema** (`string | dict`, optional)
+  - Data structure definition
+  - Can be a local YAML file path (string) or complete Schema YAML (dict)
+
+## Supported File Formats
+
+| Format | Extensions | Description | Requirements |
+|--------|------------|-------------|--------------|
+| **CSV** | `.csv`, `.tsv` | Comma/tab-separated files | - |
+| **Excel** | `.xlsx`, `.xls` | Excel spreadsheets | Requires `openpyxl` |
+| **OpenDocument** | `.ods`, `.odf`, `.odt` | OpenDocument formats | Requires `openpyxl` |
+| **Benchmark** | `benchmark://` | Benchmark dataset protocol | Requires network (first download) |
+
+\* Excel and OpenDocument formats require the `openpyxl` package, see installation instructions.
+
+## Parameter Details
+
+### Required Parameters
+
+| Parameter | Type | Default | Description | Example |
+|-----------|------|---------|-------------|---------|
+| `filepath` | `string` | N/A | Data file path | `data/users.csv` |
+
+### Optional Parameters
+
+| Parameter | Type | Default | Description | Example |
+|-----------|------|---------|-------------|---------|
+| `schema` | `string\|dict` | `null` | Data structure definition | `schemas/user.yaml` or inline dict |
+| `nrows` | `int` | `null` | Number of rows to read for quick testing or reducing memory usage | `100` |
+| `column_types` | `dict` | `null` | **Deprecated in v2.0.0** Specify column types, format: `{type: [colname]}` | `{"category": ["gender"]}` |
+| `header_names` | `list` | `null` | **Deprecated in v2.0.0** Specify column names for data without headers | `["age", "income"]` |
+| `na_values` | `string\|list\|dict` | `null` | **Deprecated in v2.0.0** Additional NA/NaN recognition strings | `"N/A"` or `{"age": ["unknown"]}` |
 
 ## Related Information
 

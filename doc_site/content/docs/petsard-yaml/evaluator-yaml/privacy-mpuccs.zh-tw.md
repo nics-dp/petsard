@@ -1,6 +1,6 @@
 ---
 title: "mpUCCs 隱私風險評估（實驗性功能）"
-weight: 147
+weight: 6
 ---
 
 {{< callout type="warning" >}}
@@ -8,6 +8,39 @@ weight: 147
 {{< /callout >}}
 
 使用最大部分唯一欄位組合（Maximal Partial Unique Column Combinations, mpUCCs）評估隱私風險，這是一種進階的單挑風險評估演算法，能識別可唯一識別記錄的欄位組合。
+
+## 使用範例
+
+請點擊下方按鈕在 Colab 中執行範例：
+
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/nics-tw/petsard/blob/main/demo/petsard-yaml/evaluator-yaml/privacy-mpuccs.ipynb)
+
+```yaml
+Splitter:
+  external_split:
+    method: custom_data
+    filepath:
+      ori: benchmark://adult-income_ori
+      control: benchmark://adult-income_control
+    schema:
+      ori: benchmark://adult-income_schema
+      control: benchmark://adult-income_schema
+Synthesizer:
+  external_data:
+    method: custom_data
+    filepath: benchmark://adult-income_syn
+    schema: benchmark://adult-income_schema
+Evaluator:
+  mpuccs_assessment:
+    method: mpuccs
+    max_baseline_cols: 2        # 要評估的最大欄位數（預設：null = 所有欄位）
+    min_entropy_delta: 0.01     # 最小熵增益閾值（預設：0.0）
+    field_decay_factor: 0.5     # 欄位組合加權衰減（預設：0.5）
+    renyi_alpha: 2.0            # Rényi 熵參數（預設：2.0）
+    numeric_precision: null     # 自動偵測或指定小數位數（預設：null）
+    datetime_precision: null    # 自動偵測或指定時間精度（預設：null）
+    calculate_baseline: true     # 計算基線保護指標（預設：true）
+```
 
 ## 概述
 
@@ -26,6 +59,28 @@ mpUCCs（最大部分唯一欄位組合）實作了基於以下理論的進階�
    - 主要保護：直接對抗識別的保護
    - 基線保護：基於屬性分佈的理論保護
    - 整體保護：標準化保護分數（0-1）
+
+## 參數說明
+
+| 參數 | 類型 | 必要性 | 預設值 | 說明 |
+|-----|------|--------|--------|------|
+| **method** | `string` | 必要 | - | 固定值：`mpuccs` |
+| **max_baseline_cols** | `int`、`null` | 選用 | null | 要評估和計算基線的最大欄位數<br>- `null`（預設）：評估所有可能的組合（1 到總欄位數）<br>- `int`：評估從 1 到 n 欄位的組合<br>範例：5 = 只評估 1、2、3、4、5 欄位組合<br>**同時控制評估範圍和基線計算**<br>適用於限制多欄位資料集的計算量 |
+| **min_entropy_delta** | `float` | 選用 | 0.0 | 修剪用的最小熵增益閾值<br>較高值 = 更積極的修剪 |
+| **field_decay_factor** | `float` | 選用 | 0.5 | 欄位組合加權的衰減因子<br>降低較大組合的權重 |
+| **renyi_alpha** | `float` | 選用 | 2.0 | Rényi 熵計算的 alpha 參數<br>- α=0：Hartley 熵（最大熵）<br>- α=1：Shannon 熵<br>- α=2：碰撞熵（預設）<br>- α→∞：最小熵<br>較高的 α 值會給予頻繁值更多權重 |
+| **numeric_precision** | `int`、`null` | 選用 | null | 數值欄位比較的精度<br>- `null`：自動偵測<br>- `int`：小數位數 |
+| **datetime_precision** | `string`、`null` | 選用 | null | 日期時間欄位比較的精度<br>- `null`：自動偵測<br>- 選項：'D'、'H'、'T'、's'、'ms'、'us'、'ns' |
+| **calculate_baseline** | `boolean` | 選用 | true | 啟用基線保護指標計算<br>基於屬性值分佈 |
+
+### 日期時間精度選項
+- `D`：天
+- `H`：小時
+- `T`：分鐘
+- `s`：秒
+- `ms`：毫秒
+- `us`：微秒
+- `ns`：奈秒
 
 ## 資料前處理細節
 
@@ -57,43 +112,6 @@ MPUCCs 執行多個前處理步驟以確保準確的隱私風險評估：
 - **基於基數**：按唯一值數量（降序）排序欄位
 - **高基數優先**：優先處理具有較多唯一值的欄位
 - **效率考量**：此順序通常能更快識別並達到更好的剪枝效果
-
-## 使用範例
-
-```yaml
-Evaluator:
-  mpuccs_assessment:
-    method: mpuccs
-    max_baseline_cols: null     # 要評估的最大欄位數（預設：null = 所有欄位）
-    min_entropy_delta: 0.01     # 最小熵增益閾值（預設：0.0）
-    field_decay_factor: 0.5     # 欄位組合加權衰減（預設：0.5）
-    renyi_alpha: 2.0            # Rényi 熵參數（預設：2.0）
-    numeric_precision: null     # 自動偵測或指定小數位數（預設：null）
-    datetime_precision: null    # 自動偵測或指定時間精度（預設：null）
-    calculate_baseline: true    # 計算基線保護指標（預設：true）
-```
-
-## 參數說明
-
-| 參數 | 類型 | 必要性 | 預設值 | 說明 |
-|-----|------|--------|--------|------|
-| **method** | `string` | 必要 | - | 固定值：`mpuccs` |
-| **max_baseline_cols** | `int`、`null` | 選用 | null | 要評估和計算基線的最大欄位數<br>- `null`（預設）：評估所有可能的組合（1 到總欄位數）<br>- `int`：評估從 1 到 n 欄位的組合<br>範例：5 = 只評估 1、2、3、4、5 欄位組合<br>**同時控制評估範圍和基線計算**<br>適用於限制多欄位資料集的計算量 |
-| **min_entropy_delta** | `float` | 選用 | 0.0 | 修剪用的最小熵增益閾值<br>較高值 = 更積極的修剪 |
-| **field_decay_factor** | `float` | 選用 | 0.5 | 欄位組合加權的衰減因子<br>降低較大組合的權重 |
-| **renyi_alpha** | `float` | 選用 | 2.0 | Rényi 熵計算的 alpha 參數<br>- α=0：Hartley 熵（最大熵）<br>- α=1：Shannon 熵<br>- α=2：碰撞熵（預設）<br>- α→∞：最小熵<br>較高的 α 值會給予頻繁值更多權重 |
-| **numeric_precision** | `int`、`null` | 選用 | null | 數值欄位比較的精度<br>- `null`：自動偵測<br>- `int`：小數位數 |
-| **datetime_precision** | `string`、`null` | 選用 | null | 日期時間欄位比較的精度<br>- `null`：自動偵測<br>- 選項：'D'、'H'、'T'、's'、'ms'、'us'、'ns' |
-| **calculate_baseline** | `boolean` | 選用 | true | 啟用基線保護指標計算<br>基於屬性值分佈 |
-
-### 日期時間精度選項
-- `D`：天
-- `H`：小時
-- `T`：分鐘
-- `s`：秒
-- `ms`：毫秒
-- `us`：微秒
-- `ns`：奈秒
 
 ## 評估結果
 

@@ -17,8 +17,9 @@ PETsARD 整合 [SDV (Synthetic Data Vault)](https://sdv.dev/) 套件，提供多
 
 ```yaml
 Loader:
-  load_benchmark:
+  load_benchmark_with_schema:
     filepath: benchmark://adult-income
+    schema: benchmark://adult-income_schema
 
 Synthesizer:
   gaussian:
@@ -32,15 +33,6 @@ Synthesizer:
 
   tvae:
     method: sdv-single_table-tvae
-
-Evaluator:
-  eval_quality:
-    method: sdmetrics-qualityreport
-
-Reporter:
-  save_comparison:
-    method: save_report
-    granularity: global
 ```
 
 ## 方法一覽

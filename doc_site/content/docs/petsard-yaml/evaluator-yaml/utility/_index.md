@@ -1,6 +1,6 @@
 ---
 title: "Data Utility Assessment"
-weight: 144
+weight: 4
 ---
 
 Measure the performance of synthetic data in machine learning tasks to determine if it can effectively replace original data.
