@@ -18,7 +18,7 @@ Synthesizer:
     filepath: benchmark://adult-income_syn
     schema: benchmark://adult-income_schema
 Constrainer:
-  multiple_data_sources:
+  validate_multiple_data_sources:
     method: auto  # Automatically selects validate mode
     source:       # Use list format for multiple sources
       - Loader

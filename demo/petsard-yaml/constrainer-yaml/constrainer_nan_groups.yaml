@@ -4,11 +4,10 @@ Loader:
     filepath: benchmark://adult-income
     schema: benchmark://adult-income_schema
 Constrainer:
-  demo:
-    method: validate
-    constraints_yaml: adult-income_constraints.yaml
+  validate_nan_groups:
+    method: auto
+    constraints_yaml: adult-income_constraints_nan_groups.yaml
 Reporter:
-  validate_constraints:
+  validation:
     method: save_validation
-    include_details: true
 ...

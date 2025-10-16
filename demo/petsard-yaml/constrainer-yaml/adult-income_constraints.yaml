@@ -1,3 +1,4 @@
+---
 nan_groups:             # NaN handling rules, default none
                         # Delete entire row when workclass is NA
   workclass: 'delete'
@@ -37,3 +38,4 @@ field_proportions:      # Field proportion maintenance, default none
   - fields: 'workclass'
     mode: 'missing'
     tolerance: 0.03
+...

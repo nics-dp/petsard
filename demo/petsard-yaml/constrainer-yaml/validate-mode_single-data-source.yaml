@@ -14,7 +14,7 @@ Synthesizer:
     filepath: benchmark://adult-income_syn
     schema: benchmark://adult-income_schema
 Constrainer:
-  single_data_source:
+  validate_single_data_source:
     method: auto          # Automatically selects validate mode
     source: Splitter.ori  # Specify single data source (optional if only one source exists)
     constraints_yaml: adult-income_constraints.yaml

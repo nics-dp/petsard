@@ -7,7 +7,7 @@ Synthesizer:
   default:
     method: default
 Constrainer:
-  inline_field_constraints:
+  external_constraints:
     # Operating mode setting
     method: auto  # Operating mode, default 'auto' (auto-detect: has Synthesizer and not custom_data → resample)
     # Constraint conditions (use exclusively with setting)
