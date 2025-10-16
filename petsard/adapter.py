@@ -1009,14 +1009,77 @@ class ConstrainerAdapter(BaseAdapter):
 
         Args:
             config (dict): Configuration parameters for the Constrainer.
+                Can use one of two approaches:
+                1. constraints_yaml: Path to YAML file containing all constraint configurations
+                2. Individual constraint parameters (nan_groups, field_constraints, etc.)
+
+                Note: Cannot use both approaches simultaneously.
 
         Attributes:
             constrainer (Constrainer): An instance of the Constrainer class
                 initialized with the provided configuration.
+
+        Raises:
+            ConfigError: If both constraints_yaml and individual constraint parameters are provided,
+                or if the YAML file is invalid or not found.
         """
+        super().__init__(config)
+
+        # Check if constraints_yaml parameter is provided
+        constraints_yaml = config.pop("constraints_yaml", None)
+
+        if constraints_yaml:
+            # Define constraint parameter keys
+            constraint_keys = {
+                "nan_groups",
+                "field_constraints",
+                "field_combinations",
+                "field_proportions",
+            }
+
+            # Check for conflicting parameters
+            conflicting_keys = constraint_keys.intersection(config.keys())
+
+            if conflicting_keys:
+                error_msg = (
+                    f"Cannot specify both 'constraints_yaml' and individual "
+                    f"constraint parameters: {conflicting_keys}. "
+                    f"Please use either constraints_yaml OR individual parameters, not both."
+                )
+                self._logger.error(error_msg)
+                raise ConfigError(error_msg)
+
+            # Load constraints from YAML file
+            import yaml
+
+            self._logger.info(f"Loading constraints from YAML file: {constraints_yaml}")
+
+            try:
+                with open(constraints_yaml, encoding="utf-8") as f:
+                    yaml_constraints = yaml.safe_load(f)
+
+                if not isinstance(yaml_constraints, dict):
+                    raise ConfigError(
+                        f"Invalid YAML format: expected dict, got {type(yaml_constraints)}"
+                    )
+
+                # Merge YAML constraints into config (preserve sampling parameters)
+                config.update(yaml_constraints)
+                self._logger.debug(
+                    f"Successfully loaded constraints from {constraints_yaml}"
+                )
+
+            except FileNotFoundError as e:
+                error_msg = f"Constraints YAML file not found: {constraints_yaml}"
+                self._logger.error(error_msg)
+                raise ConfigError(error_msg) from e
+            except yaml.YAMLError as e:
+                error_msg = f"Invalid YAML format in {constraints_yaml}: {e}"
+                self._logger.error(error_msg)
+                raise ConfigError(error_msg) from e
+
         # Transform field combinations before initializing
         config = self._transform_field_combinations(config)
-        super().__init__(config)
 
         # Store sampling configuration if provided
         self.sample_dict = {}
