@@ -395,8 +395,86 @@ class Constrainer:
                                 "violation_examples": examples,
                             }
 
+                elif constraint_type == "nan_groups" and isinstance(
+                    constraint_config, dict
+                ):
+                    # nan_groups 是字典，每個鍵是一個欄位及其處理規則
+                    for field_name, actions in constraint_config.items():
+                        # 構建規則名稱
+                        if actions == "delete":
+                            rule_name = f"{field_name}: delete"
+                            action_desc = "delete"
+                        elif isinstance(actions, dict):
+                            # 可能有多個動作，但通常只有一個
+                            action_keys = list(actions.keys())
+                            if len(action_keys) == 1:
+                                action = action_keys[0]
+                                if action == "erase":
+                                    target = actions[action]
+                                    target_str = (
+                                        target
+                                        if isinstance(target, str)
+                                        else ", ".join(target)
+                                    )
+                                    rule_name = f"{field_name}: erase -> {target_str}"
+                                    action_desc = f"erase -> {target_str}"
+                                elif action == "copy":
+                                    target = actions[action]
+                                    rule_name = f"{field_name}: copy <- {target}"
+                                    action_desc = f"copy <- {target}"
+                                elif action == "nan_if_condition":
+                                    conditions = actions[action]
+                                    cond_strs = [
+                                        f"{k}={v}"
+                                        if isinstance(v, str)
+                                        else f"{k} in {v}"
+                                        for k, v in conditions.items()
+                                    ]
+                                    rule_name = f"{field_name}: nan_if_condition ({', '.join(cond_strs)})"
+                                    action_desc = (
+                                        f"nan_if_condition ({', '.join(cond_strs)})"
+                                    )
+                                else:
+                                    rule_name = f"{field_name}: {action}"
+                                    action_desc = action
+                            else:
+                                rule_name = f"{field_name}: {', '.join(action_keys)}"
+                                action_desc = ", ".join(action_keys)
+                        else:
+                            rule_name = f"{field_name}: {actions}"
+                            action_desc = str(actions)
+
+                        # 創建臨時 constrainer 只處理這條規則
+                        temp_constrainer = NaNGroupConstrainer({field_name: actions})
+                        passed_data = temp_constrainer.apply(result.copy())
+                        passed_indices = set(passed_data.index)
+
+                        # 計算違規數量
+                        failed_indices = result.index[
+                            ~result.index.isin(passed_indices)
+                        ]
+                        failed_count = len(failed_indices)
+
+                        if failed_count > 0:
+                            # 標記違規的資料
+                            column_name = f"__violated_{constraint_type}_{field_name}__"
+                            result[column_name] = False
+                            result.loc[failed_indices, column_name] = True
+                            result.loc[failed_indices, "__validation_passed__"] = False
+
+                            # 收集違規範例
+                            examples = failed_indices[:max_examples_per_rule].tolist()
+
+                            type_violations[rule_name] = {
+                                "failed_count": failed_count,
+                                "fail_rate": failed_count / total_rows
+                                if total_rows > 0
+                                else 0.0,
+                                "violation_examples": examples,
+                            }
+
                 else:
-                    # 其他類型（如 nan_groups）用原來的方法
+                    # 其他未知類型用原來的方法
                     if constraint_type == "field_proportions":
                         constrainer._set_target_rows(total_rows)
 
