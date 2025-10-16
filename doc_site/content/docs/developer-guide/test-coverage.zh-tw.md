@@ -557,6 +557,45 @@ python -c "from tests.loader.test_loader import run_stress_demo; run_stress_demo
 
 ### `Describer` (2025年10月更新)
 
+#### `DescriberDescribe`
+
+> tests/describer/test_describer_describe.py
+
+測試 **DescriberDescribe 統計描述功能** 的全面實現（19 個測試）：
+
+**初始化測試 (4 個測試):**
+- `test_initialization`: 測試 DescriberDescribe 初始化與配置驗證
+- `test_initialization_invalid_stats_method`: 測試無效統計方法的錯誤處理
+- `test_initialization_invalid_granularity`: 測試無效粒度參數的錯誤處理
+- `test_initialization_with_all_parameters`: 測試完整參數配置的初始化
+
+**統計方法測試 (4 個測試):**
+- `test_basic_stats`: 測試基本統計方法（mean, median, std）的計算
+- `test_percentile_stats`: 測試百分位數統計（p25, p50, p75）的計算
+- `test_na_stats`: 測試 NA 值統計（na_count, na_rate）的計算
+- `test_cardinality_stats`: 測試基數統計（distinct, count）的計算
+
+**粒度測試 (2 個測試):**
+- `test_global_granularity`: 測試全域粒度統計輸出格式與結構
+- `test_columnwise_granularity`: 測試欄位粒度統計的詳細輸出
+
+**邊界情況測試 (6 個測試):**
+- `test_empty_dataframe`: 測試空 DataFrame 的處理
+- `test_single_row_dataframe`: 測試單行 DataFrame 的統計計算
+- `test_all_na_column`: 測試全 NA 欄位的統計處理
+- `test_extreme_values`: 測試極端值的統計準確性
+- `test_high_cardinality`: 測試高基數資料的效能
+- `test_percentile_with_insufficient_data`: 測試資料不足時的百分位數計算
+
+**資料類型測試 (3 個測試):**
+- `test_numeric_types`: 測試數值型資料（int, float）的統計
+- `test_categorical_types`: 測試類別型資料的統計處理
+- `test_mixed_types`: 測試混合資料類型的處理
+
+> **測試特色**：此測試套件涵蓋 DescriberDescribe 的完整功能，包括多種統計方法、不同粒度的輸出、各種邊界情況，以及對不同資料類型的支援。測試確保統計計算的準確性和穩健性。
+
+#### `DescriberCompare`
+
 > tests/describer/test_describer_compare.py
 
 測試 **重構後的 DescriberCompare** 實現（6 個測試，1 個跳過）：

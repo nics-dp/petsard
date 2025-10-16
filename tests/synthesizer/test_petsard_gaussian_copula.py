@@ -215,11 +215,15 @@ class TestPetsardGaussianCopulaSynthesizer(unittest.TestCase):
 
         synthesizer = PetsardGaussianCopulaSynthesizer(config)
 
-        # Should auto-select available device 應該自動選擇可用設備
-        if torch.cuda.is_available():
-            self.assertEqual(synthesizer.device.type, "cuda")
-        else:
-            self.assertEqual(synthesizer.device.type, "cpu")
+        # Device should be None before fitting 擬合前設備應該為 None
+        self.assertIsNone(synthesizer.device)
+
+        # Fit with test data to trigger device selection 使用測試數據擬合以觸發設備選擇
+        synthesizer.fit(self.test_data)
+
+        # Should auto-select available device after fitting 擬合後應該自動選擇可用設備
+        # For small datasets (< gpu_threshold), should use CPU 對於小數據集（< gpu_threshold），應該使用 CPU
+        self.assertEqual(synthesizer.device.type, "cpu")
 
     def test_encoded_categorical_handling(self):
         """Test handling of encoded categorical variables 測試已編碼類別變數的處理"""
