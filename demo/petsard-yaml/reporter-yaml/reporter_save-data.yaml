@@ -1,0 +1,34 @@
+---
+Loader:
+  load_benchmark_with_schema:
+    filepath: benchmark://adult-income
+    schema: benchmark://adult-income_schema
+Splitter:
+  basic_split:
+    num_samples: 3
+    train_split_ratio: 0.8
+Preprocessor:
+  default:
+    method: default
+
+Synthesizer:
+  default:
+    method: default
+
+  petsard-gaussian-copula:
+    method: petsard-gaussian-copula
+
+Postprocessor:
+  default:
+    method: default
+Reporter:
+  save_all_step:
+    method: save_data
+    source:
+      - Splitter.ori
+      - Splitter.control
+      - Preprocessor
+      - Synthesizer.default
+      - Synthesizer.petsard-gaussian-copula
+      - Postprocessor
+...

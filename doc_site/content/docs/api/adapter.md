@@ -2,7 +2,6 @@
 title: Adapter
 type: docs
 weight: 61
-prev: docs/api/reporter
 next: docs/api/config
 ---
 
