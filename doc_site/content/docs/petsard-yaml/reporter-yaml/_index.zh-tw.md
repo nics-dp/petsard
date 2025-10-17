@@ -1,6 +1,6 @@
 ---
 title: "Reporter YAML"
-weight: 170
+weight: 190
 ---
 
 Reporter 模組負責輸出實驗結果，支援資料儲存、評估報告和時間記錄等多種報告格式。

@@ -1,6 +1,6 @@
 ---
 title: "Describer YAML"
-weight: 150
+weight: 170
 ---
 
 Describer 模組的 YAML 設定檔案格式。提供資料集的統計描述與比較功能。

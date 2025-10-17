@@ -1,6 +1,6 @@
 ---
 title: "Synthesizer YAML"
-weight: 130
+weight: 140
 ---
 
 The Synthesizer module generates synthetic data and supports various synthesis methods.

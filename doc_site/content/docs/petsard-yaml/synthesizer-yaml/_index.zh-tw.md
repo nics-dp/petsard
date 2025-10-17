@@ -1,6 +1,6 @@
 ---
 title: "Synthesizer YAML"
-weight: 130
+weight: 140
 ---
 
 Synthesizer 模組負責生成合成資料，支援多種合成方法。
@@ -41,8 +41,6 @@ Synthesizer:
     module_path: custom-synthesis.py
     class_name: MySynthesizer_Shuffle
 ```
-
-關於 `custom_method` 的設定，請參閱「自訂合成方法」文件。
 
 ## 主要參數
 

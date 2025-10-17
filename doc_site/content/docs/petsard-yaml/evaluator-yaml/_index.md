@@ -1,6 +1,6 @@
 ---
 title: "Evaluator YAML"
-weight: 160
+weight: 180
 ---
 
 YAML configuration file format for the Evaluator module.

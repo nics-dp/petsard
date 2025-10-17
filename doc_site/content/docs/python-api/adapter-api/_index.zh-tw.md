@@ -1,5 +1,5 @@
 ---
-title: "Adapter API"
+title: "Adapter API（更新中）"
 weight: 390
 ---
 
