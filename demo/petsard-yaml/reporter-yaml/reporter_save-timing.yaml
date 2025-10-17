@@ -1,0 +1,52 @@
+---
+Loader:
+  load_benchmark_with_schema:
+    filepath: benchmark://adult-income
+    schema: benchmark://adult-income_schema
+Splitter:
+  basic_split:
+    num_samples: 8
+    train_split_ratio: 0.8
+Preprocessor:
+  default:
+    method: default
+
+Synthesizer:
+  default:
+    method: default
+
+  petsard-gaussian-copula:
+    method: petsard-gaussian-copula
+
+Postprocessor:
+  default:
+    method: default
+
+Evaluator:
+  validity_check:
+    method: sdmetrics-diagnosticreport
+
+  fidelity_check:
+    method: sdmetrics-qualityreport
+
+  singling_out_risk:
+    method: anonymeter-singlingout
+    n_attacks: 400
+    n_cols: 3
+    max_attempts: 4000
+
+  classification_utility:
+    method: mlutility
+    task_type: classification
+    target: income
+    random_state: 42
+
+Reporter:
+  save_all_timing:
+    method: save_timing  # Required: Fixed as save_timing
+    # time_unit: seconds # Optional: Time unit (default: seconds)
+    # module:            # Optional: Specify modules to record
+    #   - Synthesizer
+    #   - Evaluator
+    # output: petsard    # Optional: Output filename prefix (default: petsard)
+...

@@ -1,6 +1,11 @@
 ---
 field_constraints:
-  - "age >= 18 & age <= 65"                        # Age range: 18-65 years
-  - "hours-per-week >= 20 & hours-per-week <= 60"  # Working hours: 20-60 hours per week
-  - "income == '>50K' | income == '<=50K'"         # Income must be either '>50K' or '<=50K'
+  - "age >= 18 & age <= 65"                                 # Age range: 18-65 years
+  - "hours-per-week >= 20 & hours-per-week <= 60"           # Working hours: 20-60 hours per week
+  - "income == '<=50K' | (age > 50 & hours-per-week < 40)"  # Low income or elderly with reduced hours
+  - "native-country IS NOT 'United-States'"                 # Non-US nationality
+  - "occupation IS pd.NA"                                   # Missing occupation information
+  - "education == 'Doctorate' & income == '>50K'"           # Doctorate degree must have high income
+  - "(race != 'White') == (income == '>50K')"               # Mutual exclusivity check between non-White race and high income
+  - "(marital-status == 'Married-civ-spouse' & hours-per-week > 40) | (marital-status == 'Never-married' & age < 30)" # Complex logical combination
 ...

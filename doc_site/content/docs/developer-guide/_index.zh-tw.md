@@ -24,9 +24,6 @@ sidebar:
 - [日誌設定]({{< ref "docs/developer-guide/logging-configuration" >}})
   - 設定日誌層級與輸出目標
   - 自訂日誌格式與檔案位置
-- [Reporter 中的實驗名稱]({{< ref "docs/developer-guide/experiment-name-in-reporter" >}})
-  - 實驗命名規範
-  - 實驗設定管理
 - [測試覆蓋範圍]({{< ref "docs/developer-guide/test-coverage" >}})
   - 測試組織與架構
   - 詳細測試案例文件

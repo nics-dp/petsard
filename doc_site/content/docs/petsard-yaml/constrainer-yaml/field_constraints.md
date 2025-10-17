@@ -13,9 +13,14 @@ Click the button below to run examples in Colab:
 
 ```yaml
 field_constraints:
-  - "age >= 18 & age <= 65"                        # Age range: 18-65 years
-  - "hours-per-week >= 20 & hours-per-week <= 60"  # Working hours: 20-60 hours per week
-  - "income == '>50K' | income == '<=50K'"         # Income must be either '>50K' or '<=50K'
+  - "age >= 18 & age <= 65"                                 # Age range: 18-65 years
+  - "hours-per-week >= 20 & hours-per-week <= 60"           # Working hours: 20-60 hours per week
+  - "income == '<=50K' | (age > 50 & hours-per-week < 40)"  # Low income or elderly with reduced hours
+  - "native-country IS NOT 'United-States'"                 # Non-US nationality
+  - "occupation IS pd.NA"                                   # Missing occupation information
+  - "education == 'Doctorate' & income == '>50K'"           # Doctorate degree must have high income
+  - "(race != 'White') == (income == '>50K')"               # Mutual exclusivity check between non-White race and high income
+  - "(marital-status == 'Married-civ-spouse' & hours-per-week > 40) | (marital-status == 'Never-married' & age < 30)" # Complex logical combination
 ```
 
 ## Syntax Format
@@ -76,6 +81,10 @@ field_constraints:
 ## Important Notes
 
 - Each constraint must be wrapped as a string with quotes
-- String values must be single-quoted: `"field == 'value'"`
+- **String values must be single-quoted**: `"field == 'value'"`
+  - The outer double quotes wrap the entire constraint expression
+  - The inner single quotes denote string literal values (e.g., `'<=50K'`, `'>50K'`)
+  - String literals are correctly parsed even when they contain operators like `<=` or `>`
+  - Examples: `"income == '<=50K'"`, `"status == '>active'"`, `"country == 'United-States'"`
 - Use `IS` or `IS NOT` for null checking, not `==` or `!=`
 - Does not support cross-field operations (e.g., `field1 + field2 > 100`)

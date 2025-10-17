@@ -145,8 +145,20 @@ class FieldConstrainer(BaseConstrainer):
         Returns:
             list[str]: List of unique field names found in the constraint
         """
+        # First, remove string literals (quoted content) to avoid treating them as field names
+        # Replace quoted strings with a placeholder to preserve constraint structure
+        cleaned_constraint = constraint
+
+        # Remove single-quoted strings
+        cleaned_constraint = re.sub(r"'[^']*'", "", cleaned_constraint)
+
+        # Remove double-quoted strings
+        cleaned_constraint = re.sub(r'"[^"]*"', "", cleaned_constraint)
+
         # Remove DATE function calls to avoid treating dates as field names
-        constraint = re.sub(r"DATE\(\d{4}-\d{2}-\d{2}\)", "", constraint)
+        cleaned_constraint = re.sub(
+            r"DATE\(\d{4}-\d{2}-\d{2}\)", "", cleaned_constraint
+        )
 
         # Extract potential field names - looking for words not inside quotes
         # and not immediately next to operators
@@ -156,7 +168,7 @@ class FieldConstrainer(BaseConstrainer):
         # Match field names that can contain letters, numbers, underscores, and hyphens
         # Hyphen placed at the end to avoid unintended range definitions
         field_pattern = r"\b([\w-]+)\s*(?:[=!<>]+|IS(?:\s+NOT)?)\s*|(?:[=!<>]+|IS(?:\s+NOT)?)\s*\b([\w-]+)\b"
-        matches = re.finditer(field_pattern, constraint)
+        matches = re.finditer(field_pattern, cleaned_constraint)
 
         for match in matches:
             if match.group(1):  # Field before operator
@@ -166,7 +178,7 @@ class FieldConstrainer(BaseConstrainer):
 
         # Add fields involved in addition operations
         addition_pattern = r"\b([\w-]+)\s*\+\s*([\w-]+)\b"
-        for match in re.finditer(addition_pattern, constraint):
+        for match in re.finditer(addition_pattern, cleaned_constraint):
             fields.append(match.group(1))
             fields.append(match.group(2))
 

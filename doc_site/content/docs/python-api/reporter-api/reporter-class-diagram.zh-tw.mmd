@@ -1,0 +1,76 @@
+classDiagram
+    class Reporter {
+        <<Factory>>
+        __new__(**kwargs) ReporterBase
+    }
+
+    class ReporterBase {
+        <<abstract>>
+        dict config
+        __init__()
+        create(data) dict|DataFrame|None
+        report(processed_data) None
+    }
+
+    class ReporterSaveData {
+        create(data) dict
+        report(processed_data) None
+    }
+
+    class ReporterSaveReport {
+        create(data) dict
+        report(processed_data) None
+    }
+
+    class ReporterSaveTiming {
+        create(data) DataFrame
+        report(processed_data) None
+    }
+
+    class ReporterSaveValidation {
+        create(data) dict
+        report(processed_data) None
+    }
+
+    class ReporterMethod {
+        <<enumeration>>
+        int SAVE_DATA
+        int SAVE_REPORT
+        int SAVE_TIMING
+        int SAVE_VALIDATION
+        map(method) int
+    }
+
+    class ReporterConfig {
+        string method
+        string output
+        string naming_strategy
+        string source
+        string|list granularity
+        string|list eval
+        string time_unit
+        string|list module
+    }
+
+    ReporterBase <|-- ReporterSaveData
+    ReporterBase <|-- ReporterSaveReport
+    ReporterBase <|-- ReporterSaveTiming
+    ReporterBase <|-- ReporterSaveValidation
+
+    Reporter ..> ReporterSaveData
+    Reporter ..> ReporterSaveReport
+    Reporter ..> ReporterSaveTiming
+    Reporter ..> ReporterSaveValidation
+    Reporter ..> ReporterMethod
+    
+    ReporterBase *-- ReporterConfig
+
+    %% 樣式標示
+    style Reporter fill:#e6f3ff,stroke:#4a90e2,stroke-width:3px
+    style ReporterBase fill:#f3e6ff,stroke:#9966cc,stroke-width:2px
+    style ReporterSaveData fill:#fff2e6,stroke:#ff9800,stroke-width:2px
+    style ReporterSaveReport fill:#fff2e6,stroke:#ff9800,stroke-width:2px
+    style ReporterSaveTiming fill:#fff2e6,stroke:#ff9800,stroke-width:2px
+    style ReporterSaveValidation fill:#fff2e6,stroke:#ff9800,stroke-width:2px
+    style ReporterMethod fill:#f3e6ff,stroke:#9966cc,stroke-width:2px
+    style ReporterConfig fill:#f3e6ff,stroke:#9966cc,stroke-width:2px
