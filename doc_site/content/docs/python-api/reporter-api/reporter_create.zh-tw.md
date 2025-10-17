@@ -39,7 +39,7 @@ def create(data: dict) -> dict | pd.DataFrame | None
 1. **驗證輸入資料格式**（透過 `_verify_create_input()`）
 2. **根據報告器類型進行資料轉換**
 3. **套用過濾條件**（source、eval、granularity 等）
-4. **返回處理後的資料**供 [`report()`](../reporter_report) 方法使用
+4. **返回處理後的資料**供 `report()` 方法使用
 
 ### 資料驗證規則
 
@@ -382,11 +382,11 @@ invalid_data = {
 
 ## 注意事項
 
-- **函式化設計**：`create()` 不會將資料儲存在實例變數中，返回值必須傳遞給 [`report()`](../reporter_report) 方法
+- **函式化設計**：`create()` 不會將資料儲存在實例變數中，返回值必須傳遞給 `report()` 方法
 - **資料驗證**：方法會驗證輸入資料格式，無效格式會被記錄並移除
 - **記憶體效率**：處理大量資料時，建議分批處理以節省記憶體
 - **返回值類型**：根據報告器類型不同，返回值類型也不同
-- **必須呼叫 report()**：`create()` 只處理資料，必須呼叫 [`report()`](../reporter_report) 才會產生輸出檔案
+- **必須呼叫 report()**：`create()` 只處理資料，必須呼叫 `report()` 才會產生輸出檔案
 - **粒度匹配**：對於 save_report 模式，資料中的粒度標記必須與初始化時指定的粒度一致
 - **命名約定**：實驗元組的命名會影響最終的檔案名稱
 - **模組名稱驗證**：只接受有效的 PETsARD 模組名稱
@@ -394,6 +394,6 @@ invalid_data = {
 
 ## 相關文件
 
-- [Reporter API 主頁](../)：Reporter 模組完整說明
-- [`report()` 方法](../reporter_report)：報告產生方法
-- [Reporter YAML](/docs/petsard-yaml/reporter-yaml/)：YAML 配置說明
+- Reporter API 主頁：Reporter 模組完整說明
+- `report()` 方法：報告產生方法
+- Reporter YAML：YAML 配置說明
