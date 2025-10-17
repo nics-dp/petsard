@@ -32,10 +32,15 @@ else:
 import os
 import subprocess
 import sys
+import warnings
 from datetime import datetime
 from pathlib import Path
 
 import requests
+
+# Suppress NumPy warnings for invalid values in operations
+# 抑制 NumPy 在運算中遇到無效值的警告
+warnings.filterwarnings("ignore", category=RuntimeWarning, module="numpy")
 
 # ============================================================================
 #              PETsARD Setup Manager / PETsARD 設定管理器
@@ -645,7 +650,19 @@ def display_results(results: dict, max_rows: int = 3) -> None:
 
             # Display non-empty Reporter results
             for report_key, report_value in value.items():
-                if report_value:
+                # Check if value is not None and not empty
+                # For DataFrames, use .empty property; for other types, use truthiness
+                is_not_empty = False
+                if report_value is not None:
+                    if hasattr(report_value, "empty"):
+                        # It's a DataFrame or Series
+                        is_not_empty = not report_value.empty
+                    elif isinstance(report_value, dict):
+                        is_not_empty = bool(report_value)
+                    else:
+                        is_not_empty = True
+
+                if is_not_empty:
                     print(f"  • {report_key}: {type(report_value).__name__}")
             continue
 
