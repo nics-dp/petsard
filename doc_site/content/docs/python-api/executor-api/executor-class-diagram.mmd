@@ -1,0 +1,39 @@
+classDiagram
+    class Executor {
+        +Config config
+        +Status status
+        -bool verbose
+        +__init__(config, verbose)
+        +run() void
+        +get_result() dict
+        +get_timing() DataFrame
+        +is_execution_completed() bool
+        +get_inferred_schema() dict
+    }
+
+    class Config {
+        +dict raw_config
+        +__init__(config)
+        +get_module_config(module_name) dict
+        +get_experiment_names(module_name) list
+        +validate() bool
+    }
+
+    class Status {
+        +list snapshots
+        +list changes
+        +dict results
+        +__init__()
+        +record_snapshot(module, metadata) void
+        +record_change(change_type, details) void
+        +get_result() dict
+        +get_timing() DataFrame
+        +is_completed() bool
+    }
+
+    Executor --> Config : uses
+    Executor --> Status : manages
+    
+    note for Executor "Core orchestration module\nManages workflow execution\nCoordinates modules"
+    note for Config "Configuration management\nYAML parsing and validation"
+    note for Status "State tracking\nResult storage\nExecution history"
