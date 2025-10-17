@@ -251,6 +251,7 @@ commit_parser = "conventional"    # 提交訊息解析器
 logging_use_named_masks = false   # 日誌輸出設定
 commit = true                     # 確保提交版本變更
 push = true                       # 確保推送版本變更
+no_git_verify = false             # Git 提交驗證
 
 # 發布分支設定
 # Release branch configuration
@@ -266,7 +267,7 @@ prerelease = false    # 不建立預發布版本
 [tool.semantic_release.branches.dev]
 match = "dev"             # 分支匹配模式
 prerelease = true         # 建立預發布版本
-prerelease_token = "rc"   # 預發布標記
+prerelease_token = "rc"   # 預發布標記（將生成符合 PEP 440 的 1.7.0rc1 格式）
 
 # 變更日誌生成設定
 # Changelog generation configuration
@@ -341,6 +342,11 @@ source = "commit"  # 從提交訊息自動決定版本
 version_toml = [
     "pyproject.toml:project.version"  # 自動更新檔案中的版本
 ]
+# 確保版本格式符合 PEP 440
+# Ensure version format complies with PEP 440
+# 版本範例：
+#   正式版本: 1.7.0
+#   預發布版本: 1.7.0rc1, 1.7.0rc2 (符合 PEP 440，無連字符)
 
 # 發布設定
 # Publishing configuration
