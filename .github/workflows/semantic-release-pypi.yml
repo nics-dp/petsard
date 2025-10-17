@@ -94,7 +94,18 @@ jobs:
       - name: Publish | Build package with uv
         if: steps.release.outputs.released == 'true'
         run: |
-          echo "Building with version: $(grep '^version = ' pyproject.toml)"
+          # 從標籤中提取版本號
+          # Extract version from tag
+          TAG_VERSION="${{ steps.release.outputs.tag }}"
+          VERSION="${TAG_VERSION#v}"  # 移除 'v' 前綴
+          
+          # 更新 pyproject.toml 中的版本號
+          # Update version in pyproject.toml
+          sed -i "s/^version = .*/version = \"$VERSION\"/" pyproject.toml
+          
+          echo "Building with version: $VERSION (from tag: $TAG_VERSION)"
+          echo "Updated pyproject.toml: $(grep '^version = ' pyproject.toml)"
+          
           # 使用 --no-sources 確保建置時不使用 tool.uv.sources 設定，提升相容性
           # Use --no-sources to ensure build compatibility without tool.uv.sources
           uv build --no-sources
