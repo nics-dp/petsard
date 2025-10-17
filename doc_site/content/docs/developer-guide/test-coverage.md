@@ -920,7 +920,7 @@ Tests for NaN value handling constraints (18 tests):
 
 > tests/constrainer/test_field_constrainer.py
 
-Tests for field-level constraints (12 tests):
+Tests for field-level constraints (14 tests):
 
 - `test_invalid_config_structure`: Tests configuration validation:
   - Non-list inputs
@@ -935,12 +935,21 @@ Tests for field-level constraints (12 tests):
   - Parenthesized expressions
   - NULL checks
   - Date operations
+- `test_string_literals_with_operators`: Tests extraction and validation of string literals containing operators:
+  - Verifies strings like `'<=50K'` or `'>50K'` are correctly handled as literal values
+  - Tests the fix for the issue where operators within quoted strings were being parsed as comparison operators
+  - Ensures `_extract_fields()` method removes quoted strings before extracting field names
+- `test_apply_string_literals_with_operators`: Tests applying constraints with string literals containing operators:
+  - Verifies constraints like `"income == '<=50K'"` work correctly
+  - Tests actual data filtering functionality with proper string literal matching
 - `test_complex_expression_validation`: Tests complex constraint combinations
 - `test_empty_constraint_list`: Tests empty constraint list handling
 - `test_null_check_operations`: Tests NULL value check operations
 - `test_date_operation_constraints`: Tests date-based constraint operations
 - `test_parentheses_validation`: Tests parentheses matching validation
 - `test_operator_validation`: Tests operator syntax validation
+
+> **String Literal Handling Fix (October 2025)**: The `_extract_fields()` method in `FieldConstrainer` has been fixed to correctly handle string literals containing operators (such as `'<=50K'`, `'>50K'`). Previously, operators within these strings were incorrectly parsed as comparison operators, causing `50K` to be mistaken for a field name. The method now removes all content within single and double quotes before extracting field names, ensuring string literals are properly recognized.
 
 #### `FieldCombinationConstrainer`
 

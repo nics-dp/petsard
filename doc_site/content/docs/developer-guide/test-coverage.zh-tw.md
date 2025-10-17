@@ -635,4 +635,126 @@ python -c "from tests.loader.test_loader import run_stress_demo; run_stress_demo
 
 ### `Evaluator`
 
+### `Constrainer`
+
+> tests/constrainer/test_constrainer.py
+
+測試主要的 Constrainer 工廠類別功能（18 個測試）：
+
+- `test_basic_initialization`：測試基本 constrainer 初始化和配置儲存
+- `test_nan_groups_constraints`：測試 NaN 群組約束：
+  - Delete 動作實現
+  - Erase 動作含多個目標
+  - Copy 動作含類型檢查
+- `test_field_constraints`：測試欄位層級約束：
+  - 數值範圍條件
+  - 多條件組合
+- `test_field_combinations`：測試欄位組合規則：
+  - 教育-績效對應
+  - 多值組合
+- `test_all_constraints_together`：測試所有約束協同運作：
+  - 約束互動
+  - 複雜過濾場景
+- `test_resample_functionality`：測試重新採樣直到滿足：
+  - 目標行數達成
+  - 合成資料生成
+  - 約束滿足
+- `test_error_handling`：測試錯誤情況：
+  - 無效配置格式
+  - 缺失欄位
+- `test_edge_cases`：測試邊界條件：
+  - 空 DataFrame
+  - 所有 NaN 值
+- `test_empty_config`：測試空配置的 constrainer
+- `test_unknown_constraint_type_warning`：測試未知約束類型的警告
+- `test_resample_trails_attribute`：測試重新採樣追蹤功能
+- `test_register_custom_constraint`：測試自定義約束註冊
+- `test_register_invalid_constraint_class`：測試無效約束類別的錯誤處理
+
+**欄位比例整合測試（5 個測試）：**
+- `test_field_proportions_integration`：測試欄位比例 constrainer 與新架構的整合：
+  - 含更新配置格式的單一欄位比例
+  - 缺失值比例維護
+  - 欄位組合比例處理
+- `test_field_proportions_with_other_constraints`：測試欄位比例與其他約束類型協同運作：
+  - 結合欄位比例和欄位約束
+  - 多約束互動驗證
+- `test_field_proportions_comprehensive_integration`：測試基於真實場景的全面欄位比例整合：
+  - 教育、收入和工作類別資料分佈維護
+  - 多種約束模式（all、missing、field combinations）
+  - 含 `target_rows` 參數的新架構驗證
+- `test_field_proportions_multiple_modes`：測試含多種約束模式的欄位比例：
+  - 類別比例（'all' 模式）
+  - 缺失值比例（'missing' 模式）
+  - 區域比例驗證
+- `test_field_proportions_edge_cases_integration`：測試欄位比例邊界情況：
+  - 小型資料集處理
+  - 目標行數大於可用資料
+  - 空欄位比例列表處理
+
+#### `NaNGroupConstrainer`
+
+> tests/constrainer/test_nan_group_constrainer.py
+
+測試 NaN 值處理約束（18 個測試）：
+
+- `test_invalid_config_initialization`：測試無效配置處理：
+  - 非字典輸入
+  - 無效動作類型
+  - 無效目標規格
+  - Delete 動作與其他動作組合
+- `test_valid_config_initialization`：測試有效配置：
+  - 獨立 Delete 動作
+  - Erase 動作的多個目標
+  - Copy 動作的單一目標
+  - 不同目標格式
+- `test_erase_action`：測試 erase 動作功能：
+  - 當來源欄位為 NaN 時將目標欄位設為 NaN
+  - 處理多個目標欄位
+- `test_copy_action_compatible_types`：測試相容類型之間的值複製
+- `test_copy_action_incompatible_types`：測試不相容類型複製的處理
+- `test_multiple_constraints`：測試多個約束協同運作
+- `test_delete_action_edge_case`：測試含邊界情況的 delete 動作
+- `test_erase_action_multiple_targets`：測試含多個目標欄位的 erase 動作
+- `test_copy_action_type_validation`：測試含類型驗證的 copy 動作
+- `test_invalid_action_type`：測試無效動作類型的處理
+- `test_invalid_target_specification`：測試無效目標欄位規格
+- `test_empty_config_handling`：測試空配置處理
+- `test_mixed_action_validation`：測試混合動作配置的驗證
+
+#### `FieldConstrainer`
+
+> tests/constrainer/test_field_constrainer.py
+
+測試欄位層級約束（14 個測試）：
+
+- `test_invalid_config_structure`：測試配置驗證：
+  - 非列表輸入
+  - 無效約束格式
+  - 空約束
+- `test_invalid_constraint_syntax`：測試語法驗證：
+  - 不匹配的括號
+  - 無效運算符
+  - 缺少運算符
+- `test_field_extraction`：測試欄位名稱提取：
+  - 加法運算
+  - 括號表達式
+  - NULL 檢查
+  - 日期運算
+- `test_string_literals_with_operators`：測試包含運算符的字串字面值提取和驗證：
+  - 驗證像 `'<=50K'` 或 `'>50K'` 這類字串被正確處理為字面值
+  - 測試修正後的 issue：字串內的運算符曾被錯誤解析為比較運算符
+  - 確保 `_extract_fields()` 方法在提取欄位名之前先移除引號內的字串
+- `test_apply_string_literals_with_operators`：測試套用包含運算符的字串字面值約束：
+  - 驗證像 `"income == '<=50K'"` 這類約束能正確運作
+  - 測試實際資料過濾功能與字串字面值的正確匹配
+- `test_complex_expression_validation`：測試複雜約束組合
+- `test_empty_constraint_list`：測試空約束列表處理
+- `test_null_check_operations`：測試 NULL 值檢查運算
+- `test_date_operation_constraints`：測試基於日期的約束運算
+- `test_parentheses_validation`：測試括號匹配驗證
+- `test_operator_validation`：測試運算符語法驗證
+
+> **字串字面值處理修正（2025年10月）**：`FieldConstrainer` 的 `_extract_fields()` 方法已修正，能正確處理包含運算符的字串字面值（如 `'<=50K'`、`'>50K'`）。修正前，這些字串內的運算符會被錯誤地解析為比較運算符，導致 `50K` 被誤認為欄位名。現在方法會在提取欄位名之前先移除所有單引號和雙引號內的內容，確保字串字面值被正確識別。
+
 #### `

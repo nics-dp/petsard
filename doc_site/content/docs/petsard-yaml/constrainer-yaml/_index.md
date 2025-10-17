@@ -3,7 +3,9 @@ title: "Constrainer YAML"
 weight: 140
 ---
 
-The Constrainer module is used to define constraints for synthetic data, supporting two operational modes.
+Data constraints are a sophisticated mechanism for fine-grained control of synthetic data quality and consistency, enabling users to define acceptable data ranges through multi-layered rules. `PETsARD` provides four primary constraint types: NaN group constraints, field constraints, field combination constraints, and field proportion constraints. These constraints work together to ensure that generated synthetic data not only faithfully preserves statistical properties of the original data, but also conforms to specific domain logic and business requirements.
+
+The Constrainer module supports two operational modes: **Resample mode** and **Validate mode**, which can be automatically selected or manually specified based on different use cases.
 
 ## Usage Examples
 

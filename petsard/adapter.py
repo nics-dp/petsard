@@ -1160,7 +1160,12 @@ class ConstrainerAdapter(BaseAdapter):
                 if value is not None and value != "None":
                     self.sample_dict[key] = value
 
-        self.constrainer = Constrainer(config)
+        # Store metadata for later use (will be set in set_input)
+        self._metadata = None
+
+        # Note: Constrainer initialization is deferred to _run() to allow metadata setup
+        self.constrainer = None
+        self._config = config
 
     def _run(self, input: dict):
         """
@@ -1375,11 +1380,42 @@ class ConstrainerAdapter(BaseAdapter):
         Returns:
             dict: Constrainer input should contain:
                 - data (pd.DataFrame or dict): Single data or multiple data sources
+                - metadata (Schema, optional): Schema for field type checking
                 - synthesizer (optional)
                 - postprocessor (optional)
                 - is_custom_data (bool): 標記是否為 custom_data
                 - source_names (dict, optional): Mapping of data to source names
         """
+        # Get metadata for field type checking
+        # Priority: Loader > Splitter > Preprocessor
+        try:
+            if "Loader" in status.status:
+                self._metadata = status.get_metadata("Loader")
+                self._logger.debug("Using metadata from Loader for field type checking")
+            elif "Splitter" in status.status:
+                self._metadata = status.get_metadata("Splitter")
+                self._logger.debug(
+                    "Using metadata from Splitter for field type checking"
+                )
+            elif "Preprocessor" in status.status:
+                self._metadata = status.get_metadata("Preprocessor")
+                self._logger.debug(
+                    "Using metadata from Preprocessor for field type checking"
+                )
+        except Exception as e:
+            self._logger.warning(
+                f"Could not retrieve metadata for field type checking: {e}"
+            )
+            self._metadata = None
+
+        # Initialize Constrainer with metadata now that we have it
+        if self.constrainer is None:
+            self.constrainer = Constrainer(self._config, metadata=self._metadata)
+            self._logger.debug("Initialized Constrainer with metadata")
+
+        # Store metadata in input for potential future use
+        self.input["metadata"] = self._metadata
+
         # 如果指定了 source，使用 source 指定的資料
         if self.source is not None:
             self._logger.info(f"Using specified sources: {self.source}")
