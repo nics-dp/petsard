@@ -320,7 +320,17 @@ allowed_tags = [ # 支援的提交類型
     "ci",       # CI 配置文件和腳本的變更
 ]
 minor_tags = ["feat"]          # 觸發次版本更新的類型
-patch_tags = ["fix", "perf"]   # 觸發修補版本更新的類型
+patch_tags = [                 # 觸發修補版本更新的類型
+    "fix",      # 錯誤修復
+    "perf",     # 性能改進
+    "docs",     # 文檔變更
+    "style",    # 代碼格式（不影響邏輯）
+    "refactor", # 代碼重構
+    "test",     # 測試相關
+    "chore",    # 維護性變更
+    "build",    # 構建系統
+    "ci",       # CI 配置
+]
 default_bump_level = 0         # 預設更新級別 (0: patch, 1: minor, 2: major)
 
 # GitHub 倉庫設定
