@@ -7,6 +7,110 @@ from petsard.constrainer.field_proportions_constrainer import (
 )
 
 
+class TestFieldProportionsTypeValidation:
+    """Test field type validation for field proportions"""
+
+    def test_numeric_field_rejection(self):
+        """Test that numeric fields are rejected"""
+        df = pd.DataFrame(
+            {
+                "age": [25, 30, 35, 40],
+                "income": [50000, 60000, 70000, 80000],
+                "category": ["A", "B", "A", "B"],
+            }
+        )
+
+        config = FieldProportionsConfig(
+            field_proportions=[{"fields": "age", "mode": "all", "tolerance": 0.1}]
+        )
+
+        with pytest.raises(ValueError, match="僅支援類別變數"):
+            config.verify_data(df, target_n_rows=4)
+
+    def test_datetime_field_rejection(self):
+        """Test that datetime fields are rejected"""
+        df = pd.DataFrame(
+            {
+                "date": pd.to_datetime(
+                    ["2020-01-01", "2020-01-02", "2020-01-03", "2020-01-04"]
+                ),
+                "category": ["A", "B", "A", "B"],
+            }
+        )
+
+        config = FieldProportionsConfig(
+            field_proportions=[{"fields": "date", "mode": "all", "tolerance": 0.1}]
+        )
+
+        with pytest.raises(ValueError, match="僅支援類別變數"):
+            config.verify_data(df, target_n_rows=4)
+
+    def test_categorical_field_acceptance(self):
+        """Test that categorical/string fields are accepted"""
+        df = pd.DataFrame(
+            {
+                "education": ["HS", "College", "HS", "Graduate"],
+                "workclass": ["Private", "Gov", "Private", "Private"],
+            }
+        )
+
+        config = FieldProportionsConfig(
+            field_proportions=[
+                {"fields": "education", "mode": "all", "tolerance": 0.1},
+                {"fields": "workclass", "mode": "all", "tolerance": 0.1},
+            ]
+        )
+
+        # Should not raise any error
+        config.verify_data(df, target_n_rows=4)
+        assert config.target_n_rows == 4
+
+    def test_mixed_field_types(self):
+        """Test rejection when mixing numeric and categorical fields"""
+        df = pd.DataFrame({"age": [25, 30, 35, 40], "category": ["A", "B", "A", "B"]})
+
+        config = FieldProportionsConfig(
+            field_proportions=[
+                {"fields": "age", "mode": "all", "tolerance": 0.1},
+                {"fields": "category", "mode": "all", "tolerance": 0.1},
+            ]
+        )
+
+        with pytest.raises(ValueError, match="僅支援類別變數"):
+            config.verify_data(df, target_n_rows=4)
+
+    def test_error_message_details(self):
+        """Test that error message provides detailed information"""
+        df = pd.DataFrame(
+            {
+                "age": [25, 30, 35, 40],
+                "income": [50000.0, 60000.0, 70000.0, 80000.0],
+                "date": pd.to_datetime(
+                    ["2020-01-01", "2020-01-02", "2020-01-03", "2020-01-04"]
+                ),
+            }
+        )
+
+        config = FieldProportionsConfig(
+            field_proportions=[
+                {"fields": "age", "mode": "all", "tolerance": 0.1},
+                {"fields": "income", "mode": "all", "tolerance": 0.1},
+                {"fields": "date", "mode": "all", "tolerance": 0.1},
+            ]
+        )
+
+        with pytest.raises(ValueError) as exc_info:
+            config.verify_data(df, target_n_rows=4)
+
+        error_message = str(exc_info.value)
+        assert "僅支援類別變數" in error_message
+        assert "age" in error_message
+        assert "income" in error_message
+        assert "date" in error_message
+        assert "數值型不支援" in error_message
+        assert "日期型不支援" in error_message
+
+
 class TestFieldProportionsConfig:
     """Test FieldProportionsConfig class"""
 

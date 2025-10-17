@@ -13,9 +13,14 @@ weight: 2
 
 ```yaml
 field_constraints:
-  - "age >= 18 & age <= 65"  # 年齡範圍：18-65 歲
-  - "hours-per-week >= 20 & hours-per-week <= 60"  # 工時範圍：每週 20-60 小時
-  - "income == '>50K' | income == '<=50K'"  # 收入只能是 '>50K' 或 '<=50K'
+  - "age >= 18 & age <= 65"                                 # 年齡限制在 18-65 歲
+  - "hours-per-week >= 20 & hours-per-week <= 60"           # 每週工時限制在 20-60 小時
+  - "income == '<=50K' | (age > 50 & hours-per-week < 40)"  # 低收入或年長且工時少
+  - "native-country IS NOT 'United-States'"                 # 非美國籍
+  - "occupation IS pd.NA"                                   # 職業資訊遺失
+  - "education == 'Doctorate' & income == '>50K'"           # 博士學位必須高收入
+  - "(race != 'White') == (income == '>50K')"               # 非白人種與高收入的互斥檢查
+  - "(marital-status == 'Married-civ-spouse' & hours-per-week > 40) | (marital-status == 'Never-married' & age < 30)" # 複雜的邏輯組合
 ```
 
 ## 語法格式
@@ -76,6 +81,10 @@ field_constraints:
 ## 注意事項
 
 - 每個約束必須用引號包圍成字串
-- 字串值必須加單引號：`"field == 'value'"`
+- **字串值必須加單引號**：`"field == 'value'"`
+  - 外層雙引號包裹整個約束表達式
+  - 內層單引號表示字串字面值（如 `'<=50K'`、`'>50K'`）
+  - 即使字串字面值包含運算符（如 `<=`、`>`），解析器也能正確處理
+  - 範例：`"income == '<=50K'"`、`"status == '>active'"`、`"country == 'United-States'"`
 - 空值檢查使用 `IS` 或 `IS NOT`，不用 `==` 或 `!=`
 - 不支援跨欄位運算（如 `field1 + field2 > 100`）
