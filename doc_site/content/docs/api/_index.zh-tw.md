@@ -14,8 +14,6 @@ sidebar:
 | 模組 | 物件名稱 | 建立方法 | 主要方法 |
 |------|----------|----------|----------|
 | [Executor]({{< ref "docs/api/executor" >}}) | `Executor` | `Executor(config)` | `run()`, `get_result()`, `get_timing()` |
-| [Metadater]({{< ref "docs/api/metadater" >}}) | `Metadater` | `Metadater.create_schema()` | `create_schema()`, `validate_schema()` |
-| [Processor]({{< ref "docs/api/processor" >}}) | `Processor` | `Processor(metadata, config)` | `fit()`, `transform()`, `inverse_transform()` |
 | [Adapter]({{< ref "docs/api/adapter" >}}) | `*Adapter` | `*Adapter(config)` | `run()`, `set_input()`, `get_result()` |
 | [Config]({{< ref "docs/api/config" >}}) | `Config` | `Config(config_dict)` | 初始化時自動處理 |
 | [Status]({{< ref "docs/api/status" >}}) | `Status` | `Status(config)` | `put()`, `get_result()`, `create_snapshot()` |
@@ -23,12 +21,6 @@ sidebar:
 
 ## 配置與執行
 - [Executor]({{< ref "docs/api/executor" >}}) - 實驗管線的主要介面
-
-## 資料管理
-- [Metadater]({{< ref "docs/api/metadater" >}}) - 資料集架構和詮釋資料管理
-
-## 管線組件
-- [Processor]({{< ref "docs/api/processor" >}}) - 資料前處理和後處理
 
 ## 系統組件
 - [Adapter]({{< ref "docs/api/adapter" >}}) - 所有模組的標準化執行包裝器
