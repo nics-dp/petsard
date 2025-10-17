@@ -337,7 +337,9 @@ class SchemaInferencer:
         # 檢查是否使用 'default' 方法
         # 如果是，需要生成完整的配置（模擬 Processor._generate_config()）
         if self._is_using_default_method(processor_config):
-            self.logger.info("偵測到使用 'default' 方法，將根據 DefaultProcessorMap 生成配置")
+            self.logger.info(
+                "偵測到使用 'default' 方法，將根據 DefaultProcessorMap 生成配置"
+            )
             processor_config = self._generate_default_config(input_schema)
 
         # 深拷貝輸入 Schema 作為基礎
@@ -546,7 +548,7 @@ class SchemaInferencer:
             return "categorical"
         elif "datetime" in type_str or type_str in ["date", "time", "timestamp"]:
             return "datetime"
-        elif attribute.logical_type == "category" or attribute.category is True:
+        elif attribute.category is True:
             return "categorical"
         else:
             return "object"
@@ -586,48 +588,53 @@ class SchemaInferencer:
 
     def _is_using_default_method(self, processor_config: dict[str, Any]) -> bool:
         """檢查是否使用 default 方法
-        
+
         Args:
             processor_config: Processor 配置
-            
+
         Returns:
             True 如果使用 default 方法
         """
         # 檢查配置結構是否為 {"default": {"method": "default"}}
         if len(processor_config) == 1 and "default" in processor_config:
             default_config = processor_config["default"]
-            if isinstance(default_config, dict) and default_config.get("method") == "default":
+            if (
+                isinstance(default_config, dict)
+                and default_config.get("method") == "default"
+            ):
                 return True
         return False
 
     def _generate_default_config(self, schema: Schema) -> dict[str, dict[str, Any]]:
         """生成 default 配置（模擬 Processor._generate_config()）
-        
+
         這個方法複製 Processor._generate_config() 的邏輯，
         根據 DefaultProcessorMap 為每個欄位分配 processor
-        
+
         Args:
             schema: 輸入 Schema
-            
+
         Returns:
             完整的 processor 配置
         """
         from petsard.processor.base import DefaultProcessorMap
-        
+
         field_names = list(schema.attributes.keys())
         config: dict = {
             processor: dict.fromkeys(field_names)
             for processor in DefaultProcessorMap.VALID_TYPES
         }
-        
+
         for col in field_names:
             # 使用與 Processor._get_field_infer_dtype() 相同的邏輯
             infer_dtype = self._get_field_infer_dtype(schema.attributes[col])
-            
+
             for processor, obj in DefaultProcessorMap.PROCESSOR_MAP.items():
                 processor_class = obj[infer_dtype]
                 # 將 processor 類別轉換為方法名稱
-                if processor_class is None or (callable(processor_class) and processor_class() is None):
+                if processor_class is None or (
+                    callable(processor_class) and processor_class() is None
+                ):
                     config[processor][col] = None
                 else:
                     # 從類別名稱推導方法名稱
@@ -636,22 +643,22 @@ class SchemaInferencer:
                     # 轉換為 snake_case
                     method_name = self._class_name_to_method_name(class_name)
                     config[processor][col] = method_name
-        
+
         self.logger.debug(f"生成的 default 配置: {config}")
         return config
 
     def _get_field_infer_dtype(self, attribute: Attribute) -> str:
         """獲取欄位的推斷資料類型（模擬 Processor._get_field_infer_dtype()）
-        
+
         Args:
             attribute: 欄位屬性
-            
+
         Returns:
             推斷的資料類型：'numerical', 'categorical', 'datetime', 'object'
         """
         # 與 Processor._get_field_infer_dtype() 使用相同的邏輯
         data_type_str = str(attribute.type).lower() if attribute.type else "object"
-        
+
         # Map specific types to legacy categories
         if "int" in data_type_str or "float" in data_type_str:
             return "numerical"
@@ -665,19 +672,19 @@ class SchemaInferencer:
             "timestamp",
         ]:
             return "datetime"
-        elif attribute.logical_type == "category":
+        elif attribute.category is True:
             return "categorical"
         else:
             return "object"
 
     def _class_name_to_method_name(self, class_name: str) -> str:
         """將類別名稱轉換為方法名稱
-        
+
         例如：EncoderUniform → encoder_uniform
-        
+
         Args:
             class_name: 類別名稱
-            
+
         Returns:
             方法名稱（snake_case）
         """
@@ -685,6 +692,6 @@ class SchemaInferencer:
         import re
 
         # 在大寫字母前插入下劃線
-        s1 = re.sub('(.)([A-Z][a-z]+)', r'\1_\2', class_name)
+        s1 = re.sub("(.)([A-Z][a-z]+)", r"\1_\2", class_name)
         # 處理連續大寫字母
-        return re.sub('([a-z0-9])([A-Z])', r'\1_\2', s1).lower()
+        return re.sub("([a-z0-9])([A-Z])", r"\1_\2", s1).lower()
