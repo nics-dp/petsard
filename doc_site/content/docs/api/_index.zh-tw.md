@@ -16,8 +16,6 @@ sidebar:
 | [Executor]({{< ref "docs/api/executor" >}}) | `Executor` | `Executor(config)` | `run()`, `get_result()`, `get_timing()` |
 | [Metadater]({{< ref "docs/api/metadater" >}}) | `Metadater` | `Metadater.create_schema()` | `create_schema()`, `validate_schema()` |
 | [Processor]({{< ref "docs/api/processor" >}}) | `Processor` | `Processor(metadata, config)` | `fit()`, `transform()`, `inverse_transform()` |
-| [Constrainer]({{< ref "docs/api/constrainer" >}}) | `Constrainer` | `Constrainer(config)` | `apply()`, `resample_until_satisfy()` |
-| [Reporter]({{< ref "docs/api/reporter" >}}) | `Reporter` | `Reporter(method, **kwargs)` | `create()`, `report()` |
 | [Adapter]({{< ref "docs/api/adapter" >}}) | `*Adapter` | `*Adapter(config)` | `run()`, `set_input()`, `get_result()` |
 | [Config]({{< ref "docs/api/config" >}}) | `Config` | `Config(config_dict)` | 初始化時自動處理 |
 | [Status]({{< ref "docs/api/status" >}}) | `Status` | `Status(config)` | `put()`, `get_result()`, `create_snapshot()` |
@@ -31,8 +29,6 @@ sidebar:
 
 ## 管線組件
 - [Processor]({{< ref "docs/api/processor" >}}) - 資料前處理和後處理
-- [Constrainer]({{< ref "docs/api/constrainer" >}}) - 合成資料的資料約束處理器
-- [Reporter]({{< ref "docs/api/reporter" >}}) - 結果匯出和報告
 
 ## 系統組件
 - [Adapter]({{< ref "docs/api/adapter" >}}) - 所有模組的標準化執行包裝器

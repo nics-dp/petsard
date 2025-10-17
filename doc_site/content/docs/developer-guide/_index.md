@@ -24,9 +24,6 @@ sidebar:
 - [Logging Configuration]({{< ref "docs/developer-guide/logging-configuration" >}})
   - Setting log levels and output destinations
   - Customizing log formats and file locations
-- [Experiment Names in Reporter]({{< ref "docs/developer-guide/experiment-name-in-reporter" >}})
-  - Experiment naming conventions
-  - Managing experiment configurations
 - [Test Coverage]({{< ref "docs/developer-guide/test-coverage" >}})
   - Test organization and structure
   - Detailed test case documentation
