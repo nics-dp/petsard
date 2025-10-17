@@ -23,7 +23,7 @@ class Constrainer:
         "field_proportions": FieldProportionsConstrainer,
     }
 
-    def __init__(self, config: dict):
+    def __init__(self, config: dict, metadata=None):
         """
         Initialize with full constraint configuration
 
@@ -32,8 +32,10 @@ class Constrainer:
                 {
                     'nan_groups': {...},
                     'field_constraints': [...],
-                    'field_combinations': [...]
+                    'field_combinations': [...],
+                    'field_proportions': [...]
                 }
+            metadata: Optional Schema object containing field type information
 
         Attr.:
             resample_trails (int):
@@ -42,10 +44,12 @@ class Constrainer:
             validation_result (dict):
                 Validation result from the last validate() call,
                 set after calling validate()
+            metadata: Schema object for field type checking (optional)
         """
         if not isinstance(config, dict):
             raise ValueError("Config must be a dictionary")
         self.config = config
+        self.metadata = metadata
         self._constrainers = {}
         self._setup_constrainers()
 
@@ -62,9 +66,19 @@ class Constrainer:
                 )
                 continue
             else:
-                self._constrainers[constraint_type] = self._constraints[
-                    constraint_type
-                ](config)
+                # Pass metadata to constrainers that support it
+                constrainer_class = self._constraints[constraint_type]
+
+                # Check if constrainer class accepts metadata parameter
+                import inspect
+
+                sig = inspect.signature(constrainer_class.__init__)
+                if "metadata" in sig.parameters:
+                    self._constrainers[constraint_type] = constrainer_class(
+                        config, metadata=self.metadata
+                    )
+                else:
+                    self._constrainers[constraint_type] = constrainer_class(config)
 
     def apply(self, df: pd.DataFrame, target_rows: int = None) -> pd.DataFrame:
         """

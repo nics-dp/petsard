@@ -47,7 +47,28 @@ field_combinations:
 
 ## Syntax Format
 
-### Single Field Mapping
+Field combination constraints allow you to define value domain relationships between different fields, ensuring that field combinations in synthetic data conform to real-world logical specifications.
+
+### Supported Combination Types
+
+- **Single Field Mapping**: Constraints based on a single field's value
+- **Multi-Field Mapping**: More complex constraints considering multiple fields' values simultaneously
+
+### Allowlist Mechanism Explanation
+
+Based on the above example (`education` → `income`):
+- **Constrained values**:
+  - When `education = 'Doctorate'`, `income` can only be `'>50K'`
+  - When `education = 'Masters'`, `income` can be `'>50K'` or `'<=50K'`
+- **Unconstrained values**:
+  - `income` for other `education` values like `'Bachelors'`, `'HS-grad'` etc. are not restricted
+  - Data with education other than Doctorate and Masters are always retained, regardless of their `income` value
+
+{{< callout type="info" >}}
+**Implementation Limitations**: In the current implementation, field combination constraints use an allowlist approach and only support explicitly listed value combinations. Numeric fields can be enumerated for valid values, but logical comparisons using comparison operators (`>`, `<`, `>=`, `<=`) like in field constraints are not yet supported.
+{{< /callout >}}
+
+### Single Field Mapping Syntax
 
 ```yaml
 -
@@ -62,7 +83,7 @@ field_combinations:
 
 ---
 
-### Multi-Field Mapping
+### Multi-Field Mapping Syntax
 
 ```yaml
 -

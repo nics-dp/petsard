@@ -1,0 +1,41 @@
+---
+Splitter:
+  external_split:
+    method: custom_data
+    filepath:
+      ori: benchmark://adult-income_ori
+      control: benchmark://adult-income_control
+    schema:
+      ori: benchmark://adult-income_schema
+      control: benchmark://adult-income_schema
+Synthesizer:
+  external_data:
+    method: custom_data
+    filepath: benchmark://adult-income_syn
+    schema: benchmark://adult-income_schema
+Evaluator:
+  validity_check:
+    method: sdmetrics-diagnosticreport
+  fidelity_check:
+    method: sdmetrics-qualityreport
+  singling_out_risk:
+    method: anonymeter-singlingout
+    n_attacks: 400
+    n_cols: 3
+    max_attempts: 4000
+  classification_utility:
+    method: mlutility
+    task_type: classification
+    target: income
+    random_state: 42
+Reporter:
+  save_report:
+    method: save_report # Required: Fixed as save_report
+    granularity:        # Required: Specify report granularity levels
+      - global                  # Overall summary statistics
+      - columnwise              # Per-column analysis
+      - pairwise.               # Detailed breakdown
+    # eval:             # Optional: Target evaluation experiment names (default: all evaluations)
+    # output: petsard   # Optional: Output filename prefix (default: petsard)
+    # naming_strategy: traditional  # Optional: Filename naming strategy, traditional or compact (default: traditional)
+...

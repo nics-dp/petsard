@@ -20,6 +20,8 @@ class FieldProportionsConfig:
         original_proportions (dict): 存儲原始資料中各欄位的比例分布。
             在 verify_data 階段計算並存儲，避免在檢查階段重複計算。
 
+        metadata: Optional Schema object for field type checking
+
     Methods:
         verify_data(data: pd.DataFrame, target_n_rows: int) -> None:
             驗證資料中是否有所有需要的欄位，檢查設定是否有效，並計算原始資料的比例分布。
@@ -31,6 +33,7 @@ class FieldProportionsConfig:
     field_proportions: list[dict] = field(default_factory=list)
     original_proportions: dict = field(default_factory=dict)
     target_n_rows: int = field(default=None, init=False)  # Set internally
+    metadata: object = field(default=None)  # Schema object for type checking
 
     def __post_init__(self):
         """驗證配置的有效性"""
@@ -115,7 +118,7 @@ class FieldProportionsConfig:
             target_n_rows (int): 預期的過濾後資料行數。
 
         Raises:
-            ValueError: 當資料中缺少必要欄位或設定無效時。
+            ValueError: 當資料中缺少必要欄位、欄位類型不支援或設定無效時。
         """
         # 設定 target_n_rows
         if target_n_rows is None or target_n_rows <= 0:
@@ -135,6 +138,49 @@ class FieldProportionsConfig:
         missing_fields = required_fields - set(data.columns)
         if missing_fields:
             raise ValueError(f"資料中缺少以下欄位: {missing_fields}")
+
+        # 檢查欄位類型是否為類別變數
+        # field_proportions 僅支援類別變數，不支援連續數值型或日期型欄位
+        unsupported_fields = []
+        for field in required_fields:
+            # Use metadata for type checking if available
+            if self.metadata is not None:
+                # Find the attribute in metadata
+                attribute = None
+                for attr in self.metadata.attributes:
+                    if attr.name == field:
+                        attribute = attr
+                        break
+
+                if attribute is None:
+                    # Field not in metadata, fall back to dtype check
+                    dtype = data[field].dtype
+                    field_type = self._infer_type_from_dtype(dtype)
+                else:
+                    # Use metadata type
+                    field_type = attribute.infer_dtype
+
+                # Reject numeric and datetime types
+                if field_type in ["numerical", "datetime"]:
+                    unsupported_fields.append(
+                        f"{field} (類型: {field_type} [來自 metadata], 不支援)"
+                    )
+            else:
+                # Fall back to DataFrame dtype checking
+                dtype = data[field].dtype
+                # 拒絕純數值型（int, float）和日期型（datetime）
+                if pd.api.types.is_numeric_dtype(dtype):
+                    unsupported_fields.append(f"{field} (類型: {dtype}, 數值型不支援)")
+                elif pd.api.types.is_datetime64_any_dtype(dtype):
+                    unsupported_fields.append(f"{field} (類型: {dtype}, 日期型不支援)")
+
+        if unsupported_fields:
+            raise ValueError(
+                "field_proportions 僅支援類別變數（categorical）欄位。"
+                "以下欄位類型不支援:\n  "
+                + "\n  ".join(unsupported_fields)
+                + "\n\n請確保在 schema 中將這些欄位的 type 設定為 'category' 或其他類別性質的邏輯型態。"
+            )
 
         # 計算原始資料的比例分布
         self.original_proportions = {}
@@ -534,11 +580,28 @@ class FieldProportionsConfig:
 
         return all_rules_satisfied, violations
 
+    def _infer_type_from_dtype(self, dtype) -> str:
+        """
+        Infer field type from pandas dtype when metadata is not available.
+
+        Args:
+            dtype: pandas dtype
+
+        Returns:
+            str: 'numerical', 'categorical', or 'datetime'
+        """
+        if pd.api.types.is_numeric_dtype(dtype):
+            return "numerical"
+        elif pd.api.types.is_datetime64_any_dtype(dtype):
+            return "datetime"
+        else:
+            return "categorical"
+
 
 class FieldProportionsConstrainer(BaseConstrainer):
     """Field proportions constrainer for maintaining data distribution proportions"""
 
-    def __init__(self, config: dict):
+    def __init__(self, config: dict, metadata=None):
         """
         Initialize field proportions constrainer
 
@@ -547,8 +610,10 @@ class FieldProportionsConstrainer(BaseConstrainer):
                 {
                     'field_proportions': [...]
                 }
+            metadata: Optional Schema object for field type checking
         """
         super().__init__(config)
+        self.metadata = metadata
         self.proportions_config = None
         self._setup_config()
 
@@ -573,6 +638,8 @@ class FieldProportionsConstrainer(BaseConstrainer):
             else:
                 raise ValueError(f"Invalid config format: {type(self.config)}")
 
+            # Pass metadata to FieldProportionsConfig
+            config_dict["metadata"] = self.metadata
             self.proportions_config = FieldProportionsConfig(**config_dict)
         except Exception as e:
             raise ValueError(f"Invalid field proportions configuration: {e}") from e

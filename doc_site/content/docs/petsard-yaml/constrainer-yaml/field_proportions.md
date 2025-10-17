@@ -69,6 +69,9 @@ field_proportions:
 
 ## Important Notes
 
+- **Only supports categorical variables**: This feature is designed to maintain distribution proportions of categorical data and is not suitable for continuous numeric data
+  - Fields must have `type` set to `'category'` or a categorical logical type in the schema
+  - Numeric, datetime, and other continuous types are not supported
 - Maintains distribution through iterative removal of excess data
 - High cardinality fields (too many values) have limited maintenance effect
 - Multiple rules may conflict, recommend using more relaxed tolerance

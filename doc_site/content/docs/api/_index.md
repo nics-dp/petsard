@@ -16,8 +16,6 @@ sidebar:
 | [Executor]({{< ref "docs/api/executor" >}}) | `Executor` | `Executor(config)` | `run()`, `get_result()`, `get_timing()` |
 | [Metadater]({{< ref "docs/api/metadater" >}}) | `Metadater` | `Metadater.create_schema()` | `create_schema()`, `validate_schema()` |
 | [Processor]({{< ref "docs/api/processor" >}}) | `Processor` | `Processor(metadata, config)` | `fit()`, `transform()`, `inverse_transform()` |
-| [Constrainer]({{< ref "docs/api/constrainer" >}}) | `Constrainer` | `Constrainer(config)` | `apply()`, `resample_until_satisfy()` |
-| [Reporter]({{< ref "docs/api/reporter" >}}) | `Reporter` | `Reporter(method, **kwargs)` | `create()`, `report()` |
 | [Adapter]({{< ref "docs/api/adapter" >}}) | `*Adapter` | `*Adapter(config)` | `run()`, `set_input()`, `get_result()` |
 | [Config]({{< ref "docs/api/config" >}}) | `Config` | `Config(config_dict)` | Auto-processing during init |
 | [Status]({{< ref "docs/api/status" >}}) | `Status` | `Status(config)` | `put()`, `get_result()`, `create_snapshot()` |
@@ -31,8 +29,6 @@ sidebar:
 
 ## Pipeline Components
 - [Processor]({{< ref "docs/api/processor" >}}) - Data preprocessing and postprocessing
-- [Constrainer]({{< ref "docs/api/constrainer" >}}) - Data constraint handler for synthetic data
-- [Reporter]({{< ref "docs/api/reporter" >}}) - Results export and reporting
 
 ## System Components
 - [Adapter]({{< ref "docs/api/adapter" >}}) - Standardized execution wrappers for all modules
