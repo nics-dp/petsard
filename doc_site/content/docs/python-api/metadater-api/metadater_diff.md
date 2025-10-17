@@ -3,9 +3,9 @@ title: "diff()"
 weight: 323
 ---
 
-比較詮釋資料定義與實際資料的差異。
+Compare differences between metadata definition and actual data.
 
-## 語法
+## Syntax
 
 ```python
 @staticmethod
@@ -15,46 +15,46 @@ def diff(
 ) -> dict
 ```
 
-## 參數
+## Parameters
 
 - **metadata** : Metadata, required
-  - 詮釋資料定義（期望的結構）
-  - 必要參數
+  - Metadata definition (expected structure)
+  - Required parameter
   
 - **data** : dict[str, pd.DataFrame], required
-  - 實際資料，鍵為表格名稱，值為 DataFrame
-  - 必要參數
+  - Actual data with table names as keys and DataFrames as values
+  - Required parameter
 
-## 返回值
+## Returns
 
 - **dict**
-  - 差異報告字典
-  - 如果沒有差異則返回空字典 `{}`
-  - 差異報告包含以下可能的鍵：
-    - `missing_tables`: metadata 中定義但資料中缺失的表格
-    - `extra_tables`: 資料中存在但 metadata 未定義的表格
-    - `table_diffs`: 各表格的詳細差異
-      - `missing_columns`: 定義但缺失的欄位
-      - `extra_columns`: 存在但未定義的欄位
-      - `type_mismatches`: 型別不符的欄位
-      - `nullable_mismatches`: nullable 屬性不符的欄位
+  - Difference report dictionary
+  - Returns empty dictionary `{}` if no differences
+  - Difference report may contain the following keys:
+    - `missing_tables`: Tables defined in metadata but missing in data
+    - `extra_tables`: Tables present in data but not defined in metadata
+    - `table_diffs`: Detailed differences for each table
+      - `missing_columns`: Fields defined but missing
+      - `extra_columns`: Fields present but not defined
+      - `type_mismatches`: Fields with mismatched types
+      - `nullable_mismatches`: Fields with mismatched nullable attributes
 
-## 說明
+## Description
 
-[`diff()`](metadater_diff.zh-tw.md) 方法用於檢測期望的資料結構（metadata）與實際資料之間的差異，適用於：
+The [`diff()`](metadater_diff.md) method detects differences between expected data structure (metadata) and actual data, useful for:
 
-1. 資料驗證：確保資料符合預期結構
-2. 版本控制：追蹤資料結構變更
-3. 資料品質檢查：在處理前驗證資料完整性
-4. 除錯：識別資料載入或轉換過程中的問題
+1. Data Validation: Ensure data conforms to expected structure
+2. Version Control: Track data structure changes
+3. Data Quality Checks: Validate data integrity before processing
+4. Debugging: Identify issues in data loading or transformation
 
-## 基本範例
+## Basic Example
 
 ```python
 from petsard.metadater import Metadater
 import pandas as pd
 
-# 定義期望的 schema
+# Define expected schema
 config = {
     'id': 'expected_schema',
     'schemas': {
@@ -70,36 +70,36 @@ config = {
 }
 metadata = Metadater.from_dict(config)
 
-# 實際資料（有差異）
+# Actual data (with differences)
 actual_data = {
     'users': pd.DataFrame({
         'id': [1, 2, 3],
         'name': ['Alice', 'Bob', 'Charlie'],
-        'email': ['alice@ex.com', 'bob@ex.com', 'charlie@ex.com']  # 額外欄位
-        # 缺少 'age' 欄位
+        'email': ['alice@ex.com', 'bob@ex.com', 'charlie@ex.com']  # Extra field
+        # Missing 'age' field
     })
 }
 
-# 比較差異
+# Compare differences
 diff_report = Metadater.diff(metadata, actual_data)
 
-# 檢查結果
+# Check results
 if diff_report:
-    print("發現資料結構差異：")
+    print("Data structure differences found:")
     print(diff_report)
 else:
-    print("資料結構完全符合")
+    print("Data structure fully conforms")
 ```
 
-## 進階範例
+## Advanced Examples
 
-### 詳細差異分析
+### Detailed Difference Analysis
 
 ```python
 from petsard.metadater import Metadater
 import pandas as pd
 
-# 定義 schema
+# Define schema
 config = {
     'id': 'user_schema',
     'schemas': {
@@ -116,42 +116,42 @@ config = {
 }
 metadata = Metadater.from_dict(config)
 
-# 實際資料有多種差異
+# Actual data with multiple types of differences
 actual_data = {
     'users': pd.DataFrame({
         'user_id': [1, 2, 3],
         'username': ['alice', 'bob', 'charlie'],
-        'age': [25.5, 30.0, 35.0],  # 型別錯誤：應為 int 但為 float
-        'phone': ['123-456', '234-567', '345-678']  # 額外欄位
-        # 缺少 'email' 欄位
+        'age': [25.5, 30.0, 35.0],  # Type error: should be int but is float
+        'phone': ['123-456', '234-567', '345-678']  # Extra field
+        # Missing 'email' field
     })
 }
 
-# 比較差異
+# Compare differences
 diff_report = Metadater.diff(metadata, actual_data)
 
-# 分析差異報告
+# Analyze difference report
 if 'table_diffs' in diff_report:
     for table_name, table_diff in diff_report['table_diffs'].items():
-        print(f"\n表格: {table_name}")
+        print(f"\nTable: {table_name}")
         
         if 'missing_columns' in table_diff:
-            print(f"  缺失欄位: {table_diff['missing_columns']}")
+            print(f"  Missing fields: {table_diff['missing_columns']}")
         
         if 'extra_columns' in table_diff:
-            print(f"  額外欄位: {table_diff['extra_columns']}")
+            print(f"  Extra fields: {table_diff['extra_columns']}")
         
         if 'type_mismatches' in table_diff:
-            print(f"  型別不符: {table_diff['type_mismatches']}")
+            print(f"  Type mismatches: {table_diff['type_mismatches']}")
 ```
 
-### 多表格差異檢測
+### Multi-Table Difference Detection
 
 ```python
 from petsard.metadater import Metadater
 import pandas as pd
 
-# 定義多表格 schema
+# Define multi-table schema
 config = {
     'id': 'ecommerce',
     'schemas': {
@@ -174,75 +174,75 @@ config = {
 }
 metadata = Metadater.from_dict(config)
 
-# 實際資料（缺少 orders 表）
+# Actual data (missing orders table)
 actual_data = {
     'users': pd.DataFrame({
         'user_id': [1, 2],
         'name': ['Alice', 'Bob']
     }),
-    'products': pd.DataFrame({  # 額外的表格
+    'products': pd.DataFrame({  # Extra table
         'product_id': [101, 102],
         'name': ['Product A', 'Product B']
     })
 }
 
-# 比較差異
+# Compare differences
 diff_report = Metadater.diff(metadata, actual_data)
 
-# 檢查表格層級的差異
+# Check table-level differences
 if 'missing_tables' in diff_report:
-    print(f"缺失的表格: {diff_report['missing_tables']}")
+    print(f"Missing tables: {diff_report['missing_tables']}")
 
 if 'extra_tables' in diff_report:
-    print(f"額外的表格: {diff_report['extra_tables']}")
+    print(f"Extra tables: {diff_report['extra_tables']}")
 ```
 
-### 資料驗證工作流程
+### Data Validation Workflow
 
 ```python
 from petsard.metadater import Metadater
 import pandas as pd
 import sys
 
-# 載入期望的 schema
+# Load expected schema
 with open('expected_schema.yaml', 'r') as f:
     import yaml
     config = yaml.safe_load(f)
 
 metadata = Metadater.from_dict(config)
 
-# 載入實際資料
+# Load actual data
 actual_data = {
     'users': pd.read_csv('users.csv'),
     'orders': pd.read_csv('orders.csv')
 }
 
-# 驗證資料結構
+# Validate data structure
 diff_report = Metadater.diff(metadata, actual_data)
 
 if diff_report:
-    print("❌ 資料結構驗證失敗")
-    print("\n差異報告：")
+    print("❌ Data structure validation failed")
+    print("\nDifference Report:")
     print(diff_report)
     
-    # 記錄到日誌檔
+    # Log to file
     with open('validation_errors.log', 'a') as log:
-        log.write(f"差異報告: {diff_report}\n")
+        log.write(f"Difference Report: {diff_report}\n")
     
     sys.exit(1)
 else:
-    print("✅ 資料結構驗證通過")
-    # 繼續處理資料...
+    print("✅ Data structure validation passed")
+    # Continue processing data...
 ```
 
-### 型別相容性檢查
+### Type Compatibility Check
 
 ```python
 from petsard.metadater import Metadater
 import pandas as pd
 import numpy as np
 
-# 定義嚴格的型別 schema
+# Define strict type schema
 config = {
     'id': 'strict_schema',
     'schemas': {
@@ -258,10 +258,10 @@ config = {
 }
 metadata = Metadater.from_dict(config)
 
-# 測試不同的資料型別
+# Test different data types
 test_cases = [
     {
-        'name': '正確型別',
+        'name': 'Correct types',
         'data': pd.DataFrame({
             'id': [1, 2, 3],
             'value': [1.5, 2.5, 3.5],
@@ -269,9 +269,9 @@ test_cases = [
         })
     },
     {
-        'name': '型別錯誤',
+        'name': 'Type error',
         'data': pd.DataFrame({
-            'id': ['A', 'B', 'C'],  # 應為 int
+            'id': ['A', 'B', 'C'],  # Should be int
             'value': [1.5, 2.5, 3.5],
             'timestamp': pd.to_datetime(['2024-01-01', '2024-01-02', '2024-01-03'])
         })
@@ -279,50 +279,50 @@ test_cases = [
 ]
 
 for test_case in test_cases:
-    print(f"\n測試案例: {test_case['name']}")
+    print(f"\nTest case: {test_case['name']}")
     diff_report = Metadater.diff(metadata, {'measurements': test_case['data']})
     
     if diff_report:
-        print(f"  ❌ 發現差異: {diff_report}")
+        print(f"  ❌ Differences found: {diff_report}")
     else:
-        print(f"  ✅ 通過驗證")
+        print(f"  ✅ Validation passed")
 ```
 
-## 注意事項
+## Notes
 
-- **檢測內容**：
-  - 表格存在性：檢查是否有缺失或額外的表格
-  - 欄位完整性：檢查欄位是否全部存在
-  - 型別一致性：檢查資料型別是否符合定義
-  - 空值屬性：檢查 nullable 設定是否一致
+- **Detection Content**:
+  - Table existence: Check for missing or extra tables
+  - Field completeness: Check if all fields are present
+  - Type consistency: Check if data types match definitions
+  - Null attributes: Check if nullable settings are consistent
   
-- **差異報告結構**：
-  - 空字典表示完全相符
-  - 非空字典包含詳細的差異資訊
-  - 差異報告可用於生成使用者友善的錯誤訊息
+- **Difference Report Structure**:
+  - Empty dictionary indicates complete conformance
+  - Non-empty dictionary contains detailed difference information
+  - Difference reports can be used to generate user-friendly error messages
   
-- **型別比較**：
-  - 型別比較基於 pandas dtype
-  - 某些型別轉換可能被視為相容（如 int64 vs int32）
-  - 建議使用嚴格的型別定義
+- **Type Comparison**:
+  - Type comparison based on pandas dtype
+  - Some type conversions may be considered compatible (e.g., int64 vs int32)
+  - Strict type definitions recommended
   
-- **使用時機**：
-  - 資料載入後的驗證
-  - 資料轉換前的檢查
-  - 持續整合/部署的資料品質檢查
-  - 資料契約（Data Contract）驗證
+- **When to Use**:
+  - Validation after data loading
+  - Checks before data transformation
+  - Data quality checks in CI/CD
+  - Data Contract validation
   
-- **效能考量**：
-  - 大型資料集的差異檢測可能較耗時
-  - 建議對關鍵欄位優先檢查
-  - 可考慮抽樣檢查以提升效能
+- **Performance Considerations**:
+  - Difference detection for large datasets may be time-consuming
+  - Recommend prioritizing critical field checks
+  - Consider sampling for performance improvement
   
-- **與 align() 的關係**：
-  - `diff()` 僅報告差異，不修改資料
-  - `align()` 會根據 metadata 調整資料結構
-  - 建議先用 `diff()` 檢查，再決定是否使用 `align()`
+- **Relationship with align()**:
+  - `diff()` only reports differences without modifying data
+  - `align()` adjusts data structure according to metadata
+  - Recommend using `diff()` to check first, then decide whether to use `align()`
   
-- **錯誤處理**：
-  - 如果輸入格式不正確可能引發例外
-  - 建議使用 try-except 處理可能的錯誤
-  - 差異報告可序列化為 JSON 或 YAML 以便記錄
+- **Error Handling**:
+  - Incorrect input format may raise exceptions
+  - Use try-except to handle possible errors
+  - Difference reports can be serialized to JSON or YAML for logging

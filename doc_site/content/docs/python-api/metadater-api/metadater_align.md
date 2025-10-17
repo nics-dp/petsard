@@ -3,9 +3,9 @@ title: "align()"
 weight: 324
 ---
 
-根據詮釋資料定義對齊資料結構。
+Align data structure according to metadata definition.
 
-## 語法
+## Syntax
 
 ```python
 @staticmethod
@@ -15,42 +15,42 @@ def align(
 ) -> dict[str, pd.DataFrame]
 ```
 
-## 參數
+## Parameters
 
 - **metadata** : Metadata, required
-  - 詮釋資料定義（目標結構）
-  - 必要參數
-  - 定義期望的資料結構、欄位順序、型別等
+  - Metadata definition (target structure)
+  - Required parameter
+  - Defines expected data structure, field order, types, etc.
   
 - **data** : dict[str, pd.DataFrame], required
-  - 待對齊的資料，鍵為表格名稱，值為 DataFrame
-  - 必要參數
+  - Data to be aligned with table names as keys and DataFrames as values
+  - Required parameter
 
-## 返回值
+## Returns
 
 - **dict[str, pd.DataFrame]**
-  - 對齊後的資料字典
-  - 結構、欄位順序、型別符合 metadata 定義
-  - 缺失欄位會補充為 NaN
-  - 額外欄位會被保留
+  - Aligned data dictionary
+  - Structure, field order, and types conform to metadata definition
+  - Missing fields are supplemented with NaN
+  - Extra fields are preserved
 
-## 說明
+## Description
 
-[`align()`](metadater_align.zh-tw.md) 方法根據 Metadata 定義調整實際資料的結構，確保資料符合預期格式。此方法執行以下操作：
+The [`align()`](metadater_align.md) method adjusts actual data structure according to Metadata definition, ensuring data conforms to expected format. This method performs the following operations:
 
-1. **欄位順序調整**：按 metadata 定義的順序重新排列欄位
-2. **補充缺失欄位**：為 metadata 中定義但資料中缺失的欄位添加 NaN 值
-3. **保留額外欄位**：資料中存在但 metadata 未定義的欄位會被保留在最後
-4. **型別轉換**：嘗試將欄位轉換為 metadata 定義的型別（如果可能）
-5. **空值處理**：根據 nullable 設定處理空值
+1. **Field Order Adjustment**: Rearrange fields according to metadata definition order
+2. **Supplement Missing Fields**: Add NaN values for fields defined in metadata but missing in data
+3. **Preserve Extra Fields**: Fields present in data but not defined in metadata are preserved at the end
+4. **Type Conversion**: Attempt to convert fields to metadata-defined types (if possible)
+5. **Null Value Handling**: Handle null values according to nullable settings
 
-## 基本範例
+## Basic Example
 
 ```python
 from petsard.metadater import Metadater
 import pandas as pd
 
-# 定義期望的結構
+# Define expected structure
 config = {
     'id': 'target_schema',
     'schemas': {
@@ -67,24 +67,24 @@ config = {
 }
 metadata = Metadater.from_dict(config)
 
-# 實際資料（欄位順序不同、缺少某些欄位）
+# Actual data (different field order, some fields missing)
 raw_data = {
     'users': pd.DataFrame({
-        'name': ['Alice', 'Bob', 'Charlie'],  # 順序不同
+        'name': ['Alice', 'Bob', 'Charlie'],  # Different order
         'id': [1, 2, 3],
-        'phone': ['123-456', '234-567', '345-678']  # 額外欄位
-        # 缺少 'age' 和 'email' 欄位
+        'phone': ['123-456', '234-567', '345-678']  # Extra field
+        # Missing 'age' and 'email' fields
     })
 }
 
-# 對齊資料結構
+# Align data structure
 aligned_data = Metadater.align(metadata, raw_data)
 
-# 檢視對齊結果
-print("對齊後的欄位順序：", list(aligned_data['users'].columns))
-# 輸出: ['id', 'name', 'age', 'email', 'phone']
+# View alignment results
+print("Field order after alignment:", list(aligned_data['users'].columns))
+# Output: ['id', 'name', 'age', 'email', 'phone']
 
-print("\n對齊後的資料：")
+print("\nData after alignment:")
 print(aligned_data['users'])
 # id    name     age  email       phone
 # 1     Alice    NaN  NaN         123-456
@@ -92,15 +92,15 @@ print(aligned_data['users'])
 # 3     Charlie  NaN  NaN         345-678
 ```
 
-## 進階範例
+## Advanced Examples
 
-### 處理欄位順序差異
+### Handling Field Order Differences
 
 ```python
 from petsard.metadater import Metadater
 import pandas as pd
 
-# 定義標準欄位順序
+# Define standard field order
 config = {
     'id': 'standard_order',
     'schemas': {
@@ -117,7 +117,7 @@ config = {
 }
 metadata = Metadater.from_dict(config)
 
-# 資料欄位順序混亂
+# Data with messy field order
 messy_data = {
     'products': pd.DataFrame({
         'category': ['Electronics', 'Books', 'Clothing'],
@@ -127,22 +127,22 @@ messy_data = {
     })
 }
 
-# 對齊資料
+# Align data
 aligned_data = Metadater.align(metadata, messy_data)
 
-print("對齊前順序:", list(messy_data['products'].columns))
-print("對齊後順序:", list(aligned_data['products'].columns))
-# 對齊前順序: ['category', 'product_id', 'price', 'name']
-# 對齊後順序: ['product_id', 'name', 'price', 'category']
+print("Before alignment:", list(messy_data['products'].columns))
+print("After alignment:", list(aligned_data['products'].columns))
+# Before alignment: ['category', 'product_id', 'price', 'name']
+# After alignment: ['product_id', 'name', 'price', 'category']
 ```
 
-### 補充缺失欄位
+### Supplementing Missing Fields
 
 ```python
 from petsard.metadater import Metadater
 import pandas as pd
 
-# 定義完整的 schema
+# Define complete schema
 config = {
     'id': 'complete_schema',
     'schemas': {
@@ -160,20 +160,20 @@ config = {
 }
 metadata = Metadater.from_dict(config)
 
-# 資料只有部分欄位
+# Data with only partial fields
 incomplete_data = {
     'employees': pd.DataFrame({
         'emp_id': [1, 2, 3],
         'name': ['Alice', 'Bob', 'Charlie']
-        # 缺少 department, salary, hire_date
+        # Missing department, salary, hire_date
     })
 }
 
-# 對齊並補充缺失欄位
+# Align and supplement missing fields
 aligned_data = Metadater.align(metadata, incomplete_data)
 
-print("對齊後的欄位:", list(aligned_data['employees'].columns))
-print("\n缺失欄位已補充為 NaN:")
+print("Fields after alignment:", list(aligned_data['employees'].columns))
+print("\nMissing fields supplemented with NaN:")
 print(aligned_data['employees'])
 #    emp_id     name  department  salary hire_date
 # 0       1    Alice         NaN     NaN       NaT
@@ -181,13 +181,13 @@ print(aligned_data['employees'])
 # 2       3  Charlie         NaN     NaN       NaT
 ```
 
-### 多表格對齊
+### Multi-Table Alignment
 
 ```python
 from petsard.metadater import Metadater
 import pandas as pd
 
-# 定義多表格 schema
+# Define multi-table schema
 config = {
     'id': 'multi_table',
     'schemas': {
@@ -210,48 +210,48 @@ config = {
 }
 metadata = Metadater.from_dict(config)
 
-# 多個表格的資料
+# Data for multiple tables
 raw_data = {
     'users': pd.DataFrame({
-        'username': ['alice', 'bob'],  # 順序不同
+        'username': ['alice', 'bob'],  # Different order
         'user_id': [1, 2]
     }),
     'orders': pd.DataFrame({
-        'amount': [100.0, 200.0],  # 順序不同
+        'amount': [100.0, 200.0],  # Different order
         'user_id': [1, 2],
         'order_id': [101, 102]
     })
 }
 
-# 對齊所有表格
+# Align all tables
 aligned_data = Metadater.align(metadata, raw_data)
 
-print("Users 表格對齊後:", list(aligned_data['users'].columns))
-print("Orders 表格對齊後:", list(aligned_data['orders'].columns))
+print("Users table after alignment:", list(aligned_data['users'].columns))
+print("Orders table after alignment:", list(aligned_data['orders'].columns))
 ```
 
-### Loader 內部使用情境
+### Loader Internal Usage Scenario
 
 ```python
 from petsard.metadater import Metadater
 import pandas as pd
 
-# 模擬 Loader 的內部流程
+# Simulate Loader's internal process
 def load_data_with_schema(filepath, schema_config):
-    """模擬 Loader 如何使用 Metadater.align()"""
+    """Simulate how Loader uses Metadater.align()"""
     
-    # 1. 從配置建立 metadata
+    # 1. Create metadata from configuration
     metadata = Metadater.from_dict(schema_config)
     
-    # 2. 讀取原始資料
+    # 2. Read raw data
     raw_data = {'data': pd.read_csv(filepath)}
     
-    # 3. 對齊資料結構
+    # 3. Align data structure
     aligned_data = Metadater.align(metadata, raw_data)
     
     return aligned_data['data'], metadata
 
-# 使用範例
+# Usage example
 schema_config = {
     'id': 'my_schema',
     'schemas': {
@@ -268,13 +268,13 @@ schema_config = {
 # data, schema = load_data_with_schema('data.csv', schema_config)
 ```
 
-### 處理型別轉換
+### Handling Type Conversion
 
 ```python
 from petsard.metadater import Metadater
 import pandas as pd
 
-# 定義嚴格的型別 schema
+# Define strict type schema
 config = {
     'id': 'typed_schema',
     'schemas': {
@@ -290,50 +290,50 @@ config = {
 }
 metadata = Metadater.from_dict(config)
 
-# 資料型別可能不完全正確
+# Data with potentially incorrect types
 raw_data = {
     'measurements': pd.DataFrame({
-        'id': ['1', '2', '3'],  # 字串型 int
-        'value': [1, 2, 3],  # int 型 float
-        'is_valid': [1, 0, 1]  # int 型 bool
+        'id': ['1', '2', '3'],  # String type int
+        'value': [1, 2, 3],  # Int type float
+        'is_valid': [1, 0, 1]  # Int type bool
     })
 }
 
-# 對齊會嘗試轉換型別
+# Alignment will attempt type conversion
 aligned_data = Metadater.align(metadata, raw_data)
 
-print("對齊後的資料型別:")
+print("Data types after alignment:")
 print(aligned_data['measurements'].dtypes)
 # id           int64
 # value      float64
 # is_valid      bool
 ```
 
-### 資料管線中的使用
+### Usage in Data Pipeline
 
 ```python
 from petsard.metadater import Metadater
 import pandas as pd
 
-# 定義標準化流程
+# Define standardization process
 class DataPipeline:
     def __init__(self, schema_config):
         self.metadata = Metadater.from_dict(schema_config)
     
     def process(self, raw_data):
-        """標準化資料處理流程"""
-        # 1. 對齊資料結構
+        """Standardized data processing workflow"""
+        # 1. Align data structure
         aligned = Metadater.align(self.metadata, raw_data)
         
-        # 2. 檢查差異
+        # 2. Check differences
         diff = Metadater.diff(self.metadata, aligned)
         if diff:
-            print("警告：資料結構仍有差異", diff)
+            print("Warning: Data structure still has differences", diff)
         
-        # 3. 返回標準化的資料
+        # 3. Return standardized data
         return aligned
 
-# 使用管線
+# Use pipeline
 schema_config = {
     'id': 'standard',
     'schemas': {
@@ -349,7 +349,7 @@ schema_config = {
 
 pipeline = DataPipeline(schema_config)
 
-# 處理不同來源的資料
+# Process data from different sources
 sources = [
     {'data': pd.DataFrame({'value': [1.5, 2.5], 'id': [1, 2]})},
     {'data': pd.DataFrame({'id': [3, 4], 'value': [3.5, 4.5]})},
@@ -358,52 +358,52 @@ sources = [
 standardized_data = [pipeline.process(source) for source in sources]
 ```
 
-## 注意事項
+## Notes
 
-- **對齊操作**：
-  - 欄位順序會按 metadata 定義重新排列
-  - 缺失欄位會補充為 NaN（或對應型別的空值）
-  - 額外欄位會保留在最後（metadata 未定義的欄位）
-  - 型別轉換會盡力執行，但不保證所有轉換都能成功
+- **Alignment Operations**:
+  - Field order rearranged according to metadata definition
+  - Missing fields supplemented with NaN (or corresponding type null values)
+  - Extra fields preserved at the end (fields not defined in metadata)
+  - Type conversion attempted but not all conversions guaranteed to succeed
   
-- **非破壞性操作**：
-  - 不會修改原始輸入資料
-  - 返回新的 DataFrame 副本
-  - 額外欄位不會被移除
+- **Non-Destructive Operation**:
+  - Original input data not modified
+  - Returns new DataFrame copies
+  - Extra fields not removed
   
-- **型別轉換**：
-  - 自動嘗試轉換為定義的型別
-  - 轉換失敗時可能保留原型別或引發錯誤
-  - 日期時間型別轉換需要格式正確
+- **Type Conversion**:
+  - Automatic attempts to convert to defined types
+  - Conversion failures may retain original type or raise errors
+  - Datetime type conversion requires correct format
   
-- **空值處理**：
-  - 補充的欄位會使用 NaN（數值）或 None（物件）
-  - 日期時間型別使用 NaT (Not a Time)
-  - nullable 設定不影響對齊過程，只影響驗證
+- **Null Value Handling**:
+  - Supplemented fields use NaN (numeric) or None (object)
+  - Datetime types use NaT (Not a Time)
+  - nullable setting doesn't affect alignment process, only validation
   
-- **效能考量**：
-  - 大型資料集的對齊可能較耗時
-  - 頻繁的型別轉換會影響效能
-  - 建議在資料載入階段一次性對齊
+- **Performance Considerations**:
+  - Large dataset alignment may be time-consuming
+  - Frequent type conversions affect performance
+  - Recommend one-time alignment during data loading phase
   
-- **使用時機**：
-  - 資料載入後的標準化
-  - 合併不同來源的資料前
-  - 確保資料符合下游模組要求
-  - 資料管線中的標準化步驟
+- **When to Use**:
+  - Standardization after data loading
+  - Before merging data from different sources
+  - Ensuring data meets downstream module requirements
+  - Standardization step in data pipeline
   
-- **與其他方法的關係**：
-  - 通常在 `diff()` 之後使用
-  - Loader 內部自動呼叫此方法
-  - 配合 `from_dict()` 或 `from_data()` 建立 metadata
+- **Relationship with Other Methods**:
+  - Usually used after `diff()`
+  - Loader internally calls this method automatically
+  - Used with `from_dict()` or `from_data()` to create metadata
   
-- **錯誤處理**：
-  - 型別轉換失敗可能引發例外
-  - 建議使用 try-except 處理可能的錯誤
-  - 對齊前可先用 `diff()` 檢查差異程度
+- **Error Handling**:
+  - Type conversion failures may raise exceptions
+  - Use try-except to handle possible errors
+  - Check degree of differences with `diff()` before alignment
   
-- **最佳實踐**：
-  - 在資料管線早期階段對齊資料
-  - 對齊後驗證結果是否符合預期
-  - 記錄對齊過程中的警告和錯誤
-  - 考慮將對齊操作封裝為獨立函數
+- **Best Practices**:
+  - Align data early in data pipeline
+  - Validate results meet expectations after alignment
+  - Log warnings and errors during alignment process
+  - Consider encapsulating alignment operations as independent functions

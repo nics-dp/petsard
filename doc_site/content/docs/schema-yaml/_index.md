@@ -3,23 +3,11 @@ title: "Schema YAML"
 weight: 200
 ---
 
-YAML configuration format for data structure definitions.
+YAML configuration format for data structure definition.
 
-## Overview
+## Usage Examples
 
-Schema defines the structure and types of data, processed by the Metadater module. It adopts a three-layer architecture corresponding to actual data:
-
-| Configuration Level | Corresponding Data | Description |
-|---------|---------|------|
-| **Metadata** | Datasets | Manages datasets with multiple tables |
-| **Schema** | Table | Defines single table structure |
-| **Attribute** | Field | Describes single field attributes |
-
-## Usage
-
-Schema is used in Loader with two definition methods:
-
-### 1. External File Reference
+### External File Reference
 
 ```yaml
 Loader:
@@ -28,7 +16,7 @@ Loader:
     schema: schemas/user_schema.yaml  # Reference external file
 ```
 
-### 2. Inline Definition
+### Inline Definition
 
 ```yaml
 Loader:
@@ -36,132 +24,85 @@ Loader:
     filepath: data/users.csv
     schema:                   # Inline schema definition
       id: user_data
-      fields:                 # Field definitions
-        user_id:              # Field name
+      attributes:             # Field definitions (also can be written as fields)
+        user_id:
           type: int64
-          nullable: false
+          enable_null: false
         username:
-          type: object
-          nullable: true
+          type: string
+          enable_null: true
 ```
 
-## Schema Structure
+### Automatic Inference
 
-```yaml
-id: <schema_id>           # Required: Structure identifier
-fields:                   # Required: Field attribute definitions
-  <field_name>:           # Field name as key
-    type: <data_type>     # Required: Data type
-    nullable: <boolean>   # Optional: Allow null (default true)
-    logical_type: <type>  # Optional: Logical type hint
-    stats: <dict>         # Optional: Statistics (auto-generated)
-stats: <dict>             # Optional: Table statistics (auto-generated)
-```
-
-## Supported Data Types
-
-### Basic Types
-- `int64`: 64-bit integer
-- `float64`: 64-bit floating point
-- `object`: String or object
-- `bool`: Boolean
-- `datetime64`: Date and time
-- `category`: Categorical
-
-### Logical Types (logical_type)
-Used to provide additional semantic information:
-- `email`: Email address
-- `url`: URL
-- `ip_address`: IP address
-- `phone`: Phone number
-- `postal_code`: Postal code
-- `category`: Categorical data
-
-## Basic Examples
-
-### Simple Structure (External File)
-
-```yaml
-# schemas/simple_schema.yaml
-id: simple_data
-fields:
-  user_id:
-    type: int64
-    nullable: false
-  username:
-    type: object
-  age:
-    type: int64
-    nullable: true
-```
-
-### Complete Structure (Inline)
-
-```yaml
-Loader:
-  load_transaction:
-    filepath: data/transactions.csv
-    schema:
-      id: transaction_data
-      fields:
-        transaction_id:
-          type: int64
-          nullable: false
-          
-        customer_email:
-          type: object
-          logical_type: email
-          
-        amount:
-          type: float64
-          nullable: false
-          
-        transaction_date:
-          type: datetime64
-          
-        product_category:
-          type: category
-          
-        status:
-          type: category
-          nullable: true
-```
-
-## Automatic Inference
-
-If no schema is provided, the system will automatically infer the structure from data:
+If no schema is provided, the system will automatically infer structure from data:
 
 ```yaml
 Loader:
   auto_infer:
     filepath: data/auto.csv
-    # No schema specified, automatic inference
+    # No schema specified, will be inferred
 ```
 
-## Data Type Mapping
+## Main Structure
 
-| Pandas dtype | Schema type |
-|-------------|-------------|
-| int8, int16, int32, int64 | int64 |
-| uint8, uint16, uint32, uint64 | int64 |
-| float16, float32, float64 | float64 |
-| object, string | object |
-| bool | bool |
-| datetime64 | datetime64 |
-| category | category |
+```yaml
+id: <schema_id>           # Required: Schema identifier
+attributes:               # Required: Attribute definitions (also can be written as fields)
+  <attribute_name>:       # Field name as key
+    type: <data_type>     # Required: Data type
+    enable_null: <bool>   # Optional: Allow null values (default: true)
+    logical_type: <type>  # Optional: Logical type hint
+```
 
-## Important Notes
+{{< callout type="info" >}}
+`attributes` can also be written as `fields`.
+{{< /callout >}}
 
-1. **Field order**: Field order in Schema does not affect data loading
-2. **Missing fields**: Missing fields in data will be filled with default values (nullable=true)
-3. **Extra fields**: Extra fields in data will be preserved
-4. **Type conversion**: System will attempt to automatically convert compatible types
+## Attribute Parameter List
+
+### Required Parameters
+
+| Parameter | Type | Description | Example |
+|-----------|------|-------------|---------|
+| `name` | `string` | Field name (automatically set when used as key) | `"user_id"`, `"age"` |
+
+### Optional Parameters
+
+| Parameter | Type | Default | Description | Example |
+|-----------|------|---------|-------------|---------|
+| `type` | `string` | `null` | Data type, auto-inferred if not specified | `"int64"`, `"string"`, `"float64"` |
+| `enable_null` | `boolean` | `true` | Allow null values | `true`, `false` |
+| `category` | `boolean` | `null` | Whether it's categorical data | `true`, `false` |
+| `logical_type` | `string` | `null` | Logical type annotation for validation | `"email"`, `"url"`, `"phone"` |
+| `description` | `string` | `null` | Field description text | `"User unique identifier"` |
+| `type_attr` | `dict` | `null` | Additional type attributes (precision, format, etc.) | `{"precision": 2}`, `{"format": "%Y-%m-%d"}` |
+| `na_values` | `list` | `null` | Custom missing value markers | `["?", "N/A", "unknown"]` |
+| `default_value` | `any` | `null` | Default fill value | `0`, `"Unknown"`, `false` |
+| `constraints` | `dict` | `null` | Field constraint conditions | `{"min": 0, "max": 100}` |
+| `enable_optimize_type` | `boolean` | `true` | Enable type optimization | `true`, `false` |
+| `enable_stats` | `boolean` | `true` | Calculate statistics | `true`, `false` |
+| `cast_errors` | `string` | `"coerce"` | Type conversion error handling | `"raise"`, `"coerce"`, `"ignore"` |
+| `null_strategy` | `string` | `"keep"` | Null value handling strategy | `"keep"`, `"drop"`, `"fill"` |
+
+### System Auto-Generated Parameters
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `stats` | `FieldStats` | Field statistics (auto-calculated when `enable_stats=True`) |
+| `created_at` | `datetime` | Creation timestamp (auto-recorded by system) |
+| `updated_at` | `datetime` | Update timestamp (auto-recorded by system) |
+
+{{< callout type="info" >}}
+**Auto-Inference Mechanism**:
+- When using `Metadater.from_data()`, parameters like `type`, `logical_type`, `enable_null` are automatically inferred from data
+- When manually creating Schema, only `name` is required, all other parameters are optional
+- Explicitly specifying `type` is recommended to ensure data processing accuracy
+{{< /callout >}}
 
 ## Advanced Usage
 
-### Multi-table Structure
-
-When processing multiple tables, the same schema can be reused across different Loaders:
+### Reusing Schema Across Tables
 
 ```yaml
 Loader:
@@ -172,106 +113,74 @@ Loader:
   test_data:
     filepath: data/test.csv
     schema: schemas/common_schema.yaml
-    
-  validation_data:
-    filepath: data/validation.csv
-    schema: schemas/common_schema.yaml
 ```
 
 ### Partial Definition
 
-You can define only key fields, with the rest inferred by the system:
+Define only key fields, others will be inferred:
 
 ```yaml
 schema:
   id: partial_schema
-  fields:
-    # Define only important fields
+  attributes:
     primary_key:
       type: int64
-      nullable: false
-    # Other fields will be auto-inferred
+      enable_null: false
+    # Other fields will be inferred
 ```
 
-## Statistics (Stats)
+## Statistics
 
-When creating Schema using `Metadater.from_data()`, if `enable_stats=True` is set, the system will automatically calculate and store statistics.
+When using `Metadater.from_data()` with `enable_stats=True`, the system automatically calculates statistics.
 
-### Field Statistics (Attribute.stats)
-
-Each field will contain the following statistical information:
+### Field Statistics Example
 
 ```yaml
-fields:
+attributes:
   age:
     type: int64
-    nullable: true
-    stats:                    # Auto-generated statistics
-      count: 1000            # Non-null count
-      null_count: 50         # Null count
-      unique_count: 65       # Unique value count
-      min: 18                # Minimum (numeric)
-      max: 95                # Maximum (numeric)
-      mean: 35.5             # Mean (numeric)
-      median: 34.0           # Median (numeric)
-      std: 12.3              # Standard deviation (numeric)
-      q1: 26.0               # First quartile
-      q3: 44.0               # Third quartile
-      most_common:           # Most common values (categorical)
-        - ["adult", 450]
-        - ["senior", 300]
+    enable_null: true
+    stats:
+      row_count: 1000
+      na_count: 50
+      unique_count: 65
+      mean: 35.5
+      median: 34.0
 ```
 
-### Table Statistics (Schema.stats)
-
-Schema-level statistics:
-
-```yaml
-id: user_table
-stats:                       # Auto-generated table statistics
-  row_count: 1000           # Total rows
-  column_count: 12          # Total columns
-  memory_usage: 98304       # Memory usage (bytes)
-  null_columns:             # Columns with nulls
-    - age
-    - address
-  numeric_columns:          # Numeric columns
-    - age
-    - salary
-  categorical_columns:      # Categorical columns
-    - gender
-    - department
-```
-
-### Programmatic Access to Statistics
+### Programmatic Access
 
 ```python
 from petsard.metadater import Metadater
+import pandas as pd
 
-# Create from data and calculate statistics
+# Create with statistics
+data = {'users': pd.DataFrame({...})}
 metadata = Metadater.from_data(
-    data=df,
-    enable_stats=True  # Enable statistics calculation
+    data=data,
+    enable_stats=True
 )
 
 # Access statistics
-schema = metadata.schemas["table_name"]
-print(f"Total rows: {schema.stats.row_count}")
-
-# Field statistics
-age_attr = schema.fields["age"]
+schema = metadata.schemas["users"]
+age_attr = schema.attributes["age"]
 print(f"Average age: {age_attr.stats.mean}")
-print(f"Null count: {age_attr.stats.null_count}")
 ```
-
-### Notes
-
-1. **Performance considerations**: Calculating statistics will increase processing time, especially for large datasets
-2. **Privacy protection**: Statistics may contain sensitive information (e.g., min, max values), use with caution
-3. **Update timing**: Statistics are calculated at creation time and do not auto-update
-4. **Storage format**: Statistics are stored in YAML and can be used for auditing and analysis
 
 ## Related Documentation
 
-- [Metadater API](/docs/experimental-new-format/python-api/metadater-api): Programmatic Schema operations
-- [Loader API](/docs/experimental-new-format/python-api/loader-api): Data loader configuration
+- **Data Types**: See [Data Types](/docs/schema-yaml/data-types) for details
+- **Logical Types**: See [Logical Types](/docs/schema-yaml/logical-types) for details
+- **Architecture**: Schema uses a three-layer architecture design, see [Schema Architecture](/docs/schema-yaml/architecture) for details
+- **Data Alignment**: Schema can be used for data alignment and validation, see [Metadater API](/docs/python-api/metadater-api) documentation
+- **Loader Integration**: How Schema is used during data loading, see [Loader YAML](/docs/petsard-yaml/loader-yaml) documentation
+
+## Important Notes
+
+- Field order does not affect data loading
+- Missing fields in data will be filled with default values (enable_null=true)
+- Extra fields in data will be retained
+- The system will attempt automatic type conversion for compatible types
+- `attributes` can also be written as `fields`
+- Logical types are only for validation, do not change storage format
+- Statistics calculation increases processing time, use carefully with large datasets

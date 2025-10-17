@@ -3,51 +3,51 @@ title: "from_dict()"
 weight: 322
 ---
 
-從配置字典建立詮釋資料結構。
+Create metadata structure from configuration dictionary.
 
-## 語法
+## Syntax
 
 ```python
 @staticmethod
 def from_dict(config: dict) -> Metadata
 ```
 
-## 參數
+## Parameters
 
 - **config** : dict, required
-  - 詮釋資料配置字典
-  - 必要參數
-  - 需符合 Metadata/Schema/Attribute 的結構規範
+  - Metadata configuration dictionary
+  - Required parameter
+  - Must conform to Metadata/Schema/Attribute structure specifications
 
-## 返回值
+## Returns
 
 - **Metadata**
-  - 根據配置建立的詮釋資料物件
-  - 包含所有定義的 Schema 和 Attribute
+  - Metadata object created from configuration
+  - Contains all defined Schemas and Attributes
 
-## 說明
+## Description
 
-[`from_dict()`](metadater_from_dict.zh-tw.md) 方法從結構化的配置字典建立 Metadata 物件，適合用於：
+The [`from_dict()`](metadater_from_dict.md) method creates Metadata objects from structured configuration dictionaries, suitable for:
 
-1. 從 YAML 配置檔載入後轉換（Loader 內部使用）
-2. 程式化定義 schema
-3. 動態產生資料結構定義
+1. Converting after loading from YAML configuration files (used internally by Loader)
+2. Programmatic schema definition
+3. Dynamic data structure definition generation
 
-配置字典的結構應該對應 Metadata、Schema 和 Attribute 的層次關係。
+The configuration dictionary structure should correspond to the hierarchical relationships of Metadata, Schema, and Attribute.
 
-## 基本範例
+## Basic Example
 
 ```python
 from petsard.metadater import Metadater
 
-# 定義單一表格的 schema
+# Define single table schema
 config = {
     'id': 'my_dataset',
-    'name': '使用者資料集',
+    'name': 'User Dataset',
     'schemas': {
         'users': {
             'id': 'users',
-            'name': '使用者表',
+            'name': 'Users Table',
             'attributes': {
                 'id': {
                     'name': 'id',
@@ -69,27 +69,27 @@ config = {
     }
 }
 
-# 建立詮釋資料
+# Create metadata
 metadata = Metadater.from_dict(config)
 
-# 驗證結果
-print(f"資料集 ID: {metadata.id}")
-print(f"資料集名稱: {metadata.name}")
-print(f"包含表格: {list(metadata.schemas.keys())}")
+# Verify results
+print(f"Dataset ID: {metadata.id}")
+print(f"Dataset name: {metadata.name}")
+print(f"Contains tables: {list(metadata.schemas.keys())}")
 ```
 
-## 進階範例
+## Advanced Examples
 
-### 多表格定義
+### Multi-Table Definition
 
 ```python
 from petsard.metadater import Metadater
 
-# 定義包含多個表格的 schema
+# Define schema with multiple tables
 config = {
     'id': 'ecommerce_db',
-    'name': '電商資料庫',
-    'description': '包含使用者、訂單和產品資料',
+    'name': 'E-commerce Database',
+    'description': 'Contains user, order, and product data',
     'schemas': {
         'users': {
             'id': 'users',
@@ -114,20 +114,20 @@ config = {
 
 metadata = Metadater.from_dict(config)
 
-# 檢視各表格結構
+# View table structures
 for table_name, schema in metadata.schemas.items():
-    print(f"\n表格: {table_name}")
-    print(f"  欄位數: {len(schema.attributes)}")
+    print(f"\nTable: {table_name}")
+    print(f"  Field count: {len(schema.attributes)}")
     for attr_name in schema.attributes:
         print(f"    - {attr_name}")
 ```
 
-### 含邏輯型別的定義
+### Definition with Logical Types
 
 ```python
 from petsard.metadater import Metadater
 
-# 定義含特殊邏輯型別的 schema
+# Define schema with special logical types
 config = {
     'id': 'contact_info',
     'schemas': {
@@ -143,19 +143,19 @@ config = {
                     'name': 'email',
                     'type': 'str',
                     'nullable': True,
-                    'logical_type': 'email'  # 標示為電子郵件
+                    'logical_type': 'email'  # Mark as email
                 },
                 'phone': {
                     'name': 'phone',
                     'type': 'str',
                     'nullable': True,
-                    'logical_type': 'phone_number'  # 標示為電話號碼
+                    'logical_type': 'phone_number'  # Mark as phone number
                 },
                 'website': {
                     'name': 'website',
                     'type': 'str',
                     'nullable': True,
-                    'logical_type': 'url'  # 標示為 URL
+                    'logical_type': 'url'  # Mark as URL
                 }
             }
         }
@@ -164,19 +164,19 @@ config = {
 
 metadata = Metadater.from_dict(config)
 
-# 檢視邏輯型別
+# View logical types
 contacts_schema = metadata.schemas['contacts']
 for attr_name, attr in contacts_schema.attributes.items():
-    logical_type = attr.logical_type or '(無)'
+    logical_type = attr.logical_type or '(none)'
     print(f"{attr_name}: type={attr.type}, logical_type={logical_type}")
 ```
 
-### 自訂空值表示
+### Custom Null Value Representations
 
 ```python
 from petsard.metadater import Metadater
 
-# 定義自訂空值表示的 schema
+# Define schema with custom null representations
 config = {
     'id': 'survey_data',
     'schemas': {
@@ -192,7 +192,7 @@ config = {
                     'name': 'age',
                     'type': 'int',
                     'nullable': True,
-                    'na_values': ['unknown', 'N/A', '-1']  # 自訂空值表示
+                    'na_values': ['unknown', 'N/A', '-1']  # Custom null representations
                 },
                 'income': {
                     'name': 'income',
@@ -207,34 +207,34 @@ config = {
 
 metadata = Metadater.from_dict(config)
 
-# 檢視空值設定
+# View null value settings
 responses_schema = metadata.schemas['responses']
 for attr_name, attr in responses_schema.attributes.items():
     na_values = getattr(attr, 'na_values', None)
     if na_values:
-        print(f"{attr_name}: 自訂空值 = {na_values}")
+        print(f"{attr_name}: custom null values = {na_values}")
 ```
 
-### 從 YAML 讀取後轉換
+### Loading from YAML and Converting
 
 ```python
 from petsard.metadater import Metadater
 import yaml
 
-# 讀取 YAML 配置檔
+# Read YAML configuration file
 with open('schema_config.yaml', 'r', encoding='utf-8') as f:
     config = yaml.safe_load(f)
 
-# 轉換為 Metadata 物件
+# Convert to Metadata object
 metadata = Metadater.from_dict(config)
 
-print(f"從 YAML 載入: {metadata.id}")
+print(f"Loaded from YAML: {metadata.id}")
 ```
 
-**schema_config.yaml 範例：**
+**schema_config.yaml example:**
 ```yaml
 id: example_schema
-name: 範例資料結構
+name: Example Data Structure
 schemas:
   users:
     id: users
@@ -249,36 +249,36 @@ schemas:
         nullable: false
 ```
 
-## 注意事項
+## Notes
 
-- **配置結構**：
-  - 必須包含 `id` 和 `schemas` 欄位
-  - `schemas` 是字典，鍵為表格名稱
-  - 每個 schema 必須包含 `id` 和 `attributes`
-  - 每個 attribute 必須包含 `name`, `type`, `nullable`
+- **Configuration Structure**:
+  - Must include `id` and `schemas` fields
+  - `schemas` is a dictionary with table names as keys
+  - Each schema must include `id` and `attributes`
+  - Each attribute must include `name`, `type`, `nullable`
   
-- **型別支援**：
-  - 基本型別：`'int'`, `'float'`, `'str'`, `'bool'`, `'datetime'`
-  - 確保型別字串正確，否則可能導致驗證失敗
+- **Type Support**:
+  - Basic types: `'int'`, `'float'`, `'str'`, `'bool'`, `'datetime'`
+  - Ensure type strings are correct, otherwise validation may fail
   
-- **欄位名稱**：
-  - `name` 欄位定義實際的欄位名稱
-  - 字典的鍵可以與 `name` 不同，但建議保持一致
+- **Field Names**:
+  - The `name` field defines the actual field name
+  - Dictionary keys can differ from `name`, but consistency is recommended
   
-- **選填欄位**：
-  - `name`, `description`: Metadata/Schema 層級的選填欄位
-  - `logical_type`: Attribute 層級的選填欄位
-  - `na_values`: 自訂空值表示（選填）
+- **Optional Fields**:
+  - `name`, `description`: Optional fields at Metadata/Schema level
+  - `logical_type`: Optional field at Attribute level
+  - `na_values`: Custom null representations (optional)
   
-- **與 YAML 的關係**：
-  - 此方法常用於處理從 YAML 檔案讀取的配置
-  - Loader 內部使用此方法處理 `schema` 參數
-  - 建議直接使用 YAML 配置而非手動建立字典
+- **YAML Relationship**:
+  - This method is commonly used to process configurations read from YAML files
+  - Loader internally uses this method to handle the `schema` parameter
+  - Direct use of YAML configuration is recommended over manual dictionary creation
   
-- **驗證建議**：
-  - 建立後應驗證 metadata 結構是否符合預期
-  - 大型配置建議拆分為多個 YAML 檔案管理
+- **Validation Recommendations**:
+  - Verify metadata structure meets expectations after creation
+  - Large configurations should be split into multiple YAML files for management
   
-- **錯誤處理**：
-  - 配置格式錯誤會引發例外
-  - 建議使用 try-except 處理配置載入錯誤
+- **Error Handling**:
+  - Configuration format errors will raise exceptions
+  - Use try-except to handle configuration loading errors
