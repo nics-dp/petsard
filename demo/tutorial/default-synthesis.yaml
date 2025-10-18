@@ -1,7 +1,7 @@
 ---
 Loader:
-  data:
-    filepath: 'benchmark/adult-income.csv'
+  load_csv:
+    filepath: benchmark/adult-income.csv
 Preprocessor:
   demo:
     method: 'default'
