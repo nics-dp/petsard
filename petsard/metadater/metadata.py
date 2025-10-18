@@ -42,6 +42,22 @@ class Attribute:
     created_at: datetime = field(default_factory=datetime.now)
     updated_at: datetime = field(default_factory=datetime.now)
 
+    def __post_init__(self):
+        """驗證 Attribute 配置"""
+        # 拒絕 type: category
+        if self.type == "category":
+            raise ValueError(
+                f"不允許使用 'type: category'。請使用 'category: true' 參數來標記分類資料。"
+                f"\n欄位: {self.name}"
+            )
+
+        # 拒絕 logical_type: category
+        if self.logical_type == "category":
+            raise ValueError(
+                f"不允許使用 'logical_type: category'。請使用 'category: true' 參數來標記分類資料。"
+                f"\n欄位: {self.name}"
+            )
+
 
 @dataclass
 class Schema:

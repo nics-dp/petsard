@@ -1,0 +1,23 @@
+flowchart TD
+    Start[Environment Setup] --> NetworkCheck{Network<br/>Connection?}
+    NetworkCheck -->|Yes| DockerCheck1{Docker<br/>Support?}
+    NetworkCheck -->|No| DockerCheck2{Docker<br/>Support?}
+    DockerCheck1 -->|Yes| DockerBuild[Docker<br/>Build]
+    DockerCheck1 -->|No| PipInstall[pip<br/>Install]
+    DockerCheck2 -->|Yes| DockerExport[Docker<br/>Export]
+    DockerCheck2 -->|No| PackageDownload[Package<br/>Pre-download]
+
+    %% Macaron color scheme
+    style Start fill:#B0E0E6,stroke:#87CEEB,stroke-width:2px,color:#333
+    style NetworkCheck fill:#E6E6FA,stroke:#DDA0DD,stroke-width:2px,color:#333
+    style DockerCheck1 fill:#E6E6FA,stroke:#DDA0DD,stroke-width:2px,color:#333
+    style DockerCheck2 fill:#E6E6FA,stroke:#DDA0DD,stroke-width:2px,color:#333
+    style DockerBuild fill:#B4E7CE,stroke:#98D8C8,stroke-width:2px,color:#333
+    style PipInstall fill:#B4E7CE,stroke:#98D8C8,stroke-width:2px,color:#333
+    style DockerExport fill:#B4E7CE,stroke:#98D8C8,stroke-width:2px,color:#333
+    style PackageDownload fill:#B4E7CE,stroke:#98D8C8,stroke-width:2px,color:#333
+
+    %% Legend styles
+    style Legend1 fill:#B0E0E6,stroke:#87CEEB,stroke-width:2px,color:#333
+    style Legend2 fill:#E6E6FA,stroke:#DDA0DD,stroke-width:2px,color:#333
+    style Legend3 fill:#B4E7CE,stroke:#98D8C8,stroke-width:2px,color:#333

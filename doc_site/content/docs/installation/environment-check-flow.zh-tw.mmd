@@ -1,0 +1,18 @@
+flowchart
+    Start[環境準備] --> NetworkCheck{有網路<br/>連線？}
+    NetworkCheck -->|有| DockerCheck1{支援<br/>Docker？}
+    NetworkCheck -->|無| DockerCheck2{支援<br/>Docker？}
+    DockerCheck1 -->|有| DockerBuild[Docker<br/>建立]
+    DockerCheck1 -->|無| PipInstall[pip<br/>安裝]
+    DockerCheck2 -->|有| DockerExport[Docker<br/>匯出]
+    DockerCheck2 -->|無| PackageDownload[套件<br/>預下載]
+
+    %% 馬卡龍配色
+    style Start fill:#B0E0E6,stroke:#87CEEB,stroke-width:2px,color:#333
+    style NetworkCheck fill:#E6E6FA,stroke:#DDA0DD,stroke-width:2px,color:#333
+    style DockerCheck1 fill:#E6E6FA,stroke:#DDA0DD,stroke-width:2px,color:#333
+    style DockerCheck2 fill:#E6E6FA,stroke:#DDA0DD,stroke-width:2px,color:#333
+    style DockerBuild fill:#B4E7CE,stroke:#98D8C8,stroke-width:2px,color:#333
+    style PipInstall fill:#B4E7CE,stroke:#98D8C8,stroke-width:2px,color:#333
+    style DockerExport fill:#B4E7CE,stroke:#98D8C8,stroke-width:2px,color:#333
+    style PackageDownload fill:#B4E7CE,stroke:#98D8C8,stroke-width:2px,color:#333

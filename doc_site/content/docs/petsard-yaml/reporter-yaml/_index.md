@@ -1,6 +1,6 @@
 ---
 title: "Reporter YAML"
-weight: 170
+weight: 190
 ---
 
 The Reporter module is responsible for outputting experiment results and supports multiple report formats including data storage, evaluation reports, and timing records.

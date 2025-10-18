@@ -34,7 +34,7 @@ Reporter:
     granularity:        # Required: Specify report granularity levels
       - global                  # Overall summary statistics
       - columnwise              # Per-column analysis
-      - pairwise.               # Detailed breakdown
+      - pairwise                # Detailed breakdown
     # eval:             # Optional: Target evaluation experiment names (default: all evaluations)
     # output: petsard   # Optional: Output filename prefix (default: petsard)
     # naming_strategy: traditional  # Optional: Filename naming strategy, traditional or compact (default: traditional)

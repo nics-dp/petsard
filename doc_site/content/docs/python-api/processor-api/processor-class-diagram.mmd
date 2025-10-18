@@ -1,0 +1,68 @@
+classDiagram
+    class Processor {
+        <<Main Class>>
+        -_metadata: Schema
+        -_config: dict
+        -_sequence: list
+        -_mediator: dict
+        +__init__(metadata, config)
+        +fit(data, sequence)
+        +transform(data) DataFrame
+        +inverse_transform(data) DataFrame
+        +get_config(col) dict
+        +update_config(config)
+        +get_changes() DataFrame
+    }
+
+    class MissingHandler {
+        <<Sub-processor>>
+        +fit(data)
+        +transform(data)
+        +inverse_transform(data)
+    }
+
+    class OutlierHandler {
+        <<Sub-processor>>
+        +fit(data)
+        +transform(data)
+    }
+
+    class Encoder {
+        <<Sub-processor>>
+        +fit(data)
+        +transform(data)
+        +inverse_transform(data)
+    }
+
+    class Scaler {
+        <<Sub-processor>>
+        +fit(data)
+        +transform(data)
+        +inverse_transform(data)
+    }
+
+    class Mediator {
+        <<Coordinator>>
+        +fit(data)
+        +transform(data) DataFrame
+        +inverse_transform(data) DataFrame
+    }
+
+    class Schema {
+        <<Configuration>>
+        +attributes: dict
+        +metadata: dict
+    }
+
+    Processor *-- MissingHandler : uses
+    Processor *-- OutlierHandler : uses
+    Processor *-- Encoder : uses
+    Processor *-- Scaler : uses
+    Processor *-- Mediator : coordinates
+    Processor ..> Schema : depends on
+
+    note for Processor "Preprocessing: fit() + transform()<br/>Postprocessing: inverse_transform()"
+    note for MissingHandler "missing_mean, missing_median<br/>missing_mode, missing_drop"
+    note for OutlierHandler "outlier_zscore, outlier_iqr<br/>outlier_lof, outlier_isolationforest"
+    note for Encoder "encoder_uniform, encoder_label<br/>encoder_onehot, encoder_date"
+    note for Scaler "scaler_standard, scaler_minmax<br/>scaler_log, scaler_timeanchor"

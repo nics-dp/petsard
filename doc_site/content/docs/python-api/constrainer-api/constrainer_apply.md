@@ -22,7 +22,7 @@ def apply(
     
 - **target_rows** : int, optional
     - Target number of rows
-    - Used internally by [`resample_until_satisfy()`](constrainer_resample_until_satisfy.md)
+    - Used internally by `\1`
     - Used for target row count setting in field proportion constraints
     - Default value: `None`
 
@@ -34,7 +34,7 @@ def apply(
 
 ## Description
 
-The [`apply()`](constrainer_apply.md) method applies all configured constraint conditions sequentially in the following order:
+The `\1` method applies all configured constraint conditions sequentially in the following order:
 
 1. **NaN Groups** (`nan_groups`): Handle null value related rules
 2. **Field Constraints** (`field_constraints`): Check field value domain constraints
@@ -231,7 +231,7 @@ print(result)
 - **Order Matters**: Constraints are applied in fixed order, cannot be adjusted
 - **Data Reduction**: Constraints typically filter data, returned row count may significantly decrease
 - **AND Logic**: All constraints combined with AND, data must satisfy all to be retained
-- **target_rows**: General users don't need to manually set this parameter, used internally by [`resample_until_satisfy()`](constrainer_resample_until_satisfy.md)
+- **target_rows**: General users don't need to manually set this parameter, used internally by `\1`
 - **Empty Results**: If constraints are too strict, may return empty dataframe
 - **Performance Considerations**: Complex constraints on large datasets may require longer execution time
 - **Field Proportions**: Proportion maintenance only occurs when field_proportions is configured and target_rows is provided
@@ -239,6 +239,6 @@ print(result)
 
 ## Related Methods
 
-- [`__init__()`](_index.md#constructor-__init__): Initialize constraint configuration
-- [`resample_until_satisfy()`](constrainer_resample_until_satisfy.md): Resample repeatedly until constraints satisfied
-- [`register()`](constrainer_register.md): Register custom constraint types
+- `\1`: Initialize constraint configuration
+- `\1`: Resample repeatedly until constraints satisfied
+- `\1`: Register custom constraint types

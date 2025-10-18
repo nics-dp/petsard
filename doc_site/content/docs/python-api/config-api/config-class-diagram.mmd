@@ -1,0 +1,13 @@
+classDiagram
+    class Config {
+        +dict raw_config
+        +__init__(config)
+        +get_module_config(module_name) dict
+        +get_experiment_names(module_name) list
+        +validate() bool
+        -_parse_yaml(filepath) dict
+        -_parse_dict(config_dict) dict
+        -_validate_structure() bool
+    }
+    
+    note for Config "Configuration management\nYAML/dict parsing\nValidation\nQuery interface"

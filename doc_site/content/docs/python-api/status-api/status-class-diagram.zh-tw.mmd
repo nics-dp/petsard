@@ -1,0 +1,56 @@
+classDiagram
+    class Status {
+        dict metadata
+        dict status
+        dict result
+        dict inferred_schemas
+        SchemaInferencer schema_inferencer
+        SnapshotManager snapshot_manager
+        ChangeTracker change_tracker
+        put(module, experiment, adapter)
+        get_result(module) dict
+        get_metadata(module) Schema
+        get_full_expt() dict
+        get_snapshots() list
+        get_change_history() list
+        get_timing_report_data() DataFrame
+        get_status_summary() dict
+    }
+
+    class ExecutionSnapshot {
+        <<dataclass>>
+        string snapshot_id
+        string module_name
+        string experiment_name
+        datetime timestamp
+        Schema metadata_before
+        Schema metadata_after
+        dict execution_context
+    }
+
+    class MetadataChange {
+        <<dataclass>>
+        string change_id
+        string change_type
+        string target_type
+        string target_id
+        Any before_state
+        Any after_state
+        datetime timestamp
+        string module_context
+    }
+
+    class SchemaInferencer {
+        infer_preprocessor_output() Schema
+        get_inference_history() list
+    }
+
+    Status *-- SchemaInferencer
+    Status ..> ExecutionSnapshot
+    Status ..> MetadataChange
+
+    %% 樣式標示
+    style Status fill:#e6f3ff,stroke:#4a90e2,stroke-width:3px
+    style ExecutionSnapshot fill:#f3e6ff,stroke:#9966cc,stroke-width:2px
+    style MetadataChange fill:#f3e6ff,stroke:#9966cc,stroke-width:2px
+    style SchemaInferencer fill:#f3e6ff,stroke:#9966cc,stroke-width:2px

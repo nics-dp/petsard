@@ -1,41 +1,47 @@
 ---
 Splitter:
-  custom:
-    method: 'custom_data'
+  external_split:
+    method: custom_data
     filepath:
-      ori: 'benchmark/adult-income_ori.csv'
-      control: 'benchmark/adult-income_control.csv'
+      ori: benchmark/adult-income_ori.csv
+      control: benchmark/adult-income_control.csv
 Synthesizer:
-  custom:
-    method: 'custom_data'
-    filepath: 'benchmark/adult-income_syn.csv'
+  external_data:
+    method: custom_data
+    filepath: benchmark/adult-income_syn.csv
 Evaluator:
-  demo-diagnostic:
-    method: 'sdmetrics-diagnosticreport'
-  demo-quality:
-    method: 'sdmetrics-qualityreport'
-  demo-singlingout:
-    method: 'anonymeter-singlingout'
-  demo-linkability:
-    method: 'anonymeter-linkability'
+  validity_check:
+    method: sdmetrics-diagnosticreport
+  fidelity_check:
+    method: sdmetrics-qualityreport
+  singling_out_risk:
+    method: anonymeter-singlingout
+  linkability_risk:
+    method: anonymeter-linkability
     aux_cols:
       -
-        - 'age'
-        - 'marital-status'
-        - 'relationship'
-        - 'gender'
+        - workclass
+        - education
+        - occupation
+        - race
+        - gender
       -
-        - 'workclass'
-        - 'educational-num'
-        - 'occupation'
-        - 'income'
-  demo-inference:
+        - age
+        - marital-status
+        - relationship
+        - native-country
+        - income
+  inference_risk:
     method: 'anonymeter-inference'
     secret: 'income'
-  demo-classification:
-    method: 'mlutility-classification'
-    target: 'income'
+  classification_utility:
+    method: mlutility
+    task_type: classification
+    target: income
 Reporter:
+  data:
+    method: 'save_data'
+    source: 'Postprocessor'
   rpt:
     method: 'save_report'
     granularity:
