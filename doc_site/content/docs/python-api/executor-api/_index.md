@@ -7,7 +7,7 @@ Executor is the core orchestration module of the PETsARD framework. It parses YA
 
 ## Class Architecture
 
-{{< include file="executor-class-diagram.mmd" >}}
+{{< mermaid-file="executor-class-diagram.mmd" >}}
 
 ## Design Philosophy
 

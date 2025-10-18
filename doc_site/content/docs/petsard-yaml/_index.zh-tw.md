@@ -3,45 +3,6 @@ title: "PETsARD YAML"
 weight: 100
 ---
 
-<!--
-文件編寫原則（給 roo code 參考）：
-
-### YAML 優先文件
-- 以 **YAML 使用者**為主要對象
-- 詳細說明所有可在 YAML 中設定的選項
-- 提供完整的 YAML 配置範例
-- **使用者應優先查閱 YAML 文件**
-
-### 文件撰寫規範
-
-#### 避免交叉連結
-- **不要使用內部連結**：避免頁面間的相互連結，因為文件結構可能變動
-- **自給自足**：每個頁面應包含完整資訊，不依賴其他頁面
-
-#### 使用列點而非多層標題
-- **簡化層級**：參數說明使用列點格式，避免過多的標題層級
-- **提升可讀性**：使用列點和縮排來表達結構，讓文件更簡潔易懂
-- **減少空白**：避免每個參數都是獨立標題造成的大量空白
-
-#### 選項說明原則
-- **YAML 優先**：所有配置選項和詳細說明都在 YAML 文件中
-- **完整說明**：每個參數都應包含型別、預設值、範例
-- **避免重複**：詳細說明只在 YAML 文件維護，Python API 不重複
-
-#### 結構化資訊
-- **由淺入深**：從基本用法到進階選項逐步說明
-- **完整範例**：提供從簡單到複雜的多個範例
-- **實用導向**：以實際使用情境為出發點
--->
-
-## 什麼是 YAML？
-
-YAML（YAML Ain't Markup Language）是一種人類可讀的資料序列化格式，PETsARD 使用它來進行實驗設定。本文件說明如何有效地組織您的 YAML 設定。
-
-- **易讀易寫**：使用縮排和簡潔的語法，不需要程式設計背景也能理解
-- **結構清晰**：透過縮排表達層級關係，視覺上一目了然
-- **支援多種資料型別**：字串、數字、布林值、列表、物件等
-
 ## PETsARD 為什麼使用 YAML？
 
 PETsARD 採用 YAML 作為主要配置方式，讓您不需要撰寫 Python 程式碼就能完成大部分工作。
@@ -50,7 +11,6 @@ PETsARD 採用 YAML 作為主要配置方式，讓您不需要撰寫 Python 程�
 2. **易於版本控制**：純文字格式，方便追蹤變更和團隊協作
 3. **批次處理**：一個設定檔可以定義多個實驗和操作
 4. **重複使用**：設定檔可以輕鬆分享和重複使用
-<!-- 5. **環境變數支援**：敏感資訊（如 API 金鑰）可以使用環境變數保護 -->
 
 ## PETsARD YAML 基本結構
 
@@ -67,6 +27,12 @@ PETsARD 的 YAML 設定採用三層架構：
 
 最上層定義了按執行順序排列的處理模組：
 
+{{< callout type="info" >}}
+**強烈建議的執行順序**
+
+建議按照以下順序配置模組，自行改變順序造成的執行結果恕不負責。
+{{< /callout >}}
+
 - **Executor**：執行設定（日誌、工作目錄等）
 - **Loader**：資料讀取
 - **Splitter**：資料分割
@@ -74,8 +40,15 @@ PETsARD 的 YAML 設定採用三層架構：
 - **Synthesizer**：資料合成
 - **Postprocessor**：資料後處理
 - **Constrainer**：資料約束
+- **Describer**：資料描述
 - **Evaluator**：結果評估
 - **Reporter**：報告產生
+
+{{< callout type="warning" >}}
+**模組執行限制**
+
+目前限制同一個模組只能執行一次。
+{{< /callout >}}
 
 ### 實驗層級
 
@@ -136,3 +109,73 @@ Reporter:
 4. 資料後處理（Postprocessor）
 5. 評估合成資料品質（Evaluator）
 6. 儲存結果（Reporter）
+
+## 執行流程
+
+當定義多個實驗時，PETsARD 採用**深度優先**的順序執行所有模組組合：
+
+```
+Loader → Splitter → Preprocessor → Synthesizer → Postprocessor → Constrainer → Describer → Evaluator → Reporter
+```
+
+### 實驗組合
+
+若在不同模組中定義多個實驗，PETsARD 會產生所有可能的組合。例如：
+
+```yaml
+Loader:
+  load_a:
+    filepath: 'data1.csv'
+  load_b:
+    filepath: 'data2.csv'
+Synthesizer:
+  syn_ctgan:
+    method: 'sdv-single_table-ctgan'
+  syn_tvae:
+    method: 'sdv-single_table-tvae'
+```
+
+這會產生四種實驗組合：
+1. load_a + syn_ctgan
+2. load_a + syn_tvae
+3. load_b + syn_ctgan
+4. load_b + syn_tvae
+
+每個組合都會完整執行一次完整的流程，讓您可以系統性地比較不同設定的效果。
+
+## 輸出結果
+
+輸出結果需使用 Reporter 模組，請自行參閱 Reporter 模組文件了解詳細設定方式。
+
+## 最佳實踐
+
+遵循這些建議可以讓您的 YAML 設定更易讀、易維護：
+
+1. **使用有意義的實驗名稱**
+   - 好：`ctgan_epochs100`、`preprocessing_with_scaling`
+   - 避免：`exp1`、`test`、`a`
+
+2. **依模組組織參數**
+   - 將相關的參數組織在一起
+   - 保持一致的縮排（通常使用 2 或 4 個空格）
+
+3. **為實驗設定加上註解**
+   ```yaml
+   Synthesizer:
+     ctgan:  # 使用 CTGAN 進行表格資料合成
+       method: 'sdv-single_table-ctgan'
+       epochs: 300  # 增加訓練輪數以提升品質
+   ```
+
+4. **執行前驗證 YAML 語法**
+   - 確保縮排正確（YAML 對縮排敏感）
+   - 檢查冒號後是否有空格
+   - 確認引號的配對
+
+5. **善用多實驗比較**
+   - 在同一設定檔中定義多個實驗進行比較
+   - 使用一致的命名規則方便識別
+
+6. **保持設定檔簡潔**
+   - 只設定需要變更的參數
+   - 其他參數使用預設值

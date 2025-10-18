@@ -7,7 +7,7 @@ Config is the configuration management module of PETsARD, responsible for parsin
 
 ## Class Architecture
 
-{{< include file="config-class-diagram.mmd" >}}
+{{< mermaid-file="config-class-diagram.mmd" >}}
 
 ## Design Philosophy
 
@@ -538,9 +538,3 @@ Loader:
 - **File Watching**: Does not automatically reload configuration file changes
 - **Validation Timing**: Basic validation performed during initialization
 - **Error Messages**: Provides detailed error messages for invalid configurations
-
-## See Also
-
-- [Executor API](../executor-api)
-- [Status API](../status-api)
-- [YAML Configuration Guide](../../petsard-yaml)

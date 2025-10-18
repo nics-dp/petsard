@@ -27,7 +27,7 @@ def get_config(
 
 ## Description
 
-The [`get_config()`](processor_get_config.md:1) method is used to view the processor's current configuration. It can be used to:
+The `get_config()` method is used to view the processor's current configuration. It can be used to:
 
 1. View processing methods for all columns
 2. Check configuration for specific columns
@@ -156,7 +156,7 @@ for proc_type, fields in config2.items():
 
 - Returned configuration contains processor instances, not string names
 - `None` values indicate that processor type is not applied to that column
-- Can be called at any time, does not require calling [`fit()`](processor_fit.md:1) first
-- Configuration updates after calling [`update_config()`](processor_update_config.md:1)
+- Can be called at any time, does not require calling `fit()` first
+- Configuration updates after calling `update_config()`
 - Non-existent column names will be ignored in returned configuration
 - Global transformation processors (e.g., `outlier_isolationforest`) apply to all columns

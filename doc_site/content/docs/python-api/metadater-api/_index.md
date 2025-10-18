@@ -56,13 +56,13 @@ Metadater provides static class methods (`@classmethod` or `@staticmethod`) that
 
 ### Creating Metadata
 
-- [`from_data()`](metadater_from_data.md): Automatically infer and create Metadata from data
-- [`from_dict()`](metadater_from_dict.md): Create Metadata from configuration dictionary
+- `from_data()`: Automatically infer and create Metadata from data
+- `from_dict()`: Create Metadata from configuration dictionary
 
 ### Comparison and Alignment
 
-- [`diff()`](metadater_diff.md): Compare differences between Metadata and actual data
-- [`align()`](metadater_align.md): Align data structure according to Metadata
+- `diff()`: Compare differences between Metadata and actual data
+- `align()`: Align data structure according to Metadata
 
 ## Data Structure
 

@@ -148,5 +148,5 @@ class ExecutorConfig:
 - **日誌記錄**：執行過程會產生詳細的日誌記錄
 - **模組順序**：Executor 會自動按照正確順序執行模組
 - **錯誤處理**：配置錯誤會在初始化時拋出 `ConfigError`
-- **執行狀態**：使用 [`is_execution_completed()`](executor_is_execution_completed/) 檢查執行完成狀態
+- **執行狀態**：使用 `is_execution_completed()` 檢查執行完成狀態
 - **文件說明**：本段文件僅供開發團隊內部參考，不保證向後相容

@@ -18,16 +18,6 @@ sidebar:
 - [Benchmark Dataset Maintenance]({{< ref "docs/developer-guide/benchmark-datasets" >}})
   - Maintaining and extending benchmark datasets
 
-## Data Generating
-
-## Configuration and Reporting
-- [Logging Configuration]({{< ref "docs/developer-guide/logging-configuration" >}})
-  - Setting log levels and output destinations
-  - Customizing log formats and file locations
-- [Test Coverage]({{< ref "docs/developer-guide/test-coverage" >}})
-  - Test organization and structure
-  - Detailed test case documentation
-
 ## Development Environment
 - [Docker Development]({{< ref "docs/developer-guide/docker-development" >}})
   - Docker container development and testing

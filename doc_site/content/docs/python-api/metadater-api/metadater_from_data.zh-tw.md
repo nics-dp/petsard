@@ -39,7 +39,7 @@ def from_data(
 
 ## 說明
 
-[`from_data()`](metadater_from_data.zh-tw.md) 方法會自動分析資料內容並建立對應的 Metadata 物件。
+`from_data()` 方法會自動分析資料內容並建立對應的 Metadata 物件。
 
 推斷過程包括：
 1. 偵測每個欄位的資料型別（int, float, str, bool, datetime 等）

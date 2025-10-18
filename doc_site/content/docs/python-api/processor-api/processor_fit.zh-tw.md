@@ -32,13 +32,13 @@ def fit(
 
 ## 說明
 
-[`fit()`](processor_fit.zh-tw.md:1) 方法用於訓練處理器。此方法會：
+`fit()` 方法用於訓練處理器。此方法會：
 
 1. 分析資料的統計特性（平均值、標準差、類別等）
 2. 建立各個處理器的轉換規則
-3. 準備好後續的 [`transform()`](processor_transform.zh-tw.md:1) 操作
+3. 準備好後續的 `transform()` 操作
 
-此方法必須在 [`transform()`](processor_transform.zh-tw.md:1) 之前呼叫。
+此方法必須在 `transform()` 之前呼叫。
 
 ## 基本範例
 
@@ -109,11 +109,11 @@ processor.fit(
 
 ## 注意事項
 
-- 必須在 [`transform()`](processor_transform.zh-tw.md:1) 之前呼叫此方法
+- 必須在 `transform()` 之前呼叫此方法
 - 訓練資料應該與後續要轉換的資料具有相同的結構
 - `discretizing` 和 `encoder` 不能同時使用
 - `discretizing` 必須是序列中的最後一步
 - 序列最多支援 4 個處理步驟
 - 某些處理器（如 `outlier_isolationforest`）會進行全域轉換
 - 訓練後的統計資訊會保存在處理器實例中
-- 重新呼叫 [`fit()`](processor_fit.zh-tw.md:1) 會覆蓋之前的訓練結果
+- 重新呼叫 `fit()` 會覆蓋之前的訓練結果

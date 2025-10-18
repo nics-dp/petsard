@@ -153,9 +153,9 @@ Default sequence: `['missing', 'outlier', 'encoder', 'scaler']`
 
 | Operation | Preprocessing Method | Postprocessing Method | Description |
 |-----------|---------------------|----------------------|-------------|
-| Training | [`fit()`]({{< ref "processor_fit" >}}) | - | Learn data statistics |
-| Transform | [`transform()`]({{< ref "processor_transform" >}}) | - | Apply preprocessing transformations |
-| Restore | - | [`inverse_transform()`]({{< ref "processor_inverse_transform" >}}) | Apply postprocessing restoration |
+| Training | `fit()` | - | Learn data statistics |
+| Transform | `transform()` | - | Apply preprocessing transformations |
+| Restore | - | `inverse_transform()` | Apply postprocessing restoration |
 
 **Note**: Preprocessing and postprocessing use the same Processor instance to ensure transformation consistency.
 
@@ -200,8 +200,8 @@ Default sequence: `['missing', 'outlier', 'encoder', 'scaler']`
 
 - **Recommended Practice**: Use YAML configuration files instead of direct Python API usage
 - **Processing Order**:
-  - Preprocessing: Must call [`fit()`]({{< ref "processor_fit" >}}) before [`transform()`]({{< ref "processor_transform" >}})
-  - Postprocessing: Must complete preprocessing before calling [`inverse_transform()`]({{< ref "processor_inverse_transform" >}})
+  - Preprocessing: Must call `fit()` before `transform()`
+  - Postprocessing: Must complete preprocessing before calling `inverse_transform()`
 - **Sequence Constraints**:
   - `discretizing` and `encoder` cannot be used together
   - `discretizing` must be the last step in the sequence

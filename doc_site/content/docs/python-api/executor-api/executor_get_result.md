@@ -446,13 +446,7 @@ else:
 
 ## Related Methods
 
-- [`run()`](executor_run): Execute workflow
-- [`get_timing()`](executor_get_timing): Get execution time report
-- [`is_execution_completed()`](executor_is_execution_completed): Check execution status
-- [`get_inferred_schema()`](executor_get_inferred_schema): Get inferred Schema
-
-## See Also
-
-- [Executor Class Overview](./_index#basic-usage)
-- [Status API](../../status-api)
-- [Schema Documentation](../../schema-api)
+- `run()`: Execute workflow
+- `get_timing()`: Get execution time report
+- `is_execution_completed()`: Check execution status
+- `get_inferred_schema()`: Get inferred Schema

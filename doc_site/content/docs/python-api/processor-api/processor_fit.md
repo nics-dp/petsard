@@ -32,13 +32,13 @@ None (method modifies instance state)
 
 ## Description
 
-The [`fit()`](processor_fit.md:1) method trains the processor. This method will:
+The `fit()` method trains the processor. This method will:
 
 1. Analyze statistical properties of the data (mean, standard deviation, categories, etc.)
 2. Create transformation rules for each processor
-3. Prepare for subsequent [`transform()`](processor_transform.md:1) operations
+3. Prepare for subsequent `transform()` operations
 
-This method must be called before [`transform()`](processor_transform.md:1).
+This method must be called before `transform()`.
 
 ## Basic Example
 
@@ -109,11 +109,11 @@ End
 
 ## Notes
 
-- Must call this method before [`transform()`](processor_transform.md:1)
+- Must call this method before `transform()`
 - Training data should have the same structure as data to be transformed later
 - `discretizing` and `encoder` cannot be used together
 - `discretizing` must be the last step in the sequence
 - Maximum of 4 processing steps supported
 - Some processors (e.g., `outlier_isolationforest`) perform global transformation
 - Statistical information learned during training is saved in the processor instance
-- Calling [`fit()`](processor_fit.md:1) again will overwrite previous training results
+- Calling `fit()` again will overwrite previous training results

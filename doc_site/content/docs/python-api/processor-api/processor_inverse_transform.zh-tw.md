@@ -29,14 +29,14 @@ def inverse_transform(
 
 ## 說明
 
-[`inverse_transform()`](processor_inverse_transform.zh-tw.md:1) 方法用於執行資料的逆向轉換。此方法會：
+`inverse_transform()` 方法用於執行資料的逆向轉換。此方法會：
 
 1. 按照前處理序列的反向順序執行還原操作
 2. 依序套用反縮放、反編碼、恢復缺失值等操作
 3. 將資料類型對齊到原始 schema
 4. 返回接近原始格式的資料
 
-此方法必須在 [`fit()`](processor_fit.zh-tw.md:1) 和 [`transform()`](processor_transform.zh-tw.md:1) 之後呼叫。
+此方法必須在 `fit()` 和 `transform()` 之後呼叫。
 
 ## 基本範例
 
@@ -162,7 +162,7 @@ print(restored_data.describe())
 
 ## 注意事項
 
-- 必須先完成 [`fit()`](processor_fit.zh-tw.md:1) 和 [`transform()`](processor_transform.zh-tw.md:1)
+- 必須先完成 `fit()` 和 `transform()`
 - 輸入資料應該是經過相同前處理的資料
 - 離群值處理不會被還原（步驟會被跳過）
 - 缺失值的位置是隨機的，與原始資料不完全相同

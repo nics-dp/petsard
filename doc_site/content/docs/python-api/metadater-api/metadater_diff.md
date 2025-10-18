@@ -41,7 +41,7 @@ def diff(
 
 ## Description
 
-The [`diff()`](metadater_diff.md) method detects differences between expected data structure (metadata) and actual data, useful for:
+The `diff()` method detects differences between expected data structure (metadata) and actual data, useful for:
 
 1. Data Validation: Ensure data conforms to expected structure
 2. Version Control: Track data structure changes
