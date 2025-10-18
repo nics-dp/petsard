@@ -56,7 +56,7 @@ def report(processed_data: dict | pd.DataFrame | None = None) -> dict | None
 | 方法 | 格式 | 範例 |
 |------|------|------|
 | **save_data** | `{output}_{module-expt_name-pairs}.csv` | `petsard_Synthesizer[exp1].csv` |
-| **save_report** | `{output}[Report]_{eval}_[{granularity}].csv` | `petsard[Report]_eval1_[global].csv` |
+| **save_report** | `{output}_Reporter[{eval}_[{granularity}]].csv` | `petsard_Reporter[eval1_[global]].csv` |
 | **save_timing** | `{output}_timing_report.csv` | `petsard_timing_report.csv` |
 | **save_validation** | `{output}_validation_report.csv` | `petsard_validation_report.csv` |
 

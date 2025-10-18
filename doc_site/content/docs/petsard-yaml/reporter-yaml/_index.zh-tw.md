@@ -93,7 +93,7 @@ reporter = Reporter('save_report', granularity='global', naming_strategy='compac
 
 | 策略 | 格式 | 範例 |
 |------|------|------|
-| Traditional | `{output}[Report]_{eval}_[{granularity}].csv` | `petsard[Report]_eval1_[global].csv` |
+| Traditional | `{output}_Reporter[{eval}_[{granularity}]].csv` | `petsard_Reporter[eval1_[global]].csv` |
 | Compact | `{output}_{eval}_{granularity}.csv` | `petsard_eval1_global.csv` |
 
 #### save_timing 方法

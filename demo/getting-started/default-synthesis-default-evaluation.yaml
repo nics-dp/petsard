@@ -45,10 +45,10 @@ Evaluator:
     task_type: classification
     target: income
 Reporter:
-  data:
+  save_data:
     method: 'save_data'
     source: 'Postprocessor'
-  rpt:
+  save_report:
     method: 'save_report'
     granularity:
       - 'global'

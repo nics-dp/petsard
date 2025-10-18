@@ -100,7 +100,7 @@ This format is primarily used by the Reporter system to identify and organize ex
 
 | Strategy | Format | Example |
 |----------|--------|---------|
-| Traditional | `{output}[Report]_{eval}_[{granularity}].csv` | `petsard[Report]_eval1_[global].csv` |
+| Traditional | `{output}_Reporter[{eval}_[{granularity}]].csv` | `petsard_Reporter[eval1_[global]].csv` |
 | Compact | `{output}_{eval}_{granularity}.csv` | `petsard_eval1_global.csv` |
 
 #### save_timing Method

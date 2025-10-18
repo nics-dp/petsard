@@ -12,7 +12,7 @@ Postprocessor:
   demo:
     method: 'default'
 Reporter:
-  output:
+  save_data:
     method: 'save_data'
     source: 'Postprocessor'
 ...

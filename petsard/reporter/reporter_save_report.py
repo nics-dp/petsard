@@ -390,8 +390,8 @@ class ReporterSaveReport(BaseReporter):
             naming_strategy = NamingStrategy.TRADITIONAL
 
         if naming_strategy == NamingStrategy.TRADITIONAL:
-            # 傳統格式：petsard[Report]_eval_name_[granularity]
-            return f"{self.config['output']}[Report]_{eval_expt_name}"
+            # 傳統格式：petsard_Reporter[eval_name_[granularity]]
+            return f"{self.config['output']}_Reporter[{eval_expt_name}]"
         else:
             # COMPACT 格式：petsard.report.Ev.eval_name.G
             try:
