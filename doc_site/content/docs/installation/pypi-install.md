@@ -114,7 +114,9 @@ These parameters tell pip to skip SSL certificate verification for the specified
 
 ## Method 2: Source Installation
 
-For development or custom builds:
+For development or custom builds.
+
+### Method 2-a: Using Git (Recommended)
 
 ```bash
 # Clone the repository
@@ -128,6 +130,33 @@ pip install --group all -e .
 pip install --group ds -e .    # Data science features
 pip install --group dev -e .   # Development tools
 ```
+
+### Method 2-b: Manual Download (Without Git)
+
+If Git is not available in your environment, you can download the source code directly as a ZIP file:
+
+**Step 1: Download the Source Code**
+
+Visit [PETsARD GitHub Releases](https://github.com/nics-dp/petsard/releases) or download directly:
+- Latest stable version: https://github.com/nics-dp/petsard/archive/refs/heads/main.zip
+- Or select a specific version from the Releases page
+
+**Step 2: Extract and Install**
+
+```bash
+# Extract the downloaded file
+unzip petsard-main.zip
+cd petsard-main
+
+# Install with pyproject.toml (recommended)
+pip install --group all -e .
+
+# Or install specific dependency groups
+pip install --group ds -e .    # Data science features
+pip install --group dev -e .   # Development tools
+```
+
+**Windows users** can use File Explorer to extract the ZIP file, then open Command Prompt or PowerShell in that folder to run the installation commands.
 
 **Recommended tools for development:**
 * `pyenv` - Python version management

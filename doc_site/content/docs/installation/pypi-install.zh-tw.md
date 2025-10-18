@@ -114,7 +114,9 @@ pip install petsard[ds] \
 
 ## 方式 2：原始碼安裝
 
-適用於開發或自訂建置：
+適用於開發或自訂建置。
+
+### 方式 2-a：使用 Git（推薦）
 
 ```bash
 # 複製儲存庫
@@ -128,6 +130,33 @@ pip install --group all -e .
 pip install --group ds -e .    # 資料科學功能
 pip install --group dev -e .   # 開發工具
 ```
+
+### 方式 2-b：手動下載（無需 Git）
+
+如果您的環境沒有安裝 Git，可以直接下載原始碼 ZIP 檔案：
+
+**步驟 1：下載原始碼**
+
+前往 [PETsARD GitHub Releases](https://github.com/nics-dp/petsard/releases) 或直接下載：
+- 最新穩定版本：https://github.com/nics-dp/petsard/archive/refs/heads/main.zip
+- 或從 Releases 頁面選擇特定版本
+
+**步驟 2：解壓縮並安裝**
+
+```bash
+# 解壓縮下載的檔案
+unzip petsard-main.zip
+cd petsard-main
+
+# 使用 pyproject.toml 安裝（推薦）
+pip install --group all -e .
+
+# 或安裝特定依賴群組
+pip install --group ds -e .    # 資料科學功能
+pip install --group dev -e .   # 開發工具
+```
+
+**Windows 使用者**可使用檔案總管直接解壓縮，然後在該資料夾開啟命令提示字元或 PowerShell 執行安裝指令。
 
 **開發推薦工具：**
 * `pyenv` - Python 版本管理
