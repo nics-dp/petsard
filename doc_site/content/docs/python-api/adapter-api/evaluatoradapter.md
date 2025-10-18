@@ -1,6 +1,6 @@
 ---
 title: "EvaluatorAdapter"
-weight: 395
+weight: 6
 ---
 
 EvaluatorAdapter handles data evaluation, supporting comparative assessment of original, synthetic, and control datasets.

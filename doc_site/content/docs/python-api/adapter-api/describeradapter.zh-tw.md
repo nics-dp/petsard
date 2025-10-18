@@ -1,6 +1,6 @@
 ---
 title: "DescriberAdapter"
-weight: 396
+weight: 5
 ---
 
 DescriberAdapter 處理資料描述和比較，支援單一資料集描述和多資料集比較分析。

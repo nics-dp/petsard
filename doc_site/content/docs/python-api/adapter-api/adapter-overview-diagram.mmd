@@ -3,23 +3,27 @@ classDiagram
     class BaseAdapter {
         <<abstract>>
         +config: dict
-        +name: str
-        +run()
+        +module_name: str
+        +__init__(config)
+        +run(input)
+        +set_input(status) dict
+        +get_result()
+        +get_metadata() Schema
     }
 
     class LoaderAdapter {
         +loader: Loader
         +benchmarker: Benchmarker
-        +run() tuple[DataFrame, Schema]
+        +run() tuple~DataFrame, Schema~
     }
 
-    class MetadaterAdapter {
-        +metadater: SchemaMetadater
-        +run() Schema
+    class SplitterAdapter {
+        +splitter: Splitter
+        +run() dict~str, DataFrame~
     }
 
-    class DperAdapter {
-        +dper: Dper
+    class PreprocessorAdapter {
+        +processor: Processor
         +run() DataFrame
     }
 
@@ -28,35 +32,49 @@ classDiagram
         +run() DataFrame
     }
 
+    class PostprocessorAdapter {
+        +processor: Processor
+        +run() DataFrame
+    }
+
+    class ConstrainerAdapter {
+        +constrainer: Constrainer
+        +run() DataFrame
+    }
+
     class EvaluatorAdapter {
         +evaluator: Evaluator
-        +run() dict
+        +run() dict~str, DataFrame~
     }
 
-    class VisualizerAdapter {
-        +visualizer: Visualizer
-        +run() None
+    class DescriberAdapter {
+        +describer: Describer
+        +run() dict~str, DataFrame~
     }
 
-    class DatalabAdapter {
-        +datalab: Datalab
+    class ReporterAdapter {
+        +reporter: Reporter
         +run() dict
     }
 
     BaseAdapter <|-- LoaderAdapter
-    BaseAdapter <|-- MetadaterAdapter
-    BaseAdapter <|-- DperAdapter
+    BaseAdapter <|-- SplitterAdapter
+    BaseAdapter <|-- PreprocessorAdapter
     BaseAdapter <|-- SynthesizerAdapter
+    BaseAdapter <|-- PostprocessorAdapter
+    BaseAdapter <|-- ConstrainerAdapter
     BaseAdapter <|-- EvaluatorAdapter
-    BaseAdapter <|-- VisualizerAdapter
-    BaseAdapter <|-- DatalabAdapter
+    BaseAdapter <|-- DescriberAdapter
+    BaseAdapter <|-- ReporterAdapter
 
     %% Style definitions
     style BaseAdapter fill:#F0F0F0
     style LoaderAdapter fill:#E6E6FA
-    style MetadaterAdapter fill:#E6E6FA
-    style DperAdapter fill:#E6E6FA
+    style SplitterAdapter fill:#E6E6FA
+    style PreprocessorAdapter fill:#E6E6FA
     style SynthesizerAdapter fill:#E6E6FA
+    style PostprocessorAdapter fill:#E6E6FA
+    style ConstrainerAdapter fill:#E6E6FA
     style EvaluatorAdapter fill:#E6E6FA
-    style VisualizerAdapter fill:#E6E6FA
-    style DatalabAdapter fill:#E6E6FA
+    style DescriberAdapter fill:#E6E6FA
+    style ReporterAdapter fill:#E6E6FA
