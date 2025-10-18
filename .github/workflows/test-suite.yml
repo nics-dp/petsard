@@ -1,5 +1,4 @@
 name: 🧪 Test Suite
-# 測試套件：運行所有測試確保代碼品質
 
 on:
   push:
@@ -23,16 +22,16 @@ permissions:
 
 jobs:
   test:
-    name: 🧪 Run Tests
+    name: 🧪 Python ${{ matrix.python-version }}
     runs-on: ubuntu-latest
-    continue-on-error: true # 不強制要求測試通過才能合併
+    continue-on-error: true
 
     strategy:
       matrix:
         python-version: ["3.10", "3.11"]
 
     steps:
-      - name: 📥 Checkout Repository
+      - name: 📥 Checkout
         uses: actions/checkout@v5
 
       - name: 🐍 Setup Python ${{ matrix.python-version }}
@@ -40,389 +39,222 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
 
-      - name: 📦 Cache Dependencies
+      - name: 📦 Cache pip
         uses: actions/cache@v4
         with:
           path: ~/.cache/pip
           key: ${{ runner.os }}-pip-${{ matrix.python-version }}-${{ hashFiles('pyproject.toml') }}
           restore-keys: |
             ${{ runner.os }}-pip-${{ matrix.python-version }}-
-            ${{ runner.os }}-pip-
 
-      - name: 🔧 Install Dependencies
+      - name: 🔧 Install
         run: |
           python -m pip install --upgrade pip
           pip install -e ".[dev]"
 
-      - name: 🔍 Verify Test Environment
+      - name: 🔍 Ruff Check
+        id: ruff
+        continue-on-error: true
         run: |
-          echo "### 🔍 環境診斷 Environment Diagnostics" >> test_report.md
-          echo "" >> test_report.md
-          
-          echo "**Python 版本：**" >> test_report.md
-          python --version >> test_report.md 2>&1
-          echo "" >> test_report.md
-          
-          echo "**已安裝套件：**" >> test_report.md
-          echo "```" >> test_report.md
-          pip list | grep -E "(pytest|ruff|petsard)" >> test_report.md 2>&1 || echo "相關套件未找到" >> test_report.md
-          echo "```" >> test_report.md
-          echo "" >> test_report.md
-          
-          echo "**測試檔案結構：**" >> test_report.md
-          echo "```" >> test_report.md
-          if [ -d "tests" ]; then
-            ls -la tests/ >> test_report.md 2>&1
-          else
-            echo "tests/ 目錄不存在" >> test_report.md
-          fi
-          echo "```" >> test_report.md
-          echo "" >> test_report.md
-          
-          echo "**PETsARD 模組檢查：**" >> test_report.md
-          echo "```" >> test_report.md
-          python -c "import petsard; print(f'PETsARD version: {petsard.__version__ if hasattr(petsard, \"__version__\") else \"unknown\"}')" >> test_report.md 2>&1 || echo "無法載入 petsard 模組" >> test_report.md
-          echo "```" >> test_report.md
-          echo "" >> test_report.md
-          
-          echo "---" >> test_report.md
-          echo "" >> test_report.md
+          ruff check . --output-format=json > ruff.json 2>&1 || true
+          echo "status=$([ -s ruff.json ] && echo 'failed' || echo 'success')" >> $GITHUB_OUTPUT
 
-      - name: 🔍 Run Ruff Code Quality Check
-        id: ruff-check
+      - name: 🧪 Run Tests
+        id: pytest
+        continue-on-error: true
         run: |
-          # 運行 Ruff 檢查（簡潔版本）
-          if ruff check . --output-format=concise > ruff_output.txt 2>&1; then
-            echo "ruff_status=success" >> $GITHUB_OUTPUT
-            echo "### ✅ 程式碼品質檢查通過 Code Quality Check Passed" >> test_report.md
-            echo "" >> test_report.md
-          else
-            echo "ruff_status=failed" >> $GITHUB_OUTPUT
-            
-            # 統計錯誤數量
-            ERROR_COUNT=$(wc -l < ruff_output.txt)
-            
-            echo "### ⚠️ 程式碼品質問題 Code Quality Issues" >> test_report.md
-            echo "**發現 $ERROR_COUNT 個問題需要修正**" >> test_report.md
-            echo "" >> test_report.md
-            
-            # 顯示前10個錯誤
-            echo "**主要問題（前10個）:**" >> test_report.md
-            echo "```" >> test_report.md
-            head -10 ruff_output.txt >> test_report.md
-            echo "```" >> test_report.md
-            
-            if [ "$ERROR_COUNT" -gt 10 ]; then
-              echo "*...還有 $((ERROR_COUNT - 10)) 個問題*" >> test_report.md
-            fi
-            echo "" >> test_report.md
-          fi
-
-      - name: 🧪 Run Unit Tests with Coverage
-        id: unit-tests
-        run: |
-          echo "## 🧪 測試結果 Test Results" >> test_report.md
-          echo "" >> test_report.md
-
-          # 運行測試並捕獲結果，使用簡潔格式
-          if pytest tests/ --cov=petsard --cov-report=term-missing --cov-report=xml --tb=short --junit-xml=pytest-results.xml > test_output.txt 2>&1; then
-            echo "test_status=success" >> $GITHUB_OUTPUT
-            
-            # 提取測試統計
-            PASSED_COUNT=$(grep -c "PASSED" test_output.txt 2>/dev/null || echo "0")
-            TOTAL_COUNT=$(grep -E "^[0-9]+ passed" test_output.txt | grep -o "^[0-9]+" || echo "$PASSED_COUNT")
-            
-            echo "### ✅ 所有測試通過！All Tests Passed!" >> test_report.md
-            echo "" >> test_report.md
-            echo "**📊 總計**: $TOTAL_COUNT 個測試全部通過" >> test_report.md
-          else
-            echo "test_status=failed" >> $GITHUB_OUTPUT
-            
-            # 檢查是否有測試執行錯誤
-            if grep -q "ERROR" test_output.txt; then
-              echo "### ❌ 測試執行錯誤 Test Execution Error" >> test_report.md
-              echo "" >> test_report.md
-              echo "**測試無法正常執行，可能的原因：**" >> test_report.md
-              echo "- 找不到測試檔案或模組" >> test_report.md
-              echo "- 測試配置錯誤" >> test_report.md
-              echo "- 相依套件未正確安裝" >> test_report.md
-              echo "" >> test_report.md
-              echo "**錯誤詳情：**" >> test_report.md
-              echo "```" >> test_report.md
-              # 顯示錯誤訊息（前50行）
-              head -50 test_output.txt >> test_report.md
-              echo "```" >> test_report.md
-            else
-              # 提取測試統計（從 pytest 摘要行）
-              SUMMARY_LINE=$(grep -E "=+ (short test summary info|[0-9]+ failed|[0-9]+ passed|[0-9]+ error)" test_output.txt | tail -1)
-              
-              # 嘗試從不同格式提取統計
-              if echo "$SUMMARY_LINE" | grep -q "short test summary"; then
-                # 如果有 short test summary，從之後的行提取
-                PASSED_COUNT=$(grep -E "^[0-9]+ passed" test_output.txt | tail -1 | grep -o "^[0-9]*" || echo "0")
-                FAILED_COUNT=$(grep -E "^[0-9]+ failed" test_output.txt | tail -1 | grep -o "^[0-9]*" || echo "0")
-                ERROR_COUNT=$(grep -E "^[0-9]+ error" test_output.txt | tail -1 | grep -o "^[0-9]*" || echo "0")
-                SKIPPED_COUNT=$(grep -E "^[0-9]+ skipped" test_output.txt | tail -1 | grep -o "^[0-9]*" || echo "0")
-              else
-                # 標準格式提取
-                PASSED_COUNT=$(echo "$SUMMARY_LINE" | grep -o "[0-9]* passed" | grep -o "[0-9]*" || echo "0")
-                FAILED_COUNT=$(echo "$SUMMARY_LINE" | grep -o "[0-9]* failed" | grep -o "[0-9]*" || echo "0")
-                ERROR_COUNT=$(echo "$SUMMARY_LINE" | grep -o "[0-9]* error" | grep -o "[0-9]*" || echo "0")
-                SKIPPED_COUNT=$(echo "$SUMMARY_LINE" | grep -o "[0-9]* skipped" | grep -o "[0-9]*" || echo "0")
-              fi
-              
-              TOTAL_FAILED=$((FAILED_COUNT + ERROR_COUNT))
-              TOTAL_COUNT=$((PASSED_COUNT + FAILED_COUNT + ERROR_COUNT + SKIPPED_COUNT))
-              
-              # 如果統計全是 0，可能是解析失敗
-              if [ "$TOTAL_COUNT" -eq 0 ]; then
-                echo "### ⚠️ 測試結果無法解析 Test Results Cannot Be Parsed" >> test_report.md
-                echo "" >> test_report.md
-                echo "**無法從測試輸出中提取統計資訊**" >> test_report.md
-                echo "" >> test_report.md
-                echo "**原始輸出（前50行）：**" >> test_report.md
-                echo "```" >> test_report.md
-                head -50 test_output.txt >> test_report.md
-                echo "```" >> test_report.md
-              else
-                echo "### ⚠️ 測試未完全通過 Tests Not Fully Passed" >> test_report.md
-                echo "" >> test_report.md
-                echo "**📊 測試結果**: $PASSED_COUNT/$TOTAL_COUNT 通過" >> test_report.md
-                
-                if [ "$TOTAL_FAILED" -gt 0 ]; then
-                  echo "" >> test_report.md
-                  echo "**❌ 失敗的測試 ($TOTAL_FAILED 個):**" >> test_report.md
-                  echo "" >> test_report.md
-                  
-                  # 提取失敗測試名稱（從 FAILED 行）
-                  if grep "FAILED" test_output.txt | grep -o "tests/[^:]*::[^[:space:]]*" | sed 's/tests\///' | sed 's/::/ → /' > failed_tests.txt 2>/dev/null && [ -s failed_tests.txt ]; then
-                    cat failed_tests.txt | while IFS= read -r test_name; do
-                      echo "• \`$test_name\`" >> test_report.md
-                    done
-                  fi
-                  
-                  # 顯示錯誤詳情（從 short test summary）
-                  if grep -q "FAILED\|ERROR" test_output.txt; then
-                    echo "" >> test_report.md
-                    echo "**錯誤詳情：**" >> test_report.md
-                    echo "```" >> test_report.md
-                    grep -A 5 "short test summary" test_output.txt | head -20 >> test_report.md
-                    echo "```" >> test_report.md
-                  fi
-                fi
-                
-                if [ "$SKIPPED_COUNT" -gt 0 ]; then
-                  echo "" >> test_report.md
-                  echo "**⏭️ 跳過**: $SKIPPED_COUNT 個測試" >> test_report.md
-                fi
-              fi
-            fi
-          fi
+          pytest tests/ \
+            --cov=petsard \
+            --cov-report=term \
+            --cov-report=xml \
+            --cov-report=json \
+            --tb=short \
+            --junit-xml=junit.xml \
+            -v 2>&1 | tee pytest.log || true
           
-          echo "" >> test_report.md
+          # 儲存退出碼
+          echo "status=$?" >> $GITHUB_OUTPUT
 
-      - name: 📊 Generate Coverage Report
+      - name: 📊 Generate Report
         if: always()
         run: |
-          # 生成簡潔的覆蓋率報告
-          if [ -f coverage.xml ]; then
-            COVERAGE_PERCENT=$(grep -o 'line-rate="[0-9.]*"' coverage.xml | head -1 | grep -o '[0-9.]*' | awk '{printf "%.1f", $1*100}')
-            if [ ! -z "$COVERAGE_PERCENT" ]; then
-              echo "**覆蓋率**: $COVERAGE_PERCENT%" >> test_report.md
-              echo "" >> test_report.md
-            fi
-          fi
-
-      - name: 🧪 Run Functional Tests
-        id: functional-tests
-        run: |
-          # 檢查測試檔案是否存在
-          if [ ! -f "tests/test_petsard.py" ]; then
-            echo "functional_status=skipped" >> $GITHUB_OUTPUT
-            echo "### ⏭️ 功能測試跳過 Functional Tests Skipped" >> test_report.md
-            echo "**原因**: 找不到 tests/test_petsard.py 檔案" >> test_report.md
-            echo "" >> test_report.md
-          else
-            if pytest tests/test_petsard.py --tb=short > functional_output.txt 2>&1; then
-              echo "functional_status=success" >> $GITHUB_OUTPUT
-              
-              # 提取測試數量
-              FUNC_TOTAL=$(grep -E "^[0-9]+ passed" functional_output.txt | grep -o "^[0-9]+" || echo "0")
-              
-              echo "### ✅ 功能測試通過 Functional Tests Passed" >> test_report.md
-              echo "**📊 總計**: $FUNC_TOTAL 個功能測試全部通過" >> test_report.md
-              echo "" >> test_report.md
-            else
-              echo "functional_status=failed" >> $GITHUB_OUTPUT
-              
-              # 檢查是否有執行錯誤
-              if grep -q "ERROR" functional_output.txt; then
-                echo "### ❌ 功能測試執行錯誤 Functional Test Execution Error" >> test_report.md
-                echo "" >> test_report.md
-                echo "**錯誤詳情：**" >> test_report.md
-                echo "```" >> test_report.md
-                head -50 functional_output.txt >> test_report.md
-                echo "```" >> test_report.md
-              else
-                # 提取測試統計
-                SUMMARY_LINE=$(grep -E "^[0-9]+ (failed|passed|error)" functional_output.txt | tail -1)
-                FUNC_PASSED=$(echo "$SUMMARY_LINE" | grep -o "[0-9]* passed" | grep -o "[0-9]*" || echo "0")
-                FUNC_FAILED=$(echo "$SUMMARY_LINE" | grep -o "[0-9]* failed" | grep -o "[0-9]*" || echo "0")
-                FUNC_ERROR=$(echo "$SUMMARY_LINE" | grep -o "[0-9]* error" | grep -o "[0-9]*" || echo "0")
-                FUNC_TOTAL=$((FUNC_PASSED + FUNC_FAILED + FUNC_ERROR))
-                
-                if [ "$FUNC_TOTAL" -eq 0 ]; then
-                  echo "### ⚠️ 功能測試結果無法解析 Functional Test Results Cannot Be Parsed" >> test_report.md
-                  echo "" >> test_report.md
-                  echo "**原始輸出（前50行）：**" >> test_report.md
-                  echo "```" >> test_report.md
-                  head -50 functional_output.txt >> test_report.md
-                  echo "```" >> test_report.md
-                else
-                  echo "### ⚠️ 功能測試未完全通過 Functional Tests Not Fully Passed" >> test_report.md
-                  echo "**📊 功能測試**: $FUNC_PASSED/$FUNC_TOTAL 通過" >> test_report.md
+          python << 'PYTHON_SCRIPT'
+          import json
+          import xml.etree.ElementTree as ET
+          from pathlib import Path
+          
+          report = []
+          report.append("## 🧪 測試報告 Test Report\n")
+          
+          # === Ruff 結果 ===
+          ruff_file = Path("ruff.json")
+          if ruff_file.exists() and ruff_file.stat().st_size > 0:
+              try:
+                  with open("ruff.json") as f:
+                      ruff_data = json.load(f)
                   
-                  TOTAL_FUNC_FAILED=$((FUNC_FAILED + FUNC_ERROR))
-                  if [ "$TOTAL_FUNC_FAILED" -gt 0 ]; then
-                    echo "" >> test_report.md
-                    echo "**❌ 失敗的功能測試 ($TOTAL_FUNC_FAILED 個):**" >> test_report.md
-                    
-                    # 提取失敗測試名稱
-                    if grep "FAILED" functional_output.txt | grep -o "test_petsard.py::[^[:space:]]*" | sed 's/test_petsard.py:://' > failed_functional.txt 2>/dev/null && [ -s failed_functional.txt ]; then
-                      cat failed_functional.txt | while IFS= read -r test_name; do
-                        echo "• \`$test_name\`" >> test_report.md
-                      done
-                    fi
-                    
-                    # 顯示錯誤詳情
-                    if grep -q "FAILED\|ERROR" functional_output.txt; then
-                      echo "" >> test_report.md
-                      echo "**錯誤詳情：**" >> test_report.md
-                      echo "```" >> test_report.md
-                      grep -A 5 "short test summary" functional_output.txt | head -20 >> test_report.md
-                      echo "```" >> test_report.md
-                    fi
-                  fi
-                fi
-              fi
-            fi
-          fi
+                  if ruff_data:
+                      report.append(f"### ⚠️ 程式碼品質 ({len(ruff_data)} 個問題)\n")
+                      
+                      # 按檔案分組
+                      by_file = {}
+                      for issue in ruff_data[:20]:  # 最多顯示 20 個
+                          filename = issue.get('filename', 'unknown')
+                          if filename not in by_file:
+                              by_file[filename] = []
+                          by_file[filename].append(issue)
+                      
+                      for filename, issues in by_file.items():
+                          report.append(f"\n**{filename}**\n")
+                          for issue in issues[:5]:  # 每檔案最多 5 個
+                              line = issue.get('location', {}).get('row', '?')
+                              code = issue.get('code', '?')
+                              msg = issue.get('message', 'No message')
+                              report.append(f"- Line {line}: `{code}` {msg}\n")
+                      
+                      if len(ruff_data) > 20:
+                          report.append(f"\n*...還有 {len(ruff_data) - 20} 個問題*\n")
+                  else:
+                      report.append("### ✅ 程式碼品質通過\n")
+              except Exception as e:
+                  report.append(f"### ⚠️ 無法解析 Ruff 結果: {e}\n")
+          else:
+              report.append("### ✅ 程式碼品質通過\n")
           
-          echo "" >> test_report.md
-
-      - name: 📊 Generate Test Summary
-        run: |
-          echo "---" >> test_report.md
-          echo "" >> test_report.md
-          echo "### 📊 總結 Summary" >> test_report.md
-          echo "" >> test_report.md
-
-          # 檢查所有步驟的狀態
-          RUFF_STATUS="${{ steps.ruff-check.outputs.ruff_status }}"
-          UNIT_STATUS="${{ steps.unit-tests.outputs.test_status }}"
-          FUNC_STATUS="${{ steps.functional-tests.outputs.functional_status }}"
-
-          if [[ "$RUFF_STATUS" == "success" && "$UNIT_STATUS" == "success" && "$FUNC_STATUS" == "success" ]]; then
-            echo "## 🎉 所有檢查通過！All Checks Passed!" >> test_report.md
-            echo "test_overall=success" >> $GITHUB_ENV
-          else
-            echo "## ⚠️ 檢查結果 Check Results" >> test_report.md
-            echo "" >> test_report.md
-            echo "| 檢查項目 | 狀態 |" >> test_report.md
-            echo "|---------|------|" >> test_report.md
-            echo "| 程式碼品質 Code Quality | $([ "$RUFF_STATUS" == "success" ] && echo "✅ 通過" || echo "❌ 失敗") |" >> test_report.md
-            echo "| 單元測試 Unit Tests | $([ "$UNIT_STATUS" == "success" ] && echo "✅ 通過" || echo "❌ 失敗") |" >> test_report.md
-            echo "| 功能測試 Functional Tests | $([ "$FUNC_STATUS" == "success" ] && echo "✅ 通過" || echo "❌ 失敗") |" >> test_report.md
-            echo "test_overall=failed" >> $GITHUB_ENV
-          fi
-
-          echo "" >> test_report.md
+          report.append("\n---\n\n")
           
-          # 添加詳細輸出連結
-          echo "<details>" >> test_report.md
-          echo "<summary>📝 查看詳細測試輸出 View Detailed Output</summary>" >> test_report.md
-          echo "" >> test_report.md
-          echo "### 單元測試輸出 Unit Test Output" >> test_report.md
-          echo "```" >> test_report.md
-          cat test_output.txt | head -500 >> test_report.md
-          echo "```" >> test_report.md
-          echo "" >> test_report.md
-          echo "### 功能測試輸出 Functional Test Output" >> test_report.md
-          echo "```" >> test_report.md
-          cat functional_output.txt | head -500 >> test_report.md
-          echo "```" >> test_report.md
-          echo "</details>" >> test_report.md
+          # === Pytest 結果 ===
+          junit_file = Path("junit.xml")
+          coverage_file = Path("coverage.json")
           
-          echo "" >> test_report.md
-          echo "---" >> test_report.md
-          echo "*Python ${{ matrix.python-version }} | $(date -u +"%Y-%m-%d %H:%M UTC")*" >> test_report.md
+          if junit_file.exists():
+              try:
+                  tree = ET.parse("junit.xml")
+                  root = tree.getroot()
+                  
+                  total = int(root.get('tests', 0))
+                  failures = int(root.get('failures', 0))
+                  errors = int(root.get('errors', 0))
+                  skipped = int(root.get('skipped', 0))
+                  passed = total - failures - errors - skipped
+                  
+                  # 標題
+                  if failures + errors == 0:
+                      report.append(f"### ✅ 測試通過 ({passed}/{total})\n\n")
+                  else:
+                      report.append(f"### ❌ 測試失敗 ({passed}/{total} 通過)\n\n")
+                  
+                  # 覆蓋率
+                  if coverage_file.exists():
+                      with open("coverage.json") as f:
+                          cov_data = json.load(f)
+                      coverage = cov_data.get('totals', {}).get('percent_covered', 0)
+                      report.append(f"**覆蓋率**: {coverage:.1f}%\n\n")
+                  
+                  # 失敗的測試
+                  if failures + errors > 0:
+                      report.append(f"**失敗的測試**:\n\n")
+                      for testcase in root.iter('testcase'):
+                          failure = testcase.find('failure')
+                          error = testcase.find('error')
+                          if failure is not None or error is not None:
+                              classname = testcase.get('classname', '')
+                              name = testcase.get('name', '')
+                              report.append(f"- `{classname}::{name}`\n")
+                              
+                              # 錯誤訊息
+                              msg = (failure or error).get('message', '')
+                              if msg:
+                                  # 只取第一行
+                                  first_line = msg.split('\n')[0][:100]
+                                  report.append(f"  *{first_line}*\n")
+                      report.append("\n")
+                  
+                  # 跳過的測試
+                  if skipped > 0:
+                      report.append(f"**跳過**: {skipped} 個測試\n\n")
+                      
+              except Exception as e:
+                  report.append(f"### ⚠️ 無法解析測試結果: {e}\n\n")
+          else:
+              report.append("### ❌ 找不到測試結果\n\n")
+          
+          # === 詳細輸出 ===
+          pytest_log = Path("pytest.log")
+          if pytest_log.exists():
+              report.append("\n<details>\n<summary>📝 詳細測試輸出</summary>\n\n```\n")
+              with open("pytest.log") as f:
+                  lines = f.readlines()
+                  # 只顯示最後 200 行
+                  report.extend(lines[-200:])
+              report.append("\n```\n</details>\n")
+          
+          # 寫入報告
+          with open("test_report.md", "w") as f:
+              f.writelines(report)
+          
+          print("".join(report))
+          PYTHON_SCRIPT
 
-      - name: 💬 Comment Test Results on PR
-        if: github.event_name == 'pull_request'
-        uses: actions/github-script@v8
+      - name: 💬 Comment on PR
+        if: github.event_name == 'pull_request' && always()
+        uses: actions/github-script@v7
         with:
           script: |
             const fs = require('fs');
             const report = fs.readFileSync('test_report.md', 'utf8');
-
-            // 檢查是否已有測試結果留言
-            const comments = await github.rest.issues.listComments({
+            
+            // 尋找現有留言
+            const { data: comments } = await github.rest.issues.listComments({
               owner: context.repo.owner,
               repo: context.repo.repo,
               issue_number: context.issue.number,
             });
-
-            const botComment = comments.data.find(comment =>
-              comment.user.type === 'Bot' &&
-              (comment.body.includes('🧪 測試結果 Test Results') || comment.body.includes('🧪 測試套件報告 Test Suite Report'))
+            
+            const botComment = comments.find(c =>
+              c.user.type === 'Bot' && c.body.includes('🧪 測試報告')
             );
-
-            const commentBody = `## 🧪 測試套件報告 Test Suite Report\n\n${report}`;
-
+            
+            const body = `## 🧪 測試報告 (Python ${{ matrix.python-version }})\n\n${report}\n\n---\n*Updated at ${new Date().toISOString()}*`;
+            
             if (botComment) {
-              // 更新現有留言
               await github.rest.issues.updateComment({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 comment_id: botComment.id,
-                body: commentBody
+                body
               });
             } else {
-              // 創建新留言
               await github.rest.issues.createComment({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 issue_number: context.issue.number,
-                body: commentBody
+                body
               });
             }
 
-      - name: 📤 Upload Test Artifacts
+      - name: 📤 Upload Artifacts
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: test-results-python-${{ matrix.python-version }}
+          name: test-results-py${{ matrix.python-version }}
           path: |
-            test_output.txt
-            functional_output.txt
-            test_report.md
+            pytest.log
+            junit.xml
             coverage.xml
-            failures.txt
-            summary.txt
-            coverage_detail.txt
-            coverage_table.txt
-            ruff_output.txt
-            ruff_report.md
-            failed_tests.txt
-            failed_functional.txt
-            pytest-results.xml
+            coverage.json
+            ruff.json
+            test_report.md
           retention-days: 7
 
-      - name: ℹ️ Test Status Summary
+      - name: ℹ️ Summary
         if: always()
         run: |
-          if [[ "$test_overall" == "success" ]]; then
-            echo "::notice::🎉 所有檢查通過！All checks passed for Python ${{ matrix.python-version }} (Code Quality + Tests)"
+          RUFF_STATUS="${{ steps.ruff.outputs.status }}"
+          TEST_STATUS="${{ steps.pytest.outputs.status }}"
+          
+          if [[ "$RUFF_STATUS" == "success" && "$TEST_STATUS" == "0" ]]; then
+            echo "::notice::✅ Python ${{ matrix.python-version }}: 所有檢查通過"
           else
-            echo "::warning::⚠️ 部分檢查失敗，但不會阻止合併。Some checks failed for Python ${{ matrix.python-version }} (Code Quality + Tests), but merge is not blocked."
+            echo "::warning::⚠️ Python ${{ matrix.python-version }}: 部分檢查失敗（不阻止合併）"
           fi

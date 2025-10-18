@@ -5,21 +5,9 @@ weight: 200
 
 資料結構定義的 YAML 設定格式。
 
-## 概述
+## 使用範例
 
-Schema 定義資料的結構與型別，由 Metadater 模組處理。採用三層架構對應實際資料：
-
-| 設定層級 | 對應資料 | 說明 |
-|---------|---------|------|
-| **Metadata** | Datasets | 管理多個表格的資料集 |
-| **Schema** | Table | 定義單一表格結構 |
-| **Attribute** | Field | 描述單一欄位屬性 |
-
-## 使用方式
-
-Schema 在 Loader 中使用，有兩種定義方式：
-
-### 1. 外部檔案引用
+### 外部檔案引用
 
 ```yaml
 Loader:
@@ -28,7 +16,7 @@ Loader:
     schema: schemas/user_schema.yaml  # 引用外部檔案
 ```
 
-### 2. 內嵌定義
+### 內嵌定義
 
 ```yaml
 Loader:
@@ -36,98 +24,16 @@ Loader:
     filepath: data/users.csv
     schema:                   # 內嵌 schema 定義
       id: user_data
-      fields:                 # 欄位定義
-        user_id:              # 欄位名稱
+      attributes:             # 欄位定義（也可寫為 fields）
+        user_id:
           type: int64
-          nullable: false
+          enable_null: false
         username:
-          type: object
-          nullable: true
+          type: string
+          enable_null: true
 ```
 
-## Schema 結構
-
-```yaml
-id: <schema_id>           # 必填：結構識別碼
-fields:                   # 必填：欄位屬性定義
-  <field_name>:           # 欄位名稱作為 key
-    type: <data_type>     # 必填：資料型別
-    nullable: <boolean>   # 選填：是否允許空值（預設 true）
-    logical_type: <type>  # 選填：邏輯型別提示
-    stats: <dict>         # 選填：統計資料（自動產生）
-stats: <dict>             # 選填：表格統計資料（自動產生）
-```
-
-## 支援的資料型別
-
-### 基本型別
-- `int64`：64 位元整數
-- `float64`：64 位元浮點數
-- `object`：字串或物件
-- `bool`：布林值
-- `datetime64`：日期時間
-- `category`：類別型
-
-### 邏輯型別（logical_type）
-用於提供額外的語義資訊：
-- `email`：電子郵件地址
-- `url`：網址
-- `ip_address`：IP 位址
-- `phone`：電話號碼
-- `postal_code`：郵遞區號
-- `category`：分類資料
-
-## 基本範例
-
-### 簡單結構（外部檔案）
-
-```yaml
-# schemas/simple_schema.yaml
-id: simple_data
-fields:
-  user_id:
-    type: int64
-    nullable: false
-  username:
-    type: object
-  age:
-    type: int64
-    nullable: true
-```
-
-### 完整結構（內嵌）
-
-```yaml
-Loader:
-  load_transaction:
-    filepath: data/transactions.csv
-    schema:
-      id: transaction_data
-      fields:
-        transaction_id:
-          type: int64
-          nullable: false
-          
-        customer_email:
-          type: object
-          logical_type: email
-          
-        amount:
-          type: float64
-          nullable: false
-          
-        transaction_date:
-          type: datetime64
-          
-        product_category:
-          type: category
-          
-        status:
-          type: category
-          nullable: true
-```
-
-## 自動推斷
+### 自動推斷
 
 如果不提供 schema，系統會自動從資料推斷結構：
 
@@ -138,30 +44,65 @@ Loader:
     # 不指定 schema，自動推斷
 ```
 
-## 資料型別對應
+## 主要結構
 
-| Pandas dtype | Schema type |
-|-------------|-------------|
-| int8, int16, int32, int64 | int64 |
-| uint8, uint16, uint32, uint64 | int64 |
-| float16, float32, float64 | float64 |
-| object, string | object |
-| bool | bool |
-| datetime64 | datetime64 |
-| category | category |
+```yaml
+id: <schema_id>           # 必填：結構識別碼
+attributes:               # 必填：欄位屬性定義（也可寫為 fields）
+  <attribute_name>:       # 欄位名稱作為 key
+    type: <data_type>     # 必填：資料型別
+    enable_null: <bool>   # 選填：是否允許空值（預設 true）
+    logical_type: <type>  # 選填：邏輯型別提示
+```
 
-## 注意事項
+{{< callout type="info" >}}
+`attributes` 也可以寫作 `fields`。
+{{< /callout >}}
 
-1. **欄位順序**：Schema 中的欄位順序不影響資料載入
-2. **缺失欄位**：資料中缺少的欄位會填入預設值（nullable=true）
-3. **額外欄位**：資料中的額外欄位會被保留
-4. **型別轉換**：系統會嘗試自動轉換相容的型別
+## Attribute 參數列表
+
+### 必填參數
+
+| 參數 | 類型 | 說明 | 範例 |
+|------|------|------|------|
+| `name` | `string` | 欄位名稱（作為 key 時會自動設定） | `"user_id"`, `"age"` |
+
+### 選填參數
+
+| 參數 | 類型 | 預設值 | 說明 | 範例 |
+|------|------|--------|------|------|
+| `type` | `string` | `null` | 資料型別，未指定時自動推斷 | `"int64"`, `"string"`, `"float64"` |
+| `enable_null` | `boolean` | `true` | 是否允許空值 | `true`, `false` |
+| `category` | `boolean` | `null` | 是否為分類資料 | `true`, `false` |
+| `logical_type` | `string` | `null` | 邏輯型別標註，用於驗證 | `"email"`, `"url"`, `"phone"` |
+| `description` | `string` | `null` | 欄位說明文字 | `"使用者唯一識別碼"` |
+| `type_attr` | `dict` | `null` | 型別額外屬性（如精度、格式等） | `{"precision": 2}`, `{"format": "%Y-%m-%d"}` |
+| `na_values` | `list` | `null` | 自訂缺失值標記 | `["?", "N/A", "unknown"]` |
+| `default_value` | `any` | `null` | 預設填充值 | `0`, `"Unknown"`, `false` |
+| `constraints` | `dict` | `null` | 欄位約束條件 | `{"min": 0, "max": 100}` |
+| `enable_optimize_type` | `boolean` | `true` | 是否啟用型別優化 | `true`, `false` |
+| `enable_stats` | `boolean` | `true` | 是否計算統計資訊 | `true`, `false` |
+| `cast_errors` | `string` | `"coerce"` | 型別轉換錯誤處理 | `"raise"`, `"coerce"`, `"ignore"` |
+| `null_strategy` | `string` | `"keep"` | 空值處理策略 | `"keep"`, `"drop"`, `"fill"` |
+
+### 系統自動生成參數
+
+| 參數 | 類型 | 說明 |
+|------|------|------|
+| `stats` | `FieldStats` | 欄位統計資訊（使用 `enable_stats=True` 時自動計算） |
+| `created_at` | `datetime` | 建立時間（系統自動記錄） |
+| `updated_at` | `datetime` | 更新時間（系統自動記錄） |
+
+{{< callout type="info" >}}
+**自動推斷機制**：
+- 使用 `Metadater.from_data()` 時，`type`、`logical_type`、`enable_null` 等參數會自動從資料推斷
+- 手動建立 Schema 時，只有 `name` 是必填的，其他參數都是選填
+- 建議明確指定 `type` 以確保資料處理的準確性
+{{< /callout >}}
 
 ## 進階用法
 
-### 多表格結構
-
-當處理多個表格時，可以在不同的 Loader 中重複使用相同的 schema：
+### 多表格重用
 
 ```yaml
 Loader:
@@ -172,106 +113,74 @@ Loader:
   test_data:
     filepath: data/test.csv
     schema: schemas/common_schema.yaml
-    
-  validation_data:
-    filepath: data/validation.csv
-    schema: schemas/common_schema.yaml
 ```
 
 ### 部分定義
 
-可以只定義關鍵欄位，其餘由系統推斷：
+只定義關鍵欄位，其餘由系統推斷：
 
 ```yaml
 schema:
   id: partial_schema
-  fields:
-    # 只定義重要欄位
+  attributes:
     primary_key:
       type: int64
-      nullable: false
+      enable_null: false
     # 其他欄位會自動推斷
 ```
 
-## 統計資料（Stats）
+## 統計資料
 
-當使用 `Metadater.from_data()` 建立 Schema 時，如果設定 `enable_stats=True`，系統會自動計算並儲存統計資料。
+使用 `Metadater.from_data()` 時，若設定 `enable_stats=True`，系統會自動計算統計資料。
 
-### 欄位統計（Attribute.stats）
-
-每個欄位會包含以下統計資訊：
+### 欄位統計範例
 
 ```yaml
-fields:
+attributes:
   age:
     type: int64
-    nullable: true
-    stats:                    # 自動產生的統計資料
-      count: 1000            # 非空值數量
-      null_count: 50         # 空值數量
-      unique_count: 65       # 唯一值數量
-      min: 18                # 最小值（數值型）
-      max: 95                # 最大值（數值型）
-      mean: 35.5             # 平均值（數值型）
-      median: 34.0           # 中位數（數值型）
-      std: 12.3              # 標準差（數值型）
-      q1: 26.0               # 第一四分位數
-      q3: 44.0               # 第三四分位數
-      most_common:           # 最常見的值（類別型）
-        - ["adult", 450]
-        - ["senior", 300]
+    enable_null: true
+    stats:
+      row_count: 1000
+      na_count: 50
+      unique_count: 65
+      mean: 35.5
+      median: 34.0
 ```
 
-### 表格統計（Schema.stats）
-
-Schema 層級的統計資訊：
-
-```yaml
-id: user_table
-stats:                       # 自動產生的表格統計
-  row_count: 1000           # 總列數
-  column_count: 12          # 總欄數
-  memory_usage: 98304       # 記憶體使用量（bytes）
-  null_columns:             # 含空值的欄位列表
-    - age
-    - address
-  numeric_columns:          # 數值型欄位列表
-    - age
-    - salary
-  categorical_columns:      # 類別型欄位列表
-    - gender
-    - department
-```
-
-### 程式化存取統計資料
+### 程式化存取
 
 ```python
 from petsard.metadater import Metadater
+import pandas as pd
 
-# 從資料建立並計算統計
+# 建立並計算統計
+data = {'users': pd.DataFrame({...})}
 metadata = Metadater.from_data(
-    data=df,
-    enable_stats=True  # 啟用統計計算
+    data=data,
+    enable_stats=True
 )
 
-# 存取統計資料
-schema = metadata.schemas["table_name"]
-print(f"總列數：{schema.stats.row_count}")
-
-# 欄位統計
-age_attr = schema.fields["age"]
+# 存取統計
+schema = metadata.schemas["users"]
+age_attr = schema.attributes["age"]
 print(f"平均年齡：{age_attr.stats.mean}")
-print(f"空值數量：{age_attr.stats.null_count}")
 ```
 
-### 注意事項
+## 相關說明
 
-1. **效能考量**：計算統計資料會增加處理時間，特別是大型資料集
-2. **隱私保護**：統計資料可能包含敏感資訊（如最小值、最大值），使用時需注意
-3. **更新時機**：統計資料在建立時計算，不會自動更新
-4. **儲存格式**：統計資料會儲存在 YAML 中，可用於稽核和分析
+- **資料型別**：詳見 [資料型別](/docs/schema-yaml/data-types) 說明
+- **邏輯型別**：詳見 [邏輯型別](/docs/schema-yaml/logical-types) 說明
+- **架構理論**：Schema 採用三層架構設計，詳見 [Schema 架構](/docs/schema-yaml/architecture) 說明
+- **資料對齊**：Schema 可用於對齊和驗證資料，詳見 [Metadater API](/docs/python-api/metadater-api) 文檔
+- **Loader 整合**：Schema 在資料載入時的使用方式，詳見 [Loader YAML](/docs/petsard-yaml/loader-yaml) 文檔
 
-## 相關文檔
+## 注意事項
 
-- [Metadater API](/docs/experimental-new-format/python-api/metadater-api)：程式化操作 Schema
-- [Loader API](/docs/experimental-new-format/python-api/loader-api)：資料載入器配置
+- 欄位順序不影響資料載入
+- 資料中缺少的欄位會填入預設值（enable_null=true）
+- 資料中的額外欄位會被保留
+- 系統會嘗試自動轉換相容的型別
+- `attributes` 也可以寫作 `fields`
+- 邏輯型別僅用於驗證，不改變儲存格式
+- 統計計算會增加處理時間，大型資料集需謹慎使用

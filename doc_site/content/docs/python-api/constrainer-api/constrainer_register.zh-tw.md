@@ -34,16 +34,16 @@ def register(
 
 ## 說明
 
-[`register()`](constrainer_register.zh-tw.md) 是類別方法，允許使用者擴充 Constrainer 的功能，註冊自訂的約束類型。
+`\1` 是類別方法，允許使用者擴充 Constrainer 的功能，註冊自訂的約束類型。
 
 ### 內建約束類型
 
 Constrainer 預設註冊了以下約束類型：
 
-- `nan_groups`：[`NaNGroupConstrainer`](../../api/constrainer.zh-tw.md#nan_groups-配置)
-- `field_constraints`：[`FieldConstrainer`](../../api/constrainer.zh-tw.md#field_constraints-配置)
-- `field_combinations`：[`FieldCombinationConstrainer`](../../api/constrainer.zh-tw.md#field_combinations-配置)
-- `field_proportions`：[`FieldProportionsConstrainer`](../../api/constrainer.zh-tw.md#field_proportions-配置)
+- `nan_groups`：`\1`
+- `field_constraints`：`\1`
+- `field_combinations`：`\1`
+- `field_proportions`：`\1`
 
 ### 自訂約束類別要求
 
@@ -388,6 +388,6 @@ result = constrainer.apply(df)
 
 ## 相關方法
 
-- [`__init__()`](_index.zh-tw.md#建構函式-__init__)：初始化約束設定
-- [`apply()`](constrainer_apply.zh-tw.md)：套用約束條件
-- [`resample_until_satisfy()`](constrainer_resample_until_satisfy.zh-tw.md)：重複採樣直到滿足約束
+- `\1`：初始化約束設定
+- `\1`：套用約束條件
+- `\1`：重複採樣直到滿足約束

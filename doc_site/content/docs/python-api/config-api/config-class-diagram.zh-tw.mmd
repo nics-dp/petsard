@@ -1,0 +1,41 @@
+classDiagram
+    class Config {
+        Queue config
+        Queue module_flow
+        Queue expt_flow
+        list sequence
+        dict yaml
+        __init__(config)
+    }
+
+    class BaseAdapter {
+        <<abstract>>
+        dict config
+        run()
+        set_input(status)
+        get_result()
+    }
+
+    class LoaderAdapter {
+        run()
+    }
+
+    class SynthesizerAdapter {
+        run()
+    }
+
+    class EvaluatorAdapter {
+        run()
+    }
+
+    Config ..> BaseAdapter : creates
+    BaseAdapter <|-- LoaderAdapter
+    BaseAdapter <|-- SynthesizerAdapter
+    BaseAdapter <|-- EvaluatorAdapter
+
+    %% 樣式標示
+    style Config fill:#e6f3ff,stroke:#4a90e2,stroke-width:3px
+    style BaseAdapter fill:#fff2e6,stroke:#ff9800,stroke-width:2px
+    style LoaderAdapter fill:#f3e6ff,stroke:#9966cc,stroke-width:2px
+    style SynthesizerAdapter fill:#f3e6ff,stroke:#9966cc,stroke-width:2px
+    style EvaluatorAdapter fill:#f3e6ff,stroke:#9966cc,stroke-width:2px

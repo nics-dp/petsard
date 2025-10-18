@@ -1,0 +1,68 @@
+classDiagram
+    class Processor {
+        <<主要類別>>
+        -_metadata: Schema
+        -_config: dict
+        -_sequence: list
+        -_mediator: dict
+        +__init__(metadata, config)
+        +fit(data, sequence)
+        +transform(data) DataFrame
+        +inverse_transform(data) DataFrame
+        +get_config(col) dict
+        +update_config(config)
+        +get_changes() DataFrame
+    }
+
+    class MissingHandler {
+        <<子處理器>>
+        +fit(data)
+        +transform(data)
+        +inverse_transform(data)
+    }
+
+    class OutlierHandler {
+        <<子處理器>>
+        +fit(data)
+        +transform(data)
+    }
+
+    class Encoder {
+        <<子處理器>>
+        +fit(data)
+        +transform(data)
+        +inverse_transform(data)
+    }
+
+    class Scaler {
+        <<子處理器>>
+        +fit(data)
+        +transform(data)
+        +inverse_transform(data)
+    }
+
+    class Mediator {
+        <<協調器>>
+        +fit(data)
+        +transform(data) DataFrame
+        +inverse_transform(data) DataFrame
+    }
+
+    class Schema {
+        <<配置類別>>
+        +attributes: dict
+        +metadata: dict
+    }
+
+    Processor *-- MissingHandler : 使用
+    Processor *-- OutlierHandler : 使用
+    Processor *-- Encoder : 使用
+    Processor *-- Scaler : 使用
+    Processor *-- Mediator : 協調
+    Processor ..> Schema : 依賴
+
+    note for Processor "前處理: fit() + transform()<br/>後處理: inverse_transform()"
+    note for MissingHandler "missing_mean, missing_median<br/>missing_mode, missing_drop"
+    note for OutlierHandler "outlier_zscore, outlier_iqr<br/>outlier_lof, outlier_isolationforest"
+    note for Encoder "encoder_uniform, encoder_label<br/>encoder_onehot, encoder_date"
+    note for Scaler "scaler_standard, scaler_minmax<br/>scaler_log, scaler_timeanchor"

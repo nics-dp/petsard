@@ -1,6 +1,6 @@
 [project]
 name = "petsard"
-version = "1.7.0"
+version = "1.8.0"
 description = "Facilitates data generation algorithm and their evaluation processes"
 authors = [{ name = "matheme-justyn", email = "matheme.justyn@gmail.com" }]
 keywords = [
@@ -42,9 +42,10 @@ Documentation = "https://nics-tw.github.io/petsard/"
 # 標準功能群組（預設安裝）
 # Standard functionality group (default installation)
 default = [
-    {include-group = "eval"},
     {include-group = "exec"},
+    {include-group = "load-benchmark"},
     {include-group = "syn"},
+    {include-group = "eval"},
 ]
 
 # 資料科學功能群組
@@ -59,7 +60,6 @@ ds = [
 all = [
     {include-group = "ds"},
     {include-group = "load-xlsx"},
-    {include-group = "load-benchmark"},
 ]
 
 # 開發功能群組
@@ -79,6 +79,12 @@ exec = [
     "python-dateutil>=2.9.0.post0,<3",
     "pytz>=2025.2",
     "tzdata>=2025.2",
+]
+
+# 基準資料集支援
+# Benchmark dataset support
+load-benchmark = [
+    "requests>=2.32.5,<3",   # HTTP 請求下載資料集
 ]
 
 # 隱私風險評估功能
@@ -176,12 +182,6 @@ load-xlsx = [
     "openpyxl>=3.1.5,<4",   # Excel 檔案讀寫
 ]
 
-# 基準資料集支援
-# Benchmark dataset support
-load-benchmark = [
-    "requests>=2.32.5,<3",   # HTTP 請求下載資料集
-]
-
 # 開發工具
 # Development tools
 dev-tools = [
@@ -191,6 +191,59 @@ dev-tools = [
     "python-semantic-release>=10.3.2",   # 發布自動化
     "ruff>=0.12.12",                     # 程式碼檢查與格式化
     "trove-classifiers>=2025.8.26.11",   # PyPI 分類器
+]
+
+# PyPI 向下相容：optional-dependencies（舊版 pip 使用）
+# Backward compatibility for PyPI: optional-dependencies (for older pip)
+[project.optional-dependencies]
+ds = [
+    "ipykernel>=6.30.1,<7",
+    "ipython>=8.3.0,<9 ; python_full_version < '3.11'",
+    "ipython>=9.4.0,<10 ; python_full_version >= '3.11'",
+    "jupyterlab>=4.4.7,<5",
+    "notebook>=7.4.5,<8",
+    "pyzmq>=27.0.2,<28",
+    "debugpy>=1.8.16,<2",
+    "decorator>=5.2.1,<6",
+    "ipython-pygments-lexers>=1.1.1,<2 ; python_version >= '3.11'",
+    "prompt-toolkit>=3.0.52,<4",
+    "psutil>=7.0.0,<8",
+]
+all = [
+    "ipykernel>=6.30.1,<7",
+    "ipython>=8.3.0,<9 ; python_full_version < '3.11'",
+    "ipython>=9.4.0,<10 ; python_full_version >= '3.11'",
+    "jupyterlab>=4.4.7,<5",
+    "notebook>=7.4.5,<8",
+    "pyzmq>=27.0.2,<28",
+    "debugpy>=1.8.16,<2",
+    "decorator>=5.2.1,<6",
+    "ipython-pygments-lexers>=1.1.1,<2 ; python_version >= '3.11'",
+    "prompt-toolkit>=3.0.52,<4",
+    "psutil>=7.0.0,<8",
+    "openpyxl>=3.1.5,<4",
+    "requests>=2.32.5,<3",
+]
+dev = [
+    "ipykernel>=6.30.1,<7",
+    "ipython>=8.3.0,<9 ; python_full_version < '3.11'",
+    "ipython>=9.4.0,<10 ; python_full_version >= '3.11'",
+    "jupyterlab>=4.4.7,<5",
+    "notebook>=7.4.5,<8",
+    "pyzmq>=27.0.2,<28",
+    "debugpy>=1.8.16,<2",
+    "decorator>=5.2.1,<6",
+    "ipython-pygments-lexers>=1.1.1,<2 ; python_version >= '3.11'",
+    "prompt-toolkit>=3.0.52,<4",
+    "psutil>=7.0.0,<8",
+    "openpyxl>=3.1.5,<4",
+    "requests>=2.32.5,<3",
+    "pip-audit>=2.7.3",
+    "pytest>=8.4.2",
+    "pytest-cov>=6.3.0",
+    "python-semantic-release>=10.3.2",
+    "ruff>=0.12.12",
+    "trove-classifiers>=2025.8.26.11",
 ]
 
 # 建置系統設定
@@ -251,6 +304,7 @@ commit_parser = "conventional"    # 提交訊息解析器
 logging_use_named_masks = false   # 日誌輸出設定
 commit = true                     # 確保提交版本變更
 push = true                       # 確保推送版本變更
+no_git_verify = false             # Git 提交驗證
 
 # 發布分支設定
 # Release branch configuration
@@ -266,7 +320,7 @@ prerelease = false    # 不建立預發布版本
 [tool.semantic_release.branches.dev]
 match = "dev"             # 分支匹配模式
 prerelease = true         # 建立預發布版本
-prerelease_token = "rc"   # 預發布標記
+prerelease_token = "rc"   # 預發布標記（將生成符合 PEP 440 的 1.7.0rc1 格式）
 
 # 變更日誌生成設定
 # Changelog generation configuration
@@ -319,7 +373,17 @@ allowed_tags = [ # 支援的提交類型
     "ci",       # CI 配置文件和腳本的變更
 ]
 minor_tags = ["feat"]          # 觸發次版本更新的類型
-patch_tags = ["fix", "perf"]   # 觸發修補版本更新的類型
+patch_tags = [                 # 觸發修補版本更新的類型
+    "fix",      # 錯誤修復
+    "perf",     # 性能改進
+    "docs",     # 文檔變更
+    "style",    # 代碼格式（不影響邏輯）
+    "refactor", # 代碼重構
+    "test",     # 測試相關
+    "chore",    # 維護性變更
+    "build",    # 構建系統
+    "ci",       # CI 配置
+]
 default_bump_level = 0         # 預設更新級別 (0: patch, 1: minor, 2: major)
 
 # GitHub 倉庫設定
@@ -341,6 +405,11 @@ source = "commit"  # 從提交訊息自動決定版本
 version_toml = [
     "pyproject.toml:project.version"  # 自動更新檔案中的版本
 ]
+# 確保版本格式符合 PEP 440
+# Ensure version format complies with PEP 440
+# 版本範例：
+#   正式版本: 1.7.0
+#   預發布版本: 1.7.0rc1, 1.7.0rc2 (符合 PEP 440，無連字符)
 
 # 發布設定
 # Publishing configuration
