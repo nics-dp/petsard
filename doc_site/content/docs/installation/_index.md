@@ -26,7 +26,7 @@ Based on your environment conditions, please select the appropriate installation
   - No local Python environment setup required
   - Fast deployment with high environment consistency
 
-- **[PyPI Install](pip-install)** - Environments without Docker support
+- **[PyPI Install](pypi-install)** - Environments without Docker support
   - Direct installation to local Python environment
   - Supports multiple dependency group options
   - Recommended to use uv for installation
