@@ -34,7 +34,7 @@ def resample_until_satisfy(
 - **synthesizer** : Synthesizer, required
     - 用於生成合成資料的合成器實例
     - 必要參數
-    - 必須是已經透過 [`fit()`](../synthesizer-api/synthesizer_fit.zh-tw.md) 訓練過的合成器
+    - 必須是已經透過 `\1` 訓練過的合成器
     
 - **postprocessor** : Postprocessor, optional
     - 資料轉換的後處理器
@@ -72,7 +72,7 @@ def resample_until_satisfy(
 
 ## 說明
 
-[`resample_until_satisfy()`](constrainer_resample_until_satisfy.zh-tw.md) 方法適用於約束條件嚴格、過濾後資料量不足的情況。它會：
+`\1` 方法適用於約束條件嚴格、過濾後資料量不足的情況。它會：
 
 1. 先對輸入資料套用約束條件
 2. 計算需要補充的資料量
@@ -370,7 +370,7 @@ for ratio in [5.0, 10.0, 20.0, 50.0]:
 
 ## 注意事項
 
-- **合成器狀態**：synthesizer 必須已經透過 [`fit()`](../synthesizer-api/synthesizer_fit.zh-tw.md) 訓練
+- **合成器狀態**：synthesizer 必須已經透過 `\1` 訓練
 - **資料累積**：會自動去除重複列，確保資料多樣性
 - **記憶體使用**：大 sampling_ratio 和多次迭代會消耗較多記憶體
 - **參數調整**：
@@ -386,6 +386,6 @@ for ratio in [5.0, 10.0, 20.0, 50.0]:
 
 ## 相關方法
 
-- [`__init__()`](_index.zh-tw.md#建構函式-__init__)：初始化約束設定
-- [`apply()`](constrainer_apply.zh-tw.md)：單次套用約束
-- [`register()`](constrainer_register.zh-tw.md)：註冊自訂約束類型
+- `\1`：初始化約束設定
+- `\1`：單次套用約束
+- `\1`：註冊自訂約束類型

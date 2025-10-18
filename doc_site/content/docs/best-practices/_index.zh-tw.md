@@ -2,7 +2,7 @@
 title: 最佳實踐
 type: docs
 weight: 1040
-prev: docs/tutorial
+prev: docs/getting-started
 next: docs/api
 sidebar:
   open: false

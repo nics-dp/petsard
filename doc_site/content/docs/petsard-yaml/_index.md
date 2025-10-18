@@ -3,45 +3,6 @@ title: "PETsARD YAML"
 weight: 100
 ---
 
-<!--
-Documentation Writing Principles (for roo code reference):
-
-### YAML-First Documentation
-- Target **YAML users** as the primary audience
-- Provide detailed explanations of all options configurable in YAML
-- Include complete YAML configuration examples
-- **Users should prioritize consulting YAML documentation**
-
-### Documentation Standards
-
-#### Avoid Cross-Links
-- **Do not use internal links**: Avoid cross-page links as document structure may change
-- **Self-contained**: Each page should contain complete information without depending on other pages
-
-#### Use Bullet Points Instead of Multi-level Headings
-- **Simplify hierarchy**: Use bullet format for parameter descriptions, avoid excessive heading levels
-- **Improve readability**: Use bullets and indentation to express structure for cleaner, more readable documentation
-- **Reduce whitespace**: Avoid large amounts of whitespace from individual parameter headings
-
-#### Option Description Principles
-- **YAML first**: All configuration options and detailed descriptions are in YAML documentation
-- **Complete descriptions**: Each parameter should include type, default value, examples
-- **Avoid duplication**: Maintain detailed descriptions only in YAML documentation, not in Python API
-
-#### Structured Information
-- **From simple to advanced**: Progress from basic usage to advanced options
-- **Complete examples**: Provide multiple examples from simple to complex
-- **Practice-oriented**: Start from actual use cases
--->
-
-## What is YAML?
-
-YAML (YAML Ain't Markup Language) is a human-readable data serialization format that PETsARD uses for experiment configuration. This document explains how to effectively organize your YAML configurations.
-
-- **Easy to read and write**: Uses indentation and concise syntax, understandable without programming background
-- **Clear structure**: Expresses hierarchical relationships through indentation, visually clear at a glance
-- **Supports multiple data types**: Strings, numbers, booleans, lists, objects, etc.
-
 ## Why Does PETsARD Use YAML?
 
 PETsARD adopts YAML as its primary configuration method, allowing you to accomplish most tasks without writing Python code.
@@ -50,7 +11,6 @@ PETsARD adopts YAML as its primary configuration method, allowing you to accompl
 2. **Easy version control**: Plain text format, convenient for tracking changes and team collaboration
 3. **Batch processing**: One configuration file can define multiple experiments and operations
 4. **Reusable**: Configuration files can be easily shared and reused
-<!-- 5. **Environment variable support**: Sensitive information (like API keys) can be protected using environment variables -->
 
 ## PETsARD YAML Basic Structure
 
@@ -67,6 +27,12 @@ Module_Name:             # Layer 1: Module
 
 The top level defines processing modules arranged in execution order:
 
+{{< callout type="info" >}}
+**Strongly Recommended Execution Order**
+
+We strongly recommend configuring modules in the following order. We are not responsible for execution results caused by changing the order.
+{{< /callout >}}
+
 - **Executor**: Execution settings (logging, working directory, etc.)
 - **Loader**: Data loading
 - **Splitter**: Data splitting
@@ -74,8 +40,15 @@ The top level defines processing modules arranged in execution order:
 - **Synthesizer**: Data synthesis
 - **Postprocessor**: Data postprocessing
 - **Constrainer**: Data constraints
+- **Describer**: Data description
 - **Evaluator**: Result evaluation
 - **Reporter**: Report generation
+
+{{< callout type="warning" >}}
+**Module Execution Limitation**
+
+Currently, each module can only be executed once.
+{{< /callout >}}
 
 ### Experiment Level
 
@@ -141,3 +114,73 @@ This example demonstrates:
 4. Data postprocessing (Postprocessor)
 5. Evaluating synthetic data quality (Evaluator)
 6. Saving results (Reporter)
+
+## Execution Flow
+
+When multiple experiments are defined, PETsARD executes all module combinations in a **depth-first** manner:
+
+```
+Loader → Splitter → Preprocessor → Synthesizer → Postprocessor → Constrainer → Describer → Evaluator → Reporter
+```
+
+### Experiment Combinations
+
+If multiple experiments are defined in different modules, PETsARD generates all possible combinations. For example:
+
+```yaml
+Loader:
+  load_a:
+    filepath: 'data1.csv'
+  load_b:
+    filepath: 'data2.csv'
+Synthesizer:
+  syn_ctgan:
+    method: 'sdv-single_table-ctgan'
+  syn_tvae:
+    method: 'sdv-single_table-tvae'
+```
+
+This generates four experiment combinations:
+1. load_a + syn_ctgan
+2. load_a + syn_tvae
+3. load_b + syn_ctgan
+4. load_b + syn_tvae
+
+Each combination executes the complete workflow once, allowing you to systematically compare the effects of different configurations.
+
+## Output Results
+
+Output results require the use of the Reporter module. Please refer to the Reporter module documentation for detailed configuration methods.
+
+## Best Practices
+
+Following these recommendations will make your YAML configurations more readable and maintainable:
+
+1. **Use meaningful experiment names**
+   - Good: `ctgan_epochs100`, `preprocessing_with_scaling`
+   - Avoid: `exp1`, `test`, `a`
+
+2. **Organize parameters by module**
+   - Keep related parameters together
+   - Maintain consistent indentation (usually 2 or 4 spaces)
+
+3. **Add comments to experiment configurations**
+   ```yaml
+   Synthesizer:
+     ctgan:  # Using CTGAN for tabular data synthesis
+       method: 'sdv-single_table-ctgan'
+       epochs: 300  # Increase training epochs to improve quality
+   ```
+
+4. **Validate YAML syntax before execution**
+   - Ensure correct indentation (YAML is indentation-sensitive)
+   - Check for spaces after colons
+   - Verify quote pairing
+
+5. **Leverage multi-experiment comparisons**
+   - Define multiple experiments in the same configuration file for comparison
+   - Use consistent naming conventions for easy identification
+
+6. **Keep configuration files concise**
+   - Only set parameters that need to be changed
+   - Use default values for other parameters

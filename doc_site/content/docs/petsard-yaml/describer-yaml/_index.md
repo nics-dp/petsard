@@ -1,6 +1,6 @@
 ---
 title: "Describer YAML"
-weight: 150
+weight: 170
 ---
 
 YAML configuration file format for the Describer module. Provides statistical description and comparison functionality for datasets.

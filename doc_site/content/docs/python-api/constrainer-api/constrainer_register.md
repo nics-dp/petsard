@@ -34,16 +34,16 @@ None
 
 ## Description
 
-[`register()`](constrainer_register.md) is a class method that allows users to extend Constrainer functionality by registering custom constraint types.
+`\1` is a class method that allows users to extend Constrainer functionality by registering custom constraint types.
 
 ### Built-in Constraint Types
 
 Constrainer has the following constraint types registered by default:
 
-- `nan_groups`: [`NaNGroupConstrainer`](../../api/constrainer.md#nan_groups-configuration)
-- `field_constraints`: [`FieldConstrainer`](../../api/constrainer.md#field_constraints-configuration)
-- `field_combinations`: [`FieldCombinationConstrainer`](../../api/constrainer.md#field_combinations-configuration)
-- `field_proportions`: [`FieldProportionsConstrainer`](../../api/constrainer.md#field_proportions-configuration)
+- `nan_groups`: `\1`
+- `field_constraints`: `\1`
+- `field_combinations`: `\1`
+- `field_proportions`: `\1`
 
 ### Custom Constraint Class Requirements
 
@@ -388,6 +388,6 @@ result = constrainer.apply(df)
 
 ## Related Methods
 
-- [`__init__()`](_index.md#constructor-__init__): Initialize constraint configuration
-- [`apply()`](constrainer_apply.md): Apply constraint conditions
-- [`resample_until_satisfy()`](constrainer_resample_until_satisfy.md): Resample repeatedly until constraints satisfied
+- `\1`: Initialize constraint configuration
+- `\1`: Apply constraint conditions
+- `\1`: Resample repeatedly until constraints satisfied

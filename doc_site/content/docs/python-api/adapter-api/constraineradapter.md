@@ -49,7 +49,7 @@ Initialize ConstrainerAdapter instance.
     - `max_trials`: Maximum attempts (default 300)
     - `verbose_step`: Progress display frequency (default 10)
 
-**Note:** `constraints_yaml` and individual constraint parameters (nan_groups, field_constraints, etc.) cannot be used simultaneously, or it will raise [`ConfigError`](../../exceptions).
+**Note:** `constraints_yaml` and individual constraint parameters (nan_groups, field_constraints, etc.) cannot be used simultaneously, or it will raise `ConfigError`.
 
 ### `run(input: dict)`
 

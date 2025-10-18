@@ -145,20 +145,16 @@ class FieldProportionsConfig:
         for field in required_fields:
             # Use metadata for type checking if available
             if self.metadata is not None:
-                # Find the attribute in metadata
-                attribute = None
-                for attr in self.metadata.attributes:
-                    if attr.name == field:
-                        attribute = attr
-                        break
+                # Find the attribute in metadata by accessing dict values
+                attribute = self.metadata.attributes.get(field)
 
                 if attribute is None:
                     # Field not in metadata, fall back to dtype check
                     dtype = data[field].dtype
                     field_type = self._infer_type_from_dtype(dtype)
                 else:
-                    # Use metadata type
-                    field_type = attribute.infer_dtype
+                    # Infer type from attribute properties
+                    field_type = self._infer_type_from_attribute(attribute)
 
                 # Reject numeric and datetime types
                 if field_type in ["numerical", "datetime"]:
@@ -594,6 +590,30 @@ class FieldProportionsConfig:
             return "numerical"
         elif pd.api.types.is_datetime64_any_dtype(dtype):
             return "datetime"
+        else:
+            return "categorical"
+
+    def _infer_type_from_attribute(self, attribute) -> str:
+        """
+        Infer field type from Attribute object.
+
+        Args:
+            attribute: Attribute object from Schema
+
+        Returns:
+            str: 'numerical', 'categorical', or 'datetime'
+        """
+        data_type_str = str(attribute.type).lower() if attribute.type else "object"
+
+        # Map specific types to categories
+        if "int" in data_type_str or "float" in data_type_str:
+            return "numerical"
+        elif "bool" in data_type_str:
+            return "categorical"
+        elif data_type_str in ["datetime64", "date", "time", "timestamp"]:
+            return "datetime"
+        elif attribute.category is True:
+            return "categorical"
         else:
             return "categorical"
 

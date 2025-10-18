@@ -3,44 +3,47 @@ Loader:
   data:
     filepath: 'benchmark/adult-income.csv'
 Splitter:
-  demo:
+  basic_split:
     num_samples: 1
     train_split_ratio: 0.8
 Preprocessor:
-  demo:
+  default:
     method: 'default'
 Synthesizer:
-  demo:
+  default:
     method: 'default'
 Postprocessor:
-  demo:
+  default:
     method: 'default'
 Evaluator:
-  demo-diagnostic:
-    method: 'sdmetrics-diagnosticreport'
-  demo-quality:
-    method: 'sdmetrics-qualityreport'
-  demo-singlingout:
-    method: 'anonymeter-singlingout'
-  demo-linkability:
-    method: 'anonymeter-linkability'
+  validity_check:
+    method: sdmetrics-diagnosticreport
+  fidelity_check:
+    method: sdmetrics-qualityreport
+  singling_out_risk:
+    method: anonymeter-singlingout
+  linkability_risk:
+    method: anonymeter-linkability
     aux_cols:
       -
-        - 'age'
-        - 'marital-status'
-        - 'relationship'
-        - 'gender'
+        - workclass
+        - education
+        - occupation
+        - race
+        - gender
       -
-        - 'workclass'
-        - 'educational-num'
-        - 'occupation'
-        - 'income'
-  demo-inference:
+        - age
+        - marital-status
+        - relationship
+        - native-country
+        - income
+  inference_risk:
     method: 'anonymeter-inference'
     secret: 'income'
-  demo-classification:
-    method: 'mlutility-classification'
-    target: 'income'
+  classification_utility:
+    method: mlutility
+    task_type: classification
+    target: income
 Reporter:
   data:
     method: 'save_data'

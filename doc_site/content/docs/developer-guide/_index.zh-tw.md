@@ -21,9 +21,6 @@ sidebar:
 ## 資料生成
 
 ## 設定與報告
-- [日誌設定]({{< ref "docs/developer-guide/logging-configuration" >}})
-  - 設定日誌層級與輸出目標
-  - 自訂日誌格式與檔案位置
 - [測試覆蓋範圍]({{< ref "docs/developer-guide/test-coverage" >}})
   - 測試組織與架構
   - 詳細測試案例文件

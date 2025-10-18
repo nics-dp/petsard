@@ -1,0 +1,51 @@
+classDiagram
+    class Executor {
+        ExecutorConfig executor_config
+        Config config
+        Status status
+        dict result
+        __init__(config)
+        run()
+        get_result() dict
+        get_timing() DataFrame
+        is_execution_completed() bool
+        get_inferred_schema(module) Schema
+    }
+
+    class ExecutorConfig {
+        string log_output_type
+        string log_level
+        string log_dir
+        string log_filename
+    }
+
+    class Config {
+        Queue config
+        Queue module_flow
+        Queue expt_flow
+        list sequence
+        dict yaml
+    }
+
+    class Status {
+        dict metadata
+        dict status
+        dict result
+        put(module, experiment, adapter)
+        get_result(module) dict
+        get_metadata(module) Schema
+        get_full_expt() dict
+        get_snapshots() list
+        get_change_history() list
+        get_timing_report_data() DataFrame
+    }
+
+    Executor *-- ExecutorConfig
+    Executor *-- Config
+    Executor *-- Status
+
+    %% 樣式標示
+    style Executor fill:#e6f3ff,stroke:#4a90e2,stroke-width:3px
+    style ExecutorConfig fill:#f3e6ff,stroke:#9966cc,stroke-width:2px
+    style Config fill:#f3e6ff,stroke:#9966cc,stroke-width:2px
+    style Status fill:#f3e6ff,stroke:#9966cc,stroke-width:2px
