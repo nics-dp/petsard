@@ -191,7 +191,7 @@ INCLUDE_JUPYTER=true/false
    docker run -it -v $(pwd):/app/data --entrypoint /opt/venv/bin/python3 petsard:jupyter
    
    # Test PETsARD functionality inside container
-   # python -m petsard.executor demo/tutorial/default-synthesis-default-evaluation.zh-tw.yaml
+   # python -m petsard.executor demo/getting-started/default-synthesis-default-evaluation.zh-tw.yaml
    ```
 
 3. **Test Both Build Variants**
@@ -252,7 +252,7 @@ docker run --rm \
   -v $(pwd):/workspace \
   -w /workspace \
   petsard:latest \
-  python -m petsard.executor demo/tutorial/default-synthesis-default-evaluation.zh-tw.yaml
+  python -m petsard.executor demo/getting-started/default-synthesis-default-evaluation.zh-tw.yaml
 
 # Test Jupyter variant
 docker run --rm \

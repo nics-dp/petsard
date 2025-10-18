@@ -9,7 +9,7 @@ Current default synthesis uses Gaussian Copula from SDV.
 
 Click the below button to run this example in Colab:
 
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/nics-dp/petsard/blob/main/demo/tutorial/default-synthesis.ipynb)
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/nics-dp/petsard/blob/main/demo/getting-started/default-synthesis.ipynb)
 
 ```yaml
 Loader:

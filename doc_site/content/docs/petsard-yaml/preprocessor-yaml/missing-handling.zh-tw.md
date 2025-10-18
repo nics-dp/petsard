@@ -17,7 +17,7 @@ weight: 131
 
 請點擊下方按鈕在 Colab 中執行完整範例：
 
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/nics-tw/petsard/blob/main/demo/tutorial/use-cases/data-preprocessing/handling-missing-values.ipynb)
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/nics-tw/petsard/blob/main/demo/getting-started/use-cases/data-preprocessing/handling-missing-values.ipynb)
 
 ### 使用預設缺失值處理
 
