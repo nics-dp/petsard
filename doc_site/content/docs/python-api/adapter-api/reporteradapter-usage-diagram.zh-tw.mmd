@@ -1,0 +1,28 @@
+graph TB
+    subgraph ReporterAdapter["ReporterAdapter"]
+        RA[ReporterAdapter<br/>包裝類別]
+        Config[ReporterConfig<br/>配置類別]
+    end
+
+    subgraph Reporter["Reporter 模組"]
+        Reporter[Reporter<br/>工廠類別]
+        SaveData[ReporterSaveData]
+        SaveReport[ReporterSaveReport]
+        SaveTiming[ReporterSaveTiming]
+        SaveValidation[ReporterSaveValidation]
+    end
+
+    RA --> Config
+    RA ..> Reporter
+    Reporter --> SaveData
+    Reporter --> SaveReport
+    Reporter --> SaveTiming
+    Reporter --> SaveValidation
+
+    style RA fill:#e6d5f0,stroke:#9966cc,stroke-width:2px
+    style Config fill:#ffe6f0,stroke:#ff66b2,stroke-width:1px
+    style Reporter fill:#d5e6ff,stroke:#4a90e2,stroke-width:2px
+    style SaveData fill:#d5f0e6,stroke:#66cc99,stroke-width:1px
+    style SaveReport fill:#d5f0e6,stroke:#66cc99,stroke-width:1px
+    style SaveTiming fill:#d5f0e6,stroke:#66cc99,stroke-width:1px
+    style SaveValidation fill:#d5f0e6,stroke:#66cc99,stroke-width:1px

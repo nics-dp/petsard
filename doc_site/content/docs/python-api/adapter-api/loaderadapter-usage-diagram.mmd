@@ -1,0 +1,58 @@
+classDiagram
+
+    class LoaderAdapter {
+        +config: dict
+        +loader: Loader
+        +benchmarker: Benchmarker
+        +__init__(config)
+        +run() tuple[DataFrame, Schema]
+        -_handle_benchmark_protocol()
+        -_init_loader()
+    }
+
+    class Loader {
+        +filepath: str
+        +schema: Schema
+        +load() tuple[DataFrame, Schema]
+    }
+
+    class Benchmarker {
+        +config: BenchmarkerConfig
+        +download()
+        +get_filepath()
+    }
+
+    class BenchmarkerConfig {
+        +benchmark_name: str
+        +filepath_raw: str
+    }
+
+    class BenchmarkerRequests {
+        +download()
+    }
+
+    LoaderAdapter ..> Loader : uses for data loading
+    LoaderAdapter ..> Benchmarker : uses for benchmark protocol
+    Benchmarker --> BenchmarkerConfig : has
+    Benchmarker ..> BenchmarkerRequests : creates
+
+    %% Style definitions
+    class LoaderAdapter {
+        <<Main Class>>
+    }
+    style LoaderAdapter fill:#E6E6FA
+
+    class Loader {
+        <<Core Module>>
+    }
+    style Loader fill:#4169E1,color:#fff
+
+    class Benchmarker {
+        <<Benchmark Handler>>
+    }
+    style Benchmarker fill:#9370DB,color:#fff
+
+    style BenchmarkerConfig fill:#FFE4E1
+    style BenchmarkerRequests fill:#FFE4E1
+
+    note for LoaderAdapter "1. Detects benchmark:// protocol\n2. Uses Benchmarker to download\n3. Uses Loader with local path"

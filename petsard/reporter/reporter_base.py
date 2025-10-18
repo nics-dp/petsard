@@ -17,6 +17,7 @@ class ReporterMethod(IntEnum):
     SAVE_DATA = 1
     SAVE_REPORT = 2
     SAVE_TIMING = 3
+    SAVE_VALIDATION = 4
 
     @classmethod
     def map(cls, method: str) -> "ReporterMethod":
@@ -36,6 +37,7 @@ class ReporterMethod(IntEnum):
             "SAVE_DATA": cls.SAVE_DATA,
             "SAVE_REPORT": cls.SAVE_REPORT,
             "SAVE_TIMING": cls.SAVE_TIMING,
+            "SAVE_VALIDATION": cls.SAVE_VALIDATION,
         }
 
         try:

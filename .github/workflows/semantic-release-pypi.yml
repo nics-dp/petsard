@@ -67,7 +67,7 @@ jobs:
       # 安裝 uv 工具
       # Install uv tool
       - name: Setup | Install uv
-        uses: astral-sh/setup-uv@v4
+        uses: astral-sh/setup-uv@v7
         with:
           enable-cache: false
 
@@ -75,7 +75,7 @@ jobs:
       # Execute semantic version analysis, automatically determine version and create tags
       - name: Action | Semantic Version Release
         id: release
-        uses: python-semantic-release/python-semantic-release@v10.3.0
+        uses: python-semantic-release/python-semantic-release@v10.4.1
         with:
           github_token: ${{ secrets.MATHEME_JUSTYN_SEMANTIC }}  # 使用你的正確 token 名稱
 
@@ -94,7 +94,18 @@ jobs:
       - name: Publish | Build package with uv
         if: steps.release.outputs.released == 'true'
         run: |
-          echo "Building with version: $(grep '^version = ' pyproject.toml)"
+          # 從標籤中提取版本號
+          # Extract version from tag
+          TAG_VERSION="${{ steps.release.outputs.tag }}"
+          VERSION="${TAG_VERSION#v}"  # 移除 'v' 前綴
+          
+          # 更新 pyproject.toml 中的版本號
+          # Update version in pyproject.toml
+          sed -i "s/^version = .*/version = \"$VERSION\"/" pyproject.toml
+          
+          echo "Building with version: $VERSION (from tag: $TAG_VERSION)"
+          echo "Updated pyproject.toml: $(grep '^version = ' pyproject.toml)"
+          
           # 使用 --no-sources 確保建置時不使用 tool.uv.sources 設定，提升相容性
           # Use --no-sources to ensure build compatibility without tool.uv.sources
           uv build --no-sources
@@ -102,7 +113,7 @@ jobs:
       # 發布套件到 TestPyPI 測試環境（僅限 dev 分支）
       # Publish package to TestPyPI testing environment (dev branch only)
       - name: Publish | Upload package to TestPyPI (dev branch)
-        uses: pypa/gh-action-pypi-publish@v1.12.4
+        uses: pypa/gh-action-pypi-publish@v1.13.0
         if: steps.release.outputs.released == 'true' && github.ref_name == 'dev'
         with:
           repository-url: https://test.pypi.org/legacy/
@@ -113,7 +124,7 @@ jobs:
       # 發布套件到正式 PyPI 環境（僅限 main 分支）
       # Publish package to official PyPI environment (main branch only)
       - name: Publish | Upload package to PyPI (main branch)
-        uses: pypa/gh-action-pypi-publish@v1.12.4
+        uses: pypa/gh-action-pypi-publish@v1.13.0
         if: steps.release.outputs.released == 'true' && github.ref_name == 'main'
         with:
           password: ${{ secrets.PYPI_API_TOKEN }}
@@ -123,7 +134,7 @@ jobs:
       # 上傳構建檔案到 GitHub Releases 作為發布資產
       # Upload built files to GitHub Releases as release assets
       - name: Publish | Upload to GitHub Release Assets
-        uses: python-semantic-release/publish-action@v10.2.0
+        uses: python-semantic-release/publish-action@v10.4.1
         if: steps.release.outputs.released == 'true'
         with:
           github_token: ${{ secrets.WORKFLOW_TOKEN_CLASSICAL }}

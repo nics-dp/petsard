@@ -9,8 +9,8 @@ import pandas as pd
 from petsard.config_base import BaseConfig
 from petsard.exceptions import ConfigError, UncreatedError, UnsupportedMethodError
 from petsard.metadater.metadata import Schema
-from petsard.synthesizer.custom_data import CustomDataSynthesizer
 from petsard.synthesizer.custom_synthesizer import CustomSynthesizer
+from petsard.synthesizer.petsard_gaussian_copula import PetsardGaussianCopulaSynthesizer
 from petsard.synthesizer.sdv import SDVSingleTableSynthesizer
 from petsard.synthesizer.synthesizer_base import BaseSynthesizer
 
@@ -22,9 +22,8 @@ class SynthesizerMap:
 
     DEFAULT: int = 1
     SDV: int = 10
-
-    CUSTOM_DATA: int = 2
     CUSTOM_METHOD: int = 3
+    PETSARD: int = 4
 
     @classmethod
     def map(cls, method: str) -> int:
@@ -102,8 +101,8 @@ class Synthesizer:
     SYNTHESIZER_MAP: dict[int, BaseSynthesizer] = {
         SynthesizerMap.DEFAULT: SDVSingleTableSynthesizer,
         SynthesizerMap.SDV: SDVSingleTableSynthesizer,
-        SynthesizerMap.CUSTOM_DATA: CustomDataSynthesizer,
         SynthesizerMap.CUSTOM_METHOD: CustomSynthesizer,
+        SynthesizerMap.PETSARD: PetsardGaussianCopulaSynthesizer,
     }
 
     def __init__(self, method: str, sample_num_rows: int = None, **kwargs) -> None:
@@ -174,7 +173,8 @@ class Synthesizer:
         sample_num_rows: int | None = self.config.sample_num_rows
 
         # 1. If manual input, use the sample number of rows from the input
-        if self.config.sample_num_rows is not None:
+        # Check both not None and > 0 to differentiate from default value
+        if self.config.sample_num_rows is not None and self.config.sample_num_rows > 0:
             sample_from = "Manual input"
             sample_num_rows = self.config.sample_num_rows
             self._logger.debug(
@@ -204,8 +204,9 @@ class Synthesizer:
             else:
                 self._logger.debug("No row count information found in metadata stats")
 
-        # 3. if sample_from didn't been assign, means no effective metadata been used
-        if self.config.sample_from == "Undefined":
+        # 3. if sample_from is still "Undefined", means no effective configuration was found
+        # Use local variable to check if we've determined a source already
+        if sample_from == "Undefined":
             sample_from = "Source data"
             self._logger.debug(
                 "Using source data as sample source (will be determined during fit)"
@@ -268,7 +269,6 @@ class Synthesizer:
         Args:
             data (pd.DataFrame):
                 The data to be fitted.
-                Only 'CUSTOM_DATA' method doesn't need data to fit.
         """
         if self._impl is None:
             error_msg: str = "Synthesizer not created yet, call create() first"
@@ -276,29 +276,31 @@ class Synthesizer:
             raise UncreatedError(error_msg)
 
         if data is None:
-            # Should only happen for 'CUSTOM_DATA' method
-            if self.config.method_code != SynthesizerMap.CUSTOM_DATA:
-                error_msg: str = (
-                    f"Data must be provided for fitting in {self.config.method}"
-                )
-                self._logger.error(error_msg)
-                raise ConfigError(error_msg)
+            error_msg: str = (
+                f"Data must be provided for fitting in {self.config.method}"
+            )
+            self._logger.error(error_msg)
+            raise ConfigError(error_msg)
 
-            self._logger.info("Fitting synthesizer without data")
-        else:
-            # In other methods, update the sample_num_rows in the synthesizer config
-            self._logger.info(f"Fitting synthesizer with data shape: {data.shape}")
+        # Update the sample_num_rows in the synthesizer config
+        self._logger.info(f"Fitting synthesizer with data shape: {data.shape}")
 
-            if self.config.sample_from == "Source data":
-                old_value: int = self.config.sample_num_rows
-                self.config.update({"sample_num_rows": data.shape[0]})
-                self._logger.debug(
-                    f"Updated sample_num_rows from {old_value} to {data.shape[0]}"
-                )
-
+        if self.config.sample_from == "Source data":
+            old_value: int = self.config.sample_num_rows
+            self.config.update({"sample_num_rows": data.shape[0]})
+            self._logger.debug(
+                f"Updated sample_num_rows from {old_value} to {data.shape[0]}"
+            )
+            # Update implementation config only when using source data
             self._impl.update_config({"sample_num_rows": data.shape[0]})
             self._logger.debug(
                 f"Updated synthesizer config with sample_num_rows={data.shape[0]}"
+            )
+        else:
+            # For manual input or metadata-based sample size, use the configured value
+            self._impl.update_config({"sample_num_rows": self.config.sample_num_rows})
+            self._logger.debug(
+                f"Using configured sample_num_rows={self.config.sample_num_rows}"
             )
 
         time_start: time = time.time()

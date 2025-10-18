@@ -38,14 +38,9 @@ class BaseSynthesizer(ABC):
             )
             self._logger.error(error_msg)
             raise ConfigError(error_msg)
-        if "sample_num_rows" not in config:
-            error_msg: str = (
-                "The 'sample_num_rows' parameter is required for the synthesizer."
-            )
-            self._logger.error(error_msg)
-            raise ConfigError(error_msg)
 
         self.config: dict = config
+        self.training_data_rows: int | None = None  # Store training data size
         self.metadata: Schema = metadata  # Store metadata for subclasses to use
         self._impl: Any = None
 

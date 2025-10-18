@@ -1,0 +1,19 @@
+classDiagram
+    class Status {
+        +list snapshots
+        +list changes
+        +dict results
+        +dict timing_records
+        -bool _completed
+        +__init__()
+        +record_snapshot(module, experiment, metadata) void
+        +record_change(change_type, target, details) void
+        +store_result(exp_key, data, schema) void
+        +record_timing(module, experiment, step, start, end) void
+        +get_result() dict
+        +get_timing() DataFrame
+        +is_completed() bool
+        +get_status_summary() dict
+    }
+    
+    note for Status "State management\nResult storage\nMetadata tracking\nSnapshot system\nExecution history"

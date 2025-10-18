@@ -145,8 +145,20 @@ class FieldConstrainer(BaseConstrainer):
         Returns:
             list[str]: List of unique field names found in the constraint
         """
+        # First, remove string literals (quoted content) to avoid treating them as field names
+        # Replace quoted strings with a placeholder to preserve constraint structure
+        cleaned_constraint = constraint
+
+        # Remove single-quoted strings
+        cleaned_constraint = re.sub(r"'[^']*'", "", cleaned_constraint)
+
+        # Remove double-quoted strings
+        cleaned_constraint = re.sub(r'"[^"]*"', "", cleaned_constraint)
+
         # Remove DATE function calls to avoid treating dates as field names
-        constraint = re.sub(r"DATE\(\d{4}-\d{2}-\d{2}\)", "", constraint)
+        cleaned_constraint = re.sub(
+            r"DATE\(\d{4}-\d{2}-\d{2}\)", "", cleaned_constraint
+        )
 
         # Extract potential field names - looking for words not inside quotes
         # and not immediately next to operators
@@ -156,7 +168,7 @@ class FieldConstrainer(BaseConstrainer):
         # Match field names that can contain letters, numbers, underscores, and hyphens
         # Hyphen placed at the end to avoid unintended range definitions
         field_pattern = r"\b([\w-]+)\s*(?:[=!<>]+|IS(?:\s+NOT)?)\s*|(?:[=!<>]+|IS(?:\s+NOT)?)\s*\b([\w-]+)\b"
-        matches = re.finditer(field_pattern, constraint)
+        matches = re.finditer(field_pattern, cleaned_constraint)
 
         for match in matches:
             if match.group(1):  # Field before operator
@@ -166,7 +178,7 @@ class FieldConstrainer(BaseConstrainer):
 
         # Add fields involved in addition operations
         addition_pattern = r"\b([\w-]+)\s*\+\s*([\w-]+)\b"
-        for match in re.finditer(addition_pattern, constraint):
+        for match in re.finditer(addition_pattern, cleaned_constraint):
             fields.append(match.group(1))
             fields.append(match.group(2))
 
@@ -210,10 +222,10 @@ class FieldConstrainer(BaseConstrainer):
                 )
                 continue
 
-            # Apply the constraint
-            result = result.loc[mask].reset_index(drop=True)
+            # Apply the constraint - keep original index for validation tracking
+            result = result.loc[mask]
 
-        return result.reset_index(drop=True)
+        return result
 
     def _tokenize(self, condition: str) -> list:
         """
@@ -462,7 +474,11 @@ class FieldConstrainer(BaseConstrainer):
         self, tokens: list, df: pd.DataFrame, involved_columns: list[str]
     ) -> tuple[pd.Series, list[str]]:
         """
-        Parse and evaluate expression
+        Parse and evaluate expression with operator precedence:
+        1. Parentheses (highest)
+        2. Comparison operators (>, >=, ==, !=, <, <=, IS, IS NOT)
+        3. Logical AND (&)
+        4. Logical OR (|) (lowest)
 
         Args:
             tokens: List of tokens to parse
@@ -495,7 +511,10 @@ class FieldConstrainer(BaseConstrainer):
 
         parser = Parser(tokens)
 
-        def parse_primary(involved_columns: list[str]) -> tuple[pd.Series, list[str]]:
+        def parse_primary(
+            involved_columns: list[str],
+        ) -> tuple[pd.Series | float | str, list[str]]:
+            """Parse primary expressions: parentheses and values"""
             token = parser.peek()
 
             if token == "(":
@@ -506,10 +525,17 @@ class FieldConstrainer(BaseConstrainer):
                     return result, involved_columns
                 raise ConfigError("Expected closing parenthesis")
 
-            left, involved_columns = self._get_value(
+            # Just return the value
+            value, involved_columns = self._get_value(
                 parser.consume(), df, involved_columns
             )
+            return value, involved_columns
 
+        def parse_relation(involved_columns: list[str]) -> tuple[pd.Series, list[str]]:
+            """Parse comparison/relation expressions (>, >=, ==, !=, <, <=, IS, IS NOT)"""
+            left, involved_columns = parse_primary(involved_columns)
+
+            # Handle IS NOT / IS operators
             if parser.peek() == "IS":
                 parser.consume()
                 is_not = False
@@ -523,27 +549,30 @@ class FieldConstrainer(BaseConstrainer):
                         return ~pd.isna(left), involved_columns
                     return pd.isna(left), involved_columns
 
+            # Handle comparison operators
             if parser.peek() in [">", ">=", "==", "!=", "<", "<="]:
                 op = parser.consume()
-                right, involved_columns = self._get_value(
-                    parser.consume(), df, involved_columns
-                )
+                right, involved_columns = parse_primary(involved_columns)
                 return self._process_comparison(left, op, right, df), involved_columns
 
+            # If no comparison operator, convert value to boolean
             if not isinstance(left, pd.Series):
-                return pd.Series(False, index=df.index), involved_columns
+                return pd.Series(bool(left), index=df.index), involved_columns
 
             return left.notna() & (left != 0), involved_columns
 
         def parse_and(involved_columns: list[str]) -> tuple[pd.Series, list[str]]:
-            result, involved_columns = parse_primary(involved_columns)
+            """Parse AND expressions"""
+            result, involved_columns = parse_relation(involved_columns)
+
             while parser.peek() == "&":
                 parser.consume()
-                right, involved_columns = parse_primary(involved_columns)
+                right, involved_columns = parse_relation(involved_columns)
                 result = result & right
             return result, involved_columns
 
         def parse_or(involved_columns: list[str]) -> tuple[pd.Series, list[str]]:
+            """Parse OR expressions (lowest precedence)"""
             result, involved_columns = parse_and(involved_columns)
             while parser.peek() == "|":
                 parser.consume()

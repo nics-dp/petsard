@@ -11,6 +11,7 @@ from petsard.adapter import BaseAdapter
 from petsard.exceptions import SnapshotError, StatusError, TimingError, UnexecutedError
 from petsard.metadater.metadata import Metadata, Schema
 from petsard.metadater.metadater import SchemaMetadater
+from petsard.metadater.schema_inferencer import SchemaInferencer
 from petsard.processor import Processor
 from petsard.synthesizer import Synthesizer
 
@@ -153,6 +154,14 @@ class Status:
         self.status: dict = {}
         self.metadata: dict[str, Schema] = {}
 
+        # Schema 推論器 - 用於推論 pipeline 各階段的 Schema
+        self.schema_inferencer = SchemaInferencer()
+        self.inferred_schemas: dict[str, Schema] = {}  # 儲存推論出的 Schema
+
+        # Preprocessor input metadata 記憶 - 用於 Postprocessor 的多對一轉換還原
+        # 儲存 Preprocessor 的輸入 Schema，以便 Postprocessor 知道原始的 dtype
+        self.preprocessor_input_schema: Schema | None = None
+
         # 優化的快照功能 - 使用 deque 限制大小
         self.max_snapshots = max_snapshots
         self.max_timings = max_timings
@@ -173,6 +182,9 @@ class Status:
             self.exist_train_indices: list[set] = []
         if "Reporter" in self.sequence:
             self.report: dict = {}
+
+        # 驗證結果儲存 - 用於 Constrainer validate 模式
+        self._validation_results: dict[str, dict] = {}
 
         # 設置 logging handler 來捕獲時間資訊
         self._timing_handler = TimingLogHandler(self)
@@ -517,6 +529,26 @@ class Status:
         if module in ["Loader", "Splitter", "Preprocessor"]:
             new_metadata = operator.get_metadata()
 
+            # CRITICAL: 對於 Preprocessor，記憶其 input schema 供 Postprocessor 使用
+            # 這解決了多對一轉換（如 int64/float64 → float64）的可逆性問題
+            if module == "Preprocessor":
+                # 儲存 Preprocessor 的輸入 Schema（來自 Loader 或 Splitter）
+                pre_module = self.get_pre_module("Preprocessor")
+                if pre_module and pre_module in self.metadata:
+                    self.preprocessor_input_schema = self.metadata[pre_module]
+                    self._logger.info(
+                        f"記憶 Preprocessor 輸入 Schema（來自 {pre_module}）"
+                    )
+
+                # 如果有推論的 Schema，使用推論的而非實際的
+                # 這確保了 Synthesizer 等後續模組能獲得正確的轉換後 Schema
+                if module in self.inferred_schemas:
+                    inferred_metadata = self.inferred_schemas[module]
+                    self._logger.info(
+                        f"使用推論的 Preprocessor Schema（{len(inferred_metadata.attributes)} 個欄位）"
+                    )
+                    new_metadata = inferred_metadata
+
             # 使用 SchemaMetadater.diff 追蹤變更
             if metadata_before is not None and hasattr(operator, "get_data"):
                 # 計算差異
@@ -561,6 +593,13 @@ class Status:
         if module == "Splitter" and hasattr(operator, "get_train_indices"):
             train_indices = operator.get_train_indices()
             self.update_exist_train_indices(train_indices)
+
+        # Constrainer 處理 - 儲存驗證結果
+        if module == "Constrainer" and hasattr(operator, "get_validation_result"):
+            validation_result = operator.get_validation_result()
+            if validation_result is not None:
+                self.put_validation_result(module, validation_result)
+                self._logger.info(f"已儲存 {module}[{expt}] 的驗證結果")
 
         # 建立執行快照
         metadata_after = self.metadata.get(module)
@@ -657,6 +696,18 @@ class Status:
             raise UnexecutedError
         return self.metadata[module]
 
+    def get_preprocessor_input_schema(self) -> Schema | None:
+        """
+        取得 Preprocessor 的輸入 Schema
+
+        這用於 Postprocessor 的多對一轉換還原，
+        例如 int64 → scaler → float64 → inverse → int64
+
+        Returns:
+            Preprocessor 的輸入 Schema，如果不存在則返回 None
+        """
+        return self.preprocessor_input_schema
+
     def get_synthesizer(self) -> Synthesizer:
         """取得合成器實例"""
         if "Synthesizer" in self.status:
@@ -676,6 +727,46 @@ class Status:
         if not hasattr(self, "report"):
             raise UnexecutedError
         return self.report
+
+    def put_validation_result(self, module: str, validation_result: dict) -> None:
+        """
+        儲存 Constrainer 的驗證結果
+
+        Args:
+            module: 模組名稱（通常是 "Constrainer"）
+            validation_result: 驗證結果字典，包含:
+                - total_rows (int): 總資料筆數
+                - passed_rows (int): 通過所有條件的資料筆數
+                - failed_rows (int): 未通過條件的資料筆數
+                - pass_rate (float): 通過率 (0.0 到 1.0)
+                - is_fully_compliant (bool): 是否百分百符合
+                - constraint_violations (dict): 各條件的違規統計
+                - violation_details (pd.DataFrame, optional): 違規記錄的詳細資訊
+        """
+        if not hasattr(self, "_validation_results"):
+            self._validation_results = {}
+
+        self._validation_results[module] = validation_result
+        self._logger.debug(f"儲存驗證結果: {module}")
+
+    def get_validation_result(self, module: str = None) -> dict | None:
+        """
+        取得 Constrainer 的驗證結果
+
+        Args:
+            module: 模組名稱，如果為 None 則返回所有驗證結果
+
+        Returns:
+            dict: 驗證結果字典，如果不存在則返回 None
+        """
+        if not hasattr(self, "_validation_results"):
+            return None
+
+        if module is None:
+            # 返回所有驗證結果
+            return self._validation_results.copy() if self._validation_results else None
+
+        return self._validation_results.get(module)
 
     # === 新增的快照和變更追蹤方法 ===
 
@@ -861,3 +952,37 @@ class Status:
         ]
 
         return pd.DataFrame(data)
+
+    def get_data_by_module(self, modules: str | list[str]) -> dict[str, pd.DataFrame]:
+        """
+        根據模組名稱獲取資料
+        專為 Describer 和 Reporter 設計，只使用模組名稱
+
+        Args:
+            modules: 模組名稱或名稱列表
+                - 'Loader', 'Splitter', 'Preprocessor', 'Synthesizer', 'Postprocessor', 'Constrainer'
+                - 'Evaluator', 'Describer' 等
+
+        Returns:
+            dict[str, pd.DataFrame]: key 為模組名稱，value 為資料
+        """
+        if isinstance(modules, str):
+            modules = [modules]
+
+        data_sources = {}
+
+        for module_name in modules:
+            if module_name not in self.status:
+                continue
+
+            result = self.get_result(module_name)
+
+            if isinstance(result, pd.DataFrame):
+                data_sources[module_name] = result
+            elif isinstance(result, dict):
+                # 如果是字典（如 Splitter 的結果），展開為 module_key 格式
+                for key, value in result.items():
+                    if isinstance(value, pd.DataFrame):
+                        data_sources[f"{module_name}_{key}"] = value
+
+        return data_sources

@@ -1,3 +1,5 @@
+import sys
+
 import pandas as pd
 
 from petsard.evaluator.evaluator_base import BaseEvaluator
@@ -46,11 +48,14 @@ class CustomEvaluator(BaseEvaluator):
         evaluator_class: callable = None
 
         # Use core function for loading external modules
+        # Pass sys.path as search_paths to support notebook environments
+        # This allows finding modules in the same directory as the notebook
         _, evaluator_class = load_external_module(
             module_path=self.config["module_path"],
             class_name=self.config["class_name"],
             logger=self._logger,
             required_methods=self.REQUIRED_METHODS,
+            search_paths=sys.path,  # Include Python path for module search
         )
 
         self.REQUIRED_INPUT_KEYS: list[str] = evaluator_class.REQUIRED_INPUT_KEYS

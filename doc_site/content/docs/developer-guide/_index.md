@@ -1,9 +1,9 @@
 ---
 title: Developer Guide
 type: docs
-weight: 80
+weight: 1400
 prev: docs/api
-next: docs
+next: docs/experimental-new-format
 sidebar:
   open: false
 ---
@@ -17,27 +17,6 @@ sidebar:
 ## Data Loading
 - [Benchmark Dataset Maintenance]({{< ref "docs/developer-guide/benchmark-datasets" >}})
   - Maintaining and extending benchmark datasets
-
-## Data Generating
-
-## Data Evaluating
-- [Anonymeter Privacy Risk Assessment]({{< ref "docs/developer-guide/anonymeter" >}})
-  - European standards for privacy risk assessment
-  - Three dimensions of privacy risk measurement
-- [mpUCCs Experimental Feature]({{< ref "docs/developer-guide/mpuccs" >}})
-  - Advanced singling-out risk assessment
-  - Maximal partial unique column combinations theory
-
-## Configuration and Reporting
-- [Logging Configuration]({{< ref "docs/developer-guide/logging-configuration" >}})
-  - Setting log levels and output destinations
-  - Customizing log formats and file locations
-- [Experiment Names in Reporter]({{< ref "docs/developer-guide/experiment-name-in-reporter" >}})
-  - Experiment naming conventions
-  - Managing experiment configurations
-- [Test Coverage]({{< ref "docs/developer-guide/test-coverage" >}})
-  - Test organization and structure
-  - Detailed test case documentation
 
 ## Development Environment
 - [Docker Development]({{< ref "docs/developer-guide/docker-development" >}})

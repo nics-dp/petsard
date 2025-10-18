@@ -1,0 +1,11 @@
+---
+Splitter:
+  external_split:
+    method: custom_data
+    filepath:
+      ori: benchmark://adult-income_ori         # Training set
+      control: benchmark://adult-income_control # Validation set
+    schema:
+      ori: benchmark://adult-income_schema
+      control: benchmark://adult-income_schema
+...

@@ -18,11 +18,11 @@ next: docs/get-started
 
 ## 版本紀錄
 
-- [Milestone](https://github.com/nics-tw/PETsARD/releases/latest)
+- [Milestone](https://github.com/nics-dp/PETsARD/releases/latest)
   - 里程碑文件包含了 `PETsARD` 最新版本的詳細資訊。
-- [Release Note](https://github.com/nics-tw/petsard/releases)
+- [Release Note](https://github.com/nics-dp/petsard/releases)
   - 發佈通知提供 `PETsARD` 每個版本的變更內容。
-- [CHANGELOG.md](https://github.com/nics-tw/petsard/blob/main/CHANGELOG.md)
+- [CHANGELOG.md](https://github.com/nics-dp/petsard/blob/main/CHANGELOG.md)
   - 更新日誌提供 `PETsARD` 隨時間演進的所有變更。
 
 ## 開源

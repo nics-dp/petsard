@@ -191,7 +191,7 @@ INCLUDE_JUPYTER=true/false
    docker run -it -v $(pwd):/app/data --entrypoint /opt/venv/bin/python3 petsard:jupyter
    
    # Test PETsARD functionality inside container
-   # python -m petsard.executor demo/tutorial/use-cases/data-constraining.yaml
+   # python -m petsard.executor demo/tutorial/default-synthesis-default-evaluation.zh-tw.yaml
    ```
 
 3. **Test Both Build Variants**
@@ -252,7 +252,7 @@ docker run --rm \
   -v $(pwd):/workspace \
   -w /workspace \
   petsard:latest \
-  python -m petsard.executor demo/tutorial/use-cases/data-constraining.yaml
+  python -m petsard.executor demo/tutorial/default-synthesis-default-evaluation.zh-tw.yaml
 
 # Test Jupyter variant
 docker run --rm \
@@ -335,8 +335,8 @@ workflow_run:
 ### Registry Publishing
 
 Images are published to GitHub Container Registry:
-- `ghcr.io/nics-tw/petsard:latest`
-- `ghcr.io/nics-tw/petsard:v1.4.0`
+- `ghcr.io/nics-dp/petsard:latest`
+- `ghcr.io/nics-dp/petsard:v1.4.0`
 
 ## Debugging Issues
 

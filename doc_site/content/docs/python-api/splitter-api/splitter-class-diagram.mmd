@@ -1,0 +1,28 @@
+classDiagram
+    class Splitter {
+        -config: dict
+        +__init__(num_samples, train_split_ratio, random_state, max_overlap_ratio, max_attempts)
+        +split(data, metadata, exist_train_indices) tuple[dict, dict, list[set]]
+        +get_train_indices() list[set]
+        -_bootstrapping(index, exist_train_indices) dict
+        -_check_overlap_acceptable(new_train_sample, existing_train_sets) bool
+        -_update_metadata_with_split_info(metadata, train_rows, validation_rows) Schema
+    }
+
+    class Schema {
+        +id: str
+        +attributes: dict
+        +description: str
+        +stats: TableStats
+    }
+
+    class DataFrame {
+        <<pandas>>
+        +index: Index
+        +columns: Index
+        +iloc: IndexingMixin
+        +reset_index()
+    }
+
+    Splitter ..> Schema : uses
+    Splitter ..> DataFrame : uses

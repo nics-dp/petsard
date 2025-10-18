@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import logging
-import re
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -10,12 +9,10 @@ import yaml
 
 from petsard.config_base import BaseConfig
 from petsard.exceptions import (
-    BenchmarkDatasetsError,
     ConfigError,
     UnableToFollowMetadataError,
     UnsupportedMethodError,
 )
-from petsard.loader.benchmarker import BenchmarkerConfig, BenchmarkerRequests
 from petsard.metadater import Attribute, Schema, SchemaMetadater
 
 
@@ -54,11 +51,9 @@ class LoaderConfig(BaseConfig):
 
     Attributes:
         _logger (logging.Logger): The logger object.
-        DEFAULT_METHOD_FILEPATH (str): The default method filepath.
         filepath (str): The fullpath of dataset.
-        method (str): The method of Loader.
         column_types (dict): The dictionary of column types and their corresponding column names.
-        header_names (list): Specifies a list of headers for the data without header.
+        header_names (list): **DEPRECATED in v2.0.0 - will be removed** Specifies a list of headers for the data without header.
         na_values (str | list | dict): Extra string to recognized as NA/NaN.
         schema (Schema): Schema configuration object with field definitions and global parameters.
         schema_path (str): The path to schema file if loaded from YAML file.
@@ -67,20 +62,19 @@ class LoaderConfig(BaseConfig):
         file_name (str): The file name of the file path.
         file_ext (str): The file extension of the file path.
         file_ext_code (int): The file extension code.
-        benchmarker_config (BenchmarkerConfig): Optional benchmarker configuration.
     """
 
-    DEFAULT_METHOD_FILEPATH: str = "benchmark://adult-income"
-
     filepath: str | None = None
-    method: str | None = None
     column_types: dict[str, list[str]] | None = (
         None  # TODO: Deprecated in v2.0.0 - will be removed
     )
-    header_names: list[str] | None = None
+    header_names: list[str] | None = (
+        None  # TODO: Deprecated in v2.0.0 - will be removed
+    )
     na_values: str | list[str] | dict[str, str] | None = (
         None  # TODO: Deprecated in v2.0.0 - will be removed
     )
+    nrows: int | None = None  # Number of rows to read for quick testing
     schema: Schema | None = None
     schema_path: str | None = None  # 記錄 schema 來源路徑（如果從檔案載入）
 
@@ -91,51 +85,18 @@ class LoaderConfig(BaseConfig):
     file_ext: str | None = None
     file_ext_code: int | None = None
 
-    # Benchmarker configuration
-    benchmarker_config: BenchmarkerConfig | None = None
-
     def __post_init__(self):
         super().__post_init__()
         self._logger.debug("Initializing LoaderConfig")
         error_msg: str = ""
 
-        # 1. set default method if method = 'default'
-        if self.filepath is None and self.method is None:
-            error_msg = "filepath or method must be specified"
+        # 1. validate filepath
+        if self.filepath is None:
+            error_msg = "filepath must be specified"
             self._logger.error(error_msg)
             raise ConfigError(error_msg)
-        elif self.method:
-            if self.method.lower() == "default":
-                # default will use adult-income
-                self._logger.info("Using default method: adult-income")
-                self.filepath = self.DEFAULT_METHOD_FILEPATH
-            else:
-                error_msg = f"Unsupported method: {self.method}"
-                self._logger.error(error_msg)
-                raise UnsupportedMethodError(error_msg)
 
-        # 2. check if filepath is specified as a benchmark
-        if self.filepath.lower().startswith("benchmark://"):
-            self._logger.info(f"Detected benchmark filepath: {self.filepath}")
-            benchmark_name = re.sub(
-                r"^benchmark://", "", self.filepath, flags=re.IGNORECASE
-            ).lower()
-            self._logger.debug(f"Extracted benchmark name: {benchmark_name}")
-
-            # Create BenchmarkerConfig
-            self.benchmarker_config = BenchmarkerConfig(
-                benchmark_name=benchmark_name, filepath_raw=self.filepath
-            )
-
-            # Update filepath to local benchmark path
-            self.filepath = Path("benchmark").joinpath(
-                self.benchmarker_config.benchmark_filename
-            )
-            self._logger.info(
-                f"Configured benchmark dataset: {benchmark_name}, filepath: {self.filepath}"
-            )
-
-        # 3. handle filepath
+        # 2. handle filepath
         filepath_path: Path = Path(self.filepath)
         self.dir_name = str(filepath_path.parent)
         self.base_name = filepath_path.name
@@ -198,30 +159,27 @@ class Loader:
     The Loader class is responsible for creating and configuring a data loader,
     as well as retrieving and processing data from the specified sources.
 
-    The Loader is designed to be passive and focuses on four core functions:
-    1. Benchmark handling: Download benchmark datasets when needed
-    2. Schema processing: Pass schema parameters to metadater for validation
-    3. Legacy compatibility: Update legacy column_types and na_values to schema
-    4. Data reading: Use pandas reader module to load data with proper configuration
+    The Loader is designed to be passive and focuses on three core functions:
+    1. Schema processing: Pass schema parameters to metadater for validation
+    2. Legacy compatibility: Update legacy column_types and na_values to schema
+    3. Data reading: Use pandas reader module to load data with proper configuration
     """
 
     def __init__(
         self,
         filepath: str = None,
-        method: str = None,
         column_types: dict[str, list[str]] | None = None,  # TODO: Deprecated in v2.0.0
-        header_names: list[str] | None = None,
+        header_names: list[str] | None = None,  # TODO: Deprecated in v2.0.0
         na_values: str
         | list[str]
         | dict[str, str]
         | None = None,  # TODO: Deprecated in v2.0.0
+        nrows: int | None = None,
         schema: Schema | dict | str | None = None,
     ):
         """
         Args:
-            filepath (str, optional): The fullpath of dataset.
-            method (str, optional): The method of Loader.
-                Default is None, indicating only filepath is specified.
+            filepath (str): The fullpath of dataset.
             column_types (dict ,optional): **DEPRECATED in v2.0.0 - will be removed**
                 The dictionary of column types and their corresponding column names,
                 formatted as {type: [colname]}
@@ -229,7 +187,7 @@ class Loader:
                 - 'category': The column(s) will be treated as categorical.
                 - 'datetime': The column(s) will be treated as datetime.
                 Default is None, indicating no custom column types will be applied.
-            header_names (list ,optional):
+            header_names (list ,optional): **DEPRECATED in v2.0.0 - will be removed**
                 Specifies a list of headers for the data without header.
                 Default is None, indicating no custom headers will be applied.
             na_values (str | list | dict ,optional): **DEPRECATED in v2.0.0 - will be removed**
@@ -238,6 +196,10 @@ class Loader:
                 Format as {colname: na_values}.
                 Default is None, means no extra.
                 Check pandas document for Default NA string list.
+            nrows (int, optional): Number of rows to read from the file.
+                Useful for quickly testing with a subset of data to reduce memory usage.
+                Similar to pandas.read_csv's nrows parameter.
+                Default is None, which reads all rows.
             schema (Schema | dict | str, optional): Schema configuration.
                 Can be one of:
                 - Schema object: Direct schema configuration
@@ -254,7 +216,7 @@ class Loader:
         )
         self._logger.info("Initializing Loader")
         self._logger.debug(
-            f"Loader parameters - filepath: {filepath}, method: {method}, column_types: {column_types}"
+            f"Loader parameters - filepath: {filepath}, column_types: {column_types}"
         )
 
         # Process schema parameter - handle different input types
@@ -262,10 +224,10 @@ class Loader:
 
         self.config: LoaderConfig = LoaderConfig(
             filepath=filepath,
-            method=method,
             column_types=column_types,
             header_names=header_names,
             na_values=na_values,
+            nrows=nrows,
             schema=processed_schema,
             schema_path=schema_path,
         )
@@ -349,11 +311,10 @@ class Loader:
         """
         Load data from the specified file path.
 
-        This method implements four core functions:
-        1. Benchmark handling: Download benchmark datasets when needed
-        2. Schema processing: Merge legacy parameters into schema and validate
-        3. Data reading: Use pandas reader module for file loading
-        4. Metadater integration: Pass schema to metadater for processing
+        This method implements three core functions:
+        1. Schema processing: Merge legacy parameters into schema and validate
+        2. Data reading: Use pandas reader module for file loading
+        3. Metadater integration: Pass schema to metadater for processing
 
         Returns:
             data (pd.DataFrame): Data been loaded
@@ -361,36 +322,17 @@ class Loader:
         """
         self._logger.info(f"Loading data from {self.config.filepath}")
 
-        # 1: Benchmark handling
-        if self.config.benchmarker_config:
-            self._handle_benchmark_download()
-
-        # 2: Schema processing - merge legacy parameters into schema
+        # 1: Schema processing - merge legacy parameters into schema
         merged_schema_config = self._merge_legacy_to_schema()
 
-        # 3: Data reading using pandas reader module
+        # 2: Data reading using pandas reader module
         data = self._read_data_with_pandas_reader(merged_schema_config)
 
-        # 4: Pass schema to metadater for validation and processing
+        # 3: Pass schema to metadater for validation and processing
         schema_metadata = self._process_with_metadater(data, merged_schema_config)
 
         self._logger.info("Data loading completed successfully")
         return data, schema_metadata
-
-    def _handle_benchmark_download(self):
-        """Handle benchmark dataset download."""
-        self._logger.info(
-            f"Downloading benchmark dataset: {self.config.benchmarker_config.benchmark_name}"
-        )
-        try:
-            BenchmarkerRequests(
-                self.config.benchmarker_config.get_benchmarker_config()
-            ).download()
-            self._logger.debug("Benchmark dataset downloaded successfully")
-        except Exception as e:
-            error_msg = f"Failed to download benchmark dataset: {str(e)}"
-            self._logger.error(error_msg)
-            raise BenchmarkDatasetsError(error_msg) from e
 
     def _merge_legacy_to_schema(self) -> Schema:
         """
@@ -490,6 +432,11 @@ class Loader:
             "header_names": self.config.header_names,
         }
 
+        # Add nrows parameter if specified
+        if self.config.nrows is not None:
+            config["nrows"] = self.config.nrows
+            self._logger.info(f"Reading only first {self.config.nrows} rows")
+
         # Handle legacy na_values (takes precedence over schema na_values for backward compatibility)
         if self.config.na_values is not None:
             config["na_values"] = self.config.na_values
@@ -575,14 +522,200 @@ class Loader:
                 self._logger.error(error_msg)
                 raise UnableToFollowMetadataError(error_msg) from e
 
-        # 對齊資料與 schema
+        # Validate data and schema consistency and handle differences
+        if schema and schema.attributes:
+            # Compare schema with data to find differences
+            diff_result = SchemaMetadater.diff(schema, data)
+
+            # Log differences but don't raise errors, let align handle it
+            if diff_result["missing_columns"]:
+                self._logger.warning(
+                    f"Schema defines columns not in data (will be added with default values): "
+                    f"{diff_result['missing_columns']}"
+                )
+
+            if diff_result["extra_columns"]:
+                self._logger.info(
+                    f"Data contains columns not in schema (will be added to schema): "
+                    f"{diff_result['extra_columns']}"
+                )
+
+                # Create Attributes for extra columns and add to schema
+                for col_name in diff_result["extra_columns"]:
+                    if col_name in data.columns:
+                        # Infer attribute from data
+                        from petsard.metadater import AttributeMetadater
+
+                        new_attr = AttributeMetadater.from_data(
+                            data[col_name], enable_stats=schema.enable_stats
+                        )
+                        # Add to schema
+                        schema.attributes[col_name] = new_attr
+                        self._logger.debug(f"Added attribute '{col_name}' to schema")
+
+        # Align data with schema
         try:
-            aligned_data = SchemaMetadater.align(schema, data)
-            # 更新原始 data 參考
+            # Set alignment strategy
+            align_strategy = {
+                "add_missing_columns": True,  # Add default values for columns defined in schema but missing in data
+                "remove_extra_columns": False,  # Keep extra columns in data
+                "reorder_columns": True,  # Reorder columns
+            }
+
+            aligned_data = SchemaMetadater.align(schema, data, align_strategy)
+            # Update original data reference
             data.update(aligned_data)
             self._logger.debug("Data aligned with schema successfully")
         except Exception as e:
-            self._logger.warning(f"Failed to align data with schema: {str(e)}")
-            # 對齊失敗時繼續執行，但記錄警告
+            # Log warning but continue with original data
+            warning_msg = f"Failed to align data with schema: {str(e)}. Continuing with original data."
+            self._logger.warning(warning_msg)
+            # Continue with original data if alignment fails
 
         return schema
+
+
+# ============================================================================
+# Tests for nrows parameter
+# ============================================================================
+
+if __name__ == "__main__":
+    """
+    Test script for Loader nrows parameter
+    測試 Loader nrows 參數功能
+    """
+    import os
+    import sys
+
+    def test_nrows_basic():
+        """Test basic nrows functionality with CSV file"""
+        print("=" * 60)
+        print("Test 1: Basic nrows functionality")
+        print("=" * 60)
+
+        # Create a test CSV file with 100 rows
+        test_data = pd.DataFrame(
+            {
+                "id": range(1, 101),
+                "name": [f"Name_{i}" for i in range(1, 101)],
+                "value": range(100, 200),
+            }
+        )
+        test_file = "test_data.csv"
+        test_data.to_csv(test_file, index=False)
+        print(f"✓ Created test file with {len(test_data)} rows")
+
+        # Test 1: Load with nrows=10
+        loader = Loader(test_file, nrows=10)
+        data, schema = loader.load()
+
+        assert len(data) == 10, f"Expected 10 rows, got {len(data)}"
+        print(f"✓ Successfully loaded {len(data)} rows with nrows=10")
+        print(f"  Data shape: {data.shape}")
+        print(f"  Schema attributes: {len(schema.attributes)}")
+
+        # Test 2: Load without nrows (full data)
+        loader_full = Loader(test_file)
+        data_full, schema_full = loader_full.load()
+
+        assert len(data_full) == 100, f"Expected 100 rows, got {len(data_full)}"
+        print(f"✓ Successfully loaded {len(data_full)} rows without nrows")
+
+        # Cleanup
+        os.remove(test_file)
+        print("✓ Test file cleaned up")
+        print("\n✅ Test 1 PASSED\n")
+
+    def test_nrows_with_schema():
+        """Test nrows with schema configuration"""
+        print("=" * 60)
+        print("Test 2: nrows with schema")
+        print("=" * 60)
+
+        # Create test data
+        test_data = pd.DataFrame(
+            {
+                "age": range(18, 68),
+                "income": range(30000, 80000, 1000),
+                "category": ["A"] * 25 + ["B"] * 25,
+            }
+        )
+        test_file = "test_schema_data.csv"
+        test_data.to_csv(test_file, index=False)
+        print(f"✓ Created test file with {len(test_data)} rows")
+
+        # Define schema
+        schema_dict = {
+            "id": "test_schema",
+            "name": "Test Schema",
+            "attributes": {
+                "age": {"type": "Int64"},
+                "income": {"type": "Int64"},
+                "category": {"type": "category"},
+            },
+        }
+
+        # Load with nrows and schema
+        loader = Loader(test_file, nrows=15, schema=schema_dict)
+        data, schema = loader.load()
+
+        assert len(data) == 15, f"Expected 15 rows, got {len(data)}"
+        print(f"✓ Successfully loaded {len(data)} rows with nrows=15 and schema")
+        print(f"  Data shape: {data.shape}")
+        print(f"  Schema ID: {schema.id}")
+
+        # Verify schema was applied correctly
+        print(f"  Data types: {dict(data.dtypes)}")
+
+        # Cleanup
+        os.remove(test_file)
+        print("✓ Test file cleaned up")
+        print("\n✅ Test 2 PASSED\n")
+
+    def test_nrows_memory_efficiency():
+        """Test that nrows actually reduces memory usage"""
+        print("=" * 60)
+        print("Test 3: Memory efficiency with nrows")
+        print("=" * 60)
+
+        # Create a larger test file
+        test_data = pd.DataFrame({f"col_{i}": range(10000) for i in range(10)})
+        test_file = "test_large_data.csv"
+        test_data.to_csv(test_file, index=False)
+        print(
+            f"✓ Created large test file with {len(test_data)} rows and {len(test_data.columns)} columns"
+        )
+
+        # Load with nrows
+        loader_small = Loader(test_file, nrows=100)
+        data_small, _ = loader_small.load()
+        memory_small = sys.getsizeof(data_small)
+
+        print(f"✓ Loaded {len(data_small)} rows")
+        print(f"  Memory usage (estimated): {memory_small:,} bytes")
+
+        # Cleanup
+        os.remove(test_file)
+        print("✓ Test file cleaned up")
+        print("\n✅ Test 3 PASSED\n")
+
+    # Run tests
+    print("\n" + "=" * 60)
+    print("Testing Loader nrows Parameter")
+    print("測試 Loader nrows 參數")
+    print("=" * 60 + "\n")
+
+    try:
+        test_nrows_basic()
+        test_nrows_with_schema()
+        test_nrows_memory_efficiency()
+
+        print("=" * 60)
+        print("✅ ALL TESTS PASSED")
+        print("✅ 所有測試通過")
+        print("=" * 60)
+    except Exception as e:
+        print("\n" + "=" * 60)
+        print(f"❌ TEST FAILED: {str(e)}")
+        print("=" * 60)
+        raise

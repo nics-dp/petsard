@@ -39,7 +39,7 @@ jobs:
           fetch-depth: 0 # fetch all history for .GitInfo and .Lastmod
           submodules: recursive
       - name: Setup Go
-        uses: actions/setup-go@v5
+        uses: actions/setup-go@v6
         with:
           go-version-file: ./doc_site/go.mod
           cache-dependency-path: ./doc_site/go.sum
@@ -59,7 +59,7 @@ jobs:
           cd doc_site && rm go.mod
           hugo --gc --minify --baseURL "${{ steps.pages.outputs.base_url }}/"
       - name: Upload artifact
-        uses: actions/upload-pages-artifact@v3
+        uses: actions/upload-pages-artifact@v4
         with:
           path: ./doc_site/public
 

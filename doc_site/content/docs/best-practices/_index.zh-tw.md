@@ -1,8 +1,8 @@
 ---
 title: 最佳實踐
 type: docs
-weight: 40
-prev: docs/tutorial
+weight: 1040
+prev: docs/getting-started
 next: docs/api
 sidebar:
   open: false

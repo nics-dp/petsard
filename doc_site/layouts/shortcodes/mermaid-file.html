@@ -1,0 +1,5 @@
+{{ $file := .Get "file" }}
+{{ if $file }}
+  {{ $content := readFile $file }}
+  <pre class="mermaid">{{ $content }}</pre>
+{{ end }}

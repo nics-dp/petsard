@@ -171,6 +171,20 @@ Tests for the main Loader functionality:
 - `test_custom_na_values`: Tests handling of custom NA values in data loading
 - `test_custom_header_names`: Tests loading data with custom column headers
 
+#### Data-Schema Reconciliation Tests
+
+Tests for automatic reconciliation between data columns and schema definitions:
+
+- `test_data_schema_reconciliation_extra_columns`: Tests handling of extra columns in data not defined in schema
+  - Extra data columns are automatically added to schema with inferred types
+  - Schema is updated dynamically to accommodate actual data structure
+  - Ensures no data loss when data has additional columns
+  
+- `test_data_schema_reconciliation_missing_columns`: Tests handling of missing columns defined in schema but not in data
+  - Missing columns are automatically added to data with NA values
+  - Data structure is aligned with schema requirements
+  - Ensures schema completeness without breaking data processing
+
 #### Logical Type System Testing
 
 Tests for the comprehensive logical type inference and validation system:
@@ -342,20 +356,44 @@ python -c "from tests.loader.test_loader import run_stress_demo; run_stress_demo
 
 > tests/loader/test_benchmarker.py
 
-Tests for benchmark dataset handling:
+Tests for benchmark dataset handling and error handling:
+
+#### Core Functionality Tests
 
 - `test_basebenchmarker_init`: Verifies BaseBenchmarker cannot be instantiated as it's an abstract class
 - `test_benchmarker_requests_init`: Tests BenchmarkerRequests initialization with mocked filesystem operations
 - `test_download_success`: Tests successful download scenario with:
   - Mocked HTTP requests
   - Mocked file operations
-  - SHA256 verification checks
-- `test_verify_file_mismatch`: Tests SHA256 verification failure handling using mocked file content
+  - SHA256 verification logging
 - `test_download_request_fails`: Tests handling of download request failures (HTTP 404, etc.)
 - `test_file_already_exists_hash_match`: Tests scenario where file already exists with matching hash, confirming local file is used
-- `test_verify_file_remove_fails`: Tests error handling when file removal fails during verification
 - `test_init_file_exists_hash_match`: Tests initialization logic when file exists with matching hash
-- `test_file_content_change`: Tests hash verification mechanism after file content changes, ensuring changes are properly detected
+
+#### SHA-256 Verification Tests (Updated Sept 2025)
+
+- `test_verify_file_mismatch_logs_warning`: Tests SHA256 verification failure logs warning instead of raising error:
+  - Verifies warning message includes expected and actual SHA-256 values
+  - Confirms execution continues without interruption
+- `test_verify_file_match`: Tests SHA256 verification success logging
+- `test_file_content_change`: Tests hash verification mechanism after file content changes:
+  - Properly detects changes and logs warning
+  - Allows using modified local files
+
+#### LoaderAdapter Integration Tests
+
+- `test_loaderadapter_benchmark_download_success`: Tests LoaderAdapter successful benchmark file download
+- `test_loaderadapter_benchmark_download_failure`: Tests LoaderAdapter handling of benchmark download failure:
+  - Verifies error message includes detailed failure reason
+  - Confirms BenchmarkDatasetsError is raised
+- `test_loaderadapter_schema_benchmark_download_failure`: Tests LoaderAdapter handling of schema benchmark download failure
+- `test_loaderadapter_benchmark_protocol_case_insensitive`: Tests benchmark:// protocol case insensitivity
+- `test_loaderadapter_unsupported_benchmark`: Tests unsupported benchmark dataset error handling
+- `test_loaderadapter_sha256_mismatch_warning`: Tests SHA-256 mismatch warning handling:
+  - Confirms execution continues
+  - Verifies warning is properly logged
+
+> **Important Update**: Starting September 2025, SHA-256 verification failures now log warnings instead of raising errors, allowing developers to use modified local benchmark files for testing. This change improves development experience while still maintaining integrity check information logging.
 
 #### `BenchmarkerConfig`
 
@@ -614,6 +652,133 @@ Tests for metadata handling and type inference:
   - Boolean types
   - Invalid types
 
+### `Adapter Layer`
+
+> tests/test_adapter.py
+
+Tests for all Adapter layer functionality, including adapter implementations for various operators:
+
+#### BaseAdapter Tests
+
+**Base Class Tests (6 tests):**
+- `test_init_with_valid_config`: Tests initialization with valid configuration
+- `test_init_with_none_config`: Tests that None configuration raises ConfigError
+- `test_run_template_method`: Tests run template method with timing logging
+- `test_log_and_raise_config_error_decorator`: Tests configuration error decorator
+- `test_not_implemented_methods`: Tests that unimplemented methods raise NotImplementedError
+- `test_run_with_error_timing`: Tests timing logging in error scenarios
+
+#### LoaderAdapter Tests
+
+**Basic Functionality Tests (5 tests):**
+- `test_init_regular_file`: Tests regular file initialization
+- `test_run_regular_file`: Tests regular file execution
+- `test_set_input`: Tests input setting
+- `test_get_result`: Tests result retrieval
+- `test_get_metadata`: Tests metadata retrieval
+
+**Benchmark Protocol Handling Tests (11 tests):**
+- `test_init_benchmark_protocol`: Tests filepath using benchmark:// protocol initialization:
+  - Verifies `is_benchmark` attribute is correctly set to True
+  - Confirms `benchmarker_config` is properly created
+  - Tests filepath conversion from benchmark:// format
+- `test_run_benchmark_protocol`: Tests filepath using benchmark:// protocol execution with download:
+  - Simulates BenchmarkerRequests download behavior
+  - Verifies filepath is correctly converted to local path
+  - Confirms Loader receives the correct local filepath
+- `test_benchmark_download_failure`: Tests filepath benchmark download failure handling
+- `test_benchmark_protocol_case_insensitive`: Tests filepath protocol case insensitivity
+- `test_init_schema_benchmark_protocol`: Tests schema using benchmark:// protocol initialization:
+  - Verifies `is_schema_benchmark` attribute is correctly set to True
+  - Confirms `schema_benchmarker_config` is properly created
+  - Tests schema path conversion from benchmark:// format to local path
+- `test_init_both_benchmark_protocol`: Tests both filepath and schema using benchmark:// protocol:
+  - Two separate BenchmarkerConfig objects are created
+  - Both filepath and schema are converted to local paths
+  - Both `is_benchmark` and `is_schema_benchmark` attributes are correctly set
+- `test_init_schema_non_string`: Tests schema as non-string type (e.g., dict) handling:
+  - Schema remains unchanged without conversion
+  - `is_schema_benchmark` is False
+  - No `schema_benchmarker_config` is created
+- `test_run_schema_benchmark_protocol`: Tests schema using benchmark:// protocol execution with download:
+  - Simulates BenchmarkerRequests download for schema file
+  - Verifies schema path is correctly converted to local path
+  - Confirms Loader receives the correct local schema path
+- `test_run_both_benchmark_protocol`: Tests both filepath and schema using benchmark:// protocol execution:
+  - Two BenchmarkerRequests downloads (filepath and schema)
+  - Both files are downloaded to local benchmark/ directory
+  - Loader receives both local paths
+- `test_schema_benchmark_download_failure`: Tests schema benchmark download failure handling:
+  - Raises BenchmarkDatasetsError with "Failed to download benchmark schema" message
+
+#### SplitterAdapter Tests
+
+**Functionality Tests (6 tests):**
+- `test_init`: Tests initialization
+- `test_run`: Tests execution of splitting operation
+- `test_set_input_with_data`: Tests input setting with data
+- `test_get_result`: Tests result retrieval
+- `test_get_metadata`: Tests metadata retrieval (new dictionary format)
+- `test_get_train_indices`: Tests training indices retrieval
+
+#### PreprocessorAdapter Tests
+
+**Functionality Tests (7 tests):**
+- `test_init_default_method`: Tests default method initialization
+- `test_init_custom_method`: Tests custom method initialization with sequence parameter
+- `test_run_default_sequence`: Tests default sequence execution
+- `test_run_custom_sequence`: Tests custom sequence execution
+- `test_set_input_from_splitter`: Tests input setting from Splitter
+- `test_set_input_from_loader`: Tests input setting from Loader
+- `test_get_result`: Tests result retrieval
+- `test_get_metadata`: Tests metadata retrieval
+
+#### SynthesizerAdapter Tests
+
+**Functionality Tests (5 tests):**
+- `test_init`: Tests initialization
+- `test_run`: Tests execution of synthesis operation
+- `test_set_input_with_metadata`: Tests input setting with metadata
+- `test_set_input_without_metadata`: Tests input setting without metadata
+- `test_get_result`: Tests result retrieval
+
+#### ConstrainerAdapter Tests
+
+**Functionality Tests (5 tests):**
+- `test_init_basic`: Tests basic initialization
+- `test_init_with_sampling_params`: Tests initialization with sampling parameters
+- `test_transform_field_combinations`: Tests field combination transformation to tuples
+- `test_run_simple_apply`: Tests simple constraint application
+- `test_run_resample_until_satisfy`: Tests resampling until constraints are satisfied
+
+#### EvaluatorAdapter Tests
+
+**Functionality Tests (4 tests):**
+- `test_init`: Tests initialization
+- `test_run`: Tests execution of evaluation operation
+- `test_set_input_with_splitter`: Tests input setting with Splitter
+- `test_set_input_without_splitter`: Tests input setting without Splitter
+
+#### ReporterAdapter Tests
+
+**Functionality Tests (7 tests):**
+- `test_init`: Tests initialization
+- `test_run_save_report`: Tests save report execution
+- `test_run_save_data`: Tests save data execution
+- `test_set_input`: Tests input setting
+- `test_run_save_report_multi_granularity`: Tests multi-granularity report saving
+- `test_run_save_report_new_granularity_types`: Tests new granularity types (details, tree)
+- `test_run_save_report_backward_compatibility`: Tests backward compatibility with old format
+- `test_run_save_timing`: Tests timing report saving
+
+> **Architecture Note**: The Adapter Layer provides bridges between all PETsARD modules and the Executor. Each Adapter class:
+> - Inherits from BaseAdapter, providing standardized execution template and error handling
+> - Implements the `_run()` method for specific business logic
+> - Manages data flow through `set_input()` and `get_result()` methods
+> - Supports timing logging and general logging functionality
+>
+> LoaderAdapter specifically implements benchmark:// protocol handling, achieving decoupling between Loader and Benchmarker. Starting from v2.0.0, LoaderAdapter supports both filepath and schema parameters using the benchmark:// protocol, enabling automatic download of benchmark datasets and schema files (such as YAML format metadata definitions) to the local benchmark/ directory.
+
 ### `Splitter`
 
 > tests/loader/test_splitter.py
@@ -623,15 +788,11 @@ Tests for data splitting functionality with enhanced overlap control:
 #### Core Functionality Tests
 - `test_splitter_init_normal`: Tests normal initialization with new parameters (`max_overlap_ratio`, `max_attempts`)
 - `test_splitter_init_invalid_ratio`: Tests handling of invalid split ratios and overlap ratios
-- `test_splitter_init_custom_data_valid`: Tests valid custom data method configuration
-- `test_splitter_init_custom_data_invalid_method`: Tests error handling for invalid custom methods
-- `test_splitter_init_custom_data_invalid_filepath`: Tests error handling for invalid file paths
 
 #### Functional Programming API Tests
 - `test_split_normal_method`: Tests normal splitting method with new return format `(split_data, metadata_dict, train_indices)`
 - `test_split_normal_method_no_data`: Tests splitting with no data
 - `test_split_multiple_samples`: Tests multiple sample splitting with `list[set]` train indices format
-- `test_split_custom_data_method`: Tests custom data splitting method with updated metadata structure
 - `test_split_basic_functionality`: Tests basic splitting functionality with functional API
 
 #### Overlap Control Features
@@ -759,7 +920,7 @@ Tests for NaN value handling constraints (18 tests):
 
 > tests/constrainer/test_field_constrainer.py
 
-Tests for field-level constraints (12 tests):
+Tests for field-level constraints (14 tests):
 
 - `test_invalid_config_structure`: Tests configuration validation:
   - Non-list inputs
@@ -774,12 +935,21 @@ Tests for field-level constraints (12 tests):
   - Parenthesized expressions
   - NULL checks
   - Date operations
+- `test_string_literals_with_operators`: Tests extraction and validation of string literals containing operators:
+  - Verifies strings like `'<=50K'` or `'>50K'` are correctly handled as literal values
+  - Tests the fix for the issue where operators within quoted strings were being parsed as comparison operators
+  - Ensures `_extract_fields()` method removes quoted strings before extracting field names
+- `test_apply_string_literals_with_operators`: Tests applying constraints with string literals containing operators:
+  - Verifies constraints like `"income == '<=50K'"` work correctly
+  - Tests actual data filtering functionality with proper string literal matching
 - `test_complex_expression_validation`: Tests complex constraint combinations
 - `test_empty_constraint_list`: Tests empty constraint list handling
 - `test_null_check_operations`: Tests NULL value check operations
 - `test_date_operation_constraints`: Tests date-based constraint operations
 - `test_parentheses_validation`: Tests parentheses matching validation
 - `test_operator_validation`: Tests operator syntax validation
+
+> **String Literal Handling Fix (October 2025)**: The `_extract_fields()` method in `FieldConstrainer` has been fixed to correctly handle string literals containing operators (such as `'<=50K'`, `'>50K'`). Previously, operators within these strings were incorrectly parsed as comparison operators, causing `50K` to be mistaken for a field name. The method now removes all content within single and double quotes before extracting field names, ensuring string literals are properly recognized.
 
 #### `FieldCombinationConstrainer`
 
@@ -856,6 +1026,82 @@ Tests for field proportion maintenance constraints (33 tests):
 
 ## Data Evaluating
 
+### `Describer` (October 2025 Update)
+
+#### `DescriberDescribe`
+
+> tests/describer/test_describer_describe.py
+
+Tests for **DescriberDescribe statistical description functionality** with comprehensive coverage (19 tests):
+
+**Initialization Tests (4 tests):**
+- `test_initialization`: Tests DescriberDescribe initialization with configuration validation
+- `test_initialization_invalid_stats_method`: Tests error handling for invalid statistical methods
+- `test_initialization_invalid_granularity`: Tests error handling for invalid granularity parameters
+- `test_initialization_with_all_parameters`: Tests initialization with complete parameter configuration
+
+**Statistical Methods Tests (4 tests):**
+- `test_basic_stats`: Tests basic statistical methods (mean, median, std) calculation
+- `test_percentile_stats`: Tests percentile statistics (p25, p50, p75) computation
+- `test_na_stats`: Tests NA value statistics (na_count, na_rate) calculation
+- `test_cardinality_stats`: Tests cardinality statistics (distinct, count) computation
+
+**Granularity Tests (2 tests):**
+- `test_global_granularity`: Tests global granularity statistics output format and structure
+- `test_columnwise_granularity`: Tests columnwise granularity detailed statistics output
+
+**Edge Cases Tests (6 tests):**
+- `test_empty_dataframe`: Tests handling of empty DataFrames
+- `test_single_row_dataframe`: Tests statistical calculation with single-row DataFrames
+- `test_all_na_column`: Tests statistical handling of all-NA columns
+- `test_extreme_values`: Tests statistical accuracy with extreme values
+- `test_high_cardinality`: Tests performance with high cardinality data
+- `test_percentile_with_insufficient_data`: Tests percentile calculation with insufficient data
+
+**Data Types Tests (3 tests):**
+- `test_numeric_types`: Tests statistics for numeric data types (int, float)
+- `test_categorical_types`: Tests statistical handling of categorical data
+- `test_mixed_types`: Tests handling of mixed data types
+
+> **Test Features**: This test suite covers complete DescriberDescribe functionality including multiple statistical methods, different granularity outputs, various edge cases, and support for different data types. Tests ensure statistical calculation accuracy and robustness.
+
+#### `DescriberCompare`
+
+> tests/describer/test_describer_compare.py
+
+Tests for **refactored DescriberCompare** implementation (6 tests, 1 skipped):
+
+**Core Functionality Tests:**
+- `test_js_divergence_type_validation`: Tests JS Divergence data type validation
+  - Verifies both numeric and categorical data types correctly calculate JS Divergence
+  - Confirms type checking has been properly extended to accept all valid data types
+  
+- `test_describer_compare_initialization`: Tests DescriberCompare initialization
+  - Verifies internal creation of ori_describer and syn_describer instances
+  - Confirms both DescriberDescribe instances are properly configured
+  - Tests jsdivergence is correctly filtered from statistical methods (used only for comparison)
+
+- `test_na_value_handling`: Tests NA value handling (fixed)
+  - Tests handling of data containing pandas.NA values
+  - Verifies field naming changed from `ori`/`syn` to `base`/`target`
+  - Confirms FutureWarning fixed through appropriate pandas options
+
+**Refactored Architecture Tests:**
+- `test_code_reuse`: Verifies DescriberCompare reuses DescriberDescribe
+  - Confirms DescriberCompare uses DescriberDescribe instances internally
+  - Tests statistical calculation delegation to DescriberDescribe
+  - Verifies code reuse rather than duplicate implementation
+
+- `test_separation_of_concerns`: Tests separation of concerns
+  - DescriberDescribe handles statistical calculation (`_eval` method)
+  - DescriberCompare handles comparison logic (`_apply_comparison`, `_calculate_jsdivergence`)
+  - Comparison method mapping (`COMPARE_METHOD_MAP`) correctly implemented
+
+**Integration Tests (skipped):**
+- `test_full_yaml_execution`: Full YAML execution test (marked as integration, requires complete environment)
+
+> **Architecture Improvement (October 2025)**: DescriberCompare has been completely refactored to reuse DescriberDescribe functionality, following the "compare is an extension of describe" principle. This eliminates code duplication, improves maintainability, and ensures consistency in statistical calculations. Parameter naming has also been changed from `ori`/`syn` to `base`/`target` for better semantic clarity.
+
 ### `Evaluator`
 
 #### `SDMetrics`
@@ -916,34 +1162,17 @@ Tests for custom evaluator functionality:
 
 > tests/evaluator/test_mlutility.py
 
-Tests for machine learning utility evaluation (original version, 7 tests):
-
-- `test_init`: Tests MLUtility evaluator initialization
-- `test_eval_classification`: Tests classification task evaluation (using mock)
-- `test_eval_regression`: Tests regression task evaluation (using mock)
-- `test_eval_cluster`: Tests clustering task evaluation (using mock)
-- `test_preprocessing`: Tests data preprocessing functionality
-- `test_invalid_method`: Tests error handling for invalid evaluation methods
-- `test_missing_target`: Tests error handling for missing target column
-
-**Fixed Issues:**
-- Fixed import typo on line 7: `mlutlity` → `mlutility`
-
-#### `MLUtility V2`
-
-> tests/evaluator/test_mlutility_v2.py
-
-Tests for MLUtility V2 extended functionality (new version, 23 tests):
+Tests for machine learning utility evaluation (23 tests):
 
 **TaskType Tests (2 tests):**
 - `test_task_type_from_string`: Tests task type string conversion (classification, regression, clustering)
 - `test_task_type_invalid`: Tests error handling for invalid task types
 
 **MetricRegistry Tests (4 tests):**
-- `test_default_metrics`: Tests default metrics for each task type
+- `test_default_metrics`: Tests default metrics for each task type (Classification: MCC, F1, ROC AUC, accuracy; Regression: R2, RMSE; Clustering: Silhouette Score)
 - `test_metric_compatibility`: Tests metric compatibility with task types
 - `test_register_custom_metric`: Tests custom metric registration
-- `test_confusion_matrix_metrics`: Tests confusion matrix derived metrics calculation
+- `test_confusion_matrix_metrics`: Tests confusion matrix derived metrics calculation (sensitivity, specificity, precision, recall)
 
 **MLUtilityConfig Tests (6 tests):**
 - `test_config_initialization`: Tests configuration initialization
@@ -953,30 +1182,34 @@ Tests for MLUtility V2 extended functionality (new version, 23 tests):
 - `test_clustering_no_target`: Tests that clustering tasks don't require target column
 - `test_metric_compatibility_validation`: Tests metric compatibility validation
 
-**MLUtility V2 Main Functionality Tests (11 tests):**
+**MLUtility Main Functionality Tests (11 tests):**
 - `test_classification_with_extended_metrics`: Tests extended classification metrics (MCC, F1, precision, recall, specificity)
 - `test_regression_with_custom_metrics`: Tests custom regression metrics (R2, RMSE, MAPE)
 - `test_clustering_evaluation`: Tests clustering evaluation (Silhouette Score)
 - `test_domain_transfer_experiment`: Tests domain transfer experiment design
 - `test_xgb_params_configuration`: Tests XGBoost parameter configuration
 - `test_multiclass_classification`: Tests multi-class classification
-- `test_resampling_smote_enn`: Tests SMOTE-ENN imbalanced data handling
-- `test_categorical_encoding`: Tests categorical variable encoding (OneHotEncoder)
+- `test_resampling_smote_enn`: Tests SMOTE-ENN imbalanced data handling (configuration setup testing)
+- `test_categorical_encoding`: Tests categorical variable encoding handling (OneHotEncoder)
 - `test_empty_data_handling`: Tests empty data handling
 - `test_missing_target_column`: Tests missing target column handling
-- `test_end_to_end_workflow`: Tests end-to-end workflow
+- `test_end_to_end_workflow`: Tests end-to-end workflow integration
 
-**New Features:**
+**Key Features:**
 - **Extended Evaluation Metrics**: Supports full sklearn.metrics metric set
 - **Experiment Design Modes**:
   - dual_model_control: Dual model control group (ori and syn trained separately, tested on control)
   - domain_transfer: Domain transfer (syn trained, tested on ori)
 - **Imbalanced Data Handling**: Integrates SMOTE-ENN and SMOTE-Tomek (requires imbalanced-learn)
 - **XGBoost Integration**: Uses XGBoost for classification and regression tasks
-- **Automatic Categorical Encoding**: Uses OneHotEncoder for categorical variables
+- **Data Preprocessing**:
+  - Automatic categorical feature encoding (OneHotEncoder with handle_unknown='ignore')
+  - Conservative column type detection (checks all datasets)
+  - Feature standardization (StandardScaler)
+  - Data alignment and missing value handling
 - **Numeric/Datetime Precision**: Automatic detection and handling of field precision
 
-> **Architecture Enhancement**: MLUtility V2 (`mlutility_v2.py`) provides a completely redesigned machine learning utility evaluation system with richer metrics, flexible experiment design, imbalanced data handling support, and better type handling capabilities. It coexists with the original MLUtility to maintain backward compatibility.
+> **Architecture Enhancement**: MLUtility provides a comprehensive machine learning utility evaluation system with rich metrics, flexible experiment design, imbalanced data handling support, and robust type handling capabilities. The system can automatically handle mixed data types including categorical feature encoding and data standardization.
 
 #### `MPUCCs`
 

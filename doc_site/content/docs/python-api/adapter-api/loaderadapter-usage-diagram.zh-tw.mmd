@@ -1,0 +1,58 @@
+classDiagram
+
+    class LoaderAdapter {
+        +config: dict
+        +loader: Loader
+        +benchmarker: Benchmarker
+        +__init__(config)
+        +run() tuple[DataFrame, Schema]
+        -_handle_benchmark_protocol()
+        -_init_loader()
+    }
+
+    class Loader {
+        +filepath: str
+        +schema: Schema
+        +load() tuple[DataFrame, Schema]
+    }
+
+    class Benchmarker {
+        +config: BenchmarkerConfig
+        +download()
+        +get_filepath()
+    }
+
+    class BenchmarkerConfig {
+        +benchmark_name: str
+        +filepath_raw: str
+    }
+
+    class BenchmarkerRequests {
+        +download()
+    }
+
+    LoaderAdapter ..> Loader : 用於資料載入
+    LoaderAdapter ..> Benchmarker : 用於基準協定
+    Benchmarker --> BenchmarkerConfig : 擁有
+    Benchmarker ..> BenchmarkerRequests : 創建
+
+    %% 樣式定義
+    class LoaderAdapter {
+        <<主要類別>>
+    }
+    style LoaderAdapter fill:#E6E6FA
+
+    class Loader {
+        <<核心模組>>
+    }
+    style Loader fill:#4169E1,color:#fff
+
+    class Benchmarker {
+        <<基準處理器>>
+    }
+    style Benchmarker fill:#9370DB,color:#fff
+
+    style BenchmarkerConfig fill:#FFE4E1
+    style BenchmarkerRequests fill:#FFE4E1
+
+    note for LoaderAdapter "1. 偵測 benchmark:// 協定\n2. 使用 Benchmarker 下載\n3. 使用本地路徑的 Loader"

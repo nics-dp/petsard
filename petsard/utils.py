@@ -8,7 +8,7 @@ from typing import Any, TypeVar, overload
 
 from petsard.exceptions import ConfigError
 
-# 定義泛型類型變數，保持輸入輸出類型一致
+# Define generic type variable to maintain input/output type consistency / 定義泛型類型變數，保持輸入輸出類型一致
 T = TypeVar("T", int, float, Decimal, None)
 
 
@@ -26,41 +26,42 @@ def safe_round(
     value: int | float | Decimal | None, decimals: int = 2
 ) -> int | float | Decimal | None:
     """
+    Safe rounding function that maintains input/output type consistency
     安全的四捨五入函數，保持輸入輸出類型一致
 
     Args:
-        value: 要四捨五入的值（int, float, Decimal 或 None）
-        decimals: 小數位數（預設為 2）
+        value: Value to round (int, float, Decimal or None) / 要四捨五入的值（int, float, Decimal 或 None）
+        decimals: Number of decimal places (default: 2) / 小數位數（預設為 2）
 
     Returns:
-        四捨五入後的值，保持原始類型
-        - int 輸入直接返回原值（不進行四捨五入）
-        - float 輸入返回 float
-        - Decimal 輸入返回 Decimal
-        - None 輸入返回 None
+        Rounded value maintaining original type / 四捨五入後的值，保持原始類型
+        - int input returns original value (no rounding) / int 輸入直接返回原值（不進行四捨五入）
+        - float input returns float / float 輸入返回 float
+        - Decimal input returns Decimal / Decimal 輸入返回 Decimal
+        - None input returns None / None 輸入返回 None
     """
     if value is None:
         return None
 
-    # int 類型直接返回，不需要四捨五入
+    # int type returns directly without rounding / int 類型直接返回，不需要四捨五入
     if isinstance(value, int):
         return value
 
-    # float 類型
+    # float type / float 類型
     if isinstance(value, float):
         return round(value, decimals)
 
-    # Decimal 類型
+    # Decimal type / Decimal 類型
     if isinstance(value, Decimal):
-        # Decimal 的 quantize 需要一個 Decimal 作為精度參考
+        # Decimal.quantize needs a Decimal as precision reference / Decimal 的 quantize 需要一個 Decimal 作為精度參考
         if decimals == 0:
-            return round(value, 0)  # 返回 Decimal 整數
+            return round(value, 0)  # Return Decimal integer / 返回 Decimal 整數
         else:
-            # 建立精度模板，例如 0.01 代表保留 2 位小數
+            # Create precision template, e.g., 0.01 for 2 decimal places / 建立精度模板，例如 0.01 代表保留 2 位小數
             precision = Decimal(10) ** -decimals
             return value.quantize(precision)
 
-    # 不應該到達這裡，但為了類型檢查器
+    # Should not reach here, but for type checker / 不應該到達這裡，但為了類型檢查器
     raise TypeError(f"Unsupported type for safe_round: {type(value)}")
 
 
@@ -100,7 +101,16 @@ def _resolve_module_path(
     # Combine default and additional search paths
     all_search_paths = default_search_paths[:]
     if search_paths:
-        all_search_paths.extend(search_paths)
+        # search_paths may contain directories, so we need to join them with module_path
+        for search_dir in search_paths:
+            # Skip non-directory paths
+            if isinstance(search_dir, str) and os.path.isdir(search_dir):
+                # Combine directory with module path
+                full_path = os.path.join(search_dir, module_path)
+                all_search_paths.append(full_path)
+            else:
+                # If it's not a directory, add it as is (could be a full path)
+                all_search_paths.append(search_dir)
 
     # Try each search path
     for search_path in all_search_paths:

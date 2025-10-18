@@ -2,7 +2,6 @@
 title: Adapter
 type: docs
 weight: 61
-prev: docs/api/reporter
 next: docs/api/config
 ---
 
@@ -50,14 +49,29 @@ BaseAdapter(config)
 LoaderAdapter(config)
 ```
 
-包裝 Loader 模組進行資料載入操作。
+包裝 Loader 模組進行資料載入操作，並自動處理基準資料集協議。
 
 **配置參數**
-- `filepath` (str)：資料檔案路徑
-- `method` (str, optional)：載入方法（'default' 用於基準資料）
-- `column_types` (dict, optional)：欄位類型規格
-- `header_names` (list, optional)：自訂標題名稱
-- `na_values` (str/list/dict, optional)：自訂 NA 值定義
+- `filepath` (str)：資料檔案路徑，支援兩種格式：
+  - **本地檔案**：一般檔案路徑（如 'data.csv'）
+  - **基準資料集**：使用 `benchmark://` 協議（如 'benchmark://adult-income'）
+- `column_types` (dict, optional)：**已棄用** - 欄位類型規格（請改用 schema）
+- `header_names` (list, optional)：無標頭檔案的自訂標題名稱
+- `na_values` (str/list/dict, optional)：**已棄用** - 自訂 NA 值定義（請改用 schema）
+- `schema` (Schema/dict/str, optional)：完整資料類型和詮釋資料的 Schema 設定：
+  - Schema 物件：直接提供 schema 設定
+  - dict：將轉換為 Schema 的字典
+  - str：包含 schema 設定的 YAML 檔案路徑
+
+**基準資料集處理**
+LoaderAdapter 會自動偵測 `benchmark://` 協議並處理：
+1. 解析協議並提取資料集名稱
+2. 建立 BenchmarkerConfig 實例
+3. 使用 BenchmarkerRequests 下載資料集（如需要）
+4. 將路徑轉換為本地檔案路徑
+5. 使用 Loader 載入本地檔案
+
+此設計實現了 Loader 與 Benchmarker 的完全解耦，讓 Loader 專注於純檔案載入功能。
 
 **主要方法**
 - `get_result()`：回傳載入的 DataFrame
@@ -69,13 +83,20 @@ LoaderAdapter(config)
 SplitterAdapter(config)
 ```
 
-包裝 Splitter 模組進行資料分割操作。
+包裝 Splitter 模組進行資料分割操作。當配置中指定 `method='custom_data'` 時，適配器會直接使用 LoaderAdapter 處理預分割資料的載入，而不使用 Splitter 模組。
 
 **配置參數**
 - `train_split_ratio` (float)：訓練資料比例（預設：0.8）
 - `num_samples` (int)：分割樣本數量（預設：1）
 - `random_state` (int/float/str, optional)：隨機種子
-- `method` (str, optional)：'custom_data' 用於載入預分割資料
+
+自訂資料模式：
+- `method` (str)：設為 'custom_data' 以載入預分割資料
+- `filepath` (dict)：'ori'（訓練）和 'control'（驗證）資料的路徑
+- 支援每個檔案的所有 LoaderAdapter 參數，包括：
+  - `header_names` (list)：無標頭檔案的自訂欄位標頭
+  - `schema` (Schema/dict/str)：資料類型和詮釋資料的 Schema 設定
+  - 其他資料載入所需的參數
 
 **主要方法**
 - `get_result()`：回傳包含 'train' 和 'validation' DataFrame 的字典
@@ -104,12 +125,20 @@ PreprocessorAdapter(config)
 SynthesizerAdapter(config)
 ```
 
-包裝 Synthesizer 模組進行合成資料生成。
+包裝 Synthesizer 模組進行合成資料生成。當配置中指定 `syn_method='custom_data'` 時，適配器會直接使用 LoaderAdapter 處理外部合成資料的載入，而不使用 Synthesizer 模組。
 
 **配置參數**
 - `method` (str)：合成方法（例如：'sdv'）
 - `model` (str)：模型類型（例如：'GaussianCopula'）
 - 選定方法的額外特定參數
+
+自訂資料模式：
+- `method` (str)：設為 'custom_data' 以載入外部合成資料
+- `filepath` (str)：預合成資料檔案的路徑
+- 支援所有 LoaderAdapter 參數，包括：
+  - `header_names` (list)：無標頭檔案的自訂欄位標頭
+  - `schema` (Schema/dict/str)：資料類型和詮釋資料的 Schema 設定
+  - 其他資料載入所需的參數
 
 **主要方法**
 - `get_result()`：回傳合成的 DataFrame

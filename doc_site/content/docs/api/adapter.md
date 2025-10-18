@@ -2,7 +2,6 @@
 title: Adapter
 type: docs
 weight: 61
-prev: docs/api/reporter
 next: docs/api/config
 ---
 
@@ -50,14 +49,25 @@ Abstract base class defining the standard interface for all adapters.
 LoaderAdapter(config)
 ```
 
-Wraps the Loader module for data loading operations.
+Wraps the Loader module for data loading operations. The adapter automatically detects and handles the `benchmark://` protocol, downloading benchmark datasets through the Benchmarker when needed.
 
 **Configuration Parameters**
-- `filepath` (str): Path to the data file
-- `method` (str, optional): Loading method ('default' for benchmark data)
-- `column_types` (dict, optional): Column type specifications
-- `header_names` (list, optional): Custom header names
-- `na_values` (str/list/dict, optional): Custom NA value definitions
+- `filepath` (str): Path to the data file or benchmark URL (e.g., 'benchmark://adult-income')
+- `column_types` (dict, optional): **DEPRECATED** - Column type specifications (use schema instead)
+- `header_names` (list, optional): Custom header names for files without headers
+- `na_values` (str/list/dict, optional): **DEPRECATED** - Custom NA value definitions (use schema instead)
+- `schema` (Schema/dict/str, optional): Schema configuration for comprehensive data typing and metadata:
+  - Schema object: Direct schema configuration
+  - dict: Dictionary that will be converted to Schema
+  - str: Path to YAML file containing schema configuration
+
+**Special Handling for benchmark:// Protocol**
+
+When the filepath starts with 'benchmark://', LoaderAdapter:
+1. Automatically creates a BenchmarkerConfig for the specified dataset
+2. Downloads the dataset using the Benchmarker module if not already cached
+3. Loads the data from the downloaded location
+4. Protocol matching is case-insensitive ('benchmark://' or 'Benchmark://' both work)
 
 **Key Methods**
 - `get_result()`: Returns loaded DataFrame
@@ -69,13 +79,20 @@ Wraps the Loader module for data loading operations.
 SplitterAdapter(config)
 ```
 
-Wraps the Splitter module for data splitting operations.
+Wraps the Splitter module for data splitting operations. When `method='custom_data'` is specified in configuration, the adapter handles loading pre-split data directly using LoaderAdapter instead of using the Splitter module.
 
 **Configuration Parameters**
 - `train_split_ratio` (float): Ratio for training data (default: 0.8)
 - `num_samples` (int): Number of split samples (default: 1)
 - `random_state` (int/float/str, optional): Random seed
-- `method` (str, optional): 'custom_data' for loading pre-split data
+
+For custom_data mode:
+- `method` (str): Set to 'custom_data' to load pre-split data
+- `filepath` (dict): Paths for 'ori' (training) and 'control' (validation) data
+- All LoaderAdapter parameters are supported for each file, including:
+  - `header_names` (list): Custom column headers for files without headers
+  - `schema` (Schema/dict/str): Schema configuration for data types and metadata
+  - Additional data loading parameters as needed
 
 **Key Methods**
 - `get_result()`: Returns dict with 'train' and 'validation' DataFrames
@@ -104,12 +121,20 @@ Wraps the Processor module for data preprocessing operations.
 SynthesizerAdapter(config)
 ```
 
-Wraps the Synthesizer module for synthetic data generation.
+Wraps the Synthesizer module for synthetic data generation. When `syn_method='custom_data'` is specified in configuration, the adapter handles loading external synthetic data directly using LoaderAdapter instead of using the Synthesizer module.
 
 **Configuration Parameters**
 - `method` (str): Synthesis method (e.g., 'sdv')
 - `model` (str): Model type (e.g., 'GaussianCopula')
 - Additional parameters specific to the chosen method
+
+For custom_data mode:
+- `method` (str): Set to 'custom_data' to load external synthetic data
+- `filepath` (str): Path to the pre-synthesized data file
+- All LoaderAdapter parameters are supported, including:
+  - `header_names` (list): Custom column headers for files without headers
+  - `schema` (Schema/dict/str): Schema configuration for data types and metadata
+  - Additional data loading parameters as needed
 
 **Key Methods**
 - `get_result()`: Returns synthetic DataFrame

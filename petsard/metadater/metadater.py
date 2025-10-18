@@ -36,13 +36,19 @@ class AttributeMetadater:
             "bool": "boolean",
             "object": "string",
             "datetime64[ns]": "datetime64",
-            "category": "category",
         }
 
         data_type = type_mapping.get(dtype_str, "string")
 
         # 推斷邏輯類型 Infer logical type
         logical_type = cls._infer_logical_type(data)
+
+        # 推斷是否為分類資料 Infer if categorical
+        is_category = dtype_str == "category" or (
+            data.dtype == "object" and len(data.unique()) / len(data) < 0.05
+            if len(data) > 0
+            else False
+        )
 
         # 計算統計資訊
         stats = None
@@ -53,6 +59,7 @@ class AttributeMetadater:
             name=data.name,
             type=data_type,
             logical_type=logical_type,
+            category=is_category,
             enable_null=data.isnull().any(),
             enable_stats=enable_stats,
             stats=stats,
@@ -83,11 +90,6 @@ class AttributeMetadater:
             except (AttributeError, TypeError):
                 # 如果有任何混合類型，跳過 email 檢查
                 pass
-
-            # 檢查是否為分類資料
-            unique_ratio = len(data.unique()) / len(data) if len(data) > 0 else 1.0
-            if unique_ratio < 0.05:  # 唯一值比例小於 5%
-                return "category"
 
         return None
 
@@ -154,12 +156,24 @@ class AttributeMetadater:
         # 型別轉換
         if attribute.type:
             try:
-                if attribute.type == "int64" and aligned.isnull().any():
-                    aligned = aligned.astype("Int64")  # Nullable integer
+                # CRITICAL FIX: Handle both "integer" (schema format) and "int64" (pandas dtype format)
+                # 關鍵修復：處理 "integer"（schema 格式）和 "int64"（pandas dtype 格式）
+                if attribute.type in ("integer", "int64", "int32", "int16", "int8"):
+                    # For integer types, always use nullable Int64 to handle potential NaN values
+                    # 對於整數類型，始終使用 nullable Int64 來處理潛在的 NaN 值
+                    if aligned.isnull().any():
+                        aligned = aligned.astype("Int64")
+                    else:
+                        # No nulls, can use regular int64
+                        # 沒有空值，可以使用普通的 int64
+                        try:
+                            aligned = aligned.astype("int64")
+                        except (ValueError, TypeError):
+                            # If conversion fails, use Int64 anyway
+                            # 如果轉換失敗，仍然使用 Int64
+                            aligned = aligned.astype("Int64")
                 elif attribute.type == "boolean":
                     aligned = aligned.astype("boolean")
-                elif attribute.type == "category":
-                    aligned = aligned.astype("category")
                 elif attribute.type.startswith("datetime"):
                     aligned = pd.to_datetime(aligned, errors=attribute.cast_errors)
                 else:
@@ -272,7 +286,7 @@ class AttributeMetadater:
                 mode_frequency = int((series == mode).sum())
 
             # 如果是類別型態，計算分佈
-            if logical_type in ["string", "category", "categorical", "boolean"]:
+            if logical_type in ["string", "categorical", "boolean"]:
                 value_counts = series.value_counts()
                 # 限制最多記錄前 20 個類別
                 top_categories = value_counts.head(20)
@@ -357,39 +371,30 @@ class SchemaMetadater:
     @classmethod
     def from_dict_v1(cls, config: dict[str, Any]) -> Schema:
         """從現有 YAML 格式建立 Schema（v1.0 相容性）"""
-        # 提取全域參數
-        global_params = {
-            "optimize_dtypes": config.get("optimize_dtypes", "selective"),
-            "nullable_int": config.get("nullable_int", "force"),
-            "leading_zeros": config.get("leading_zeros", "never"),
-            "infer_logical_types": config.get("infer_logical_types", "selective"),
-            "sample_size": config.get("sample_size"),
-        }
-
         # 轉換 fields 為 attributes
         attributes = {}
         if "fields" in config:
             for field_name, field_config in config["fields"].items():
                 # 轉換 v1 欄位格式為 v2 Attribute 格式
-                attr_config = cls._convert_field_to_attribute(
-                    field_name, field_config, global_params
-                )
+                attr_config = cls._convert_field_to_attribute(field_name, field_config)
                 attributes[field_name] = AttributeMetadater.from_dict(attr_config)
 
-        # 建立 v2 Schema 格式
+        # 建立 v2 Schema 格式，支援 compute_stats 和 title
         return Schema(
             id=config.get("schema_id", "default"),
-            name=config.get("name", "Default Schema"),
+            name=config.get(
+                "title", config.get("name", "Default Schema")
+            ),  # 優先使用 title
             description=config.get("description", ""),
             attributes=attributes,
             primary_key=config.get("primary_key", []),
             foreign_keys=config.get("foreign_keys", {}),
+            enable_stats=config.get("compute_stats", True),  # 支援 compute_stats
+            sample_size=config.get("sample_size"),  # 支援 sample_size
         )
 
     @staticmethod
-    def _convert_field_to_attribute(
-        name: str, field: dict[str, Any], global_params: dict[str, Any]
-    ) -> dict[str, Any]:
+    def _convert_field_to_attribute(name: str, field: dict[str, Any]) -> dict[str, Any]:
         """將 v1 field 格式轉換為 v2 attribute 格式"""
         # 型別映射
         type_mapping = {
@@ -410,7 +415,7 @@ class SchemaMetadater:
 
         # 處理特殊屬性
         if field.get("category_method") == "force":
-            attr["logical_type"] = "category"
+            attr["category"] = True
 
         # 合併 type_attr
         type_attr = {}
@@ -435,8 +440,22 @@ class SchemaMetadater:
     @classmethod
     def from_dict(cls, config: dict[str, Any]) -> Schema:
         """從字典建立 Schema（v2.0 理想格式）"""
-        # 將 fields 對應到內部的 attributes
-        if "fields" in config:
+        # 處理 attributes 或 fields
+        if "attributes" in config:
+            # 將 attributes 中的 dict 轉換成 Attribute 物件
+            attributes = {}
+            for attr_name, attr_config in config["attributes"].items():
+                if isinstance(attr_config, dict):
+                    # 確保有 name 欄位
+                    if "name" not in attr_config:
+                        attr_config["name"] = attr_name
+                    attributes[attr_name] = AttributeMetadater.from_dict(attr_config)
+                else:
+                    # 如果已經是 Attribute 物件，直接使用
+                    attributes[attr_name] = attr_config
+            config["attributes"] = attributes
+        elif "fields" in config:
+            # 向後相容：將 fields 對應到內部的 attributes
             attributes = {}
             for field_name, field_config in config["fields"].items():
                 attributes[field_name] = AttributeMetadater.from_dict(field_config)
@@ -447,22 +466,12 @@ class SchemaMetadater:
 
     @classmethod
     def from_yaml(cls, filepath: str) -> Schema:
-        """智慧載入 YAML，自動判斷版本"""
+        """從 YAML 檔案載入 Schema"""
         with open(filepath) as f:
             config = yaml.safe_load(f)
 
-        # 根據其他特徵判斷版本
-        has_global_params = any(
-            k in config
-            for k in ["optimize_dtypes", "nullable_int", "infer_logical_types"]
-        )
-
-        if has_global_params:
-            # v1.0 格式（有全域參數）
-            return cls.from_dict_v1(config)
-        else:
-            # v2.0 格式（簡潔格式）
-            return cls.from_dict(config)
+        # 直接使用 from_dict，它會處理 fields 和 attributes 兩種格式
+        return cls.from_dict(config)
 
     @classmethod
     def get(cls, schema: Schema, name: str) -> Attribute:

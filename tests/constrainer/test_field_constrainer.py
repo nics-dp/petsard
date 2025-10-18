@@ -121,6 +121,66 @@ class TestFieldConstrainerValidation:
                 f"Field extraction failed for '{constraint}'. Expected: {expected_fields}, Got: {fields}"
             )
 
+    def test_string_literals_with_operators(self):
+        """
+        Test extraction and validation of string literals containing operators.
+        Verifies that strings like '<=50K' or '>50K' are correctly handled as literal values.
+        This tests the fix for the issue where operators within quoted strings were being
+        parsed as comparison operators.
+        """
+        # Test field extraction with string literals containing operators
+        test_cases = [
+            ("income == '<=50K'", ["income"]),
+            ("income == '>50K'", ["income"]),
+            ("income == '<=50K' | income == '>50K'", ["income"]),
+            ("education == 'Doctorate' & income == '>50K'", ["education", "income"]),
+            ("status == '>active' | status == '<=pending'", ["status"]),
+        ]
+
+        constrainer = FieldConstrainer([])
+        for constraint, expected_fields in test_cases:
+            fields = constrainer._extract_fields(constraint)
+            assert sorted(fields) == sorted(expected_fields), (
+                f"Field extraction failed for '{constraint}'. "
+                f"Expected: {expected_fields}, Got: {fields}"
+            )
+
+    def test_apply_string_literals_with_operators(self):
+        """
+        Test applying constraints with string literals containing operators.
+        Verifies that constraints like "income == '<=50K'" work correctly.
+        """
+        # Create test DataFrame similar to adult income dataset
+        test_df = pd.DataFrame(
+            {
+                "age": [25, 35, 45, 55, 60],
+                "income": ["<=50K", ">50K", "<=50K", "<=50K", ">50K"],
+                "education": [
+                    "Bachelors",
+                    "Masters",
+                    "Doctorate",
+                    "HS-grad",
+                    "Doctorate",
+                ],
+            }
+        )
+
+        # Test individual constraints
+        test_cases = [
+            (["income == '<=50K'"], 3),  # Should match 3 rows
+            (["income == '>50K'"], 2),  # Should match 2 rows
+            (["income == '<=50K' | income == '>50K'"], 5),  # Should match all rows
+            (["education == 'Doctorate' & income == '>50K'"], 1),  # Should match 1 row
+        ]
+
+        for constraints, expected_count in test_cases:
+            constrainer = FieldConstrainer(constraints)
+            result = constrainer.apply(test_df)
+            assert len(result) == expected_count, (
+                f"Constraint {constraints} failed. "
+                f"Expected {expected_count} rows, got {len(result)}"
+            )
+
     def test_apply_with_empty_dataframe(self):
         """Test applying constraints to empty DataFrame"""
         constrainer = FieldConstrainer(["age > 30"])

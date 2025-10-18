@@ -1,0 +1,66 @@
+flowchart TD
+    Start([開始評估])
+    Validity[資料有效性檢查<br/>sdmetrics-diagnosticreport]
+    ValidityCheck{分數接近 1.0?}
+    ValidityFail[資料結構問題<br/>需檢查合成過程]
+    Privacy[隱私保護力評估<br/>anonymeter methods]
+    PrivacyCheck{風險小於 0.09?}
+    PrivacyFail[隱私風險過高<br/>需調整合成參數]
+    Purpose{合成資料使用目的?}
+    Fidelity1[追求高保真度<br/>sdmetrics-qualityreport]
+    Fidelity2[保真度達標即可<br/>sdmetrics-qualityreport]
+    FidelityHigh{分數越高越好<br/>建議 0.75 以上}
+    Success1[適合資料釋出]
+    Improve1[需提升保真度]
+    FidelityBasic{分數 0.75 以上?}
+    Improve2[需提升保真度]
+    Utility[評估實用性<br/>mlutility]
+    TaskType{任務類型}
+    ClassCheck{MCC 0.5 以上?}
+    RegCheck{R2 0.7 以上?}
+    ClusterCheck{輪廓係數 0.5 以上?}
+    Success2[適合分類任務]
+    Success3[適合迴歸任務]
+    Success4[適合聚類任務]
+    ImproveUtil1[需提升模型效用]
+    ImproveUtil2[需提升模型效用]
+    ImproveUtil3[需提升模型效用]
+
+    Start --> Validity
+    Validity --> ValidityCheck
+    ValidityCheck -->|否| ValidityFail
+    ValidityCheck -->|是| Privacy
+    Privacy --> PrivacyCheck
+    PrivacyCheck -->|否| PrivacyFail
+    PrivacyCheck -->|是| Purpose
+    Purpose -->|資料釋出<br/>無特定任務| Fidelity1
+    Purpose -->|特定任務<br/>資料增益/模型訓練| Fidelity2
+    Fidelity1 --> FidelityHigh
+    FidelityHigh -->|達標| Success1
+    FidelityHigh -->|未達標| Improve1
+    Fidelity2 --> FidelityBasic
+    FidelityBasic -->|否| Improve2
+    FidelityBasic -->|是| Utility
+    Utility --> TaskType
+    TaskType -->|分類| ClassCheck
+    TaskType -->|迴歸| RegCheck
+    TaskType -->|聚類| ClusterCheck
+    ClassCheck -->|是| Success2
+    ClassCheck -->|否| ImproveUtil1
+    RegCheck -->|是| Success3
+    RegCheck -->|否| ImproveUtil2
+    ClusterCheck -->|是| Success4
+    ClusterCheck -->|否| ImproveUtil3
+
+    style Start fill:#e1f5fe
+    style Success1 fill:#c8e6c9
+    style Success2 fill:#c8e6c9
+    style Success3 fill:#c8e6c9
+    style Success4 fill:#c8e6c9
+    style ValidityFail fill:#ffcdd2
+    style PrivacyFail fill:#ffcdd2
+    style Improve1 fill:#fff3e0
+    style Improve2 fill:#fff3e0
+    style ImproveUtil1 fill:#fff3e0
+    style ImproveUtil2 fill:#fff3e0
+    style ImproveUtil3 fill:#fff3e0

@@ -1,0 +1,66 @@
+flowchart TD
+    Start([Start Evaluation])
+    Validity[Data Validity Check<br/>sdmetrics-diagnosticreport]
+    ValidityCheck{Score approx 1.0?}
+    ValidityFail[Data Structure Issues<br/>Check synthesis process]
+    Privacy[Privacy Protection Evaluation<br/>anonymeter methods]
+    PrivacyCheck{Risk less than 0.09?}
+    PrivacyFail[High Privacy Risk<br/>Adjust synthesis parameters]
+    Purpose{Synthetic Data Purpose?}
+    Fidelity1[Pursue High Fidelity<br/>sdmetrics-qualityreport]
+    Fidelity2[Basic Fidelity OK<br/>sdmetrics-qualityreport]
+    FidelityHigh{Higher is Better<br/>Recommend 0.75 or more}
+    Success1[Suitable for Data Release]
+    Improve1[Need Better Fidelity]
+    FidelityBasic{Score 0.75 or more?}
+    Improve2[Need Better Fidelity]
+    Utility[Evaluate Utility<br/>mlutility]
+    TaskType{Task Type}
+    ClassCheck{MCC 0.5 or more?}
+    RegCheck{R2 0.7 or more?}
+    ClusterCheck{Silhouette 0.5 or more?}
+    Success2[Suitable for Classification]
+    Success3[Suitable for Regression]
+    Success4[Suitable for Clustering]
+    ImproveUtil1[Need Better Utility]
+    ImproveUtil2[Need Better Utility]
+    ImproveUtil3[Need Better Utility]
+
+    Start --> Validity
+    Validity --> ValidityCheck
+    ValidityCheck -->|No| ValidityFail
+    ValidityCheck -->|Yes| Privacy
+    Privacy --> PrivacyCheck
+    PrivacyCheck -->|No| PrivacyFail
+    PrivacyCheck -->|Yes| Purpose
+    Purpose -->|Data Release<br/>No specific task| Fidelity1
+    Purpose -->|Specific Task<br/>Augmentation/Training| Fidelity2
+    Fidelity1 --> FidelityHigh
+    FidelityHigh -->|Pass| Success1
+    FidelityHigh -->|Fail| Improve1
+    Fidelity2 --> FidelityBasic
+    FidelityBasic -->|No| Improve2
+    FidelityBasic -->|Yes| Utility
+    Utility --> TaskType
+    TaskType -->|Classification| ClassCheck
+    TaskType -->|Regression| RegCheck
+    TaskType -->|Clustering| ClusterCheck
+    ClassCheck -->|Yes| Success2
+    ClassCheck -->|No| ImproveUtil1
+    RegCheck -->|Yes| Success3
+    RegCheck -->|No| ImproveUtil2
+    ClusterCheck -->|Yes| Success4
+    ClusterCheck -->|No| ImproveUtil3
+
+    style Start fill:#e1f5fe
+    style Success1 fill:#c8e6c9
+    style Success2 fill:#c8e6c9
+    style Success3 fill:#c8e6c9
+    style Success4 fill:#c8e6c9
+    style ValidityFail fill:#ffcdd2
+    style PrivacyFail fill:#ffcdd2
+    style Improve1 fill:#fff3e0
+    style Improve2 fill:#fff3e0
+    style ImproveUtil1 fill:#fff3e0
+    style ImproveUtil2 fill:#fff3e0
+    style ImproveUtil3 fill:#fff3e0

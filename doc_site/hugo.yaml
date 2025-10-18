@@ -1,6 +1,6 @@
 # Hugo configuration file
 title: PETsARD
-baseURL: "https://nics-tw.github.io/petsard/"
+baseURL: "https://nics-dp.github.io/petsard/"
 
 theme: hextra
 
@@ -18,7 +18,7 @@ languages:
           pageRef: /about
           weight: 2
         - name: Contact ↗
-          url: "https://github.com/nics-tw"
+          url: "https://github.com/nics-dp"
           weight: 3
         - name: Search
           weight: 4
@@ -26,7 +26,7 @@ languages:
             type: search
         - name: GitHub
           weight: 5
-          url: "https://github.com/nics-tw/petsard"
+          url: "https://github.com/nics-dp/petsard"
           params:
             icon: github
   zh-tw:
@@ -41,7 +41,7 @@ languages:
           pageRef: /about
           weight: 2
         - name: 聯絡 ↗
-          url: "https://github.com/nics-tw"
+          url: "https://github.com/nics-dp"
           weight: 3
         - name: 搜尋
           weight: 4
@@ -49,7 +49,7 @@ languages:
             type: search
         - name: GitHub
           weight: 5
-          url: "https://github.com/nics-tw/petsard"
+          url: "https://github.com/nics-dp/petsard"
           params:
             icon: github
 

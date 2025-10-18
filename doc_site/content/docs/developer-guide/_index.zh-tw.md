@@ -1,9 +1,9 @@
 ---
 title: 開發者手冊
 type: docs
-weight: 80
+weight: 1400
 prev: docs/api
-next: docs
+next: docs/experimental-new-format
 sidebar:
   open: false
 ---
@@ -20,21 +20,7 @@ sidebar:
 
 ## 資料生成
 
-## 資料評測
-- [Anonymeter 隱私風險評測]({{< ref "docs/developer-guide/anonymeter" >}})
-  - 歐盟隱私風險評估標準
-  - 三個面向的隱私風險量測
-- [mpUCCs 實驗性新功能]({{< ref "docs/developer-guide/mpuccs" >}})
-  - 先進指認性風險評估
-  - 最大部分唯一欄位組合理論
-
 ## 設定與報告
-- [日誌設定]({{< ref "docs/developer-guide/logging-configuration" >}})
-  - 設定日誌層級與輸出目標
-  - 自訂日誌格式與檔案位置
-- [Reporter 中的實驗名稱]({{< ref "docs/developer-guide/experiment-name-in-reporter" >}})
-  - 實驗命名規範
-  - 實驗設定管理
 - [測試覆蓋範圍]({{< ref "docs/developer-guide/test-coverage" >}})
   - 測試組織與架構
   - 詳細測試案例文件
