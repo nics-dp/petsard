@@ -30,25 +30,19 @@ YAML（YAML Ain't Markup Language）是一種人類可讀的資料序列化格�
 
 以下情境可以幫助您選擇合適的 YAML 設定方式：
 
-1. **基本使用：預設合成**
+1. **[基本使用：預設合成](default-synthesis)**
 
   - 當您只需要基本的資料合成時
   - 用於簡單的隱私強化合成資料生成
 
-2. **基本使用與評測：預設合成與預設評測**
+2. **[基本使用與評測：預設合成與預設評測](default-synthesis-default-evaluation)**
 
   - 當您需要合成與完整評測時
   - 包含保護力、保真度與實用性評估
 
-3. **評測外部合成資料：外部合成與預設評測**
+3. **[評測外部合成資料：外部合成與預設評測](external-synthesis-default-evaluation)**
 
   - 當您想評估其他解決方案的合成資料時
   - 使用我們的評測指標來評估外部合成的資料
-
-4. **Docker 使用：使用 Docker**
-
-  - 當您想在容器化環境中執行 PETsARD 時
-  - 無需本地 Python 環境設定，輕鬆部署
-  - 使用 GitHub Container Registry 的預建容器
 
 只要選擇符合您需求的情境，準備對應的 YAML 設定，即可執行上述程式碼。
