@@ -157,6 +157,14 @@ For major changes, please open an issue first to discuss what you would like to 
 
 ---
 
+## **🔒 Security 安全**
+
+For security vulnerabilities, please refer to our [Security Policy](SECURITY.md).
+
+如有安全漏洞，請參閱我們的[安全政策](SECURITY.md)。
+
+---
+
 ## **📄 License 授權**
 
 This project is licensed under the terms specified in the [LICENSE](LICENSE) file.
