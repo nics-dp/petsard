@@ -153,9 +153,9 @@ Processor 支援以下處理步驟：
 
 | 操作 | 前處理方法 | 後處理方法 | 說明 |
 |-----|----------|-----------|------|
-| 訓練 | [`fit()`]({{< ref "processor_fit" >}}) | - | 學習資料統計特性 |
-| 轉換 | [`transform()`]({{< ref "processor_transform" >}}) | - | 執行前處理轉換 |
-| 還原 | - | [`inverse_transform()`]({{< ref "processor_inverse_transform" >}}) | 執行後處理還原 |
+| 訓練 | `fit()` | - | 學習資料統計特性 |
+| 轉換 | `transform()` | - | 執行前處理轉換 |
+| 還原 | - | `inverse_transform()` | 執行後處理還原 |
 
 **注意**：前處理和後處理使用同一個 Processor 實例，確保轉換的一致性。
 
@@ -200,8 +200,8 @@ Processor 支援以下處理步驟：
 
 - **建議作法**：使用 YAML 配置檔而非直接使用 Python API
 - **處理順序**：
-  - 前處理：必須先呼叫 [`fit()`]({{< ref "processor_fit" >}}) 再呼叫 [`transform()`]({{< ref "processor_transform" >}})
-  - 後處理：必須先完成前處理才能呼叫 [`inverse_transform()`]({{< ref "processor_inverse_transform" >}})
+  - 前處理：必須先呼叫 `fit()` 再呼叫 `transform()`
+  - 後處理：必須先完成前處理才能呼叫 `inverse_transform()`
 - **序列限制**：
   - `discretizing` 和 `encoder` 不能同時使用
   - `discretizing` 必須是序列中的最後一步

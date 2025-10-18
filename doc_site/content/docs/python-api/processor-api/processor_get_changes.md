@@ -23,7 +23,7 @@ None
 
 ## Description
 
-The [`get_changes()`](processor_get_changes.md:1) method is used to view which configurations have been customized. This method will:
+The `get_changes()` method is used to view which configurations have been customized. This method will:
 
 1. Compare current configuration with default configuration
 2. List all differences
@@ -189,7 +189,7 @@ DataFrame contains the following columns:
 
 - Only displays items different from default configuration
 - Returns empty DataFrame if there are no changes
-- Can be called at any time, does not require calling [`fit()`](processor_fit.md:1) first
+- Can be called at any time, does not require calling `fit()` first
 - Both current and default configurations show class names (not instances)
 - If a column's processor is set to `None`, it may also appear in the change list
 - Global transformation processors (e.g., `outlier_isolationforest`) affect display for all columns

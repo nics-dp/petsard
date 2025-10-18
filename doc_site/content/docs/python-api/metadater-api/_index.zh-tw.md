@@ -56,13 +56,13 @@ Metadater 提供靜態類別方法（`@classmethod` 或 `@staticmethod`），不
 
 ### 建立詮釋資料
 
-- [`from_data()`](metadater_from_data.zh-tw.md)：從資料自動推斷並建立 Metadata
-- [`from_dict()`](metadater_from_dict.zh-tw.md)：從配置字典建立 Metadata
+- `from_data()`：從資料自動推斷並建立 Metadata
+- `from_dict()`：從配置字典建立 Metadata
 
 ### 比較與對齊
 
-- [`diff()`](metadater_diff.zh-tw.md)：比較 Metadata 與實際資料的差異
-- [`align()`](metadater_align.zh-tw.md)：根據 Metadata 對齊資料結構
+- `diff()`：比較 Metadata 與實際資料的差異
+- `align()`：根據 Metadata 對齊資料結構
 
 ## 資料結構
 

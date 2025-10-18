@@ -26,7 +26,7 @@ None (method modifies instance state)
 
 ## Description
 
-The [`update_config()`](processor_update_config.md:1) method updates the processor configuration. It can:
+The `update_config()` method updates the processor configuration. It can:
 
 1. Override default processing methods
 2. Set custom processors for specific columns
@@ -236,8 +236,8 @@ print("gender encoder:", type(config['encoder']['gender']).__name__)
 ## Notes
 
 - Updating configuration overwrites default settings for that column
-- Must call this method before [`fit()`](processor_fit.md:1)
-- If updating after [`fit()`](processor_fit.md:1), need to retrain
+- Must call this method before `fit()`
+- If updating after `fit()`, need to retrain
 - Invalid processor names will raise `ConfigError`
 - Setting to `None` or `"none"` disables that processing
 - Processors with parameters must use dictionary format

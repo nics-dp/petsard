@@ -34,7 +34,7 @@ def resample_until_satisfy(
 - **synthesizer** : Synthesizer, required
     - Synthesizer instance for generating synthetic data
     - Required parameter
-    - Must be a synthesizer already trained via [`fit()`](../synthesizer-api/synthesizer_fit.md)
+    - Must be a synthesizer already trained via `\1`
     
 - **postprocessor** : Postprocessor, optional
     - Postprocessor for data transformation
@@ -72,7 +72,7 @@ The following attribute is set after execution:
 
 ## Description
 
-The [`resample_until_satisfy()`](constrainer_resample_until_satisfy.md) method is suitable for situations with strict constraints where filtered data is insufficient. It will:
+The `\1` method is suitable for situations with strict constraints where filtered data is insufficient. It will:
 
 1. First apply constraints to input data
 2. Calculate amount of data needed for supplementation
@@ -370,7 +370,7 @@ for ratio in [5.0, 10.0, 20.0, 50.0]:
 
 ## Important Notes
 
-- **Synthesizer State**: synthesizer must already be trained via [`fit()`](../synthesizer-api/synthesizer_fit.md)
+- **Synthesizer State**: synthesizer must already be trained via `\1`
 - **Data Accumulation**: Automatically removes duplicate rows to ensure data diversity
 - **Memory Usage**: Large sampling_ratio and multiple iterations consume more memory
 - **Parameter Tuning**:
@@ -386,6 +386,6 @@ for ratio in [5.0, 10.0, 20.0, 50.0]:
 
 ## Related Methods
 
-- [`__init__()`](_index.md#constructor-__init__): Initialize constraint configuration
-- [`apply()`](constrainer_apply.md): Single application of constraints
-- [`register()`](constrainer_register.md): Register custom constraint types
+- `\1`: Initialize constraint configuration
+- `\1`: Single application of constraints
+- `\1`: Register custom constraint types

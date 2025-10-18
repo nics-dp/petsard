@@ -36,7 +36,7 @@ def align(
 
 ## 說明
 
-[`align()`](metadater_align.zh-tw.md) 方法根據 Metadata 定義調整實際資料的結構，確保資料符合預期格式。此方法執行以下操作：
+`align()` 方法根據 Metadata 定義調整實際資料的結構，確保資料符合預期格式。此方法執行以下操作：
 
 1. **欄位順序調整**：按 metadata 定義的順序重新排列欄位
 2. **補充缺失欄位**：為 metadata 中定義但資料中缺失的欄位添加 NaN 值

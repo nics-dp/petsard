@@ -23,7 +23,7 @@ def get_changes() -> pd.DataFrame
 
 ## 說明
 
-[`get_changes()`](processor_get_changes.zh-tw.md:1) 方法用於檢視哪些配置被自訂修改過。此方法會：
+`get_changes()` 方法用於檢視哪些配置被自訂修改過。此方法會：
 
 1. 比較當前配置與預設配置
 2. 列出所有差異
@@ -189,7 +189,7 @@ DataFrame 包含以下欄位：
 
 - 只顯示與預設配置不同的項目
 - 如果沒有任何變更，返回空的 DataFrame
-- 可以在任何時候呼叫此方法，不需要先 [`fit()`](processor_fit.zh-tw.md:1)
+- 可以在任何時候呼叫此方法，不需要先 `fit()`
 - 當前配置和預設配置都顯示類別名稱（不是實例）
 - 如果欄位的處理器設為 `None`，也可能出現在變更列表中
 - 全域轉換處理器（如 `outlier_isolationforest`）會影響所有欄位的顯示

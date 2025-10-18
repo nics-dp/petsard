@@ -28,13 +28,13 @@ def transform(
 
 ## Description
 
-The [`transform()`](processor_transform.md:1) method performs actual data transformation. This method will:
+The `transform()` method performs actual data transformation. This method will:
 
 1. Execute each processing step according to the training sequence
 2. Sequentially apply missing value handling, outlier processing, encoding, scaling, etc.
 3. Return transformed data
 
-This method must be called after [`fit()`](processor_fit.md:1).
+This method must be called after `fit()`.
 
 ## Basic Example
 
@@ -136,7 +136,7 @@ End
 
 ## Notes
 
-- Must call [`fit()`](processor_fit.md:1) to train processor first
+- Must call `fit()` to train processor first
 - Transformed data must have same column structure as training data
 - Some encoding methods (e.g., One-Hot) change the number of columns
 - Data types after transformation may differ from original

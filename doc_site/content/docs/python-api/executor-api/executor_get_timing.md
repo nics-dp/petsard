@@ -420,12 +420,6 @@ if exp_times.max() > 100:  # More than 100 seconds
 
 ## Related Methods
 
-- [`run()`](executor_run): Execute workflow
-- [`get_result()`](executor_get_result): Get execution results
-- [`is_execution_completed()`](executor_is_execution_completed): Check execution status
-
-## See Also
-
-- [Executor Class Overview](./_index#basic-usage)
-- [Status API](../../status-api)
-- [Performance Optimization Guide](../../tutorial/performance-optimization)
+- `run()`: Execute workflow
+- `get_result()`: Get execution results
+- `is_execution_completed()`: Check execution status

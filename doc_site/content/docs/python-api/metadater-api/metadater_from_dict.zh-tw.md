@@ -27,7 +27,7 @@ def from_dict(config: dict) -> Metadata
 
 ## 說明
 
-[`from_dict()`](metadater_from_dict.zh-tw.md) 方法從結構化的配置字典建立 Metadata 物件，適合用於：
+`from_dict()` 方法從結構化的配置字典建立 Metadata 物件，適合用於：
 
 1. 從 YAML 配置檔載入後轉換（Loader 內部使用）
 2. 程式化定義 schema

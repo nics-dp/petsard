@@ -36,7 +36,7 @@ def align(
 
 ## Description
 
-The [`align()`](metadater_align.md) method adjusts actual data structure according to Metadata definition, ensuring data conforms to expected format. This method performs the following operations:
+The `align()` method adjusts actual data structure according to Metadata definition, ensuring data conforms to expected format. This method performs the following operations:
 
 1. **Field Order Adjustment**: Rearrange fields according to metadata definition order
 2. **Supplement Missing Fields**: Add NaN values for fields defined in metadata but missing in data

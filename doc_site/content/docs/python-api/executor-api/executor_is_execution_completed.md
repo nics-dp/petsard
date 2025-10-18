@@ -505,12 +505,6 @@ else:
 
 ## Related Methods
 
-- [`run()`](executor_run): Execute workflow
-- [`get_result()`](executor_get_result): Get execution results
-- [`get_timing()`](executor_get_timing): Get execution time report
-
-## See Also
-
-- [Executor Class Overview](./_index#basic-usage)
-- [Status API](../../status-api)
-- [Error Handling Guide](../../tutorial/error-handling)
+- `run()`: Execute workflow
+- `get_result()`: Get execution results
+- `get_timing()`: Get execution time report

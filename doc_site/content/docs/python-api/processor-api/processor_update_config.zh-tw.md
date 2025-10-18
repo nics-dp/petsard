@@ -26,7 +26,7 @@ def update_config(
 
 ## 說明
 
-[`update_config()`](processor_update_config.zh-tw.md:1) 方法用於更新處理器的配置。可以：
+`update_config()` 方法用於更新處理器的配置。可以：
 
 1. 覆寫預設的處理方式
 2. 為特定欄位設定自訂處理器
@@ -236,8 +236,8 @@ print("gender encoder:", type(config['encoder']['gender']).__name__)
 ## 注意事項
 
 - 更新配置會覆寫該欄位的預設設定
-- 必須在 [`fit()`](processor_fit.zh-tw.md:1) 之前呼叫此方法
-- 如果在 [`fit()`](processor_fit.zh-tw.md:1) 之後更新配置，需要重新訓練
+- 必須在 `fit()` 之前呼叫此方法
+- 如果在 `fit()` 之後更新配置，需要重新訓練
 - 無效的處理器名稱會拋出 `ConfigError`
 - 設為 `None` 或 `"none"` 會停用該處理
 - 帶參數的處理器必須使用字典格式

@@ -39,7 +39,7 @@ def from_data(
 
 ## Description
 
-The [`from_data()`](metadater_from_data.md:1) method automatically analyzes data content and creates a corresponding Metadata object.
+The `from_data()` method automatically analyzes data content and creates a corresponding Metadata object.
 
 The inference process includes:
 1. Detecting data type for each field (int, float, str, bool, datetime, etc.)

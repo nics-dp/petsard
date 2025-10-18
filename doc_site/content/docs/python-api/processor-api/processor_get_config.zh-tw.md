@@ -27,7 +27,7 @@ def get_config(
 
 ## 說明
 
-[`get_config()`](processor_get_config.zh-tw.md:1) 方法用於檢視處理器的當前配置。可以用來：
+`get_config()` 方法用於檢視處理器的當前配置。可以用來：
 
 1. 查看所有欄位的處理方式
 2. 檢查特定欄位的配置
@@ -156,7 +156,7 @@ for proc_type, fields in config2.items():
 
 - 返回的配置是處理器實例，不是字串名稱
 - `None` 值表示該處理類型不套用於該欄位
-- 可以在任何時候呼叫此方法，不需要先 [`fit()`](processor_fit.zh-tw.md:1)
-- 配置會在 [`update_config()`](processor_update_config.zh-tw.md:1) 後更新
+- 可以在任何時候呼叫此方法，不需要先 `fit()`
+- 配置會在 `update_config()` 後更新
 - 如果提供的欄位名稱不存在，會在返回的配置中被忽略
 - 全域轉換處理器（如 `outlier_isolationforest`）會套用到所有欄位

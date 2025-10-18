@@ -351,13 +351,7 @@ executor.run()  # Silent execution
 
 ## Related Methods
 
-- [`get_result()`](executor_get_result): Get execution results
-- [`get_timing()`](executor_get_timing): Get execution time report
-- [`is_execution_completed()`](executor_is_execution_completed): Check execution status
-- [`get_inferred_schema()`](executor_get_inferred_schema): Get inferred Schema
-
-## See Also
-
-- [Executor Class Overview](./_index#basic-usage)
-- [Config API](../../config-api)
-- [Status API](../../status-api)
+- `get_result()`: Get execution results
+- `get_timing()`: Get execution time report
+- `is_execution_completed()`: Check execution status
+- `get_inferred_schema()`: Get inferred Schema

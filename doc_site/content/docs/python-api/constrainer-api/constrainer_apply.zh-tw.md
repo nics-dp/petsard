@@ -22,7 +22,7 @@ def apply(
     
 - **target_rows** : int, optional
     - 目標列數
-    - 由 [`resample_until_satisfy()`](constrainer_resample_until_satisfy.zh-tw.md) 內部使用
+    - 由 `\1` 內部使用
     - 用於欄位比例約束的目標行數設定
     - 預設值：`None`
 
@@ -34,7 +34,7 @@ def apply(
 
 ## 說明
 
-[`apply()`](constrainer_apply.zh-tw.md) 方法按以下順序依序套用所有已設定的約束條件：
+`\1` 方法按以下順序依序套用所有已設定的約束條件：
 
 1. **NaN Groups** (`nan_groups`)：處理空值相關規則
 2. **Field Constraints** (`field_constraints`)：檢查欄位值域約束
@@ -231,7 +231,7 @@ print(result)
 - **順序重要**：約束按固定順序套用，順序不可調整
 - **資料減少**：約束通常會過濾資料，返回的資料列數可能大幅減少
 - **AND 邏輯**：所有約束以 AND 組合，資料必須全部滿足才會保留
-- **target_rows**：一般使用者不需手動設定此參數，由 [`resample_until_satisfy()`](constrainer_resample_until_satisfy.zh-tw.md) 內部使用
+- **target_rows**：一般使用者不需手動設定此參數，由 `\1` 內部使用
 - **空結果**：如果約束條件過於嚴格，可能返回空的資料框
 - **效能考量**：大型資料集上的複雜約束可能需要較長執行時間
 - **欄位比例**：只有設定了 field_proportions 且提供 target_rows 時才會進行比例維護
@@ -239,6 +239,6 @@ print(result)
 
 ## 相關方法
 
-- [`__init__()`](_index.zh-tw.md#建構函式-__init__)：初始化約束設定
-- [`resample_until_satisfy()`](constrainer_resample_until_satisfy.zh-tw.md)：重複採樣直到滿足約束
-- [`register()`](constrainer_register.zh-tw.md)：註冊自訂約束類型
+- `\1`：初始化約束設定
+- `\1`：重複採樣直到滿足約束
+- `\1`：註冊自訂約束類型

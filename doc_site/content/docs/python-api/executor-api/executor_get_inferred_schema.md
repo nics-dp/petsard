@@ -475,14 +475,7 @@ for exp_key, schema in schemas.items():
 
 ## Related Methods
 
-- [`run()`](executor_run): Execute workflow
-- [`get_result()`](executor_get_result): Get execution results (includes actual Schema)
-- [`get_timing()`](executor_get_timing): Get execution time report
-- [`is_execution_completed()`](executor_is_execution_completed): Check execution status
-
-## See Also
-
-- [Executor Class Overview](./_index#basic-usage)
-- [Preprocessor API](../../processor-api/preprocessor-api)
-- [Schema API](../../schema-api)
-- [Data Constraining Tutorial](../../tutorial/use-cases/data-constraining)
+- `run()`: Execute workflow
+- `get_result()`: Get execution results (includes actual Schema)
+- `get_timing()`: Get execution time report
+- `is_execution_completed()`: Check execution status

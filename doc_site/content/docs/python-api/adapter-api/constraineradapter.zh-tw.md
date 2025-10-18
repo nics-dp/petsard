@@ -49,7 +49,7 @@ ConstrainerAdapter 處理合成資料的約束條件套用，整合 Constrainer 
     - `max_trials`：最大嘗試次數（預設 300）
     - `verbose_step`：進度顯示頻率（預設 10）
 
-**注意：** `constraints_yaml` 與個別約束參數（nan_groups, field_constraints 等）不能同時使用，否則會引發 [`ConfigError`](../../exceptions)。
+**注意：** `constraints_yaml` 與個別約束參數（nan_groups, field_constraints 等）不能同時使用，否則會引發 `ConfigError`。
 
 ### `run(input: dict)`
 

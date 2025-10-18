@@ -27,7 +27,7 @@ def from_dict(config: dict) -> Metadata
 
 ## Description
 
-The [`from_dict()`](metadater_from_dict.md) method creates Metadata objects from structured configuration dictionaries, suitable for:
+The `from_dict()` method creates Metadata objects from structured configuration dictionaries, suitable for:
 
 1. Converting after loading from YAML configuration files (used internally by Loader)
 2. Programmatic schema definition

@@ -29,14 +29,14 @@ def inverse_transform(
 
 ## Description
 
-The [`inverse_transform()`](processor_inverse_transform.md:1) method performs inverse data transformation. This method will:
+The `inverse_transform()` method performs inverse data transformation. This method will:
 
 1. Execute restoration operations in reverse order of preprocessing sequence
 2. Sequentially apply inverse scaling, inverse encoding, restore missing values, etc.
 3. Align data types to original schema
 4. Return data in format close to original
 
-This method must be called after [`fit()`](processor_fit.md:1) and [`transform()`](processor_transform.md:1).
+This method must be called after `fit()` and `transform()`.
 
 ## Basic Example
 
@@ -162,7 +162,7 @@ End
 
 ## Notes
 
-- Must complete [`fit()`](processor_fit.md:1) and [`transform()`](processor_transform.md:1) first
+- Must complete `fit()` and `transform()` first
 - Input data should be data processed with same preprocessing
 - Outlier processing is not restored (step is skipped)
 - Missing value positions are random, not exactly same as original data
