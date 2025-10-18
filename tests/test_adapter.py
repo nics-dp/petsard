@@ -1117,7 +1117,9 @@ class TestConstrainerAdapter:
         with patch("petsard.adapter.Constrainer") as mock_constrainer_class:
             operator = ConstrainerAdapter(config)
 
-            mock_constrainer_class.assert_called_once()
+            # Constrainer initialization is now delayed, so it won't be called in __init__
+            # mock_constrainer_class.assert_called_once()
+            assert operator.constrainer is None  # Not initialized yet
             assert operator.sample_dict == {}
 
     def test_init_with_sampling_params(self):
@@ -1150,10 +1152,10 @@ class TestConstrainerAdapter:
         with patch("petsard.adapter.Constrainer"):
             operator = ConstrainerAdapter(config)
 
-            # 檢查是否轉換為 tuple
+            # field_combinations format has changed from tuple to list
             transformed_config = operator.config
-            assert isinstance(transformed_config["field_combinations"][0], tuple)
-            assert isinstance(transformed_config["field_combinations"][1], tuple)
+            assert isinstance(transformed_config["field_combinations"][0], list)
+            assert isinstance(transformed_config["field_combinations"][1], list)
 
     def test_run_simple_apply(self):
         """測試簡單約束應用"""
@@ -1163,13 +1165,24 @@ class TestConstrainerAdapter:
 
         with patch("petsard.adapter.Constrainer") as mock_constrainer_class:
             mock_constrainer = Mock()
-            mock_constrainer.apply.return_value = constrained_data
+            # 當 return_details=True 時，validate() 返回包含詳細統計的字典
+            mock_constrainer.validate.return_value = {
+                "is_fully_compliant": True,
+                "total_rows": 3,
+                "passed_rows": 3,
+                "failed_rows": 0,
+                "pass_rate": 1.0,
+                "constraint_violations": {},
+            }
             mock_constrainer_class.return_value = mock_constrainer
 
             operator = ConstrainerAdapter(config)
+            # Initialize constrainer before _run
+            operator.constrainer = mock_constrainer
             operator._run(input_data)
 
-            mock_constrainer.apply.assert_called_once_with(input_data["data"])
+            mock_constrainer.validate.assert_called_once()
+            # validate mode 不會呼叫 apply，只會進行驗證
             assert operator.constrained_data.equals(constrained_data)
 
     def test_run_resample_until_satisfy(self):
@@ -1188,6 +1201,8 @@ class TestConstrainerAdapter:
             mock_constrainer_class.return_value = mock_constrainer
 
             operator = ConstrainerAdapter(config)
+            # Initialize constrainer before _run
+            operator.constrainer = mock_constrainer
             operator._run(input_data)
 
             mock_constrainer.resample_until_satisfy.assert_called_once()
@@ -1353,7 +1368,22 @@ class TestReporterAdapter:
             "Loader": pd.DataFrame({"A": [1, 2, 3]}),
             "Synthesizer": pd.DataFrame({"A": [4, 5, 6]}),
         }[module]
+
+        # get_report() 用於 exist_report，返回空字典即可
         mock_status.get_report.return_value = {}
+
+        # get_validation_result() 用於 validation_results
+        # 需要是一個可迭代的字典，而非 Mock 對象
+        mock_status.get_validation_result.return_value = {
+            "Constrainer": {
+                "is_fully_compliant": True,
+                "total_rows": 100,
+                "passed_rows": 100,
+                "failed_rows": 0,
+                "pass_rate": 1.0,
+                "constraint_violations": {},
+            }
+        }
 
         result = operator.set_input(mock_status)
 

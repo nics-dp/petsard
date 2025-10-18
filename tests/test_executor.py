@@ -84,9 +84,10 @@ class TestExecutor:
         config_file = self.create_temp_config_file(self.test_config)
 
         try:
-            with patch("petsard.executor.Config") as mock_config_class, patch(
-                "petsard.status.Status"
-            ) as mock_status_class:
+            with (
+                patch("petsard.executor.Config") as mock_config_class,
+                patch("petsard.status.Status") as mock_status_class,
+            ):
                 # 設定模擬物件
                 mock_config = Mock()
                 mock_config.sequence = ["Loader", "Synthesizer"]
@@ -129,9 +130,10 @@ class TestExecutor:
         config_file = self.create_temp_config_file(config_with_executor)
 
         try:
-            with patch("petsard.executor.Config") as mock_config_class, patch(
-                "petsard.status.Status"
-            ) as mock_status_class:
+            with (
+                patch("petsard.executor.Config") as mock_config_class,
+                patch("petsard.status.Status") as mock_status_class,
+            ):
                 executor = Executor(config_file)
 
                 # 檢查執行器配置是否被正確更新
@@ -150,9 +152,12 @@ class TestExecutor:
         mock_get_logger.return_value = mock_logger
 
         try:
-            with patch("petsard.executor.Config"), patch(
-                "petsard.status.Status"
-            ), patch("os.makedirs"), patch("logging.FileHandler") as mock_file_handler:
+            with (
+                patch("petsard.executor.Config"),
+                patch("petsard.status.Status"),
+                patch("os.makedirs"),
+                patch("logging.FileHandler") as mock_file_handler,
+            ):
                 executor = Executor(config_file)
                 executor.executor_config.log_output_type = "file"
                 executor._setup_logger()
@@ -171,11 +176,12 @@ class TestExecutor:
         mock_get_logger.return_value = mock_logger
 
         try:
-            with patch("petsard.executor.Config") as mock_config_class, patch(
-                "petsard.status.Status"
-            ) as mock_status_class, patch(
-                "logging.StreamHandler"
-            ) as mock_stream_handler, patch("logging.FileHandler"):
+            with (
+                patch("petsard.executor.Config") as mock_config_class,
+                patch("petsard.status.Status") as mock_status_class,
+                patch("logging.StreamHandler") as mock_stream_handler,
+                patch("logging.FileHandler"),
+            ):
                 # 設定模擬物件
                 mock_config = Mock()
                 mock_config.sequence = ["Loader"]
@@ -202,9 +208,10 @@ class TestExecutor:
         config_file = self.create_temp_config_file(self.test_config)
 
         try:
-            with patch("petsard.executor.Config") as mock_config_class, patch(
-                "petsard.status.Status"
-            ) as mock_status_class:
+            with (
+                patch("petsard.executor.Config") as mock_config_class,
+                patch("petsard.status.Status") as mock_status_class,
+            ):
                 # 設定模擬物件
                 mock_config = Mock()
                 mock_config.sequence = ["Loader", "Synthesizer"]  # 設定 sequence 屬性
@@ -218,6 +225,13 @@ class TestExecutor:
                     "Synthesizer": "synthesize",
                 }
                 mock_status.get_result.return_value = "test_result"
+
+                # inferred_schemas 需要支持 `in` 運算符，所以使用實際的字典
+                # 而非 Mock 對象，以避免 'Mock' object is not iterable 錯誤
+                mock_status.inferred_schemas = {
+                    "Loader": {"schema": "data"},
+                    "Synthesizer": {"schema": "data"},
+                }
 
                 # 設定佇列模擬
                 mock_operator1 = Mock()
@@ -248,9 +262,10 @@ class TestExecutor:
         config_file = self.create_temp_config_file(self.test_config)
 
         try:
-            with patch("petsard.executor.Config") as mock_config_class, patch(
-                "petsard.status.Status"
-            ) as mock_status_class:
+            with (
+                patch("petsard.executor.Config") as mock_config_class,
+                patch("petsard.status.Status") as mock_status_class,
+            ):
                 # 設定模擬物件
                 mock_config = Mock()
                 mock_config.sequence = ["Loader", "Synthesizer"]
@@ -314,9 +329,10 @@ class TestExecutor:
         config_file = self.create_temp_config_file(self.test_config)
 
         try:
-            with patch("petsard.executor.Config") as mock_config_class, patch(
-                "petsard.status.Status"
-            ) as mock_status_class:
+            with (
+                patch("petsard.executor.Config") as mock_config_class,
+                patch("petsard.status.Status") as mock_status_class,
+            ):
                 import pandas as pd
 
                 # 建立模擬的時間記錄 DataFrame
@@ -375,13 +391,13 @@ class TestExecutorIntegration:
         config_file.close()
 
         try:
-            with patch("petsard.executor.Config") as mock_config_class, patch(
-                "petsard.status.Status"
-            ) as mock_status_class, patch(
-                "logging.StreamHandler"
-            ) as mock_stream_handler, patch("logging.FileHandler"), patch(
-                "logging.getLogger"
-            ) as mock_get_logger:
+            with (
+                patch("petsard.executor.Config") as mock_config_class,
+                patch("petsard.status.Status") as mock_status_class,
+                patch("logging.StreamHandler") as mock_stream_handler,
+                patch("logging.FileHandler"),
+                patch("logging.getLogger") as mock_get_logger,
+            ):
                 # 設定模擬物件
                 mock_config = Mock()
                 mock_config.sequence = ["Loader"]  # 設定 sequence 屬性
@@ -440,9 +456,11 @@ class TestExecutorIntegration:
         mock_time.side_effect = [1000.0, 1010.5]  # 開始和結束時間
 
         try:
-            with patch("petsard.executor.Config") as mock_config_class, patch(
-                "petsard.status.Status"
-            ) as mock_status_class, patch("logging.getLogger") as mock_get_logger:
+            with (
+                patch("petsard.executor.Config") as mock_config_class,
+                patch("petsard.status.Status") as mock_status_class,
+                patch("logging.getLogger") as mock_get_logger,
+            ):
                 mock_logger = Mock()
                 mock_get_logger.return_value = mock_logger
 

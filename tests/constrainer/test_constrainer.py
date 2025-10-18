@@ -274,11 +274,12 @@ def test_register_invalid_constraint_class():
 
 def test_field_proportions_integration(sample_df):
     """Test field proportions constrainer integration with new architecture"""
-    # Create test data with known proportions
+    # Create test data with known proportions - use categorical data
     data = pd.DataFrame(
         {
             "category": ["A"] * 60 + ["B"] * 30 + ["C"] * 10,
-            "income": [50000, None, 60000, None, 70000] * 20,
+            "income": [">50K", None, "50K", None, "<50K"]
+            * 20,  # Changed to categorical
             "age_group": ["Young", "Old"] * 50,
         }
     )
