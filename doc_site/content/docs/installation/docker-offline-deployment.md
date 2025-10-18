@@ -1,31 +1,34 @@
 ---
-title: Docker Export
+title: Docker Offline Deployment
 type: docs
 weight: 4
-prev: docs/installation
+prev: docs/installation/pypi-install
+next: docs/installation/package-predownload
 ---
-
-# Docker Export
 
 Suitable for environments **without network connection** but **with Docker support**.
 
 This method requires building or pulling the Docker image in an environment with network access, then exporting it as a file, and finally importing it in the offline environment.
 
+> If your environment **has network connection**, please refer to [Docker Prebuilt](../docker-prebuilt) method directly, without the need for export/import steps.
+
 ## Step 1: Prepare Docker Image in Network-Connected Environment
 
-### Option A: Using Pre-built Image (Recommended)
+### Method A: Export Pre-built Image (Recommended)
+
+First pull the pre-built image (see [Docker Prebuilt](../docker-prebuilt) for details), then export it:
 
 ```bash
-# Pull the latest version
+# Pull the latest version (skip if already done)
 docker pull ghcr.io/nics-dp/petsard:latest
 
 # Export image to file
 docker save ghcr.io/nics-dp/petsard:latest -o petsard-latest.tar
 ```
 
-### Option B: Local Build
+### Method B: Build and Export Image
 
-If you have the PETsARD source code, you can build your own container:
+If you need to customize or modify the container, you can build your own image:
 
 ```bash
 # Clone the repository

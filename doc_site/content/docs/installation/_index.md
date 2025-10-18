@@ -22,7 +22,7 @@ Based on your environment conditions, please select the appropriate installation
 
 ### Environments with Network Connection
 
-- **[Docker Build](docker-build)** - Environments with Docker support (Recommended)
+- **[Docker Prebuilt](docker-prebuilt)** - Environments with Docker support (Recommended)
   - No local Python environment setup required
   - Fast deployment with high environment consistency
 
@@ -33,7 +33,7 @@ Based on your environment conditions, please select the appropriate installation
 
 ### Environments without Network Connection
 
-- **[Docker Export](docker-export)** - Environments with Docker support
+- **[Docker Offline Deployment](docker-offline-deployment)** - Environments with Docker support
   - Build/pull image in network-connected environment first
   - Export and transfer to offline environment
 

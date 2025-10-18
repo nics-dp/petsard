@@ -2,10 +2,9 @@
 title: 套件預下載
 type: docs
 weight: 5
-prev: docs/installation
+prev: docs/installation/docker-offline-deployment
+next: docs/installation
 ---
-
-# 套件預下載
 
 適用於**無網路連線**且**不支援 Docker** 的環境。
 

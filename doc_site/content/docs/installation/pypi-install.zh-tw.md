@@ -2,10 +2,9 @@
 title: PyPI 安裝
 type: docs
 weight: 3
-prev: docs/installation
+prev: docs/installation/docker-prebuilt
+next: docs/installation/docker-offline-deployment
 ---
-
-# PyPI 安裝
 
 適用於**有網路連線**但**不支援 Docker** 的環境。
 
@@ -60,9 +59,9 @@ uv pip install petsard[dev]  # 用於開發
 pip install petsard
 
 # 使用依賴群組
-pip install petsard[ds]   # 適用於 Docker 環境中使用 Jupyter
-pip install petsard[all]  # 包含 xlsx 檔案支援
-pip install petsard[dev]  # 用於開發
+pip install --group ds petsard    # 適用於 Docker 環境中使用 Jupyter
+pip install --group all petsard   # 包含 xlsx 檔案支援
+pip install --group dev petsard   # 用於開發
 ```
 
 ### 方式 1-c：從 TestPyPI 安裝（測試用）
@@ -77,7 +76,7 @@ uv pip install --index-url https://test.pypi.org/simple/ petsard
 pip install --index-url https://test.pypi.org/simple/ petsard
 
 # 使用依賴群組（可能需要額外的 --extra-index-url 以安裝依賴）
-pip install --index-url https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple/ petsard[ds]
+pip install --index-url https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple/ --group ds petsard
 ```
 
 **注意：** TestPyPI 用於測試套件發布。生產環境請從主要 PyPI 安裝（方式 1-a 或 1-b）。
@@ -87,7 +86,7 @@ pip install --index-url https://test.pypi.org/simple/ --extra-index-url https://
 如果您在受限的網路環境中安裝（例如：企業防火牆後或透過代理伺服器），可能會遇到 SSL 憑證驗證問題。此時可以使用 `--trusted-host` 參數來略過憑證驗證：
 
 ```bash
-pip install petsard[ds] \
+pip install --group ds petsard \
   --trusted-host pypi.org \
   --trusted-host files.pythonhosted.org
 ```
@@ -95,7 +94,7 @@ pip install petsard[ds] \
 **Jupyter Notebook 使用者**，語法相同：
 
 ```python
-%pip install petsard[ds] \
+%pip install --group ds petsard \
   --trusted-host pypi.org \
   --trusted-host files.pythonhosted.org
 ```

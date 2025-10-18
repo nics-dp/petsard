@@ -1,15 +1,16 @@
 ---
-title: Docker 建立
+title: Docker 預建
 type: docs
 weight: 2
 prev: docs/installation
+next: docs/installation/pypi-install
 ---
-
-# Docker 建立
 
 適用於**有網路連線**且**支援 Docker** 的環境。
 
-## 方式：使用預建 Docker 容器
+> 如果您的環境**無網路連線**，請參閱 [Docker 離線部署](../docker-offline-deployment) 方式。
+
+## 方式：使用預建 Docker 容器（推薦）
 
 PETsARD 提供預先建置的 Docker 容器，無需本地 Python 環境設定即可使用。
 

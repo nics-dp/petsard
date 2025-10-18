@@ -22,7 +22,7 @@ next: docs/getting-started
 
 ### 有網路連線的環境
 
-- **[Docker 建立](docker-build)** - 支援 Docker 的環境（推薦）
+- **[Docker 預建](docker-prebuilt)** - 支援 Docker 的環境（推薦）
   - 無需本地 Python 環境設定
   - 快速部署，環境一致性高
 
@@ -33,7 +33,7 @@ next: docs/getting-started
 
 ### 無網路連線的環境
 
-- **[Docker 匯出](docker-export)** - 支援 Docker 的環境
+- **[Docker 離線部署](docker-offline-deployment)** - 支援 Docker 的環境
   - 先在有網路環境建置/拉取映像
   - 匯出後傳輸到離線環境使用
 

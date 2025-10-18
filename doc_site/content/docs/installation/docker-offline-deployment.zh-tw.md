@@ -1,31 +1,34 @@
 ---
-title: Docker 匯出
+title: Docker 離線部署
 type: docs
 weight: 4
-prev: docs/installation
+prev: docs/installation/pypi-install
+next: docs/installation/package-predownload
 ---
-
-# Docker 匯出
 
 適用於**無網路連線**但**支援 Docker** 的環境。
 
 此方式需要在有網路的環境中先建置或拉取 Docker 映像，然後匯出為檔案，最後在離線環境中匯入使用。
 
+> 如果您的環境**有網路連線**，請直接參閱 [Docker 預建](../docker-prebuilt) 方式，無需匯出/匯入步驟。
+
 ## 步驟 1：在有網路的環境中準備 Docker 映像
 
-### 選項 A：使用預建映像（推薦）
+### 方式 A：匯出預建映像（推薦）
+
+先拉取預建映像（詳見 [Docker 預建](../docker-prebuilt)），然後匯出：
 
 ```bash
-# 拉取最新版本
+# 拉取最新版本（如已完成可跳過）
 docker pull ghcr.io/nics-dp/petsard:latest
 
 # 匯出映像為檔案
 docker save ghcr.io/nics-dp/petsard:latest -o petsard-latest.tar
 ```
 
-### 選項 B：本地建置映像
+### 方式 B：建置並匯出映像
 
-如果您有 PETsARD 原始碼，可以建置自己的容器：
+如果需要自訂或修改容器，可以建置自己的映像：
 
 ```bash
 # 複製儲存庫
