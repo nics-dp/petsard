@@ -172,16 +172,16 @@ class TestFieldProportionsConfig:
         """Test verify_data with valid DataFrame"""
         config = FieldProportionsConfig(
             field_proportions=[
-                {"fields": "age", "mode": "all", "tolerance": 0.05},
+                {"fields": "age_group", "mode": "all", "tolerance": 0.05},
                 {"fields": "income", "mode": "missing", "tolerance": 0.03},
             ]
         )
 
-        # Create test data
+        # Create test data - use categorical fields
         data = pd.DataFrame(
             {
-                "age": [25, 30, 35, 40, 25, 30],
-                "income": [50000, 60000, None, 80000, 55000, None],
+                "age_group": ["Young", "Middle", "Old", "Senior", "Young", "Middle"],
+                "income": [">50K", "50K", None, ">50K", "50K", None],
             }
         )
 
@@ -362,10 +362,10 @@ class TestFieldProportionsConstrainer:
 
         constrainer = FieldProportionsConstrainer(config)
 
-        # Create test data with missing values
+        # Create test data with missing values - use categorical data
         data = pd.DataFrame(
             {
-                "income": [50000, None, 60000, None, 70000] * 20,  # 40% missing
+                "income": [">50K", None, "50K", None, "<50K"] * 20,  # 40% missing
             }
         )
 
@@ -525,10 +525,10 @@ class TestFieldProportionsConstrainerExtremeEdgeCases:
 
         constrainer = FieldProportionsConstrainer(config)
 
-        # No missing values
+        # No missing values - use categorical data
         data = pd.DataFrame(
             {
-                "income": [50000, 60000, 70000] * 20,
+                "income": [">50K", "50K", "<50K"] * 20,
             }
         )
 
@@ -593,10 +593,10 @@ class TestFieldProportionsConstrainerExtremeEdgeCases:
 
         constrainer = FieldProportionsConstrainer(config)
 
-        # Many unique values (each appears only once)
+        # Many unique values (each appears only once) - use strings
         data = pd.DataFrame(
             {
-                "id": list(range(100)),  # 100 unique values
+                "id": [f"ID_{i}" for i in range(100)],  # 100 unique string values
             }
         )
 
@@ -724,10 +724,10 @@ class TestFieldProportionsConstrainerExtremeEdgeCases:
 
         constrainer = FieldProportionsConstrainer(config)
 
-        # Values that might cause floating point precision issues
+        # Use categorical values instead of numeric
         data = pd.DataFrame(
             {
-                "value": [0.1, 0.2, 0.3] * 334,  # 1002 rows total
+                "value": ["Low", "Medium", "High"] * 334,  # 1002 rows total
             }
         )
 
@@ -764,11 +764,17 @@ class TestFieldProportionsConstrainerExtremeEdgeCases:
 
         constrainer = FieldProportionsConstrainer(config)
 
-        # Datetime objects
-        dates = pd.date_range("2020-01-01", periods=5, freq="D")
+        # Use date strings instead of datetime objects
         data = pd.DataFrame(
             {
-                "date": list(dates) * 20,
+                "date": [
+                    "2020-01-01",
+                    "2020-01-02",
+                    "2020-01-03",
+                    "2020-01-04",
+                    "2020-01-05",
+                ]
+                * 20,
             }
         )
 
