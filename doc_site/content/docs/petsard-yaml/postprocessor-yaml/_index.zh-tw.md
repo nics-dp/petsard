@@ -1,5 +1,5 @@
 ---
-title: "Postprocessor YAML（更新中）"
+title: "Postprocessor YAML"
 weight: 150
 ---
 
@@ -9,37 +9,35 @@ Postprocessor 模組的 YAML 設定檔案格式，用於資料後處理（還原
 
 請點擊下方按鈕在 Colab 中執行範例：
 
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/nics-tw/petsard/blob/main/demo/petsard-yaml/postprocessor-yaml/postprocessor-yaml.ipynb)
-
-### 使用預設後處理
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/nics-tw/petsard/blob/main/demo/petsard-yaml/postprocessor-yaml/postprocessor.ipynb)
 
 ```yaml
-Postprocessor:
-  demo:
-    method: 'default'
-```
-
-### 搭配 Preprocessor 使用
-
-```yaml
+Loader:
+  load_benchmark_with_schema:
+    filepath: benchmark://adult-income
+    schema: benchmark://adult-income_schema
 Preprocessor:
-  demo:
-    method: 'default'
-    
+  default:
+    method: default
 Synthesizer:
-  demo:
-    method: 'default'
-    
+  default:
+    method: default
 Postprocessor:
-  demo:
-    method: 'default'  # 自動還原 Preprocessor 的轉換
+  default:
+    method: default  # 後處理：自動還原前處理轉換
+Reporter:
+  save_all_step:
+    method: save_data
+    source:
+      - Preprocessor
+      - Synthesizer
+      - Postprocessor
 ```
 
 ## 主要參數
 
 - **method** (`string`, 必要)
-  - 後處理方法
-  - 可用值：`'default'`（自動還原前處理）
+  - 目前僅提供 `'default'` 方法，會自動偵測對應的 Preprocessor 配置並執行逆向還原操作
 
 ## 工作原理
 
@@ -53,9 +51,19 @@ Postprocessor 會自動執行 Preprocessor 的逆向操作，將合成資料還�
    - 反離散化（discretizing → inverse discretizing）
    - 恢復缺失值（missing → restore NA）
 
+## 與 Preprocessor 的對應關係
+
+| Preprocessor 步驟 | Postprocessor 對應 | 說明 |
+|------------------|-------------------|------|
+| `missing` | `restore_missing` | 依比例重新插入缺失值 |
+| `outlier` | ❌ 不還原 | 離群值處理無法逆向 |
+| `encoder` | `inverse_encoder` | 類別變數解碼 |
+| `scaler` | `inverse_scaler` | 數值反縮放 |
+| `discretizing` | `inverse_discretizing` | 連續化 |
+
 ## 還原序列
 
-假設 Preprocessor 的序列為 `['missing', 'outlier', 'encoder', 'scaler']`，  
+假設 Preprocessor 的序列為 `['missing', 'outlier', 'encoder', 'scaler']`，
 Postprocessor 的還原序列為 `['scaler', 'encoder', 'missing']`
 
 **注意**：
@@ -79,10 +87,9 @@ Postprocessor 的還原序列為 `['scaler', 'encoder', 'missing']`
 
 ## 執行說明
 
-- Postprocessor 必須在 Synthesizer 之後執行
+- Postprocessor 必須在 Preprocessor 之後執行
 - 系統會自動讀取前面的 Preprocessor 配置
 - 如果沒有對應的 Preprocessor，Postprocessor 將不執行任何操作
-- 實驗名稱（第二層）可自由命名
 
 ## 注意事項
 
@@ -90,53 +97,7 @@ Postprocessor 的還原序列為 `['scaler', 'encoder', 'missing']`
 - 離群值處理無法還原，資料範圍可能與原始資料略有差異
 - 缺失值會按照原始比例隨機插入（位置可能不同）
 - 資料類型會自動對齊到原始 schema 定義
-- 詳細的還原機制請參閱 Postprocessor API 文檔
-
-## 與 Preprocessor 的對應關係
-
-| Preprocessor 步驟 | Postprocessor 對應 | 說明 |
-|------------------|-------------------|------|
-| `missing` | `restore_missing` | 依比例重新插入缺失值 |
-| `outlier` | ❌ 不還原 | 離群值處理無法逆向 |
-| `encoder` | `inverse_encoder` | 類別變數解碼 |
-| `scaler` | `inverse_scaler` | 數值反縮放 |
-| `discretizing` | `inverse_discretizing` | 連續化 |
-
-## 完整範例
-
-```yaml
-Loader:
-  load_data:
-    filepath: 'benchmark/adult-income.csv'
-    schema: 'benchmark/adult-income_schema.yaml'
-
-Preprocessor:
-  preprocess:
-    method: 'default'
-    sequence:
-      - missing
-      - outlier
-      - encoder
-      - scaler
-    config:
-      missing:
-        age: 'missing_mean'
-      encoder:
-        gender: 'encoder_onehot'
-
-Synthesizer:
-  synthesize:
-    method: 'default'
-
-Postprocessor:
-  postprocess:
-    method: 'default'
-    # 會自動執行：
-    # 1. inverse scaler
-    # 2. inverse encoder (gender 會從 one-hot 還原)
-    # 3. restore missing (age 會插入適當比例的 NA)
-
-Reporter:
-  save:
-    method: 'save_data'
-    source: 'Postprocessor'
+- **多個前後處理器的配置建議**：
+  - 即使配置了多個 Preprocessor，通常只需設定單一個 Postprocessor 即可自動處理所有還原操作
+  - 目前針對多個 Preprocessor 組合以及多個 Postprocessor 配置的測試並不全面
+  - **建議**：盡可能避免在 Preprocessor 上同時嘗試多種複雜組合，以確保後處理的穩定性
