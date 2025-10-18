@@ -58,7 +58,6 @@ def create_schema(data: pd.DataFrame, schema_id: str) -> SchemaMetadata:
 ### 當修改 `petsard/loader/` 時
 
 **必須檢查**:
-- [ ] `.ai/functional_design/loader.md` 是否需要更新
 - [ ] API 變更是否影響向後相容性
 - [ ] 與 Metadater 的整合是否正常
 - [ ] `load()` 方法的回傳格式是否一致
@@ -82,7 +81,6 @@ class Loader:
 ### 當修改 `petsard/metadater/` 時
 
 **必須檢查**:
-- [ ] `.ai/functional_design/metadater.md` 是否需要更新
 - [ ] 三層架構 (Metadata/Schema/Field) 的完整性
 - [ ] 函數式設計原則的遵循
 - [ ] 不可變資料結構的使用
@@ -104,7 +102,6 @@ class FieldMetadata:
 ### 當修改 `petsard/evaluator/` 時
 
 **必須檢查**:
-- [ ] `.ai/functional_design/evaluator.md` 是否需要更新
 - [ ] 新的評估器是否繼承 `BaseEvaluator`
 - [ ] 評估結果格式是否一致
 - [ ] 是否正確使用 Metadater 進行資料處理
