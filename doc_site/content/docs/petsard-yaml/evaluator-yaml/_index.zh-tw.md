@@ -185,9 +185,9 @@ Evaluator:
 ³ **隱私風險標準**（風險 < 0.09）：基於 PDPC Singapore 指引
 
 ⁴ **實用性標準**（依任務類型）：
-- 分類任務：F1 ≥ 0.7
-- 迴歸任務：R² ≥ 0.7
-- 聚類任務：輪廓係數 ≥ 0.5
+- 分類任務（XGBoost）：F1 ≥ 0.7
+- 迴歸任務（XGBoost）：R² ≥ 0.7
+- 聚類任務（K-means）：輪廓係數 ≥ 0.5
 
 > **預設方法**：當 `method: default` 時，系統會自動執行 `sdmetrics-qualityreport` 評估資料保真度。
 

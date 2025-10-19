@@ -188,9 +188,9 @@ Evaluator:
 ³ **Privacy Risk Standard** (Risk < 0.09): Based on PDPC Singapore guidelines
 
 ⁴ **Utility Standard** (Task-dependent):
-- Classification tasks: F1 ≥ 0.7
-- Regression tasks: R² ≥ 0.7
-- Clustering tasks: Silhouette coefficient ≥ 0.5
+- Classification tasks (XGBoost): F1 ≥ 0.7
+- Regression tasks (XGBoost): R² ≥ 0.7
+- Clustering tasks (K-means): Silhouette coefficient ≥ 0.5
 
 > **Default Method**: When `method: default` is used, the system automatically executes `sdmetrics-qualityreport` to evaluate data fidelity.
 

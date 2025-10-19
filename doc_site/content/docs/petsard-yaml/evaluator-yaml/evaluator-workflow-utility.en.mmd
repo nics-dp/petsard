@@ -2,9 +2,9 @@ flowchart TD
     Start([Data Utility Assessment])
     Method[Assessment Method:<br/>mlutility]
     TaskType{Task Type & Standard}
-    Classification{Classification: F1 ≥ 0.7?}
-    Regression{Regression: R² ≥ 0.7?}
-    Clustering{Clustering: Silhouette ≥ 0.5?}
+    Classification{Classification XGBoost:<br/>F1 ≥ 0.7?}
+    Regression{Regression XGBoost:<br/>R² ≥ 0.7?}
+    Clustering{Clustering K-means:<br/>Silhouette ≥ 0.5?}
     Pass[Utility Met]
     Fail[Need to Improve Model Utility]
 
