@@ -1,6 +1,6 @@
 ---
 title: "儲存時間資訊"
-weight: 4
+weight: 5
 ---
 
 使用 `save_timing` 方法記錄各模組的執行時間，用於效能分析和優化。
@@ -37,7 +37,7 @@ Postprocessor:
 
 Reporter:
   save_all_timing:
-    method: save_timing  # 必要：固定使用 save_timing 方法
+    method: save_timing  # 必要：固定為 save_timing
     # time_unit: seconds # 選用：時間單位（預設：seconds）
     # module:            # 選用：指定要記錄的模組
     #   - Synthesizer

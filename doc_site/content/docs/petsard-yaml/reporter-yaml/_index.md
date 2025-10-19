@@ -49,15 +49,12 @@ This module supports the following report output methods. For detailed parameter
 1. **Save Data** - Save synthetic data or outputs from other modules as CSV files
 2. **Generate Evaluation Reports** - Generate evaluation result reports with multiple granularity levels
 3. **Save Schema Information** - Output data column schema information from specified modules
-4. **Save Timing Information** - Record execution time of each module
+4. **Save Validation Results** - Export Constrainer validation results as structured CSV reports
+5. **Save Timing Information** - Record execution time of each module
 
 ## Naming Strategy and Experiment Names
 
 PETsARD adopts a unified experiment naming convention for identifying and tracking experiment processes.
-
-Click the button below to run examples in Colab:
-
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/nics-dp/petsard/blob/main/demo/developer-guide/experiment-name-in-reporter.ipynb)
 
 ### Naming Strategy Overview
 
@@ -65,16 +62,6 @@ The Reporter module supports two naming strategies, controlled via the `naming_s
 
 1. **TRADITIONAL**: Maintains backward compatibility with traditional naming format
 2. **COMPACT**: Provides a more concise and readable naming format
-
-```python
-from petsard.reporter import Reporter
-
-# Traditional naming (default)
-reporter = Reporter('save_report', granularity='global', naming_strategy='traditional')
-
-# Compact naming
-reporter = Reporter('save_report', granularity='global', naming_strategy='compact')
-```
 
 ### Experiment Name Format
 
