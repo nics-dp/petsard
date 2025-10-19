@@ -85,10 +85,19 @@ Insert Missing Values (Missing restore)
 Original Format Data
 ```
 
+## Precision Restoration
+
+Postprocessor automatically restores numeric fields to their original precision:
+
+- **Precision Source**: Uses the schema from Preprocessor input (preprocessor_input_schema)
+- **Auto-Application**: Data is rounded according to original precision after restoration
+- **Precision Consistency**: Ensures restored data matches original data precision
+
 ## Execution Instructions
 
 - Postprocessor must be executed after Preprocessor
 - The system will automatically read the previous Preprocessor configuration
+- The system will automatically retrieve original data precision information
 - If there is no corresponding Preprocessor, the Postprocessor will not perform any operations
 
 ## Notes
@@ -97,6 +106,7 @@ Original Format Data
 - Outlier handling cannot be restored, so data ranges may differ slightly from the original data
 - Missing values are randomly inserted according to the original proportions (positions may differ)
 - Data types are automatically aligned with the original schema definition
+- Precision is automatically restored to match original data precision
 - **Multiple Preprocessor/Postprocessor Configuration Recommendations**:
   - Even with multiple Preprocessors configured, typically only a single Postprocessor is needed to automatically handle all restoration operations
   - Testing for multiple Preprocessor combinations and multiple Postprocessor configurations is currently not comprehensive

@@ -48,6 +48,51 @@ class BaseAdapter:
             self._logger.debug("Error details: ", exc_info=True)
             raise ConfigError
 
+    def _apply_precision_rounding(
+        self, data: pd.DataFrame, schema: Schema, context: str
+    ) -> None:
+        """
+        Apply precision rounding to numerical columns in-place based on schema.
+        根據 schema 對數值欄位進行原地精度四捨五入
+
+        Args:
+            data: DataFrame to apply precision rounding to (modified in-place)
+            schema: Schema containing precision information in type_attr
+            context: Context description for logging (e.g., "Preprocessor output")
+        """
+        from petsard.utils import safe_round
+
+        if schema is None or not hasattr(schema, "attributes"):
+            return
+
+        precision_applied_count = 0
+
+        # schema.attributes is a dict, iterate over values
+        for attr in schema.attributes.values():
+            col_name = attr.name
+            # Check if column exists in data
+            if col_name not in data.columns:
+                continue
+
+            # Check if this is a numerical column with precision
+            if attr.type_attr and "precision" in attr.type_attr:
+                precision = attr.type_attr["precision"]
+                # Only apply to numerical types (check attr.type not attr.sdtype)
+                if attr.type and any(t in attr.type for t in ["float", "int"]):
+                    # Apply safe_round to entire column
+                    data[col_name] = data[col_name].apply(
+                        lambda x: safe_round(x, precision)
+                    )
+                    precision_applied_count += 1
+                    self._logger.debug(
+                        f"Applied precision={precision} to column '{col_name}' in {context}"
+                    )
+
+        if precision_applied_count > 0:
+            self._logger.info(
+                f"✓ Applied precision rounding to {precision_applied_count} columns in {context}"
+            )
+
     def run(self, input: dict):
         """
         Execute the module's functionality.
@@ -403,6 +448,10 @@ class LoaderAdapter(BaseAdapter):
         self._logger.debug("Using Schema from Metadater")
         self.metadata = self._schema_metadata
 
+        # Apply precision rounding based on schema
+        # 根據 schema 應用精度四捨五入
+        self._apply_precision_rounding(self.data, self.metadata, "Loader output")
+
         self._logger.debug("Data loading completed")
 
     def set_input(self, status) -> dict:
@@ -689,6 +738,12 @@ class PreprocessorAdapter(BaseAdapter):
         self._logger.debug("Transforming data")
         self.data_preproc = self.processor.transform(data=input["data"])
 
+        # Apply precision rounding based on output schema
+        # 根據輸出 schema 應用精度四捨五入
+        self._apply_precision_rounding(
+            self.data_preproc, self.processor._metadata, "Preprocessor output"
+        )
+
     @BaseAdapter.log_and_raise_config_error
     def set_input(self, status) -> dict:
         """
@@ -937,6 +992,12 @@ class PostprocessorAdapter(BaseAdapter):
                 self._logger.warning(
                     f"Failed to restore dtypes from original schema: {e}"
                 )
+
+            # Apply precision rounding based on original schema (preprocessor input schema)
+            # 根據原始 schema（preprocessor 輸入 schema）應用精度四捨五入
+            self._apply_precision_rounding(
+                self.data_postproc, input["original_schema"], "Postprocessor output"
+            )
 
     @BaseAdapter.log_and_raise_config_error
     def set_input(self, status) -> dict:

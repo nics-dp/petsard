@@ -85,10 +85,19 @@ Postprocessor 的還原序列為 `['scaler', 'encoder', 'missing']`
 原始格式資料
 ```
 
+## 精度還原
+
+Postprocessor 會自動還原數值欄位到原始精度：
+
+- **精度來源**：使用 Preprocessor 輸入時的 schema（preprocessor_input_schema）
+- **自動應用**：還原完成後自動根據原始精度進行四捨五入
+- **精度一致**：確保還原後的資料與原始資料精度一致
+
 ## 執行說明
 
 - Postprocessor 必須在 Preprocessor 之後執行
 - 系統會自動讀取前面的 Preprocessor 配置
+- 系統會自動取得原始資料的精度資訊
 - 如果沒有對應的 Preprocessor，Postprocessor 將不執行任何操作
 
 ## 注意事項
@@ -97,6 +106,7 @@ Postprocessor 的還原序列為 `['scaler', 'encoder', 'missing']`
 - 離群值處理無法還原，資料範圍可能與原始資料略有差異
 - 缺失值會按照原始比例隨機插入（位置可能不同）
 - 資料類型會自動對齊到原始 schema 定義
+- 精度會自動還原到原始資料的精度
 - **多個前後處理器的配置建議**：
   - 即使配置了多個 Preprocessor，通常只需設定單一個 Postprocessor 即可自動處理所有還原操作
   - 目前針對多個 Preprocessor 組合以及多個 Postprocessor 配置的測試並不全面

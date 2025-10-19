@@ -239,12 +239,20 @@ class ProcessorTransformRules:
         Returns:
             轉換後的 Attribute（新實例）
         """
+        # 判斷型別是否改變
+        output_type = rule.output_type if rule.output_type else attribute.type
+        type_changed = output_type != attribute.type
+
+        # 如果型別改變（特別是從數值型別轉為其他型別），精度資訊可能無效
+        # 但我們仍然保留 type_attr，讓後續的 Postprocessor 可以使用原始的精度資訊
+        type_attr = attribute.type_attr
+
         # 創建新的 Attribute，保留大部分原始資訊
         new_attr_dict = {
             "name": attribute.name,
             "description": attribute.description,
-            "type": rule.output_type if rule.output_type else attribute.type,
-            "type_attr": attribute.type_attr,
+            "type": output_type,
+            "type_attr": type_attr,  # 保留精度資訊
             "category": attribute.category,  # 預設保持不變
             "logical_type": rule.output_logical_type
             if rule.output_logical_type
@@ -279,12 +287,20 @@ class ProcessorTransformRules:
         Returns:
             轉換後的 Attribute（新實例）
         """
+        # 判斷型別是否改變
+        output_type = transform_info.get("output_type") or attribute.type
+        type_changed = output_type != attribute.type
+
+        # 如果型別改變（特別是從數值型別轉為其他型別），精度資訊可能無效
+        # 但我們仍然保留 type_attr，讓後續的 Postprocessor 可以使用原始的精度資訊
+        type_attr = attribute.type_attr
+
         # 創建新的 Attribute，保留大部分原始資訊
         new_attr_dict = {
             "name": attribute.name,
             "description": attribute.description,
-            "type": transform_info.get("output_type") or attribute.type,
-            "type_attr": attribute.type_attr,
+            "type": output_type,
+            "type_attr": type_attr,  # 保留精度資訊
             "category": transform_info.get("output_category")
             if transform_info.get("output_category") is not None
             else attribute.category,

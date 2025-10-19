@@ -98,6 +98,14 @@ Preprocessor 支援以下處理步驟，依序執行：
 - [縮放]({{< ref "scaling" >}})
 - [離散化]({{< ref "discretizing" >}})
 
+## 精度保持
+
+Preprocessor 會自動保持數值欄位的精度：
+
+- **精度保留**：轉換過程中不會改變 schema 中的 `type_attr.precision`
+- **自動應用**：轉換完成後自動根據精度進行四捨五入
+- **記憶機制**：精度資訊會記錄在 Status 中，供後續模組使用
+
 ## 執行說明
 
 - 實驗名稱（第二層）可自由命名，建議使用描述性名稱
@@ -110,4 +118,5 @@ Preprocessor 支援以下處理步驟，依序執行：
 - `discretizing` 必須是序列中的最後一步
 - 某些離群值處理器（如 `outlier_isolationforest`、`outlier_lof`）是全域轉換，會套用到所有欄位
 - 自訂 config 會覆蓋預設設定
+- 精度會在前處理轉換後自動應用，確保數值一致性
 - 詳細的處理器參數設定請參閱各功能頁面和 Processor API 文檔

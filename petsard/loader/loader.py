@@ -512,13 +512,41 @@ class Loader:
         # 如果沒有 schema，從資料建立
         if schema is None or not schema.attributes:
             try:
-                schema = SchemaMetadater.from_data(data)
+                schema = SchemaMetadater.from_data(data, base_schema=None)
                 # 現在可以直接修改屬性（已移除 frozen）
                 schema.id = self.config.file_name or "inferred_schema"
                 schema.name = self.config.base_name or "Inferred Schema"
-                self._logger.debug("Created schema from data")
+                self._logger.debug("Created schema from data without base_schema")
             except Exception as e:
                 error_msg = f"Failed to create schema from data: {str(e)}"
+                self._logger.error(error_msg)
+                raise UnableToFollowMetadataError(error_msg) from e
+        else:
+            # 有 schema，需要從資料推斷並合併
+            # 如果 schema 有 precision 定義，就使用該精度，不從資料推斷
+            try:
+                # 傳遞 base_schema 給 from_data，讓它知道哪些欄位有 precision 定義
+                inferred_schema = SchemaMetadater.from_data(data, base_schema=schema)
+                # 合併 schema 和 inferred_schema
+                # 優先使用原 schema 的設定，但補充推斷的資訊
+                for col_name, inferred_attr in inferred_schema.attributes.items():
+                    if col_name in schema.attributes:
+                        # 欄位已存在於 schema，保留原有設定（包括 precision）
+                        # 但更新推斷的資訊（如 stats）
+                        if (
+                            inferred_attr.stats
+                            and not schema.attributes[col_name].stats
+                        ):
+                            schema.attributes[col_name].stats = inferred_attr.stats
+                    else:
+                        # 新欄位，直接加入
+                        schema.attributes[col_name] = inferred_attr
+                        self._logger.debug(
+                            f"Added inferred attribute '{col_name}' to schema"
+                        )
+                self._logger.debug("Schema merged with inferred attributes")
+            except Exception as e:
+                error_msg = f"Failed to merge schema with data: {str(e)}"
                 self._logger.error(error_msg)
                 raise UnableToFollowMetadataError(error_msg) from e
 
