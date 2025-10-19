@@ -461,8 +461,10 @@ class Loader:
                     if attribute.type == "string":
                         dtype_dict[attr_name] = str
                     elif "int" in attribute.type:
-                        # Use nullable integer type for int to handle NA values properly
-                        dtype_dict[attr_name] = "Int64"
+                        # Don't set dtype for int columns during read to avoid casting issues
+                        # Let pandas read them as float64 first, then convert in align stage
+                        # This allows handling of float-like integers (e.g., "1.0") and na_values
+                        pass
                     elif "float" in attribute.type:
                         dtype_dict[attr_name] = float
                     elif attribute.type == "boolean":

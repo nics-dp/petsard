@@ -558,7 +558,26 @@ class SchemaMetadater:
             # 向後相容：將 fields 對應到內部的 attributes
             attributes = {}
             for field_name, field_config in config["fields"].items():
-                attributes[field_name] = AttributeMetadater.from_dict(field_config)
+                if isinstance(field_config, dict):
+                    # 確保有 name 欄位
+                    if "name" not in field_config:
+                        field_config["name"] = field_name
+                    # 應用類型映射以統一類型名稱
+                    if "type" in field_config:
+                        type_mapping = {
+                            "int": "int64",
+                            "float": "float64",
+                            "str": "string",
+                            "bool": "boolean",
+                            "datetime": "datetime64",
+                        }
+                        field_config["type"] = type_mapping.get(
+                            field_config["type"], field_config["type"]
+                        )
+                    attributes[field_name] = AttributeMetadater.from_dict(field_config)
+                else:
+                    # 如果已經是 Attribute 物件，直接使用
+                    attributes[field_name] = field_config
             config["attributes"] = attributes
             del config["fields"]  # 移除 fields，改用 attributes
 
