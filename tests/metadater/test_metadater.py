@@ -645,5 +645,126 @@ class TestIntegration:
         assert "vip_status" in updated_schema.attributes
 
 
+class TestPrecisionTracking:
+    """測試數值欄位精度追蹤功能"""
+
+    def test_infer_precision_integers(self):
+        """測試整數精度推斷（精度應為 0）"""
+        series = pd.Series([1, 2, 3, 4, 5], name="integers")
+        attr = AttributeMetadater.from_data(series)
+
+        # 整數的精度應為 0（如果有 type_attr）
+        if attr.type_attr:
+            assert attr.type_attr.get("precision") == 0
+        # 整數類型可能不設置 type_attr，這也是可接受的
+
+    def test_infer_precision_floats_with_decimals(self):
+        """測試浮點數精度推斷"""
+        series = pd.Series([1.12, 2.34, 3.456, 4.5, 5.67], name="floats")
+        attr = AttributeMetadater.from_data(series)
+
+        # 精度應為最大小數位數 3
+        assert attr.type_attr.get("precision") == 3
+
+    def test_infer_precision_mixed_decimals(self):
+        """測試混合小數位數的精度推斷"""
+        series = pd.Series([1.1, 2.22, 3.333, 4.4444, 5.55555], name="mixed")
+        attr = AttributeMetadater.from_data(series)
+
+        # 精度應為最大小數位數 5
+        assert attr.type_attr.get("precision") == 5
+
+    def test_infer_precision_with_nulls(self):
+        """測試包含 null 值的精度推斷"""
+        series = pd.Series([1.12, None, 3.456, np.nan, 5.67], name="with_nulls")
+        attr = AttributeMetadater.from_data(series)
+
+        # 精度應為最大小數位數 3（忽略 null）
+        assert attr.type_attr.get("precision") == 3
+
+    def test_infer_precision_zero_decimals(self):
+        """測試零小數位數（整數型浮點數）"""
+        series = pd.Series([1.0, 2.0, 3.0, 4.0, 5.0], name="zero_decimals")
+        attr = AttributeMetadater.from_data(series)
+
+        # 精度應為 0
+        assert attr.type_attr.get("precision") == 0
+
+    def test_no_precision_for_non_numeric(self):
+        """測試非數值型別不推斷精度"""
+        series = pd.Series(["a", "b", "c"], name="strings")
+        attr = AttributeMetadater.from_data(series)
+
+        # 非數值型別的 type_attr 應為 None 或不包含 precision
+        assert attr.type_attr is None or "precision" not in attr.type_attr
+
+    def test_precision_with_base_attribute(self):
+        """測試有 base_attribute 時不推斷精度"""
+        from petsard.metadater.metadata import Attribute
+
+        # 建立帶有精度的 base_attribute
+        base_attr = Attribute(
+            name="test_col",
+            type="float64",
+            enable_null=False,
+            type_attr={"precision": 2},
+        )
+
+        # 實際資料有更多小數位數
+        series = pd.Series([1.123, 2.456, 3.789], name="test_col")
+
+        # 使用 base_attribute，應該保持原精度 2
+        attr = AttributeMetadater.from_data(series, base_attribute=base_attr)
+
+        assert attr.type_attr.get("precision") == 2
+
+    def test_schema_precision_preservation(self):
+        """測試 Schema 層級的精度保留"""
+        df = pd.DataFrame(
+            {
+                "integers": [1, 2, 3],
+                "decimals": [1.12, 2.34, 3.45],
+                "mixed": [1.1, 2.222, 3.33],
+            }
+        )
+
+        schema = SchemaMetadater.from_data(df)
+
+        # 檢查浮點數欄位的精度
+        assert schema.attributes["decimals"].type_attr is not None
+        assert schema.attributes["decimals"].type_attr.get("precision") == 2
+        assert schema.attributes["mixed"].type_attr is not None
+        assert schema.attributes["mixed"].type_attr.get("precision") == 3
+
+        # 整數欄位可能有或沒有 type_attr
+        if schema.attributes["integers"].type_attr:
+            assert schema.attributes["integers"].type_attr.get("precision") == 0
+
+    def test_schema_with_base_schema(self):
+        """測試有 base_schema 時保留原精度"""
+        from petsard.metadater.metadata import Attribute, Schema
+
+        # 建立帶有精度的 base_schema
+        base_schema = Schema(
+            id="base_schema",
+            attributes={
+                "value": Attribute(
+                    name="value",
+                    type="float64",
+                    enable_null=False,
+                    type_attr={"precision": 2},
+                )
+            },
+        )
+
+        # 實際資料有更多小數位數
+        df = pd.DataFrame({"value": [1.12345, 2.67890, 3.45678]})
+
+        # 使用 base_schema，應該保持原精度
+        schema = SchemaMetadater.from_data(df, base_schema=base_schema)
+
+        assert schema.attributes["value"].type_attr.get("precision") == 2
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])

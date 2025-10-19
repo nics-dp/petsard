@@ -123,6 +123,33 @@ When multiple experiments are defined, PETsARD executes all module combinations 
 Loader → Splitter → Preprocessor → Synthesizer → Postprocessor → Constrainer → Describer → Evaluator → Reporter
 ```
 
+{{< callout type="info" >}}
+**Depth-First Execution Order**
+
+Depth-first means PETsARD will complete all modules for the first experiment combination before starting the second one. It's like walking one path to the end before returning to walk another path.
+
+**Example**:
+```
+Combination 1: Loader(A) → Synthesizer(method_a) → Evaluator → Reporter
+Combination 2: Loader(A) → Synthesizer(method_b) → Evaluator → Reporter
+Combination 3: Loader(B) → Synthesizer(method_a) → Evaluator → Reporter
+Combination 4: Loader(B) → Synthesizer(method_b) → Evaluator → Reporter
+```
+
+**Execution Tree**:
+
+{{< mermaid-file file="content/docs/petsard-yaml/depth-first-execution.mermaid" >}}
+
+> **Legend:**
+> - ① ② ③ ④: Execution order numbers
+> - Green boxes: Complete experiment combinations (will execute all subsequent modules)
+> - Arrows: Data flow direction
+
+Execution order: Complete all modules for combination ① → then combination ② → and so on
+
+Not breadth-first: executing Loader for all combinations first, then Preprocessor for all combinations...
+{{< /callout >}}
+
 ### Experiment Combinations
 
 If multiple experiments are defined in different modules, PETsARD generates all possible combinations. For example:
@@ -134,17 +161,17 @@ Loader:
   load_b:
     filepath: 'data2.csv'
 Synthesizer:
-  syn_ctgan:
-    method: 'sdv-single_table-ctgan'
-  syn_tvae:
-    method: 'sdv-single_table-tvae'
+  method_a:
+    method: 'method-a'
+  method_b:
+    method: 'method-b'
 ```
 
 This generates four experiment combinations:
-1. load_a + syn_ctgan
-2. load_a + syn_tvae
-3. load_b + syn_ctgan
-4. load_b + syn_tvae
+1. load_a + method_a
+2. load_a + method_b
+3. load_b + method_a
+4. load_b + method_b
 
 Each combination executes the complete workflow once, allowing you to systematically compare the effects of different configurations.
 

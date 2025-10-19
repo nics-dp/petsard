@@ -1,6 +1,6 @@
 ---
 title: "Save Timing Information"
-weight: 173
+weight: 5
 ---
 
 Use the `save_timing` method to record the execution time of each module for performance analysis and optimization.
@@ -9,7 +9,7 @@ Use the `save_timing` method to record the execution time of each module for per
 
 Click the button below to run the example in Colab:
 
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/nics-tw/petsard/blob/main/demo/petsard-yaml/reporter-yaml/reporter_save-timing.ipynb)
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/nics-tw/petsard/blob/main/demo/petsard-yaml/reporter-yaml/reporter_save-validation.ipynb)
 
 ```yaml
 Loader:

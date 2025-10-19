@@ -1,6 +1,6 @@
 ---
 title: "DescriberAdapter"
-weight: 396
+weight: 5
 ---
 
 DescriberAdapter handles data description and comparison, supporting single dataset description and multi-dataset comparative analysis.

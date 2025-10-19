@@ -118,6 +118,33 @@ Reporter:
 Loader → Splitter → Preprocessor → Synthesizer → Postprocessor → Constrainer → Describer → Evaluator → Reporter
 ```
 
+{{< callout type="info" >}}
+**深度優先（Depth-First）執行順序**
+
+深度優先意味著 PETsARD 會先完整執行第一個實驗組合的所有模組，然後才開始執行第二個實驗組合。這就像是先把一條路走到底，再回頭走另一條路。
+
+**範例**：
+```
+組合 1: Loader(A) → Synthesizer(method_a) → Evaluator → Reporter
+組合 2: Loader(A) → Synthesizer(method_b) → Evaluator → Reporter
+組合 3: Loader(B) → Synthesizer(method_a) → Evaluator → Reporter
+組合 4: Loader(B) → Synthesizer(method_b) → Evaluator → Reporter
+```
+
+**執行樹狀圖**：
+
+{{< mermaid-file file="content/docs/petsard-yaml/depth-first-execution.zh-tw.mermaid" >}}
+
+> **圖例說明：**
+> - ① ② ③ ④：執行順序編號
+> - 綠色方塊：完整的實驗組合（會執行所有後續模組）
+> - 箭頭：資料流向
+
+執行順序：先完成組合 ① 的所有模組 → 再完成組合 ② 的所有模組 → 依此類推
+
+而非廣度優先（Breadth-First）：先執行所有組合的 Loader，再執行所有組合的 Preprocessor...
+{{< /callout >}}
+
 ### 實驗組合
 
 若在不同模組中定義多個實驗，PETsARD 會產生所有可能的組合。例如：
@@ -129,17 +156,17 @@ Loader:
   load_b:
     filepath: 'data2.csv'
 Synthesizer:
-  syn_ctgan:
-    method: 'sdv-single_table-ctgan'
-  syn_tvae:
-    method: 'sdv-single_table-tvae'
+  method_a:
+    method: 'method-a'
+  method_b:
+    method: 'method-b'
 ```
 
 這會產生四種實驗組合：
-1. load_a + syn_ctgan
-2. load_a + syn_tvae
-3. load_b + syn_ctgan
-4. load_b + syn_tvae
+1. load_a + method_a
+2. load_a + method_b
+3. load_b + method_a
+4. load_b + method_b
 
 每個組合都會完整執行一次完整的流程，讓您可以系統性地比較不同設定的效果。
 

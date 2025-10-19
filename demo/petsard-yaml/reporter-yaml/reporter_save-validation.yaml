@@ -1,0 +1,15 @@
+---
+Loader:
+  load_benchmark_with_schema:
+    filepath: benchmark://adult-income
+    schema: benchmark://adult-income_schema
+Constrainer:
+  external_constraints:
+    method: auto
+    constraints_yaml: adult-income_constraints.yaml
+Reporter:
+  save_validation:
+    method: save_validation     # Required: Fixed to save_validation method
+    # output: petsard           # Optional: Output file name prefix (default: petsard)
+    # include_details: true     # Optional: Include detailed violation records (default: true)
+...

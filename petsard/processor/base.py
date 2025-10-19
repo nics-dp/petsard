@@ -629,6 +629,9 @@ class Processor:
 
                     self.transformed[col] = obj.transform(self.transformed[col])
 
+                    # Update metadata based on processor's SCHEMA_TRANSFORM
+                    self._update_metadata_after_transform(col, obj, processor)
+
                     infer_dtype = self._get_field_infer_dtype(col)
                     if infer_dtype == "datetime":
                         # it is fine to re-adjust mulitple times
@@ -649,15 +652,6 @@ class Processor:
                                 ScalerZeroCenter,
                             ),
                         ):
-                            # TODO: Handle metadata adjustment after processing
-                            # adjust_metadata_after_processing should not be in Metadater
-                            # Processor should maintain its own statistics using Field/Table objects
-                            # Metadater.adjust_metadata_after_processing(
-                            #     mode="columnwise",
-                            #     data=self.transformed[col],
-                            #     original_metadata=self._metadata,
-                            #     col=col,
-                            # )
                             pass
 
                     # Log post-transformation statistics
@@ -924,6 +918,59 @@ class Processor:
                             self._working_config[processor][col] = deepcopy(
                                 self._config[processor][ori_col]
                             )
+
+    def _update_metadata_after_transform(
+        self, col: str, obj: object, processor_type: str
+    ) -> None:
+        """
+        Update metadata based on processor's SCHEMA_TRANSFORM rules
+
+        根據 processor 的 SCHEMA_TRANSFORM 規則更新 metadata
+        例如：encoder_uniform 將 string 轉換為 float64
+
+        Args:
+            col: Column name being processed
+            obj: Processor object
+            processor_type: Type of processor (e.g., 'encoder', 'scaler')
+        """
+        # Check if processor has SCHEMA_TRANSFORM info
+        if not hasattr(obj, "get_schema_transform_info"):
+            return
+
+        try:
+            transform_info = obj.get_schema_transform_info()
+
+            # Get current attribute from metadata
+            if col not in self._metadata.attributes:
+                self.logger.warning(
+                    f"Column '{col}' not found in metadata, skipping schema update"
+                )
+                return
+
+            attribute = self._metadata.attributes[col]
+
+            # Update type if specified in SCHEMA_TRANSFORM
+            if transform_info.get("output_type"):
+                old_type = attribute.type
+                new_type = transform_info["output_type"]
+                attribute.type = new_type
+                self.logger.debug(
+                    f"Updated schema for '{col}': type {old_type} → {new_type} "
+                    f"(processor: {type(obj).__name__})"
+                )
+
+            # Update category if specified in SCHEMA_TRANSFORM
+            if transform_info.get("output_category") is not None:
+                old_category = attribute.category
+                new_category = transform_info["output_category"]
+                attribute.category = new_category
+                self.logger.debug(
+                    f"Updated schema for '{col}': category {old_category} → {new_category} "
+                    f"(processor: {type(obj).__name__})"
+                )
+
+        except Exception as e:
+            self.logger.warning(f"Failed to update metadata for column '{col}': {e}")
 
     def _align_dtypes(self, data: pd.DataFrame) -> pd.DataFrame:
         """

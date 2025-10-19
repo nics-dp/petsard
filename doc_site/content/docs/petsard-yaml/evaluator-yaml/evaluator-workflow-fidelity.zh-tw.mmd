@@ -1,0 +1,16 @@
+flowchart TD
+    Start([資料保真度評估])
+    Method[評估方法:<br/>sdmetrics-qualityreport]
+    Check{分數 ≥ 0.75?}
+    Pass[保真度達標]
+    Fail[需提升保真度]
+
+    Start --> Method
+    Method --> Check
+    Check -->|是| Pass
+    Check -->|否| Fail
+
+    style Start fill:#e1f5fe
+    style Pass fill:#c8e6c9
+    style Fail fill:#fff3e0
+    style Method fill:#fff3e0

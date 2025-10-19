@@ -15,7 +15,25 @@ Evaluator 模組的 YAML 設定檔案格式。
 
 我們建議採用以下評估流程，確保合成資料符合需求：
 
-{{< mermaid-file file="content/docs/petsard-yaml/evaluator-yaml/evaluator-workflow.zh-tw.mmd" >}}
+#### 1. 評估流程概覽
+
+{{< mermaid-file file="content/docs/petsard-yaml/evaluator-yaml/evaluator-workflow-overview.zh-tw.mmd" >}}
+
+#### 2. 資料診斷性標準
+
+{{< mermaid-file file="content/docs/petsard-yaml/evaluator-yaml/evaluator-workflow-diagnostic.zh-tw.mmd" >}}
+
+#### 3. 隱私保護力標準
+
+{{< mermaid-file file="content/docs/petsard-yaml/evaluator-yaml/evaluator-workflow-privacy.zh-tw.mmd" >}}
+
+#### 4. 資料保真度標準
+
+{{< mermaid-file file="content/docs/petsard-yaml/evaluator-yaml/evaluator-workflow-fidelity.zh-tw.mmd" >}}
+
+#### 5. 資料實用性標準
+
+{{< mermaid-file file="content/docs/petsard-yaml/evaluator-yaml/evaluator-workflow-utility.zh-tw.mmd" >}}
 
 > **圖例說明：**
 > - 淺藍色方框：開始/結束點
@@ -24,8 +42,7 @@ Evaluator 模組的 YAML 設定檔案格式。
 > - 綠色方框：成功結果
 > - 紅色方框：失敗狀態，需要採取行動
 > - 黃色方框：需要改進
-> - 箭頭：流程方向
-> - `|是/否|`：決策結果
+> - 橙色方框：評估方法
 
 ### 1. 基礎評估（必要）
 
@@ -168,9 +185,9 @@ Evaluator:
 ³ **隱私風險標準**（風險 < 0.09）：基於 PDPC Singapore 指引
 
 ⁴ **實用性標準**（依任務類型）：
-- 分類任務：MCC ≥ 0.5
-- 迴歸任務：R² ≥ 0.7
-- 聚類任務：輪廓係數 ≥ 0.5
+- 分類任務（XGBoost）：F1 ≥ 0.7
+- 迴歸任務（XGBoost）：R² ≥ 0.7
+- 聚類任務（K-means）：輪廓係數 ≥ 0.5
 
 > **預設方法**：當 `method: default` 時，系統會自動執行 `sdmetrics-qualityreport` 評估資料保真度。
 

@@ -1,0 +1,27 @@
+flowchart TD
+    Start([Start Evaluation])
+    Diagnostic{Step 1:<br/>Diagnostics Pass?}
+    DiagnosticFail[Data Structure Issues<br/>Check Synthesis Process]
+    Privacy{Step 2:<br/>Protection Pass?}
+    PrivacyFail[Privacy Risk Too High<br/>Adjust Synthesis Parameters]
+    Purpose{Step 3:<br/>Synthetic Data Purpose?}
+    Release[Scenario A:<br/>Data Release<br/>No Specific Downstream Task]
+    Task[Scenario B:<br/>Specific Task Application<br/>Data Augmentation/Model Training]
+    FidelityFocus[Evaluation Focus:<br/>Pursue Highest Fidelity]
+    UtilityFocus[Evaluation Focus:<br/>Pursue High Utility<br/>Fidelity Meets Baseline]
+
+    Start --> Diagnostic
+    Diagnostic -->|No| DiagnosticFail
+    Diagnostic -->|Yes| Privacy
+    Privacy -->|No| PrivacyFail
+    Privacy -->|Yes| Purpose
+    Purpose -->|A| Release
+    Purpose -->|B| Task
+    Release --> FidelityFocus
+    Task --> UtilityFocus
+
+    style Start fill:#e1f5fe
+    style DiagnosticFail fill:#ffcdd2
+    style PrivacyFail fill:#ffcdd2
+    style FidelityFocus fill:#c8e6c9
+    style UtilityFocus fill:#c8e6c9

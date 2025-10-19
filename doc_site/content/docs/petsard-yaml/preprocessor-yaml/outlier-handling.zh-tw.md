@@ -1,44 +1,94 @@
 ---
 title: "離群值處理"
-weight: 132
+weight: 2
 ---
 
 識別並處理資料中的離群值（Outliers）。
 
 ## 使用範例
 
-### 使用預設離群值處理
+點擊下方按鈕在 Colab 中執行完整範例：
+
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/nics-tw/petsard/blob/main/demo/petsard-yaml/preprocessor-yaml/preprocessor_outlier-handling.ipynb)
+
+### 範例 1：欄位特定離群值方法
 
 ```yaml
-Preprocessor:
-  demo:
-    method: 'default'
-    # 數值型欄位：使用 IQR 方法
-    # 類別型欄位：不處理
-```
+---
+Loader:
+  load_benchmark_with_schema:
+    filepath: benchmark://adult-income
+    schema: benchmark://adult-income_schema
 
-### 自訂特定欄位的離群值處理
-
-```yaml
 Preprocessor:
-  custom:
-    method: 'default'
+  outlier-field-specific:
+    sequence:
+      - outlier
     config:
       outlier:
-        age: 'outlier_zscore'      # 使用 Z-Score 方法
-        income: 'outlier_iqr'      # 使用 IQR 方法
-        hours_per_week: None       # 不處理離群值
+        age: 'outlier_zscore'       # 對 age 欄位使用 Z-Score 方法
+        fnlwgt: 'outlier_iqr'       # 對 fnlwgt 欄位使用 IQR 方法
+        education-num: None         # 跳過此欄位的離群值處理
+
+        # 注意：
+        # - 設定為 None 的欄位：不會進行離群值處理
+        # - 未列出的欄位（如 capital-gain、capital-loss、hours-per-week）：
+        #   會使用預設方法（outlier_iqr）
+
+Reporter:
+  save_data:
+    method: save_data
+    source:
+      - Preprocessor
+  save_schema:
+    method: save_schema
+    source:
+      - Loader
+      - Preprocessor
+...
 ```
 
-### 使用全域離群值處理
+### 範例 2：全域離群值方法
 
 ```yaml
+---
+Loader:
+  load_benchmark_with_schema:
+    filepath: 'benchmark://adult-income'
+    schema: 'benchmark://adult-income_schema'
+
 Preprocessor:
-  global_outlier:
-    method: 'default'
+  outlier-global-simple:
+    sequence:
+      - outlier
     config:
-      outlier:
-        age: 'outlier_isolationforest'  # 會套用到所有欄位
+      # 簡化語法：將一個全域方法套用到所有數值欄位
+      outlier: 'outlier_isolationforest'
+
+      # 可用的全域方法：
+      # - 'outlier_isolationforest': Isolation Forest 演算法
+      # - 'outlier_lof': Local Outlier Factor 演算法
+
+      # 這等同於：
+      # outlier:
+      #   age: 'outlier_isolationforest'
+      #   fnlwgt: 'outlier_isolationforest'
+      #   education-num: 'outlier_isolationforest'
+      #   capital-gain: 'outlier_isolationforest'
+      #   capital-loss: 'outlier_isolationforest'
+      #   hours-per-week: 'outlier_isolationforest'
+
+Reporter:
+  save_data:
+    method: save_data
+    source:
+      - Preprocessor
+  save_schema:
+    method: save_schema
+    source:
+      - Loader
+      - Preprocessor
+...
 ```
 
 ## 可用的處理器
@@ -157,52 +207,10 @@ config:
 | 類別型 | 無 | 不處理離群值 |
 | 日期時間型 | `outlier_iqr` | 使用四分位距方法 |
 
-## 全域處理行為
-
-當使用全域處理器（`outlier_isolationforest` 或 `outlier_lof`）時：
-
-```yaml
-Preprocessor:
-  demo:
-    method: 'default'
-    config:
-      outlier:
-        age: 'outlier_isolationforest'
-        income: 'outlier_iqr'  # 這個設定會被忽略
-        # ⚠️ 所有數值欄位都會使用 isolationforest
-```
-
 系統會自動：
 1. 偵測到全域處理器
 2. 將所有數值欄位的處理器替換為該全域處理器
 3. 記錄警告訊息
-
-## 完整範例
-
-```yaml
-Loader:
-  load_data:
-    filepath: 'data.csv'
-    schema: 'schema.yaml'
-
-Preprocessor:
-  handle_outliers:
-    method: 'default'
-    sequence:
-      - missing
-      - outlier
-      - encoder
-      - scaler
-    config:
-      outlier:
-        # 使用不同方法處理不同欄位
-        age: 'outlier_zscore'           # Z-Score 方法
-        income: 'outlier_iqr'           # IQR 方法
-        hours_per_week: 'outlier_iqr'  # IQR 方法
-        
-        # 不處理某些欄位
-        education_num: None
-```
 
 ## 注意事項
 
@@ -222,9 +230,3 @@ Preprocessor:
 | 多維度離群值 | `outlier_isolationforest` | 考慮欄位間關聯性 |
 | 密度基礎檢測 | `outlier_lof` | 適合非均勻分布資料 |
 | 不確定時 | `outlier_iqr` | 穩健且廣泛適用 |
-
-## 相關文件
-
-- [Processor API - fit()]({{< ref "/docs/python-api/processor-api/processor_fit" >}})
-- [Processor API - transform()]({{< ref "/docs/python-api/processor-api/processor_transform" >}})
-- [缺失值處理]({{< ref "missing-handling" >}})

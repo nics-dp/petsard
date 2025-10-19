@@ -1,0 +1,27 @@
+flowchart TD
+    Start([開始評估])
+    Diagnostic{Step 1:<br/>資料診斷性通過?}
+    DiagnosticFail[資料結構問題<br/>需檢查合成過程]
+    Privacy{Step 2:<br/>隱私保護力通過?}
+    PrivacyFail[隱私風險過高<br/>需調整合成參數]
+    Purpose{Step 3:<br/>合成資料使用目的?}
+    Release[情境 A:<br/>資料釋出<br/>無特定下游任務]
+    Task[情境 B:<br/>特定任務應用<br/>資料增益/模型訓練]
+    FidelityFocus[評估重點：<br/>追求最高保真度]
+    UtilityFocus[評估重點：<br/>追求高實用性<br/>保真度達標即可]
+
+    Start --> Diagnostic
+    Diagnostic -->|否| DiagnosticFail
+    Diagnostic -->|是| Privacy
+    Privacy -->|否| PrivacyFail
+    Privacy -->|是| Purpose
+    Purpose -->|A| Release
+    Purpose -->|B| Task
+    Release --> FidelityFocus
+    Task --> UtilityFocus
+
+    style Start fill:#e1f5fe
+    style DiagnosticFail fill:#ffcdd2
+    style PrivacyFail fill:#ffcdd2
+    style FidelityFocus fill:#c8e6c9
+    style UtilityFocus fill:#c8e6c9

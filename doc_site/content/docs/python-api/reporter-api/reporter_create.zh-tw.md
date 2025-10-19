@@ -141,7 +141,7 @@ eval_data = {
 processed = reporter.create(eval_data)
 
 # processed 包含所有粒度的處理後結果
-# 結構：{'Reporter': {'[global]': {...}, '[columnwise]': {...}, '[details]': {...}}}
+# 結構：{'Reporter': {'global': {...}, 'columnwise': {...}, 'details': {...}}}
 ```
 
 ### 合併先前報告
@@ -165,8 +165,8 @@ eval_data = {
     ('Evaluator', 'eval2_[global]'): new_global_results,
     ('Evaluator', 'eval2_[columnwise]'): new_columnwise_results,
     'exist_report': {  # 特殊鍵用於合併
-        '[global]': previous_global,
-        '[columnwise]': previous_columnwise
+        'global': previous_global,
+        'columnwise': previous_columnwise
     }
 }
 
@@ -281,8 +281,8 @@ processed = reporter.create(data_dict)
 {
     ('Evaluator', 'eval1_[global]'): new_data,
     'exist_report': {
-        '[global]': previous_report_df,
-        '[columnwise]': previous_columnwise_df
+        'global': previous_report_df,
+        'columnwise': previous_columnwise_df
     }
 }
 ```
@@ -328,7 +328,7 @@ empty_data = {}
 
 processed = reporter.create(empty_data)
 # 返回包含警告的結果
-# {'Reporter': {'[global]': {'report': None, 'warnings': '...'}}}
+# {'Reporter': {'global': {'report': None, 'warnings': '...'}}}
 ```
 
 ### 粒度不匹配

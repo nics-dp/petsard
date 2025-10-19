@@ -1365,6 +1365,63 @@ Tests for timing information reporting functionality:
   - Processing timing data without internal storage
   - Generating timing reports with proper formatting
 
+#### `ReporterSaveSchema`
+
+> tests/reporter/test_reporter_save_schema.py
+
+Tests for schema output functionality with comprehensive coverage (30 tests):
+
+**Initialization Tests (6 tests):**
+- `test_init_with_string_source`: Tests initialization with single source string
+- `test_init_with_list_source`: Tests initialization with multiple source list
+- `test_init_with_custom_output`: Tests custom output prefix configuration
+- `test_init_with_yaml_output`: Tests YAML output option enabling
+- `test_init_without_source_raises_error`: Tests error handling for missing source parameter
+- `test_init_with_invalid_source_type`: Tests error handling for invalid source types (numeric, tuple, mixed list)
+
+**Create Method Tests (5 tests):**
+- `test_create_with_single_source`: Tests schema extraction from single source module
+- `test_create_with_multiple_sources`: Tests schema extraction from multiple source modules
+- `test_create_with_all_sources`: Tests processing all available sources
+- `test_create_with_nonexistent_source`: Tests handling of non-existent source modules
+- `test_create_skips_none_dataframes`: Tests skipping of None DataFrame values
+
+**Schema Inference Tests (4 tests):**
+- `test_infer_schema_basic_structure`: Tests basic schema structure generation (columns, shape)
+- `test_infer_schema_column_info`: Tests column information inference (dtype, nullable, unique_count)
+- `test_infer_schema_numeric_statistics`: Tests numeric statistics calculation (min, max, mean)
+- `test_infer_schema_categorical_info`: Tests categorical information extraction (categories list)
+
+**Schema Flattening Tests (3 tests):**
+- `test_flatten_source_schema_basic`: Tests basic schema flattening to single row
+- `test_flatten_source_schema_columns`: Tests column attributes flattening (dtype, nullable, statistics)
+- `test_flatten_source_schema_categories`: Tests categorical values flattening with pipe separator
+
+**Report Generation Tests (5 tests):**
+- `test_report_csv_output`: Tests CSV summary file generation with source names in filename
+- `test_report_yaml_output`: Tests optional YAML file generation for each schema
+- `test_report_filename_with_multiple_sources`: Tests filename generation with multiple source modules (e.g., `petsard_schema_Loader-Preprocessor-Synthesizer_summary.csv`)
+- `test_report_with_empty_data`: Tests handling of empty data input
+- `test_report_with_none_dataframes`: Tests handling of None DataFrame values
+
+**Factory Integration Tests (3 tests):**
+- `test_create_via_reporter_factory`: Tests creation through Reporter factory class
+- `test_factory_with_multiple_sources`: Tests factory method with multiple source modules
+- `test_factory_without_source_raises_error`: Tests factory error handling for missing source
+
+**Edge Cases Tests (4 tests):**
+- `test_empty_dataframe`: Tests handling of empty DataFrame
+- `test_dataframe_with_all_nan`: Tests handling of all-NaN DataFrame
+- `test_dataframe_with_many_categories`: Tests handling of high cardinality categorical data (>10 categories not recorded)
+- `test_save_yaml_error_handling`: Tests YAML save error handling with invalid paths
+
+**Key Features:**
+- **CSV Summary Output**: Default output format with one row per source, all column attributes flattened
+- **Filename Convention**: Includes all source module names (e.g., `petsard_schema_Loader-Preprocessor_summary.csv`)
+- **Schema Inference**: Automatic detection of dtypes, nullable status, statistics, and categories
+- **Optional YAML**: Controlled by `yaml_output` parameter (default: false)
+- **Comprehensive Testing**: 30 tests covering initialization, schema processing, output generation, and edge cases
+
 #### `Reporter Utils`
 
 Tests for utility functions:

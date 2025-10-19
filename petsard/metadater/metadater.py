@@ -19,9 +19,20 @@ class AttributeMetadater:
 
     @classmethod
     def from_data(
-        cls, data: pd.Series, enable_stats: bool = True, **kwargs
+        cls,
+        data: pd.Series,
+        enable_stats: bool = True,
+        base_attribute: Attribute = None,
+        **kwargs,
     ) -> Attribute:
-        """從 Series 建立 Attribute 設定檔 Create Attribute configuration from Series"""
+        """從 Series 建立 Attribute 設定檔 Create Attribute configuration from Series
+
+        Args:
+            data: 資料 Series
+            enable_stats: 是否計算統計資訊
+            base_attribute: 基礎 Attribute（如果有），如果該 attribute 有 precision 定義則不推斷
+            **kwargs: 其他參數
+        """
         # 推斷資料類型 Infer data type
         dtype_str = str(data.dtype)
 
@@ -55,15 +66,88 @@ class AttributeMetadater:
         if enable_stats:
             stats = cls._calculate_field_stats(data, logical_type)
 
+        # 計算數值欄位的精度 Calculate precision for numerical fields
+        # 如果 base_attribute 有 precision 定義，優先使用該精度，不推斷
+        type_attr = None
+        if data_type in ["float32", "float64"]:
+            # 檢查是否有 base_attribute 且有 precision 定義
+            if (
+                base_attribute
+                and base_attribute.type_attr
+                and "precision" in base_attribute.type_attr
+            ):
+                # 使用 base_attribute 定義的精度
+                type_attr = {"precision": base_attribute.type_attr["precision"]}
+            else:
+                # 沒有定義，從資料推斷精度
+                precision = cls._infer_precision(data)
+                if precision is not None:
+                    type_attr = {"precision": precision}
+
         return Attribute(
             name=data.name,
             type=data_type,
+            type_attr=type_attr,
             logical_type=logical_type,
             category=is_category,
             enable_null=data.isnull().any(),
             enable_stats=enable_stats,
             stats=stats,
         )
+
+    @classmethod
+    def _infer_precision(cls, data: pd.Series) -> int | None:
+        """推斷數值欄位的精度（小數位數）
+
+        此方法分析該欄位中所有數值，找出最大的小數位數作為精度。
+
+        Args:
+            data: 數值型 Series
+
+        Returns:
+            精度（小數位數），如果無法推斷則返回 None
+        """
+        from decimal import Decimal
+
+        import numpy as np
+
+        # 只處理浮點數類型
+        if not pd.api.types.is_float_dtype(data):
+            return None
+
+        # 移除 NaN 值
+        non_na_data = data.dropna()
+        if len(non_na_data) == 0:
+            return None
+
+        # 計算每個值的小數位數
+        precisions = []
+        for value in non_na_data:
+            if not np.isfinite(value):  # 跳過 inf 和 -inf
+                continue
+
+            # 使用 Decimal 進行精確的小數位數檢測
+            # 這樣可以正確處理浮點數的精度，避免字串格式化的限制
+            try:
+                # 將浮點數轉為 Decimal 以保留完整精度
+                decimal_value = Decimal(str(value))
+                # 標準化以移除尾隨零
+                normalized = decimal_value.normalize()
+                # 計算小數位數
+                sign, digits, exponent = normalized.as_tuple()
+                if exponent < 0:
+                    precisions.append(abs(exponent))
+                else:
+                    precisions.append(0)
+            except (ValueError, OverflowError):
+                # 如果轉換失敗，跳過該值
+                continue
+
+        if not precisions:
+            return None
+
+        # 返回該欄位中最大的精度
+        return max(precisions)
 
     @classmethod
     def _infer_logical_type(cls, data: pd.Series) -> str | None:
@@ -176,6 +260,12 @@ class AttributeMetadater:
                     aligned = aligned.astype("boolean")
                 elif attribute.type.startswith("datetime"):
                     aligned = pd.to_datetime(aligned, errors=attribute.cast_errors)
+                elif attribute.type == "string":
+                    # 特殊處理：如果資料已經是數值類型，保持數值類型
+                    # 這避免將 Preprocessor 編碼的數值資料轉回字串
+                    if not pd.api.types.is_numeric_dtype(aligned):
+                        aligned = aligned.astype(attribute.type)
+                    # 如果已經是數值類型，保持不變
                 else:
                     aligned = aligned.astype(attribute.type)
             except Exception:
@@ -186,9 +276,8 @@ class AttributeMetadater:
         # 處理數值精度（如果有設定）
         if attribute.type_attr and "precision" in attribute.type_attr:
             precision = attribute.type_attr["precision"]
-            if attribute.type and (
-                "float" in attribute.type or "int" in attribute.type
-            ):
+            # 檢查實際資料類型是否為數值類型，而不只是檢查 schema 定義
+            if pd.api.types.is_numeric_dtype(aligned):
                 # 對數值欄位應用精度
                 aligned = aligned.apply(lambda x: safe_round(x, precision))
 
@@ -324,14 +413,30 @@ class SchemaMetadater:
 
     @classmethod
     def from_data(
-        cls, data: pd.DataFrame, enable_stats: bool = False, **kwargs
+        cls,
+        data: pd.DataFrame,
+        enable_stats: bool = False,
+        base_schema: Schema = None,
+        **kwargs,
     ) -> Schema:
-        """從 DataFrame 建立 Schema 設定檔"""
+        """從 DataFrame 建立 Schema 設定檔
+
+        Args:
+            data: 資料 DataFrame
+            enable_stats: 是否計算統計資訊
+            base_schema: 基礎 Schema（如果有），如果欄位有 precision 定義則不推斷
+            **kwargs: 其他參數
+        """
         attributes = {}
 
         for col in data.columns:
+            # 檢查 base_schema 中是否有該欄位的定義
+            base_attribute = None
+            if base_schema and base_schema.attributes and col in base_schema.attributes:
+                base_attribute = base_schema.attributes[col]
+
             attributes[col] = AttributeMetadater.from_data(
-                data[col], enable_stats=enable_stats
+                data[col], enable_stats=enable_stats, base_attribute=base_attribute
             )
 
         # 計算表格統計
@@ -458,7 +563,26 @@ class SchemaMetadater:
             # 向後相容：將 fields 對應到內部的 attributes
             attributes = {}
             for field_name, field_config in config["fields"].items():
-                attributes[field_name] = AttributeMetadater.from_dict(field_config)
+                if isinstance(field_config, dict):
+                    # 確保有 name 欄位
+                    if "name" not in field_config:
+                        field_config["name"] = field_name
+                    # 應用類型映射以統一類型名稱
+                    if "type" in field_config:
+                        type_mapping = {
+                            "int": "int64",
+                            "float": "float64",
+                            "str": "string",
+                            "bool": "boolean",
+                            "datetime": "datetime64",
+                        }
+                        field_config["type"] = type_mapping.get(
+                            field_config["type"], field_config["type"]
+                        )
+                    attributes[field_name] = AttributeMetadater.from_dict(field_config)
+                else:
+                    # 如果已經是 Attribute 物件，直接使用
+                    attributes[field_name] = field_config
             config["attributes"] = attributes
             del config["fields"]  # 移除 fields，改用 attributes
 
@@ -466,9 +590,57 @@ class SchemaMetadater:
 
     @classmethod
     def from_yaml(cls, filepath: str) -> Schema:
-        """從 YAML 檔案載入 Schema"""
+        """從 YAML 檔案載入 Schema
+
+        Raises:
+            ValueError: 當 YAML 檔案中有重複的欄位名稱時
+        """
+
+        # 使用自定義 loader 來檢測重複的 key
+        class DuplicateKeysLoader(yaml.SafeLoader):
+            """自定義 YAML Loader，檢測重複的 key"""
+
+            pass
+
+        def check_duplicate_keys(loader, node, deep=False):
+            """檢查並報告重複的 key"""
+            mapping = {}
+            duplicates = []
+
+            for key_node, value_node in node.value:
+                # 獲取 key 的實際值
+                key = loader.construct_object(key_node, deep=deep)
+                if key in mapping:
+                    # 記錄重複的 key 及其行號
+                    duplicates.append(
+                        f"  - '{key}' (first at line {mapping[key]}, duplicate at line {key_node.start_mark.line + 1})"
+                    )
+                else:
+                    mapping[key] = key_node.start_mark.line + 1
+
+            if duplicates:
+                error_msg = (
+                    "Schema file contains duplicate attribute names:\n"
+                    + "\n".join(duplicates)
+                    + f"\n\nFile: {filepath}"
+                )
+                raise ValueError(error_msg)
+
+            # 使用父類的 construct_mapping 方法
+            return yaml.SafeLoader.construct_mapping(loader, node, deep)
+
+        # 覆寫 construct_mapping 方法
+        DuplicateKeysLoader.construct_mapping = check_duplicate_keys
+
         with open(filepath) as f:
-            config = yaml.safe_load(f)
+            try:
+                config = yaml.load(f, Loader=DuplicateKeysLoader)
+            except ValueError:
+                # 重新拋出 ValueError，保持原始錯誤訊息
+                raise
+            except yaml.YAMLError as e:
+                # 其他 YAML 解析錯誤
+                raise ValueError(f"Failed to parse YAML file {filepath}: {e}")
 
         # 直接使用 from_dict，它會處理 fields 和 attributes 兩種格式
         return cls.from_dict(config)

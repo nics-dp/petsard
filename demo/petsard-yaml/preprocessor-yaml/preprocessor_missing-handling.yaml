@@ -1,0 +1,34 @@
+---
+Loader:
+  load_benchmark_with_schema:
+    filepath: benchmark://adult-income
+    schema: benchmark://adult-income_schema
+
+Preprocessor:
+  missing-field-specific:
+    sequence:
+      - missing
+    config:
+      missing:
+        workclass: 'missing_drop'     # Drop rows with missing values
+        education: 'missing_drop'     # Drop rows with missing values
+        occupation: None              # Skip missing value handling for this field
+        age: 'missing_mean'           # Fill with mean value
+
+        # Notes:
+        # - Fields set to None: Will not process missing values, keeping original NAs
+        # - Unlisted fields: Will use default methods
+        #   * Numerical fields (e.g., fnlwgt, capital-gain): Use missing_mean
+        #   * Categorical fields: Use missing_drop
+
+Reporter:
+  save_data:
+    method: save_data
+    source:
+      - Preprocessor
+  save_schema:
+    method: save_schema
+    source:
+      - Loader
+      - Preprocessor
+...

@@ -174,6 +174,7 @@ print(f"Average age: {age_attr.stats.mean}")
 - **Architecture**: Schema uses a three-layer architecture design, see [Schema Architecture](/docs/schema-yaml/architecture) for details
 - **Data Alignment**: Schema can be used for data alignment and validation, see [Metadater API](/docs/python-api/metadater-api) documentation
 - **Loader Integration**: How Schema is used during data loading, see [Loader YAML](/docs/petsard-yaml/loader-yaml) documentation
+- **Reporter Output**: Use Reporter's save_schema method to export schema from each module, see [Reporter - Save Schema](/docs/petsard-yaml/reporter-yaml/save-schema) for details
 
 ## Important Notes
 

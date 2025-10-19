@@ -1,9 +1,9 @@
 ---
-title: "Schema YAML"
+title: "表詮釋資料 YAML"
 weight: 200
 ---
 
-資料結構定義的 YAML 設定格式。
+資料結構定義的 YAML 設定格式（Schema YAML）。
 
 ## 使用範例
 
@@ -171,9 +171,10 @@ print(f"平均年齡：{age_attr.stats.mean}")
 
 - **資料型別**：詳見 [資料型別](/docs/schema-yaml/data-types) 說明
 - **邏輯型別**：詳見 [邏輯型別](/docs/schema-yaml/logical-types) 說明
-- **架構理論**：Schema 採用三層架構設計，詳見 [Schema 架構](/docs/schema-yaml/architecture) 說明
-- **資料對齊**：Schema 可用於對齊和驗證資料，詳見 [Metadater API](/docs/python-api/metadater-api) 文檔
-- **Loader 整合**：Schema 在資料載入時的使用方式，詳見 [Loader YAML](/docs/petsard-yaml/loader-yaml) 文檔
+- **架構理論**：表詮釋資料 (Schema) 採用三層架構設計，詳見 [表詮釋資料架構](/docs/schema-yaml/architecture) 說明
+- **資料對齊**：表詮釋資料可用於對齊和驗證資料，詳見 [Metadater API](/docs/python-api/metadater-api) 文檔
+- **Loader 整合**：表詮釋資料在資料載入時的使用方式，詳見 [Loader YAML](/docs/petsard-yaml/loader-yaml) 文檔
+- **Reporter 輸出**：可使用 Reporter 的 save_schema 方法輸出各模組的表詮釋資料，詳見 [Reporter - 儲存表詮釋資料](/docs/petsard-yaml/reporter-yaml/save-schema) 說明
 
 ## 注意事項
 

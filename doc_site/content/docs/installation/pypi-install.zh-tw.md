@@ -2,10 +2,9 @@
 title: PyPI 安裝
 type: docs
 weight: 3
-prev: docs/installation
+prev: docs/installation/docker-prebuilt
+next: docs/installation/docker-offline-deployment
 ---
-
-# PyPI 安裝
 
 適用於**有網路連線**但**不支援 Docker** 的環境。
 
@@ -60,9 +59,9 @@ uv pip install petsard[dev]  # 用於開發
 pip install petsard
 
 # 使用依賴群組
-pip install petsard[ds]   # 適用於 Docker 環境中使用 Jupyter
-pip install petsard[all]  # 包含 xlsx 檔案支援
-pip install petsard[dev]  # 用於開發
+pip install --group ds petsard    # 適用於 Docker 環境中使用 Jupyter
+pip install --group all petsard   # 包含 xlsx 檔案支援
+pip install --group dev petsard   # 用於開發
 ```
 
 ### 方式 1-c：從 TestPyPI 安裝（測試用）
@@ -77,7 +76,7 @@ uv pip install --index-url https://test.pypi.org/simple/ petsard
 pip install --index-url https://test.pypi.org/simple/ petsard
 
 # 使用依賴群組（可能需要額外的 --extra-index-url 以安裝依賴）
-pip install --index-url https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple/ petsard[ds]
+pip install --index-url https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple/ --group ds petsard
 ```
 
 **注意：** TestPyPI 用於測試套件發布。生產環境請從主要 PyPI 安裝（方式 1-a 或 1-b）。
@@ -87,7 +86,7 @@ pip install --index-url https://test.pypi.org/simple/ --extra-index-url https://
 如果您在受限的網路環境中安裝（例如：企業防火牆後或透過代理伺服器），可能會遇到 SSL 憑證驗證問題。此時可以使用 `--trusted-host` 參數來略過憑證驗證：
 
 ```bash
-pip install petsard[ds] \
+pip install --group ds petsard \
   --trusted-host pypi.org \
   --trusted-host files.pythonhosted.org
 ```
@@ -95,7 +94,7 @@ pip install petsard[ds] \
 **Jupyter Notebook 使用者**，語法相同：
 
 ```python
-%pip install petsard[ds] \
+%pip install --group ds petsard \
   --trusted-host pypi.org \
   --trusted-host files.pythonhosted.org
 ```
@@ -114,7 +113,9 @@ pip install petsard[ds] \
 
 ## 方式 2：原始碼安裝
 
-適用於開發或自訂建置：
+適用於開發或自訂建置。
+
+### 方式 2-a：使用 Git（推薦）
 
 ```bash
 # 複製儲存庫
@@ -128,6 +129,33 @@ pip install --group all -e .
 pip install --group ds -e .    # 資料科學功能
 pip install --group dev -e .   # 開發工具
 ```
+
+### 方式 2-b：手動下載（無需 Git）
+
+如果您的環境沒有安裝 Git，可以直接下載原始碼 ZIP 檔案：
+
+**步驟 1：下載原始碼**
+
+前往 [PETsARD GitHub Releases](https://github.com/nics-dp/petsard/releases) 或直接下載：
+- 最新穩定版本：https://github.com/nics-dp/petsard/archive/refs/heads/main.zip
+- 或從 Releases 頁面選擇特定版本
+
+**步驟 2：解壓縮並安裝**
+
+```bash
+# 解壓縮下載的檔案
+unzip petsard-main.zip
+cd petsard-main
+
+# 使用 pyproject.toml 安裝（推薦）
+pip install --group all -e .
+
+# 或安裝特定依賴群組
+pip install --group ds -e .    # 資料科學功能
+pip install --group dev -e .   # 開發工具
+```
+
+**Windows 使用者**可使用檔案總管直接解壓縮，然後在該資料夾開啟命令提示字元或 PowerShell 執行安裝指令。
 
 **開發推薦工具：**
 * `pyenv` - Python 版本管理
