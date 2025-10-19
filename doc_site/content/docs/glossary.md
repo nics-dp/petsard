@@ -178,7 +178,7 @@ Technical terms and definitions used in PETsARD documentation (alphabetically or
 ## S
 
 - **Scaling**: Preprocessing techniques adjusting numerical ranges, including standardization, min-max scaling, time-anchored scaling, etc.
-- **Schema**: In PETsARD, refers to metadata defining data structure, including field types, constraints, and relationships.
+- **Schema**: Metadata defining data structure, including field names, data types, constraints, and relationships. In PETsARD, used to track structural changes of data throughout the processing pipeline.
 - **Scikit-learn**: Abbreviated as sklearn. Python machine learning library providing classification, regression, clustering algorithms, used by PETsARD for machine learning utility evaluation.
 - **SDMetrics**: Evaluation tool in the SDV ecosystem for assessing synthetic data quality, fidelity, and diagnostic reports.
 - **SDV**: Synthetic Data Vault. Open-source synthetic data generation framework providing various synthesis algorithms.

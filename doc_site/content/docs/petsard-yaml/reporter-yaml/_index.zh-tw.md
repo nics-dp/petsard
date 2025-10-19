@@ -32,6 +32,12 @@ Reporter:
     method: save_report
     granularity: global
 
+  save_schema:
+    method: save_schema
+    source:
+      - Loader
+      - Synthesizer
+
   save_timing:
     method: save_timing
 ```
@@ -42,7 +48,8 @@ Reporter:
 
 1. **儲存資料** - 將合成資料或其他模組的輸出儲存為 CSV 檔案
 2. **產生評估報告** - 產生評估結果報告，支援多種粒度層級
-3. **儲存時間資訊** - 記錄各模組的執行時間
+3. **儲存表詮釋資料** - 輸出指定模組的資料欄位 schema 資訊
+4. **儲存時間資訊** - 記錄各模組的執行時間
 
 ## 命名策略與實驗名稱
 

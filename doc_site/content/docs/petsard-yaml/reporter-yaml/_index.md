@@ -32,6 +32,12 @@ Reporter:
     method: save_report
     granularity: global
 
+  save_schema:
+    method: save_schema
+    source:
+      - Loader
+      - Synthesizer
+
   save_timing:
     method: save_timing
 ```
@@ -42,7 +48,8 @@ This module supports the following report output methods. For detailed parameter
 
 1. **Save Data** - Save synthetic data or outputs from other modules as CSV files
 2. **Generate Evaluation Reports** - Generate evaluation result reports with multiple granularity levels
-3. **Save Timing Information** - Record execution time of each module
+3. **Save Schema Information** - Output data column schema information from specified modules
+4. **Save Timing Information** - Record execution time of each module
 
 ## Naming Strategy and Experiment Names
 

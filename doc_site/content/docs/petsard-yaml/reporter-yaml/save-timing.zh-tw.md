@@ -1,6 +1,6 @@
 ---
 title: "儲存時間資訊"
-weight: 3
+weight: 4
 ---
 
 使用 `save_timing` 方法記錄各模組的執行時間，用於效能分析和優化。
