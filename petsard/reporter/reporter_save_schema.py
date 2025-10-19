@@ -30,7 +30,12 @@ class ReporterSaveSchema(BaseReporter):
                 - output (str, optional): 輸出檔案名稱前綴，預設為 'petsard'
                 - yaml_output (bool, optional): 是否輸出 YAML 檔案，預設為 False
                 - properties (str | List[str], optional): 要輸出的屬性名稱，預設為所有屬性
-                    支援的屬性：'dtype', 'nullable', 'unique_count', 'min', 'max', 'mean', 'std', 'categories'
+                    支援的屬性：'type', 'category', 'dtype', 'nullable', 'unique_count',
+                               'min', 'max', 'mean', 'std', 'categories'
+                    注意：
+                    - 'type': schema 定義的類型（如 'str', 'int', 'float64'）
+                    - 'category': schema 中的 category 標記（True/False/None）
+                    - 'dtype': 實際 pandas dtype（如 'float64', 'object'）
 
         Raises:
             ConfigError: 如果配置中缺少 'source' 欄位，或 source/properties 格式不正確
@@ -68,12 +73,22 @@ class ReporterSaveSchema(BaseReporter):
         Args:
             data (dict): 資料字典，由 ReporterOperator.set_input() 生成
                 格式參考 BaseReporter._verify_create_input()
+                可能包含 'metadata' key，其中包含各模組的 Schema
 
         Returns:
             dict[str, Any]: 處理後的 schema 資料字典
                 key: 完整實驗名稱
                 value: Schema 物件
         """
+        # 提取並存儲 metadata（如果有）
+        if "metadata" in data:
+            self._metadata_dict = data.pop("metadata")
+            self._logger.debug(
+                f"Received metadata for {len(self._metadata_dict)} modules"
+            )
+        else:
+            self._metadata_dict = {}
+
         # 驗證輸入資料
         self._verify_create_input(data)
 
@@ -138,8 +153,11 @@ class ReporterSaveSchema(BaseReporter):
                 continue
 
             try:
-                # 從 DataFrame 推斷 schema
-                schema_dict = self._infer_schema_from_dataframe(df)
+                # 嘗試獲取對應的 metadata
+                metadata = self._get_metadata_for_expt(expt_name)
+
+                # 從 DataFrame 推斷 schema，並傳入 metadata
+                schema_dict = self._infer_schema_from_dataframe(df, metadata)
                 saved_schemas[expt_name] = schema_dict
 
                 # 攤平整個 source 的 schema 為單一行
@@ -170,12 +188,37 @@ class ReporterSaveSchema(BaseReporter):
 
         return saved_schemas
 
-    def _infer_schema_from_dataframe(self, df) -> dict[str, Any]:
+    def _get_metadata_for_expt(self, expt_name: str):
+        """
+        獲取實驗名稱對應的 metadata
+
+        Args:
+            expt_name: 實驗名稱
+
+        Returns:
+            Schema 或 None
+        """
+        # 從 processed_data 中獲取 metadata（如果 Reporter 有傳遞）
+        if hasattr(self, "_metadata_dict"):
+            # expt_name 格式: "Loader[default]_Preprocessor[v1]"
+            # 需要解析出模組名稱
+            if "_" in expt_name:
+                parts = expt_name.split("_")
+                # 取最後一個模組
+                last_module = parts[-1].split("[")[0]
+            else:
+                last_module = expt_name.split("[")[0]
+
+            return self._metadata_dict.get(last_module)
+        return None
+
+    def _infer_schema_from_dataframe(self, df, metadata=None) -> dict[str, Any]:
         """
         從 DataFrame 推斷 schema 結構
 
         Args:
             df: pandas DataFrame
+            metadata: Schema metadata (optional)
 
         Returns:
             dict: schema 字典，包含欄位資訊
@@ -189,7 +232,26 @@ class ReporterSaveSchema(BaseReporter):
         for col in df.columns:
             col_info = {}
 
+            # 從 metadata 獲取 type 和 category（schema 定義的類型）
+            schema_type = None
+            schema_category = None
+            if (
+                metadata
+                and hasattr(metadata, "attributes")
+                and col in metadata.attributes
+            ):
+                schema_type = metadata.attributes[col].type
+                schema_category = metadata.attributes[col].category
+
             # 基本屬性
+            if properties is None or "type" in properties:
+                if schema_type:
+                    col_info["type"] = schema_type
+
+            if properties is None or "category" in properties:
+                # 輸出 category，即使是 None 或 False 也要顯示
+                col_info["category"] = schema_category
+
             if properties is None or "dtype" in properties:
                 col_info["dtype"] = str(df[col].dtype)
             if properties is None or "nullable" in properties:

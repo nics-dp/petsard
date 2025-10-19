@@ -2436,9 +2436,19 @@ class ReporterAdapter(BaseAdapter):
         full_expt = status.get_full_expt()
 
         data = {}
+        metadata_dict = {}  # 收集 metadata
         for module in full_expt.keys():
             index_dict = status.get_full_expt(module=module)
             result = status.get_result(module=module)
+
+            # 嘗試獲取該模組的 metadata
+            try:
+                module_metadata = status.get_metadata(module)
+                if module_metadata:
+                    # 為每個 index_tuple 記錄對應的 metadata
+                    metadata_dict[module] = module_metadata
+            except Exception:
+                pass  # 如果無法獲取 metadata，繼續處理
 
             # if module.get_result is a dict,
             #   add key into expt_name: expt_name[key]
@@ -2457,6 +2467,7 @@ class ReporterAdapter(BaseAdapter):
                 data[index_tuple] = deepcopy(result)
         self.input["data"] = data
         self.input["data"]["exist_report"] = status.get_report()
+        self.input["metadata"] = metadata_dict  # 傳遞 metadata
 
         # Add timing data support
         if hasattr(status, "get_timing_report_data"):

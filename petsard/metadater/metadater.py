@@ -260,6 +260,12 @@ class AttributeMetadater:
                     aligned = aligned.astype("boolean")
                 elif attribute.type.startswith("datetime"):
                     aligned = pd.to_datetime(aligned, errors=attribute.cast_errors)
+                elif attribute.type == "string":
+                    # 特殊處理：如果資料已經是數值類型，保持數值類型
+                    # 這避免將 Preprocessor 編碼的數值資料轉回字串
+                    if not pd.api.types.is_numeric_dtype(aligned):
+                        aligned = aligned.astype(attribute.type)
+                    # 如果已經是數值類型，保持不變
                 else:
                     aligned = aligned.astype(attribute.type)
             except Exception:
@@ -270,9 +276,8 @@ class AttributeMetadater:
         # 處理數值精度（如果有設定）
         if attribute.type_attr and "precision" in attribute.type_attr:
             precision = attribute.type_attr["precision"]
-            if attribute.type and (
-                "float" in attribute.type or "int" in attribute.type
-            ):
+            # 檢查實際資料類型是否為數值類型，而不只是檢查 schema 定義
+            if pd.api.types.is_numeric_dtype(aligned):
                 # 對數值欄位應用精度
                 aligned = aligned.apply(lambda x: safe_round(x, precision))
 
@@ -585,9 +590,57 @@ class SchemaMetadater:
 
     @classmethod
     def from_yaml(cls, filepath: str) -> Schema:
-        """從 YAML 檔案載入 Schema"""
+        """從 YAML 檔案載入 Schema
+
+        Raises:
+            ValueError: 當 YAML 檔案中有重複的欄位名稱時
+        """
+
+        # 使用自定義 loader 來檢測重複的 key
+        class DuplicateKeysLoader(yaml.SafeLoader):
+            """自定義 YAML Loader，檢測重複的 key"""
+
+            pass
+
+        def check_duplicate_keys(loader, node, deep=False):
+            """檢查並報告重複的 key"""
+            mapping = {}
+            duplicates = []
+
+            for key_node, value_node in node.value:
+                # 獲取 key 的實際值
+                key = loader.construct_object(key_node, deep=deep)
+                if key in mapping:
+                    # 記錄重複的 key 及其行號
+                    duplicates.append(
+                        f"  - '{key}' (first at line {mapping[key]}, duplicate at line {key_node.start_mark.line + 1})"
+                    )
+                else:
+                    mapping[key] = key_node.start_mark.line + 1
+
+            if duplicates:
+                error_msg = (
+                    "Schema file contains duplicate attribute names:\n"
+                    + "\n".join(duplicates)
+                    + f"\n\nFile: {filepath}"
+                )
+                raise ValueError(error_msg)
+
+            # 使用父類的 construct_mapping 方法
+            return yaml.SafeLoader.construct_mapping(loader, node, deep)
+
+        # 覆寫 construct_mapping 方法
+        DuplicateKeysLoader.construct_mapping = check_duplicate_keys
+
         with open(filepath) as f:
-            config = yaml.safe_load(f)
+            try:
+                config = yaml.load(f, Loader=DuplicateKeysLoader)
+            except ValueError:
+                # 重新拋出 ValueError，保持原始錯誤訊息
+                raise
+            except yaml.YAMLError as e:
+                # 其他 YAML 解析錯誤
+                raise ValueError(f"Failed to parse YAML file {filepath}: {e}")
 
         # 直接使用 from_dict，它會處理 fields 和 attributes 兩種格式
         return cls.from_dict(config)

@@ -75,7 +75,19 @@ def schema_to_sdv(schema: Schema, data: pd.DataFrame = None) -> dict[str, Any]:
     sdv_metadata = {"columns": {}, "METADATA_SPEC_VERSION": "SINGLE_TABLE_V1"}
 
     for attr_name, attribute in schema.attributes.items():
-        sdtype = _map_attribute_to_sdv_type(attribute)
+        # 🔍 DIAGNOSTIC: 顯示每個欄位的 schema type
+        print(
+            f"  {attr_name}: schema.type={getattr(attribute, 'type', 'N/A')}, category={getattr(attribute, 'category', 'N/A')}"
+        )
+
+        # Get actual dtype from data if available
+        actual_dtype = None
+        if data is not None and attr_name in data.columns:
+            actual_dtype = data[attr_name].dtype
+            print(f"    → actual dtype in data: {actual_dtype}")
+
+        sdtype = _map_attribute_to_sdv_type(attribute, actual_dtype=actual_dtype)
+        print(f"    → SDV sdtype: {sdtype}")
         col_info = {"sdtype": sdtype}
 
         # If data is provided and column is categorical, extract values
@@ -107,25 +119,57 @@ def schema_to_sdv(schema: Schema, data: pd.DataFrame = None) -> dict[str, Any]:
     return sdv_metadata
 
 
-def _map_attribute_to_sdv_type(attribute: Any) -> str:
+def _map_attribute_to_sdv_type(attribute: Any, actual_dtype=None) -> str:
     """
     Map PETsARD Attribute to SDV sdtype 將 PETsARD Attribute 對應到 SDV sdtype
 
     Args:
         attribute: PETsARD Attribute object or dict PETsARD Attribute 物件或 dict
+        actual_dtype: Actual pandas dtype from data (optional) 實際資料的 pandas dtype（可選）
 
     Returns:
         str: SDV sdtype
     """
     # Handle both dict and Attribute object 處理 dict 和 Attribute 物件兩種情況
     if isinstance(attribute, dict):
-        category = attribute.get("category")
+        category = attribute.category
         logical_type = attribute.get("logical_type")
         attr_type = attribute.get("type")
+        attr_name = attribute.get("name", "unknown")
     else:
         category = attribute.category
         logical_type = attribute.logical_type
         attr_type = attribute.type
+        attr_name = attribute.name
+
+    # PRIORITY 0: Check actual data type first (most reliable)
+    # 優先級 0：優先檢查實際資料類型（最可靠）
+    # This handles cases where schema type is outdated after preprocessing
+    # 這處理 schema 類型在預處理後過時的情況
+    if actual_dtype is not None:
+        import pandas as pd
+
+        actual_dtype_str = str(actual_dtype)
+
+        # If actual data is numerical, use numerical regardless of schema
+        # 如果實際資料是數值類型，無論 schema 如何都使用 numerical
+        if pd.api.types.is_numeric_dtype(actual_dtype):
+            print(
+                f"  ✓ '{attr_name}': actual_dtype={actual_dtype_str} → sdtype='numerical'"
+            )
+            return "numerical"
+        elif pd.api.types.is_datetime64_any_dtype(actual_dtype):
+            print(
+                f"  ✓ '{attr_name}': actual_dtype={actual_dtype_str} → sdtype='datetime'"
+            )
+            return "datetime"
+        elif pd.api.types.is_bool_dtype(actual_dtype):
+            print(
+                f"  ✓ '{attr_name}': actual_dtype={actual_dtype_str} → sdtype='boolean'"
+            )
+            return "boolean"
+        # If actual data is object/string, continue to other checks
+        # 如果實際資料是 object/string，繼續其他檢查
 
     # PRIORITY 1: Check data type first for numerical types
     # 優先級 1：對於 numerical 類型，優先檢查資料類型
@@ -161,18 +205,40 @@ def _map_attribute_to_sdv_type(attribute: Any) -> str:
         elif logical in ["address", "ip", "url"]:
             return "pii"
 
-    # PRIORITY 3: Check category field for string types
-    # 優先級 3：對於字串類型檢查 category 欄位
+    # PRIORITY 3: Check category field explicitly
+    # 優先級 3：明確檢查 category 欄位
     if category is True:
+        # Explicitly marked as categorical
+        # 明確標記為 categorical
         return "categorical"
+    elif category is False:
+        # Explicitly marked as NOT categorical
+        # 明確標記為非 categorical
+        # For string types with category=false, check actual dtype or default to numerical
+        # 對於 category=false 的字串類型，檢查實際 dtype 或預設為 numerical
+        if attr_type:
+            attr_type_lower = attr_type.lower()
+            if attr_type_lower in ["string", "str", "object"]:
+                # String type but category=false means it was likely encoded to numerical
+                # 字串類型但 category=false 表示可能已編碼為數值
+                # If we have actual_dtype and it's numeric, we would have returned at PRIORITY 0
+                # So if we're here, use numerical as it's likely an encoded categorical
+                # 如果有 actual_dtype 且為數值，在 PRIORITY 0 就會返回了
+                # 所以到這裡，使用 numerical 因為可能是已編碼的類別
+                print(
+                    f"  ⚠️ '{attr_name}': schema says string but category=false → using 'numerical' (likely encoded)"
+                )
+                return "numerical"
+        # For other types with category=false, continue to next checks
+        # 其他 category=false 的類型，繼續下一個檢查
 
     # PRIORITY 4: Default based on remaining type
     # 優先級 4：根據剩餘類型設定預設值
     if attr_type:
         attr_type_lower = attr_type.lower()
         if attr_type_lower in ["string", "str", "object"]:
-            # String types default to categorical
-            # 字串類型預設為 categorical
+            # String types default to categorical (when category is not explicitly set)
+            # 字串類型預設為 categorical（當 category 未明確設定時）
             return "categorical"
 
     # Default to categorical for unknown types
@@ -410,19 +476,52 @@ class BaseSDVSynthesizer:
 
         # TIMING: Create SDV metadata
         step_start = time.time()
-        # If no metadata, create from data 如果沒有 metadata，從數據創建
-        print("\n🔍 DIAGNOSTIC: Checking _sdv_metadata in fit()")
-        if self._sdv_metadata is None:
-            print("⚠️  _sdv_metadata is None! Will create from data...")
-            print("⚠️  This means SDV will INFER types instead of using your schema!")
+        # CRITICAL FIX: Always regenerate SDV metadata using actual data dtypes
+        # 關鍵修復：始終使用實際數據的 dtype 重新生成 SDV metadata
+        print("\n🔍 DIAGNOSTIC: Regenerating SDV metadata with actual data dtypes")
+
+        if self.metadata is not None and hasattr(self.metadata, "attributes"):
+            # We have PETsARD schema - use it with actual data to get correct types
+            # 有 PETsARD schema - 結合實際數據來取得正確的類型
+            print("✓ Using PETsARD schema + actual data dtypes")
+            print(f"  Converting {len(self.metadata.attributes)} attributes...")
+
+            # Convert schema to SDV format, passing data to check actual dtypes
+            # 將 schema 轉換為 SDV 格式，傳入 data 以檢查實際 dtype
+            sdv_metadata_dict = schema_to_sdv(self.metadata, data=data)
+
+            import warnings
+
+            from sdv.metadata import Metadata as SDV_Metadata
+
+            with warnings.catch_warnings(record=True) as w:
+                warnings.filterwarnings(
+                    "always", message="No table name was provided.*"
+                )
+                self._sdv_metadata = SDV_Metadata.load_from_dict(sdv_metadata_dict)
+                for warning in w:
+                    self.logger.debug(f"SDV Metadata: {warning.message}")
+
+            print(
+                f"✓ Successfully regenerated SDV metadata with {len(sdv_metadata_dict['columns'])} columns"
+            )
+        elif self._sdv_metadata is None:
+            # No schema provided - create from data (fallback)
+            # 沒有提供 schema - 從數據創建（備用方案）
+            print("⚠️  No PETsARD schema! Will infer from data...")
             self.logger.warning(
-                "⚠️  _sdv_metadata is None! Creating from data - SDV will infer types!"
+                "⚠️  No PETsARD schema provided! Inferring types from data"
             )
             self._create_sdv_metadata(data)
         else:
-            print("✓ _sdv_metadata exists, using pre-configured schema")
-            print(f"  SDV_Metadata object: {type(self._sdv_metadata)}")
-        self.logger.info(f"⏱️  Create SDV metadata: {time.time() - step_start:.3f}s")
+            # Edge case: somehow have _sdv_metadata but no self.metadata
+            # This shouldn't happen in normal flow
+            print("⚠️  Have _sdv_metadata but no self.metadata - unusual case")
+            print("   Keeping existing _sdv_metadata")
+
+        self.logger.info(
+            f"⏱️  Create/regenerate SDV metadata: {time.time() - step_start:.3f}s"
+        )
 
         # TIMING: Initialize synthesizer
         step_start = time.time()
