@@ -40,6 +40,11 @@ Reporter:
       - Postprocessor
     yaml_output: true    # 選用：是否輸出個別 YAML 檔案（預設：false）
     # output: petsard    # 選用：輸出檔案名稱前綴（預設：petsard）
+    # properties:        # 選用：指定要輸出的屬性（預設：所有屬性）
+    #   - dtype
+    #   - nullable
+    #   - min
+    #   - max
 ```
 
 ## 主要參數
@@ -87,6 +92,51 @@ Reporter:
 |------|------|--------|------|------|
 | `output` | `string` | `petsard` | 輸出檔案名稱前綴 | `my_experiment` |
 | `yaml_output` | `boolean` | `false` | 是否額外輸出 YAML 格式 | `true`, `false` |
+| `properties` | `string` 或 `list` | 所有屬性 | 指定要輸出的屬性名稱 | `dtype` 或 `["dtype", "nullable", "min", "max"]` |
+
+#### properties 參數詳細說明
+
+`properties` 參數用於篩選要輸出的屬性，只有指定的屬性會出現在輸出檔案中。支援以下格式：
+
+1. **單一屬性**：只輸出指定的屬性
+   ```yaml
+   properties: dtype
+   ```
+
+2. **多個屬性**：輸出多個指定的屬性
+   ```yaml
+   properties:
+     - dtype
+     - nullable
+     - min
+     - max
+   ```
+
+**常見屬性**：
+- `dtype`：資料型別
+- `nullable`：是否允許空值
+- `min`、`max`、`mean`、`std`：數值型欄位的統計值
+- `categories`：類別型欄位的類別值列表
+- `unique_count`：唯一值數量
+
+**使用範例**：
+```yaml
+Reporter:
+  save_schema:
+    method: save_schema
+    source:
+      - Loader
+      - Synthesizer
+    properties:
+      - dtype
+      - nullable
+    output: filtered_schema
+```
+
+**效果**：
+- CSV 檔案中只會包含 `{欄位名}_dtype` 和 `{欄位名}_nullable` 欄位
+- 其他屬性（如 min、max、categories 等）不會被輸出
+- 適用於所有欄位，無論其資料型別
 
 ## 輸出格式
 
@@ -118,6 +168,11 @@ Reporter:
   - `age_nullable`：age 欄位是否允許空值
   - `age_min`、`age_max`、`age_mean`：age 欄位的統計值
   - `workclass_categories`：workclass 欄位的類別值列表
+
+**使用 properties 參數時**：
+- 只有指定的屬性會被輸出
+- 例如設定 `properties: ["dtype", "nullable"]` 時，CSV 只會包含 `age_dtype`、`age_nullable`、`workclass_dtype`、`workclass_nullable` 等欄位
+- 其他未指定的屬性（如 min、max、categories）不會出現在輸出中
 
 **優點**：
 - 易於比較不同實驗的 schema 差異

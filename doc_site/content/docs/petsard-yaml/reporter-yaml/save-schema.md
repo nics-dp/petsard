@@ -40,6 +40,11 @@ Reporter:
       - Postprocessor
     yaml_output: true    # Optional: Output individual YAML files (default: false)
     # output: petsard    # Optional: Output file name prefix (default: petsard)
+    # properties:        # Optional: Specify properties to output (default: all properties)
+    #   - dtype
+    #   - nullable
+    #   - min
+    #   - max
 ```
 
 ## Main Parameters
@@ -87,6 +92,51 @@ The `source` parameter specifies which modules' schemas to export. Supported for
 |-----------|------|---------|-------------|---------|
 | `output` | `string` | `petsard` | Output file name prefix | `my_experiment` |
 | `yaml_output` | `boolean` | `false` | Whether to output YAML format additionally | `true`, `false` |
+| `properties` | `string` or `list` | All properties | Specify property names to output | `dtype` or `["dtype", "nullable", "min", "max"]` |
+
+#### properties Parameter Details
+
+The `properties` parameter filters which attributes to output. Only specified properties will appear in output files. Supported formats:
+
+1. **Single Property**: Output only the specified property
+   ```yaml
+   properties: dtype
+   ```
+
+2. **Multiple Properties**: Output multiple specified properties
+   ```yaml
+   properties:
+     - dtype
+     - nullable
+     - min
+     - max
+   ```
+
+**Common Properties**:
+- `dtype`: Data type
+- `nullable`: Whether null values are allowed
+- `min`, `max`, `mean`, `std`: Statistics for numeric columns
+- `categories`: Category values for categorical columns
+- `unique_count`: Number of unique values
+
+**Usage Example**:
+```yaml
+Reporter:
+  save_schema:
+    method: save_schema
+    source:
+      - Loader
+      - Synthesizer
+    properties:
+      - dtype
+      - nullable
+    output: filtered_schema
+```
+
+**Effect**:
+- CSV file will only include `{column_name}_dtype` and `{column_name}_nullable` columns
+- Other attributes (like min, max, categories, etc.) will not be output
+- Applies to all columns regardless of their data type
 
 ## Output Format
 
@@ -118,6 +168,11 @@ The filename includes all source module names connected by hyphens, similar to t
   - `age_nullable`: Whether age column allows null values
   - `age_min`, `age_max`, `age_mean`: Statistics for age column
   - `workclass_categories`: Category values for workclass column
+
+**When using properties parameter**:
+- Only specified properties will be output
+- For example, with `properties: ["dtype", "nullable"]`, CSV will only include `age_dtype`, `age_nullable`, `workclass_dtype`, `workclass_nullable`, etc.
+- Unspecified attributes (like min, max, categories) will not appear in the output
 
 **Advantages**:
 - Easy to compare schema differences across experiments

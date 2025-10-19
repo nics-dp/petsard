@@ -29,9 +29,11 @@ class ReporterSaveSchema(BaseReporter):
                                'Postprocessor', 'Constrainer'
                 - output (str, optional): 輸出檔案名稱前綴，預設為 'petsard'
                 - yaml_output (bool, optional): 是否輸出 YAML 檔案，預設為 False
+                - properties (str | List[str], optional): 要輸出的屬性名稱，預設為所有屬性
+                    支援的屬性：'dtype', 'nullable', 'unique_count', 'min', 'max', 'mean', 'std', 'categories'
 
         Raises:
-            ConfigError: 如果配置中缺少 'source' 欄位，或 source 格式不正確
+            ConfigError: 如果配置中缺少 'source' 欄位，或 source/properties 格式不正確
         """
         super().__init__(config)
 
@@ -47,6 +49,15 @@ class ReporterSaveSchema(BaseReporter):
         # 將 source 轉換為列表（如果是字串）
         if isinstance(self.config["source"], str):
             self.config["source"] = [self.config["source"]]
+
+        # 處理 properties 參數
+        if "properties" in self.config:
+            if isinstance(self.config["properties"], str):
+                self.config["properties"] = [self.config["properties"]]
+            elif not isinstance(self.config["properties"], list) or not all(
+                isinstance(item, str) for item in self.config["properties"]
+            ):
+                raise ConfigError("'properties' must be a string or list of strings")
 
         self._logger = logging.getLogger(f"PETsARD.{self.__class__.__name__}")
 
@@ -171,46 +182,86 @@ class ReporterSaveSchema(BaseReporter):
         """
         schema = {"columns": {}, "shape": {"rows": len(df), "columns": len(df.columns)}}
 
+        # 取得要輸出的屬性列表
+        properties = self.config.get("properties", None)
+
         # 為每個欄位記錄資訊
         for col in df.columns:
-            col_info = {
-                "dtype": str(df[col].dtype),
-                "nullable": bool(df[col].isna().any()),
-                "unique_count": int(df[col].nunique()),
-            }
+            col_info = {}
+
+            # 基本屬性
+            if properties is None or "dtype" in properties:
+                col_info["dtype"] = str(df[col].dtype)
+            if properties is None or "nullable" in properties:
+                col_info["nullable"] = bool(df[col].isna().any())
+            if properties is None or "unique_count" in properties:
+                col_info["unique_count"] = int(df[col].nunique())
 
             # 如果是數值型別，添加統計資訊
             if df[col].dtype.kind in "biufc":  # bool, int, unsigned int, float, complex
-                if not df[col].isna().all():
-                    min_val = df[col].min()
-                    max_val = df[col].max()
-                    mean_val = df[col].mean()
+                # 檢查是否需要任何統計屬性
+                stats_needed = (
+                    properties is None
+                    or "min" in properties
+                    or "max" in properties
+                    or "mean" in properties
+                    or "std" in properties
+                )
+
+                if stats_needed and not df[col].isna().all():
+                    statistics = {}
 
                     # 根據資料型別決定統計值的精度
                     if df[col].dtype.kind in "biu":  # bool, int, unsigned int
                         # 整數型別：四捨五入為整數
-                        col_info["statistics"] = {
-                            "min": int(round(min_val)),
-                            "max": int(round(max_val)),
-                            "mean": int(round(mean_val)),
-                        }
+                        if properties is None or "min" in properties:
+                            statistics["min"] = int(round(df[col].min()))
+                        if properties is None or "max" in properties:
+                            statistics["max"] = int(round(df[col].max()))
+                        if properties is None or "mean" in properties:
+                            statistics["mean"] = int(round(df[col].mean()))
+                        if properties is None or "std" in properties:
+                            statistics["std"] = int(round(df[col].std()))
                     else:  # float, complex
                         # 浮點數型別：偵測資料精度並限制小數位數
                         decimal_places = self._detect_decimal_places(df[col])
-                        col_info["statistics"] = {
-                            "min": round(float(min_val), decimal_places),
-                            "max": round(float(max_val), decimal_places),
-                            "mean": round(float(mean_val), decimal_places),
-                        }
-                else:
-                    col_info["statistics"] = {
-                        "min": None,
-                        "max": None,
-                        "mean": None,
-                    }
+                        if properties is None or "min" in properties:
+                            statistics["min"] = round(
+                                float(df[col].min()), decimal_places
+                            )
+                        if properties is None or "max" in properties:
+                            statistics["max"] = round(
+                                float(df[col].max()), decimal_places
+                            )
+                        if properties is None or "mean" in properties:
+                            statistics["mean"] = round(
+                                float(df[col].mean()), decimal_places
+                            )
+                        if properties is None or "std" in properties:
+                            statistics["std"] = round(
+                                float(df[col].std()), decimal_places
+                            )
+
+                    if statistics:
+                        col_info["statistics"] = statistics
+                elif stats_needed:
+                    # 全部為 NA 的情況
+                    statistics = {}
+                    if properties is None or "min" in properties:
+                        statistics["min"] = None
+                    if properties is None or "max" in properties:
+                        statistics["max"] = None
+                    if properties is None or "mean" in properties:
+                        statistics["mean"] = None
+                    if properties is None or "std" in properties:
+                        statistics["std"] = None
+                    if statistics:
+                        col_info["statistics"] = statistics
 
             # 如果是物件類型（通常是字串），記錄樣本值
-            elif df[col].dtype == "object" or df[col].dtype.name == "category":
+            elif (df[col].dtype == "object" or df[col].dtype.name == "category") and (
+                properties is None or "categories" in properties
+            ):
                 unique_values = df[col].dropna().unique()
                 if len(unique_values) <= 10:  # 只有少量唯一值時才記錄
                     col_info["categories"] = [str(v) for v in unique_values]

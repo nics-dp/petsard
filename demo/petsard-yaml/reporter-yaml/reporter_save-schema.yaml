@@ -27,4 +27,9 @@ Reporter:
       - Postprocessor
     yaml_output: true    # Optional: Output individual YAML files (default: false)
     # output: petsard    # Optional: Output file name prefix (default: petsard)
+    # properties:        # Optional: Specify properties to output (default: all properties)
+    #   - dtype
+    #   - nullable
+    #   - min
+    #   - max
 ...
