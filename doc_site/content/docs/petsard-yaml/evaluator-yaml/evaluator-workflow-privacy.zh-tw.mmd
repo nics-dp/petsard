@@ -1,0 +1,16 @@
+flowchart TD
+    Start([隱私保護力評估])
+    Method[評估方法:<br/>anonymeter-singlingout<br/>anonymeter-linkability<br/>anonymeter-inference]
+    Check{風險 < 0.09?}
+    Pass[保護力通過]
+    Fail[需調整合成參數]
+
+    Start --> Method
+    Method --> Check
+    Check -->|是| Pass
+    Check -->|否| Fail
+
+    style Start fill:#e1f5fe
+    style Pass fill:#c8e6c9
+    style Fail fill:#ffcdd2
+    style Method fill:#fff3e0

@@ -1,0 +1,16 @@
+flowchart TD
+    Start([資料診斷性評估])
+    Method[評估方法:<br/>sdmetrics-diagnosticreport]
+    Check{分數 ≈ 1.0?}
+    Pass[診斷通過]
+    Fail[需檢查合成過程]
+
+    Start --> Method
+    Method --> Check
+    Check -->|是| Pass
+    Check -->|否| Fail
+
+    style Start fill:#e1f5fe
+    style Pass fill:#c8e6c9
+    style Fail fill:#ffcdd2
+    style Method fill:#fff3e0

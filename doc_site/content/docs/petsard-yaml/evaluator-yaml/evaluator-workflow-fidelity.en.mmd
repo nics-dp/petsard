@@ -1,0 +1,16 @@
+flowchart TD
+    Start([Data Fidelity Assessment])
+    Method[Assessment Method:<br/>sdmetrics-qualityreport]
+    Check{Score ≥ 0.75?}
+    Pass[Fidelity Met]
+    Fail[Need to Improve Fidelity]
+
+    Start --> Method
+    Method --> Check
+    Check -->|Yes| Pass
+    Check -->|No| Fail
+
+    style Start fill:#e1f5fe
+    style Pass fill:#c8e6c9
+    style Fail fill:#fff3e0
+    style Method fill:#fff3e0

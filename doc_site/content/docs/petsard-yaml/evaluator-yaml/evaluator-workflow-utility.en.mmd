@@ -1,0 +1,26 @@
+flowchart TD
+    Start([Data Utility Assessment])
+    Method[Assessment Method:<br/>mlutility]
+    TaskType{Task Type & Standard}
+    Classification{Classification: F1 ≥ 0.7?}
+    Regression{Regression: R² ≥ 0.7?}
+    Clustering{Clustering: Silhouette ≥ 0.5?}
+    Pass[Utility Met]
+    Fail[Need to Improve Model Utility]
+
+    Start --> Method
+    Method --> TaskType
+    TaskType -->|Classification| Classification
+    TaskType -->|Regression| Regression
+    TaskType -->|Clustering| Clustering
+    Classification -->|Yes| Pass
+    Classification -->|No| Fail
+    Regression -->|Yes| Pass
+    Regression -->|No| Fail
+    Clustering -->|Yes| Pass
+    Clustering -->|No| Fail
+
+    style Start fill:#e1f5fe
+    style Pass fill:#c8e6c9
+    style Fail fill:#fff3e0
+    style Method fill:#fff3e0

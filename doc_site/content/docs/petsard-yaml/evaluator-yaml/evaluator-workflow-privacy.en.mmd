@@ -1,0 +1,16 @@
+flowchart TD
+    Start([Privacy Protection Assessment])
+    Method[Assessment Methods:<br/>anonymeter-singlingout<br/>anonymeter-linkability<br/>anonymeter-inference]
+    Check{Risk < 0.09?}
+    Pass[Protection Pass]
+    Fail[Adjust Synthesis Parameters]
+
+    Start --> Method
+    Method --> Check
+    Check -->|Yes| Pass
+    Check -->|No| Fail
+
+    style Start fill:#e1f5fe
+    style Pass fill:#c8e6c9
+    style Fail fill:#ffcdd2
+    style Method fill:#fff3e0

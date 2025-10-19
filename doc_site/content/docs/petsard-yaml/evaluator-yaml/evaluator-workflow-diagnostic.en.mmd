@@ -1,0 +1,16 @@
+flowchart TD
+    Start([Data Diagnostics Assessment])
+    Method[Assessment Method:<br/>sdmetrics-diagnosticreport]
+    Check{Score ≈ 1.0?}
+    Pass[Diagnostics Pass]
+    Fail[Check Synthesis Process]
+
+    Start --> Method
+    Method --> Check
+    Check -->|Yes| Pass
+    Check -->|No| Fail
+
+    style Start fill:#e1f5fe
+    style Pass fill:#c8e6c9
+    style Fail fill:#ffcdd2
+    style Method fill:#fff3e0
