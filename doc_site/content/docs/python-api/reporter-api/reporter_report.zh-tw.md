@@ -56,7 +56,7 @@ def report(processed_data: dict | pd.DataFrame | None = None) -> dict | None
 | 方法 | 格式 | 範例 |
 |------|------|------|
 | **save_data** | `{output}_{module-expt_name-pairs}.csv` | `petsard_Synthesizer[exp1].csv` |
-| **save_report** | `{output}_Reporter[{eval}_[{granularity}]].csv` | `petsard_Reporter[eval1_[global]].csv` |
+| **save_report** | `{output}_Reporter[{eval}_{granularity}].csv` | `petsard_Reporter[eval1_global].csv` |
 | **save_timing** | `{output}_timing_report.csv` | `petsard_timing_report.csv` |
 | **save_validation** | `{output}_validation_report.csv` | `petsard_validation_report.csv` |
 
@@ -113,7 +113,7 @@ processed = reporter.create(eval_data)
 
 # 產生報告檔案
 reporter.report(processed)
-# 輸出：petsard[Report]_eval1_[global].csv
+# 輸出：petsard_Reporter[eval1_global].csv
 ```
 
 ### save_timing 模式
@@ -181,7 +181,7 @@ processed = reporter.create(eval_data)
 
 # 產生自訂前綴的報告
 reporter.report(processed)
-# 輸出：my_experiment[Report]_eval1_[global].csv
+# 輸出：my_experiment_Reporter[eval1_global].csv
 ```
 
 ### 多粒度報告產生
@@ -206,9 +206,9 @@ processed = reporter.create(eval_data)
 # 為每個粒度產生個別報告
 reporter.report(processed)
 # 輸出：
-# - petsard[Report]_eval1_[global].csv
-# - petsard[Report]_eval1_[columnwise].csv
-# - petsard[Report]_eval1_[details].csv
+# - petsard_Reporter[eval1_global].csv
+# - petsard_Reporter[eval1_columnwise].csv
+# - petsard_Reporter[eval1_details].csv
 ```
 
 ### 批次處理多個實驗
@@ -431,7 +431,7 @@ reporter.report(processed)
 # processed 結構：
 # {
 #     'Reporter': {
-#         'eval_expt_name': '[global]',
+#         'eval_expt_name': 'global',
 #         'granularity': 'global',
 #         'report': DataFrame
 #     }
@@ -450,13 +450,13 @@ reporter.report(processed)
 # processed 結構：
 # {
 #     'Reporter': {
-#         '[global]': {
-#             'eval_expt_name': '[global]',
+#         'global': {
+#             'eval_expt_name': 'global',
 #             'granularity': 'global',
 #             'report': DataFrame
 #         },
-#         '[columnwise]': {
-#             'eval_expt_name': '[columnwise]',
+#         'columnwise': {
+#             'eval_expt_name': 'columnwise',
 #             'granularity': 'columnwise',
 #             'report': DataFrame
 #         }

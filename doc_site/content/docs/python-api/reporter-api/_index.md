@@ -218,7 +218,7 @@ Uses the original naming format for backward compatibility:
 
 **Examples:**
 - `petsard_Synthesizer[exp1].csv`
-- `petsard[Report]_eval1_[global].csv`
+- `petsard_Reporter[eval1_global].csv`
 - `petsard_timing_report.csv`
 
 ### Compact Strategy
@@ -242,7 +242,7 @@ reporter = Reporter(
     granularity='global',
     naming_strategy='traditional'
 )
-# Output: petsard[Report]_eval1_[global].csv
+# Output: petsard_Reporter[eval1_global].csv
 
 # Compact strategy example
 reporter = Reporter(
@@ -276,7 +276,7 @@ from petsard import Reporter
 reporter = Reporter(method='save_report', granularity='global')
 processed = reporter.create({('Evaluator', 'eval1_[global]'): global_results})
 reporter.report(processed)
-# Generates: petsard[Report]_eval1_[global].csv
+# Generates: petsard_Reporter[eval1_global].csv
 ```
 
 ### Generate Evaluation Report (Multiple Granularities)
@@ -296,9 +296,9 @@ processed = reporter.create({
 })
 reporter.report(processed)
 # Generates:
-# - petsard[Report]_eval1_[global].csv
-# - petsard[Report]_eval1_[columnwise].csv
-# - petsard[Report]_eval1_[details].csv
+# - petsard_Reporter[eval1_global].csv
+# - petsard_Reporter[eval1_columnwise].csv
+# - petsard_Reporter[eval1_details].csv
 ```
 
 ### Save Timing Information

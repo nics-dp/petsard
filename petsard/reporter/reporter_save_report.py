@@ -390,7 +390,8 @@ class ReporterSaveReport(BaseReporter):
             naming_strategy = NamingStrategy.TRADITIONAL
 
         if naming_strategy == NamingStrategy.TRADITIONAL:
-            # 傳統格式：petsard_Reporter[eval_name_[granularity]]
+            # 傳統格式：petsard_Reporter[eval_name]
+            # eval_expt_name 現在不再包含中括號，所以直接添加
             return f"{self.config['output']}_Reporter[{eval_expt_name}]"
         else:
             # COMPACT 格式：petsard.report.Ev.eval_name.G
@@ -435,7 +436,7 @@ class ReporterSaveReport(BaseReporter):
 
         if eval_config is None:
             eval_pattern = re.escape(f"_[{granularity}]") + "$"
-            output_eval_name = f"[{granularity}]"
+            output_eval_name = granularity
         else:
             eval_pattern = (
                 "^("
@@ -444,7 +445,7 @@ class ReporterSaveReport(BaseReporter):
                 + re.escape(f"_[{granularity}]")
                 + "$"
             )
-            output_eval_name = "-".join(eval_config) + f"_[{granularity}]"
+            output_eval_name = "-".join(eval_config) + f"_{granularity}"
 
         return eval_pattern, output_eval_name
 
@@ -464,7 +465,7 @@ class ReporterSaveReport(BaseReporter):
 
         if eval_config is None:
             eval_pattern = re.escape(f"_[{granularity}]") + "$"
-            output_eval_name = f"[{granularity}]"
+            output_eval_name = granularity
         else:
             eval_pattern = (
                 "^("
@@ -473,7 +474,7 @@ class ReporterSaveReport(BaseReporter):
                 + re.escape(f"_[{granularity}]")
                 + "$"
             )
-            output_eval_name = "-".join(eval_config) + f"_[{granularity}]"
+            output_eval_name = "-".join(eval_config) + f"_{granularity}"
 
         return eval_pattern, output_eval_name
 

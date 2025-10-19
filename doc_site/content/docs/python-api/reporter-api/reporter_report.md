@@ -56,7 +56,7 @@ Filename format depends on the `naming_strategy` parameter:
 | Method | Format | Example |
 |--------|--------|---------|
 | **save_data** | `{output}_{module-expt_name-pairs}.csv` | `petsard_Synthesizer[exp1].csv` |
-| **save_report** | `{output}_Reporter[{eval}_[{granularity}]].csv` | `petsard_Reporter[eval1_[global]].csv` |
+| **save_report** | `{output}_Reporter[{eval}_{granularity}].csv` | `petsard_Reporter[eval1_global].csv` |
 | **save_timing** | `{output}_timing_report.csv` | `petsard_timing_report.csv` |
 | **save_validation** | `{output}_validation_report.csv` | `petsard_validation_report.csv` |
 
@@ -113,7 +113,7 @@ processed = reporter.create(eval_data)
 
 # Generate report file
 reporter.report(processed)
-# Output: petsard[Report]_eval1_[global].csv
+# Output: petsard_Reporter[eval1_global].csv
 ```
 
 ### save_timing Mode
@@ -181,7 +181,7 @@ processed = reporter.create(eval_data)
 
 # Generate report with custom prefix
 reporter.report(processed)
-# Output: my_experiment[Report]_eval1_[global].csv
+# Output: my_experiment_Reporter[eval1_global].csv
 ```
 
 ### Multi-Granularity Report Generation
@@ -206,9 +206,9 @@ processed = reporter.create(eval_data)
 # Generate separate report for each granularity
 reporter.report(processed)
 # Output:
-# - petsard[Report]_eval1_[global].csv
-# - petsard[Report]_eval1_[columnwise].csv
-# - petsard[Report]_eval1_[details].csv
+# - petsard_Reporter[eval1_global].csv
+# - petsard_Reporter[eval1_columnwise].csv
+# - petsard_Reporter[eval1_details].csv
 ```
 
 ### Batch Process Multiple Experiments
@@ -431,7 +431,7 @@ reporter.report(processed)
 # processed structure:
 # {
 #     'Reporter': {
-#         'eval_expt_name': '[global]',
+#         'eval_expt_name': 'global',
 #         'granularity': 'global',
 #         'report': DataFrame
 #     }
@@ -450,13 +450,13 @@ reporter.report(processed)
 # processed structure:
 # {
 #     'Reporter': {
-#         '[global]': {
-#             'eval_expt_name': '[global]',
+#         'global': {
+#             'eval_expt_name': 'global',
 #             'granularity': 'global',
 #             'report': DataFrame
 #         },
-#         '[columnwise]': {
-#             'eval_expt_name': '[columnwise]',
+#         'columnwise': {
+#             'eval_expt_name': 'columnwise',
 #             'granularity': 'columnwise',
 #             'report': DataFrame
 #         }
