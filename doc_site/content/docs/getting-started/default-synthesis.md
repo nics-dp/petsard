@@ -1,5 +1,5 @@
 ---
-title: Default Synthesis
+title: Data Synthesis with Default Parameters
 type: docs
 weight: 7
 ---
@@ -16,13 +16,13 @@ Loader:
   load_csv:
     filepath: benchmark/adult-income.csv
 Preprocessor:
-  demo:
+  default:
     method: 'default'
 Synthesizer:
-  demo:
-    method: 'default' # sdv-single_table-gaussiancopula
+  default:
+    method: 'default'
 Postprocessor:
-  demo:
+  default:
     method: 'default'
 Reporter:
   output:
@@ -37,7 +37,7 @@ Reporter:
 - **`load_csv`**: Experiment name, can be freely named, recommended to use descriptive names
 - **`filepath`**: Data file path
   - Value: `benchmark/adult-income.csv`
-  - Description: Specifies the location of the data file to load
+  - Description: Specifies the location of the data file to load. This example uses `adult-income.csv`, which you can replace with your own CSV file path
   - Supported formats: CSV, TSV, Excel (requires openpyxl), OpenDocument
   - Supports relative or absolute paths
   - Also supports `benchmark://` protocol for automatic standard dataset downloads
@@ -53,11 +53,11 @@ Loader:
     schema: benchmark/adult-income_schema.yaml
 ```
 
-For detailed information about Schema, please refer to the [Schema YAML Documentation](../../petsard-yaml/loader-yaml/#schema-yaml).
+For detailed information about Schema, please refer to the [Schema YAML Documentation](../../schema-yaml/).
 
 ### Preprocessor (Data Preprocessing Module)
 
-- **`demo`**: Experiment name, can be freely named
+- **`default`**: Experiment name, can be freely named
 - **`method`**: Preprocessing method
   - Value: `default`
   - Description: Uses the default processing sequence, including the following steps:
@@ -68,16 +68,15 @@ For detailed information about Schema, please refer to the [Schema YAML Document
 
 ### Synthesizer (Synthetic Data Generation Module)
 
-- **`demo`**: Experiment name, can be freely named
+- **`default`**: Experiment name, can be freely named
 - **`method`**: Synthesis method
   - Value: `default`
   - Description: Uses the default synthesis method, which is **SDV Gaussian Copula**
   - Gaussian Copula is a statistical-based synthesis method that captures correlations between variables
-  - The comment `sdv-single_table-gaussiancopula` indicates the full method name
 
 ### Postprocessor (Data Postprocessing Module)
 
-- **`demo`**: Experiment name, can be freely named
+- **`default`**: Experiment name, can be freely named
 - **`method`**: Postprocessing method
   - Value: `default`
   - Description: Automatically performs reverse operations of Preprocessor to restore synthetic data to original format

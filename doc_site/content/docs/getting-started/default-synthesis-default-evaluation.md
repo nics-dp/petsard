@@ -1,5 +1,5 @@
 ---
-title: Default Synthesis Default Evaluation
+title: Data Synthesis and Evaluation with Default Parameters
 type: docs
 weight: 8
 ---
@@ -214,3 +214,4 @@ Follow these steps to evaluate your synthetic data:
     * Clustering: Silhouette > 0.5
     * Regression: Adjusted R² > 0.7
   > Note: ROC AUC (Receiver Operating Characteristic Area Under Curve) measures the model's ability to distinguish between classes
+

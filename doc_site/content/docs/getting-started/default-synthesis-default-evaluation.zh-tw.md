@@ -1,5 +1,5 @@
 ---
-title: 預設合成與預設評測
+title: 以預設參數做資料合成與資料評測
 type: docs
 weight: 8
 ---

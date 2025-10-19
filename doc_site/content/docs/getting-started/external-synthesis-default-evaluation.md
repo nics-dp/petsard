@@ -1,5 +1,5 @@
 ---
-title: External Synthesis with Default Evaluation
+title: Evaluation of External Synthetic Data with Default Parameters
 type: docs
 weight: 9
 ---

@@ -1,5 +1,5 @@
 ---
-title: 外部合成與預設評測
+title: 以外部合成資料做預設評測
 type: docs
 weight: 9
 ---
