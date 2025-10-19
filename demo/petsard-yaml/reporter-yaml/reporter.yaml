@@ -19,6 +19,12 @@ Reporter:
     method: save_report
     granularity: global
 
+  save_schema:
+    method: save_schema
+    source:
+      - Loader
+      - Synthesizer
+
   save_timing:
     method: save_timing
 ...

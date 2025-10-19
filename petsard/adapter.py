@@ -48,6 +48,88 @@ class BaseAdapter:
             self._logger.debug("Error details: ", exc_info=True)
             raise ConfigError
 
+    def _apply_precision_rounding(
+        self, data: pd.DataFrame, schema: Schema, context: str
+    ) -> None:
+        """
+        Apply precision rounding to numerical columns in-place based on schema.
+        根據 schema 對數值欄位進行原地精度四捨五入
+
+        Args:
+            data: DataFrame to apply precision rounding to (modified in-place)
+            schema: Schema containing precision information in type_attr
+            context: Context description for logging (e.g., "Preprocessor output")
+        """
+        from petsard.utils import safe_round
+
+        if schema is None or not hasattr(schema, "attributes"):
+            return
+
+        precision_applied_count = 0
+
+        # schema.attributes is a dict, iterate over values
+        for attr in schema.attributes.values():
+            col_name = attr.name
+            # Check if column exists in data
+            if col_name not in data.columns:
+                continue
+
+            # Check if this is a numerical column with precision
+            if attr.type_attr and "precision" in attr.type_attr:
+                precision = attr.type_attr["precision"]
+                # Only apply to numerical types (check attr.type not attr.sdtype)
+                if attr.type and any(t in attr.type for t in ["float", "int"]):
+                    # Apply safe_round to entire column
+                    data[col_name] = data[col_name].apply(
+                        lambda x: safe_round(x, precision)
+                    )
+                    precision_applied_count += 1
+                    self._logger.debug(
+                        f"Applied precision={precision} to column '{col_name}' in {context}"
+                    )
+
+        if precision_applied_count > 0:
+            self._logger.info(
+                f"✓ Applied precision rounding to {precision_applied_count} columns in {context}"
+            )
+
+    def _update_schema_stats(
+        self, schema: Schema, data: pd.DataFrame, context: str = ""
+    ) -> Schema:
+        """
+        Recalculate statistics and update schema based on current data.
+        重新計算統計資訊並更新 schema
+
+        Args:
+            schema: Original schema (used to preserve type definitions and precision)
+            data: Current data to calculate statistics from
+            context: Context description for logging (e.g., "Preprocessor")
+
+        Returns:
+            Schema: Updated schema with recalculated statistics
+        """
+        # If stats are not enabled in the original schema, don't calculate them
+        if not schema or not schema.enable_stats:
+            return schema
+
+        self._logger.debug(f"Recalculating statistics for {context}")
+
+        # Use SchemaMetadater.from_data to recalculate stats while preserving schema definitions
+        updated_schema = SchemaMetadater.from_data(
+            data=data,
+            enable_stats=True,
+            base_schema=schema,  # Preserve precision and other type attributes
+            id=schema.id,
+            name=schema.name,
+            description=schema.description,
+        )
+
+        self._logger.info(
+            f"✓ Updated statistics for {len(updated_schema.attributes)} attributes in {context}"
+        )
+
+        return updated_schema
+
     def run(self, input: dict):
         """
         Execute the module's functionality.
@@ -403,6 +485,17 @@ class LoaderAdapter(BaseAdapter):
         self._logger.debug("Using Schema from Metadater")
         self.metadata = self._schema_metadata
 
+        # Apply precision rounding based on schema
+        # 根據 schema 應用精度四捨五入
+        self._apply_precision_rounding(self.data, self.metadata, "Loader output")
+
+        # Update schema statistics based on loaded data
+        # 根據載入的數據更新 schema 統計資訊
+        if self.metadata and self.metadata.enable_stats:
+            self.metadata = self._update_schema_stats(
+                self.metadata, self.data, "Loader"
+            )
+
         self._logger.debug("Data loading completed")
 
     def set_input(self, status) -> dict:
@@ -573,6 +666,17 @@ class SplitterAdapter(BaseAdapter):
             self.data, self.metadata, self.train_indices = self.splitter.split(
                 **split_params
             )
+
+        # Update schema statistics for train data after splitting
+        # 分割後更新 train 資料的 schema 統計資訊
+        if self.metadata and 1 in self.metadata:
+            train_metadata = self.metadata[1].get("train")
+            if train_metadata and train_metadata.enable_stats:
+                train_data = self.data[1]["train"]
+                self.metadata[1]["train"] = self._update_schema_stats(
+                    train_metadata, train_data, "Splitter (train)"
+                )
+
         self._logger.debug("Data splitting completed")
 
     @BaseAdapter.log_and_raise_config_error
@@ -663,6 +767,90 @@ class PreprocessorAdapter(BaseAdapter):
                     k: v for k, v in config.items() if k not in ["method", "sequence"]
                 }
 
+        # Support simplified global outlier method configuration
+        # Allow: outlier: 'outlier_isolationforest' instead of outlier: {col: 'outlier_isolationforest'}
+        self._normalize_global_outlier_config()
+
+    def _normalize_global_outlier_config(self):
+        """
+        Normalize simplified global outlier configuration.
+
+        Converts:
+            outlier: 'outlier_isolationforest'
+        To:
+            outlier: {'__global__': 'outlier_isolationforest'}
+        """
+        if "outlier" not in self._config:
+            return
+
+        outlier_config = self._config["outlier"]
+
+        # Check if outlier config is a string (simplified format)
+        if isinstance(outlier_config, str):
+            method = outlier_config.lower()
+            # Only allow global methods in simplified format
+            if method in ["outlier_isolationforest", "outlier_lof"]:
+                self._logger.info(
+                    f"✓ Detected simplified global outlier config: {method}"
+                )
+                self._logger.info(f"  Will apply {method} to ALL numerical columns")
+                # Convert to dict format with special key
+                self._config["outlier"] = {"__global__": outlier_config}
+            else:
+                self._logger.warning(
+                    f"⚠️ Simplified outlier config only supports global methods "
+                    f"(outlier_isolationforest, outlier_lof). Got: {method}"
+                )
+                self._logger.warning(
+                    f"  Please use dict format for field-specific methods: "
+                    f"outlier: {{column_name: '{method}'}}"
+                )
+
+    def _expand_global_outlier_config(self, data: pd.DataFrame, config: dict) -> dict:
+        """
+        Expand simplified global outlier configuration to all numerical columns.
+
+        Converts:
+            outlier: {'__global__': 'outlier_isolationforest'}
+        To:
+            outlier: {'col1': 'outlier_isolationforest', 'col2': 'outlier_isolationforest', ...}
+
+        Args:
+            data: DataFrame to identify numerical columns
+            config: Configuration dictionary
+
+        Returns:
+            dict: Expanded configuration
+        """
+        if "outlier" not in config:
+            return config
+
+        outlier_config = config["outlier"]
+
+        # Check if it's the simplified format with __global__ key
+        if isinstance(outlier_config, dict) and "__global__" in outlier_config:
+            global_method = outlier_config["__global__"]
+            self._logger.info(
+                f"✓ Expanding global outlier config: {global_method} to all numerical columns"
+            )
+
+            # Identify numerical columns
+            numerical_cols = data.select_dtypes(include=["number"]).columns.tolist()
+            self._logger.info(
+                f"  Found {len(numerical_cols)} numerical columns: {numerical_cols}"
+            )
+
+            # Create expanded config
+            expanded_config = config.copy()
+            expanded_outlier_config = dict.fromkeys(numerical_cols, global_method)
+            expanded_config["outlier"] = expanded_outlier_config
+
+            self._logger.debug(f"  Expanded outlier config: {expanded_outlier_config}")
+            return expanded_config
+
+        # Return original config if not simplified format
+        return config
+
     def _run(self, input: dict):
         """
         Executes the data pre-process using the Processor instance.
@@ -677,7 +865,13 @@ class PreprocessorAdapter(BaseAdapter):
         """
 
         self._logger.debug("Initializing processor")
-        self.processor = Processor(metadata=input["metadata"], config=self._config)
+
+        # Expand simplified global outlier config before passing to Processor
+        expanded_config = self._expand_global_outlier_config(
+            input["data"], self._config
+        )
+
+        self.processor = Processor(metadata=input["metadata"], config=expanded_config)
 
         if self._sequence is None:
             self._logger.debug("Using default processing sequence")
@@ -688,6 +882,25 @@ class PreprocessorAdapter(BaseAdapter):
 
         self._logger.debug("Transforming data")
         self.data_preproc = self.processor.transform(data=input["data"])
+
+        # Apply precision rounding based on output schema
+        # 根據輸出 schema 應用精度四捨五入
+        self._apply_precision_rounding(
+            self.data_preproc, self.processor._metadata, "Preprocessor output"
+        )
+
+        # Update schema statistics after preprocessing
+        # 預處理後更新 schema 統計資訊
+        # Check original input metadata's enable_stats setting, not processor's internal metadata
+        # 檢查原始輸入 metadata 的 enable_stats 設定，而不是 processor 內部的 metadata
+        if (
+            input.get("metadata")
+            and input["metadata"].enable_stats
+            and self.processor._metadata
+        ):
+            self.processor._metadata = self._update_schema_stats(
+                self.processor._metadata, self.data_preproc, "Preprocessor"
+            )
 
     @BaseAdapter.log_and_raise_config_error
     def set_input(self, status) -> dict:
@@ -727,6 +940,8 @@ class PreprocessorAdapter(BaseAdapter):
         Returns:
             (Schema): The updated metadata.
         """
+        # Return the metadata which should have been updated with stats in _run()
+        # 返回在 _run() 中已經更新過 stats 的 metadata
         metadata: Schema = deepcopy(self.processor._metadata)
 
         # Note: The metadata update logic for EncoderUniform and ScalerTimeAnchor
@@ -835,6 +1050,17 @@ class SynthesizerAdapter(BaseAdapter):
             self.data_syn = self.synthesizer.fit_sample(data=input["data"])
             self._logger.debug("Train and sampling Synthesizing model completed")
 
+            # Update schema statistics for synthesized data
+            # 更新合成資料的 schema 統計資訊
+            if input["metadata"] and input["metadata"].enable_stats:
+                # Create updated schema based on synthesized data
+
+                updated_metadata = self._update_schema_stats(
+                    input["metadata"], self.data_syn, "Synthesizer"
+                )
+                # Store updated metadata for potential use by downstream modules
+                self._updated_metadata = updated_metadata
+
     @BaseAdapter.log_and_raise_config_error
     def set_input(self, status) -> dict:
         """
@@ -936,6 +1162,20 @@ class PostprocessorAdapter(BaseAdapter):
             except Exception as e:
                 self._logger.warning(
                     f"Failed to restore dtypes from original schema: {e}"
+                )
+
+            # Apply precision rounding based on original schema (preprocessor input schema)
+            # 根據原始 schema（preprocessor 輸入 schema）應用精度四捨五入
+            self._apply_precision_rounding(
+                self.data_postproc, input["original_schema"], "Postprocessor output"
+            )
+
+            # Update schema statistics after postprocessing
+            # 後處理後更新 schema 統計資訊
+            if input.get("original_schema") and input["original_schema"].enable_stats:
+                # Store updated schema for potential downstream use
+                self._updated_schema = self._update_schema_stats(
+                    input["original_schema"], self.data_postproc, "Postprocessor"
                 )
 
     @BaseAdapter.log_and_raise_config_error
@@ -1343,6 +1583,25 @@ class ConstrainerAdapter(BaseAdapter):
                 # 對於 validate 模式，返回所有資料（包含違規的）
                 # 讓使用者可以自行決定如何處理
                 self.constrained_data = data.copy()
+
+        # Update schema statistics after constraining
+        # 約束處理後更新 schema 統計資訊
+        if self._metadata and self._metadata.enable_stats:
+            if is_multiple_sources:
+                # For multiple sources, update each separately
+                # 多個 source 的情況，分別更新
+                for source_name, source_data in self.constrained_data.items():
+                    if isinstance(source_data, pd.DataFrame):
+                        self._logger.debug(
+                            f"Updating statistics for source: {source_name}"
+                        )
+            else:
+                # For single source, update stats
+                # 單一 source 的情況，更新統計
+                if isinstance(self.constrained_data, pd.DataFrame):
+                    self._updated_metadata = self._update_schema_stats(
+                        self._metadata, self.constrained_data, "Constrainer"
+                    )
 
         self._logger.debug("Data constraining completed")
 
@@ -2177,9 +2436,19 @@ class ReporterAdapter(BaseAdapter):
         full_expt = status.get_full_expt()
 
         data = {}
+        metadata_dict = {}  # 收集 metadata
         for module in full_expt.keys():
             index_dict = status.get_full_expt(module=module)
             result = status.get_result(module=module)
+
+            # 嘗試獲取該模組的 metadata
+            try:
+                module_metadata = status.get_metadata(module)
+                if module_metadata:
+                    # 為每個 index_tuple 記錄對應的 metadata
+                    metadata_dict[module] = module_metadata
+            except Exception:
+                pass  # 如果無法獲取 metadata，繼續處理
 
             # if module.get_result is a dict,
             #   add key into expt_name: expt_name[key]
@@ -2198,6 +2467,7 @@ class ReporterAdapter(BaseAdapter):
                 data[index_tuple] = deepcopy(result)
         self.input["data"] = data
         self.input["data"]["exist_report"] = status.get_report()
+        self.input["metadata"] = metadata_dict  # 傳遞 metadata
 
         # Add timing data support
         if hasattr(status, "get_timing_report_data"):

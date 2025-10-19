@@ -92,7 +92,7 @@ class ReporterSaveTiming(BaseReporter):
             return None
 
         # 保存報告
-        full_output: str = f"{self.config['output']}[Timing]"
+        full_output: str = f"{self.config['output']}_[Timing]"
         self._save(data=processed_data, full_output=full_output)
 
         return processed_data

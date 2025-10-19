@@ -1,0 +1,35 @@
+---
+Loader:
+  load_benchmark_with_schema:
+    filepath: benchmark://adult-income
+    schema: benchmark://adult-income_schema
+Splitter:
+  basic_split:
+    num_samples: 1
+    train_split_ratio: 0.8
+Preprocessor:
+  default:
+    method: 'default'
+Synthesizer:
+  default:
+    method: 'default'
+Postprocessor:
+  default:
+    method: 'default'
+
+Reporter:
+  save_schema:
+    method: save_schema  # Required: Fixed to save_schema method
+    source:              # Required: Specify modules to extract schema from
+      - Loader
+      - Preprocessor
+      - Synthesizer
+      - Postprocessor
+    yaml_output: true    # Optional: Output individual YAML files (default: false)
+    # output: petsard    # Optional: Output file name prefix (default: petsard)
+    # properties:        # Optional: Specify properties to output (default: all properties)
+    #   - dtype
+    #   - nullable
+    #   - min
+    #   - max
+...

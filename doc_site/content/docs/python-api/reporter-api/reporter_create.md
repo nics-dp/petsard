@@ -141,7 +141,7 @@ eval_data = {
 processed = reporter.create(eval_data)
 
 # processed contains processed results for all granularities
-# Structure: {'Reporter': {'[global]': {...}, '[columnwise]': {...}, '[details]': {...}}}
+# Structure: {'Reporter': {'global': {...}, 'columnwise': {...}, 'details': {...}}}
 ```
 
 ### Merge Previous Reports
@@ -165,8 +165,8 @@ eval_data = {
     ('Evaluator', 'eval2_[global]'): new_global_results,
     ('Evaluator', 'eval2_[columnwise]'): new_columnwise_results,
     'exist_report': {  # Special key for merging
-        '[global]': previous_global,
-        '[columnwise]': previous_columnwise
+        'global': previous_global,
+        'columnwise': previous_columnwise
     }
 }
 
@@ -281,8 +281,8 @@ Used for merging previous report results:
 {
     ('Evaluator', 'eval1_[global]'): new_data,
     'exist_report': {
-        '[global]': previous_report_df,
-        '[columnwise]': previous_columnwise_df
+        'global': previous_report_df,
+        'columnwise': previous_columnwise_df
     }
 }
 ```
@@ -328,7 +328,7 @@ empty_data = {}
 
 processed = reporter.create(empty_data)
 # Returns result with warnings
-# {'Reporter': {'[global]': {'report': None, 'warnings': '...'}}}
+# {'Reporter': {'global': {'report': None, 'warnings': '...'}}}
 ```
 
 ### Granularity Mismatch

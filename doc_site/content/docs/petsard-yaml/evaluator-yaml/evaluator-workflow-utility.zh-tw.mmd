@@ -1,0 +1,26 @@
+flowchart TD
+    Start([資料實用性評估])
+    Method[評估方法:<br/>mlutility]
+    TaskType{任務類型與標準}
+    Classification{分類 XGBoost:<br/>F1 ≥ 0.7?}
+    Regression{迴歸 XGBoost:<br/>R² ≥ 0.7?}
+    Clustering{聚類 K-means:<br/>輪廓係數 ≥ 0.5?}
+    Pass[實用性達標]
+    Fail[需提升模型效用]
+
+    Start --> Method
+    Method --> TaskType
+    TaskType -->|分類| Classification
+    TaskType -->|迴歸| Regression
+    TaskType -->|聚類| Clustering
+    Classification -->|是| Pass
+    Classification -->|否| Fail
+    Regression -->|是| Pass
+    Regression -->|否| Fail
+    Clustering -->|是| Pass
+    Clustering -->|否| Fail
+
+    style Start fill:#e1f5fe
+    style Pass fill:#c8e6c9
+    style Fail fill:#fff3e0
+    style Method fill:#fff3e0

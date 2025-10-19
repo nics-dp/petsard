@@ -1,5 +1,5 @@
 ---
-title: 預設合成與預設評測
+title: 以預設參數做資料合成與資料評測
 type: docs
 weight: 8
 ---
@@ -9,7 +9,7 @@ weight: 8
 
 請點擊下方按鈕在 Colab 中執行範例：
 
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/nics-dp/petsard/blob/main/demo/tutorial/default-synthesis-default-evaluation.ipynb)
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/nics-dp/petsard/blob/main/demo/getting-started/default-synthesis-default-evaluation.ipynb)
 
 ```yaml
 Loader:

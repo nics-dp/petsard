@@ -109,13 +109,13 @@ class TestDescriberCompare:
 
         try:
             # 創建執行器
-            exec = Executor(str(yaml_path))
+            exec_now = Executor(str(yaml_path))
 
             # 執行
-            exec.run()
+            exec_now.run()
 
             # 取得結果
-            result = exec.get_result()
+            result = exec_now.get_result()
 
             # 驗證結果結構
             assert result is not None

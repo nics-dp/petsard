@@ -30,17 +30,17 @@ YAML (YAML Ain't Markup Language) is a human-readable data serialization format 
 
 The following scenarios guide you in choosing the right YAML configuration:
 
-1. **[Basic Usage: Default Synthesis](default-synthesis)**
+1. **[Basic Usage: Data Synthesis with Default Parameters](default-synthesis)**
 
   - When you only need basic data synthesis
   - For simple privacy-enhanced synthetic data generation
 
-2. **[Basic Usage with Evaluation: Default Synthesis and Evaluation](default-synthesis-default-evaluation)**
+2. **[Basic Usage with Evaluation: Data Synthesis and Evaluation with Default Parameters](default-synthesis-default-evaluation)**
 
   - When you need both synthesis and comprehensive evaluation
   - Includes protection, fidelity, and utility assessments
 
-3. **[Evaluation of External Solutions: External Synthesis with Default Evaluation](external-synthesis-default-evaluation)**
+3. **[Evaluation of External Solutions: Evaluation of External Synthetic Data with Default Parameters](external-synthesis-default-evaluation)**
 
   - When you have pre-synthesized data
   - For evaluating existing privacy-enhanced solutions

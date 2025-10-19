@@ -48,6 +48,145 @@ Constrainer:
 
 {{< callout type="warning" >}}
 **Important**: Cannot use both `constraints_yaml` and individual constraint parameters simultaneously.
+#### Constraints File Example
+
+Below is the complete content of [`adult-income_constraints.yaml`](demo/petsard-yaml/constrainer-yaml/adult-income_constraints.yaml:1), demonstrating practical applications of all four constraint types:
+
+```yaml
+nan_groups:             # NaN handling rules, default none
+                        # Delete entire row when workclass is NA
+  workclass: 'delete'
+                        # Set income to NA when occupation is NA
+  occupation:
+    'erase':
+      - 'income'
+                        # Copy value from educational-num to age when age is NA and educational-num has value
+  age:
+    'copy':
+      'educational-num'
+field_constraints:      # Field constraint conditions, default none
+                        # Age between 18 and 65
+  - "age >= 18 & age <= 65"
+                        # Hours per week between 20 and 60
+  - "hours-per-week >= 20 & hours-per-week <= 60"
+field_combinations:     # Field value pairing relationships, default none
+                        # Doctorate education can only have >50K income
+                        # Masters education can have >50K or <=50K income
+  -
+    - education: income
+    - Doctorate:
+        - '>50K'
+      Masters:
+        - '>50K'
+        - '<=50K'
+field_proportions:      # Field proportion maintenance, default none
+                        # Maintain education distribution, 10% tolerance
+  - fields: 'education'
+    mode: 'all'
+    tolerance: 0.1
+                        # Maintain income distribution, 5% tolerance
+  - fields: 'income'
+    mode: 'all'
+    tolerance: 0.05
+                        # Maintain workclass missing value proportion, 3% tolerance
+  - fields: 'workclass'
+    mode: 'missing'
+    tolerance: 0.03
+```
+
+#### Constraint Explanations
+
+##### 1. NaN Group Constraints (nan_groups)
+
+**NaN handling rules, default none**
+
+- **`workclass: 'delete'`**
+  - 🌐 **English**: Delete entire row when workclass is NA
+  - 🇹🇼 **繁體中文**: 當 `workclass` 欄位為空值時，刪除整筆資料
+  - 💡 **Explanation**: This rule ensures all retained records have complete workclass information
+
+- **`occupation` with `erase` rule**
+  - 🌐 **English**: Set income to NA when occupation is NA
+  - 🇹🇼 **繁體中文**: 當 `occupation` 欄位為空值時，將 `income` 欄位設為空值
+  - 💡 **Explanation**: Establishes correlation between occupation and income; income data is unreliable without occupation information
+
+- **`age` with `copy` rule**
+  - 🌐 **English**: Copy value from educational-num to age when age is NA and educational-num has value
+  - 🇹🇼 **繁體中文**: 當 `age` 欄位為空值且 `educational-num` 有值時，將 `educational-num` 的值複製到 `age`
+  - 💡 **Explanation**: An imputation strategy using years of education to estimate age (demonstration only; practical use requires feasibility assessment)
+
+##### 2. Field Constraints (field_constraints)
+
+**Field constraint conditions, default none**
+
+- **`"age >= 18 & age <= 65"`**
+  - 🌐 **English**: Age between 18 and 65
+  - 🇹🇼 **繁體中文**: 年齡必須介於 18 到 65 歲之間
+  - 💡 **Explanation**: Limits dataset to working-age population, aligning with common labor force statistics ranges
+
+- **`"hours-per-week >= 20 & hours-per-week <= 60"`**
+  - 🌐 **English**: Hours per week between 20 and 60
+  - 🇹🇼 **繁體中文**: 每週工作時數必須介於 20 到 60 小時之間
+  - 💡 **Explanation**: Excludes part-time (<20 hours) and extreme overwork (>60 hours) cases, focusing on standard employment patterns
+
+##### 3. Field Combination Constraints (field_combinations)
+
+**Field value pairing relationships, default none**
+
+- **Education-Income Pairing Rules**
+  - 🌐 **English**: 
+    - Doctorate education can only have >50K income
+    - Masters education can have >50K or <=50K income
+  - 🇹🇼 **繁體中文**:
+    - 博士學歷（`Doctorate`）只能配對高收入（`>50K`）
+    - 碩士學歷（`Masters`）可以配對高收入（`>50K`）或低收入（`<=50K`）
+  - 💡 **Explanation**:
+    - Reflects real-world education returns: Doctorate degrees typically correspond to higher income
+    - Master's degrees may have varying income levels depending on field, experience, and other factors
+    - **Positive listing**: Unlisted education levels will be treated as invalid combinations
+
+##### 4. Field Proportion Constraints (field_proportions)
+
+**Field proportion maintenance, default none**
+
+- **Education Distribution Maintenance**
+  - 🌐 **English**: Maintain education distribution, 10% tolerance
+  - 🇹🇼 **繁體中文**: 維護 `education` 欄位的整體分布，容許 10% 的誤差
+  - 💡 **Explanation**:
+    - `mode: 'all'`: Maintains proportions for all categories
+    - `tolerance: 0.1`: Allows synthetic data proportions to differ from original by ±10%
+
+- **Income Distribution Maintenance**
+  - 🌐 **English**: Maintain income distribution, 5% tolerance
+  - 🇹🇼 **繁體中文**: 維護 `income` 欄位的整體分布，容許 5% 的誤差
+  - 💡 **Explanation**: Stricter tolerance (5%) ensures income class distribution closely matches original data
+
+- **Workclass Missing Value Proportion Maintenance**
+  - 🌐 **English**: Maintain workclass missing value proportion, 3% tolerance
+  - 🇹🇼 **繁體中文**: 維護 `workclass` 欄位的遺失值比例，容許 3% 的誤差
+  - 💡 **Explanation**:
+    - `mode: 'missing'`: Only maintains proportion of missing values (NA)
+    - `tolerance: 0.03`: Strictly controls missing value proportion to preserve data quality characteristics
+
+#### Referencing Constraints File in Main Configuration
+
+```yaml
+Loader:
+  load_benchmark_with_schema:
+    filepath: benchmark://adult-income
+    schema: benchmark://adult-income_schema
+Synthesizer:
+  default:
+    method: default
+Constrainer:
+  external_constraints:
+    method: auto
+    constraints_yaml: adult-income_constraints.yaml  # Reference external constraints file
+    target_rows: None
+    sampling_ratio: 10.0
+    max_trials: 300
+```
+
 {{< /callout >}}
 
 ### Validate Mode: Single Data Source

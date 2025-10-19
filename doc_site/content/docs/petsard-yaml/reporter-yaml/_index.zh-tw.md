@@ -32,6 +32,12 @@ Reporter:
     method: save_report
     granularity: global
 
+  save_schema:
+    method: save_schema
+    source:
+      - Loader
+      - Synthesizer
+
   save_timing:
     method: save_timing
 ```
@@ -42,25 +48,20 @@ Reporter:
 
 1. **儲存資料** - 將合成資料或其他模組的輸出儲存為 CSV 檔案
 2. **產生評估報告** - 產生評估結果報告，支援多種粒度層級
-3. **儲存時間資訊** - 記錄各模組的執行時間
+3. **儲存表詮釋資料** - 輸出指定模組的資料欄位 schema 資訊
+4. **儲存驗證結果** - 將 Constrainer 驗證結果輸出為結構化 CSV 報告
+5. **儲存時間資訊** - 記錄各模組的執行時間
 
 ## 命名策略與實驗名稱
 
 PETsARD 採用統一的實驗命名規範，用於識別和追蹤實驗過程。
+
+### 命名策略概述
+
 Reporter 模組支援兩種命名策略，可透過 `naming_strategy` 參數控制：
 
 1. **TRADITIONAL**：維持向後相容性的傳統命名格式
 2. **COMPACT**：提供更簡潔易讀的命名格式
-
-```python
-from petsard.reporter import Reporter
-
-# 傳統命名（預設）
-reporter = Reporter('save_report', granularity='global', naming_strategy='traditional')
-
-# 簡潔命名
-reporter = Reporter('save_report', granularity='global', naming_strategy='compact')
-```
 
 ### 實驗名稱格式
 
@@ -93,7 +94,7 @@ reporter = Reporter('save_report', granularity='global', naming_strategy='compac
 
 | 策略 | 格式 | 範例 |
 |------|------|------|
-| Traditional | `{output}[Report]_{eval}_[{granularity}].csv` | `petsard[Report]_eval1_[global].csv` |
+| Traditional | `{output}_Reporter[{eval}_[{granularity}]].csv` | `petsard_Reporter[eval1_[global]].csv` |
 | Compact | `{output}_{eval}_{granularity}.csv` | `petsard_eval1_global.csv` |
 
 #### save_timing 方法

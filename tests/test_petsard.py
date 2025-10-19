@@ -47,7 +47,7 @@ class TestPETsARDFunctionalWorkflows:
         return None
 
     def test_default_synthesis_workflow(self, temp_output_dir):
-        """Test the default synthesis workflow (demo/tutorial/default-synthesis.yaml)."""
+        """Test the default synthesis workflow (demo/getting-started/default-synthesis.yaml)."""
         # Create a minimal YAML config for default synthesis
         config_content = f"""---
 Loader:

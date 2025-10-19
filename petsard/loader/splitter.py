@@ -180,7 +180,7 @@ class Splitter:
         if self.config["random_state"] is not None:
             random.seed(self.config["random_state"])
 
-        sample_size = int(len(index) * self.config["train_split_ratio"])
+        sample_size = round(len(index) * self.config["train_split_ratio"])
 
         # 初始化現有訓練索引集合列表
         existing_train_sets = []

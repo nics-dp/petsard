@@ -15,7 +15,25 @@ Click the below button to run this example in Colab:
 
 We recommend the following evaluation workflow to ensure synthetic data meets requirements:
 
-{{< mermaid-file file="content/docs/petsard-yaml/evaluator-yaml/evaluator-workflow.mmd" >}}
+#### 1. Evaluation Workflow Overview
+
+{{< mermaid-file file="content/docs/petsard-yaml/evaluator-yaml/evaluator-workflow-overview.en.mmd" >}}
+
+#### 2. Data Diagnostics Standard
+
+{{< mermaid-file file="content/docs/petsard-yaml/evaluator-yaml/evaluator-workflow-diagnostic.en.mmd" >}}
+
+#### 3. Privacy Protection Standard
+
+{{< mermaid-file file="content/docs/petsard-yaml/evaluator-yaml/evaluator-workflow-privacy.en.mmd" >}}
+
+#### 4. Data Fidelity Standard
+
+{{< mermaid-file file="content/docs/petsard-yaml/evaluator-yaml/evaluator-workflow-fidelity.en.mmd" >}}
+
+#### 5. Data Utility Standard
+
+{{< mermaid-file file="content/docs/petsard-yaml/evaluator-yaml/evaluator-workflow-utility.en.mmd" >}}
 
 > **Legend:**
 > - Light blue boxes: Start/End points
@@ -24,8 +42,7 @@ We recommend the following evaluation workflow to ensure synthetic data meets re
 > - Green boxes: Success outcomes
 > - Red boxes: Failure states requiring action
 > - Yellow boxes: Improvement needed
-> - Arrows: Process flow direction
-> - `|Yes/No|`: Decision outcomes
+> - Orange boxes: Assessment methods
 
 ### 1. Foundation Evaluation (Required)
 
@@ -171,9 +188,9 @@ Evaluator:
 ³ **Privacy Risk Standard** (Risk < 0.09): Based on PDPC Singapore guidelines
 
 ⁴ **Utility Standard** (Task-dependent):
-- Classification tasks: MCC ≥ 0.5
-- Regression tasks: R² ≥ 0.7
-- Clustering tasks: Silhouette coefficient ≥ 0.5
+- Classification tasks (XGBoost): F1 ≥ 0.7
+- Regression tasks (XGBoost): R² ≥ 0.7
+- Clustering tasks (K-means): Silhouette coefficient ≥ 0.5
 
 > **Default Method**: When `method: default` is used, the system automatically executes `sdmetrics-qualityreport` to evaluate data fidelity.
 

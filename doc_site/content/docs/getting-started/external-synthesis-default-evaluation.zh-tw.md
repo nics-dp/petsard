@@ -1,5 +1,5 @@
 ---
-title: 外部合成與預設評測
+title: 以外部合成資料做預設評測
 type: docs
 weight: 9
 ---
@@ -10,7 +10,7 @@ weight: 9
 
 請點擊下方按鈕在 Colab 中執行範例：
 
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/nics-dp/petsard/blob/main/demo/tutorial/external-synthesis-default-evaluation.ipynb)
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/nics-dp/petsard/blob/main/demo/getting-started/external-synthesis-default-evaluation.ipynb)
 
 ```yaml
 Splitter:

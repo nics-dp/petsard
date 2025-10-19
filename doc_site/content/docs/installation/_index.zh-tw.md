@@ -22,22 +22,22 @@ next: docs/getting-started
 
 ### 有網路連線的環境
 
-- **[Docker 建立](docker-build.zh-tw)** - 支援 Docker 的環境（推薦）
+- **[Docker 預建](docker-prebuilt)** - 支援 Docker 的環境（推薦）
   - 無需本地 Python 環境設定
   - 快速部署，環境一致性高
 
-- **[PyPI 安裝](pypi-install.zh-tw)** - 不支援 Docker 的環境
+- **[PyPI 安裝](pypi-install)** - 不支援 Docker 的環境
   - 直接安裝到本地 Python 環境
   - 支援多種依賴群組選擇
   - 推薦使用 uv 進行安裝
 
 ### 無網路連線的環境
 
-- **[Docker 匯出](docker-export.zh-tw)** - 支援 Docker 的環境
+- **[Docker 離線部署](docker-offline-deployment)** - 支援 Docker 的環境
   - 先在有網路環境建置/拉取映像
   - 匯出後傳輸到離線環境使用
 
-- **[套件預下載](package-predownload.zh-tw)** - 不支援 Docker 的環境
+- **[套件預下載](package-predownload)** - 不支援 Docker 的環境
   - 預先下載所有依賴套件
   - 傳輸到離線環境進行安裝
 

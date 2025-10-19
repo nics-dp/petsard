@@ -88,6 +88,15 @@ Loader:
 | `header_names` | `list` | `null` | **Deprecated in v2.0.0** Specify column names for data without headers | `["age", "income"]` |
 | `na_values` | `string\|list\|dict` | `null` | **Deprecated in v2.0.0** Additional NA/NaN recognition strings | `"N/A"` or `{"age": ["unknown"]}` |
 
+## Precision Handling
+
+Loader automatically handles precision for numeric fields:
+
+- **Auto-Inference**: Automatically detects decimal places for each numeric field when no schema is provided
+- **Precision Recording**: Inference results are stored in `type_attr.precision` of the schema
+- **Auto-Application**: Data is rounded according to precision after loading
+- **Manual Specification**: Precision can be manually set in schema via `type_attr.precision`
+
 ## Related Information
 
 - **Benchmark Datasets**: Use the benchmark:// protocol to automatically download and load standardized datasets, see benchmark:// documentation.

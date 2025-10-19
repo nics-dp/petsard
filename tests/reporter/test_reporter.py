@@ -541,14 +541,14 @@ class Test_ReporterSaveReport:
             rpt._setup_evaluation_parameters_for_granularity("global")
         )
         assert eval_pattern == "^(test\\-eval)_\\[global\\]$"
-        assert output_eval_name == "test-eval_[global]"
+        assert output_eval_name == "test-eval_global"
 
         # Test columnwise granularity
         eval_pattern, output_eval_name = (
             rpt._setup_evaluation_parameters_for_granularity("columnwise")
         )
         assert eval_pattern == "^(test\\-eval)_\\[columnwise\\]$"
-        assert output_eval_name == "test-eval_[columnwise]"
+        assert output_eval_name == "test-eval_columnwise"
 
         # Test with no eval config
         cfg["eval"] = None
@@ -557,7 +557,7 @@ class Test_ReporterSaveReport:
             rpt._setup_evaluation_parameters_for_granularity("global")
         )
         assert eval_pattern == "_\\[global\\]$"
-        assert output_eval_name == "[global]"
+        assert output_eval_name == "global"
 
     def test_reset_details_index(self):
         """
@@ -621,35 +621,26 @@ class Test_ReporterSaveReport:
         granularity = "global"
         result, expected_rpt = _test_create(data, granularity)
         # 新的多 granularity 格式
-        if (
-            isinstance(result["Reporter"], dict)
-            and f"[{granularity}]" in result["Reporter"]
-        ):
-            reporter_data = result["Reporter"][f"[{granularity}]"]
-            assert reporter_data["eval_expt_name"] == f"[{granularity}]"
-            assert reporter_data["granularity"] == f"{granularity}"
+        if isinstance(result["Reporter"], dict) and granularity in result["Reporter"]:
+            reporter_data = result["Reporter"][granularity]
+            assert reporter_data["eval_expt_name"] == granularity
+            assert reporter_data["granularity"] == granularity
             pd.testing.assert_frame_equal(reporter_data["report"], expected_rpt)
 
         granularity = "columnwise"
         result, expected_rpt = _test_create(data, granularity)
-        if (
-            isinstance(result["Reporter"], dict)
-            and f"[{granularity}]" in result["Reporter"]
-        ):
-            reporter_data = result["Reporter"][f"[{granularity}]"]
-            assert reporter_data["eval_expt_name"] == f"[{granularity}]"
-            assert reporter_data["granularity"] == f"{granularity}"
+        if isinstance(result["Reporter"], dict) and granularity in result["Reporter"]:
+            reporter_data = result["Reporter"][granularity]
+            assert reporter_data["eval_expt_name"] == granularity
+            assert reporter_data["granularity"] == granularity
             pd.testing.assert_frame_equal(reporter_data["report"], expected_rpt)
 
         granularity = "pairwise"
         result, expected_rpt = _test_create(data, granularity)
-        if (
-            isinstance(result["Reporter"], dict)
-            and f"[{granularity}]" in result["Reporter"]
-        ):
-            reporter_data = result["Reporter"][f"[{granularity}]"]
-            assert reporter_data["eval_expt_name"] == f"[{granularity}]"
-            assert reporter_data["granularity"] == f"{granularity}"
+        if isinstance(result["Reporter"], dict) and granularity in result["Reporter"]:
+            reporter_data = result["Reporter"][granularity]
+            assert reporter_data["eval_expt_name"] == granularity
+            assert reporter_data["granularity"] == granularity
             pd.testing.assert_frame_equal(reporter_data["report"], expected_rpt)
 
     def test_process_report_data(self, sample_reporter_input):
@@ -675,7 +666,7 @@ class Test_ReporterSaveReport:
                 granularity = convert_eval_expt_name_to_tuple(full_expt_tuple[1])[1]
             except (TypeError, ConfigError):
                 granularity = "global"
-            output_eval_name = f"[{granularity}]"
+            output_eval_name = granularity
             skip_flag, rpt = ReporterSaveReport._process_report_data(
                 report=report,
                 full_expt_tuple=full_expt_tuple,
@@ -769,7 +760,7 @@ class Test_ReporterSaveReport:
                 name1 = ("Postprocessor", "Before") + name1
                 name2 = ("Postprocessor", "After") + name2
             if process:
-                output_eval_name = f"[{granularity}]"
+                output_eval_name = granularity
                 skip_flag, data1 = ReporterSaveReport._process_report_data(
                     report=data1,
                     full_expt_tuple=name1,
@@ -1600,12 +1591,12 @@ class TestReporterNamingStrategy:
         reporter = ReporterSaveReport(config)
 
         # 測試基本檔名生成
-        filename = reporter._generate_report_filename("[global]", "global")
-        assert filename == "petsard[Report]_[global]"
+        filename = reporter._generate_report_filename("global", "global")
+        assert filename == "petsard_Reporter[global]"
 
         # 測試帶評估名稱的檔名
-        filename = reporter._generate_report_filename("demo-quality_[global]", "global")
-        assert filename == "petsard[Report]_demo-quality_[global]"
+        filename = reporter._generate_report_filename("demo-quality_global", "global")
+        assert filename == "petsard_Reporter[demo-quality_global]"
 
     def test_generate_report_filename_compact(self):
         """測試簡潔命名策略的檔名生成"""
@@ -1618,12 +1609,12 @@ class TestReporterNamingStrategy:
         reporter = ReporterSaveReport(config)
 
         # 測試基本檔名生成
-        filename = reporter._generate_report_filename("[global]", "global")
+        filename = reporter._generate_report_filename("global", "global")
         assert filename.startswith("petsard.report.Rp")
         assert "G" in filename  # 應該包含粒度簡寫
 
         # 測試帶評估名稱的檔名
-        filename = reporter._generate_report_filename("demo-quality_[global]", "global")
+        filename = reporter._generate_report_filename("demo-quality_global", "global")
         assert filename.startswith("petsard.report.Rp")
         assert "demo-quality" in filename
         assert "G" in filename
@@ -1649,7 +1640,7 @@ class TestReporterNamingStrategy:
         compact_reporter = ReporterSaveReport(compact_config)
 
         # 生成檔名
-        eval_name = "demo-quality_[global]"
+        eval_name = "demo-quality_global"
         traditional_filename = traditional_reporter._generate_report_filename(
             eval_name, "global"
         )
@@ -1661,7 +1652,7 @@ class TestReporterNamingStrategy:
         assert traditional_filename != compact_filename
 
         # Traditional 格式檢查
-        assert "[Report]_" in traditional_filename
+        assert "Reporter[" in traditional_filename
 
         # Compact 格式檢查
         assert ".report." in compact_filename
@@ -1681,9 +1672,9 @@ class TestReporterNamingStrategy:
             }
             traditional_reporter = ReporterSaveReport(traditional_config)
             traditional_filename = traditional_reporter._generate_report_filename(
-                f"test_[{granularity}]", granularity
+                f"test_{granularity}", granularity
             )
-            assert "[Report]_" in traditional_filename
+            assert "Reporter[" in traditional_filename
             assert granularity in traditional_filename
 
             # Compact
@@ -1695,7 +1686,7 @@ class TestReporterNamingStrategy:
             }
             compact_reporter = ReporterSaveReport(compact_config)
             compact_filename = compact_reporter._generate_report_filename(
-                f"test_[{granularity}]", granularity
+                f"test_{granularity}", granularity
             )
             assert ".report." in compact_filename
             assert "Rp" in compact_filename
@@ -1706,8 +1697,8 @@ class TestReporterNamingStrategy:
         config = {"method": "save_report", "granularity": "global"}
         reporter = ReporterSaveReport(config)
 
-        filename = reporter._generate_report_filename("[global]", "global")
-        assert filename == "petsard[Report]_[global]"
+        filename = reporter._generate_report_filename("global", "global")
+        assert filename == "petsard_Reporter[global]"
 
         # 這應該與明確設定 traditional 的結果相同
         config_explicit = {
@@ -1717,7 +1708,7 @@ class TestReporterNamingStrategy:
         }
         reporter_explicit = ReporterSaveReport(config_explicit)
         filename_explicit = reporter_explicit._generate_report_filename(
-            "[global]", "global"
+            "global", "global"
         )
 
         assert filename == filename_explicit

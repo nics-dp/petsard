@@ -88,6 +88,15 @@ Loader:
 | `header_names` | `list` | `null` | **已棄用 v2.0.0** 為無表頭的資料指定欄位名稱 | `["age", "income"]` |
 | `na_values` | `string\|list\|dict` | `null` | **已棄用 v2.0.0** 額外的 NA/NaN 識別字串 | `"N/A"` 或 `{"age": ["unknown"]}` |
 
+## 精度處理
+
+Loader 會自動處理數值欄位的精度：
+
+- **自動推斷**：未提供 schema 時，自動偵測每個數值欄位的小數位數
+- **精度記錄**：推斷結果儲存在 schema 的 `type_attr.precision` 中
+- **自動應用**：載入資料後根據精度進行四捨五入
+- **手動指定**：可在 schema 中手動設定 `type_attr.precision` 來指定精度
+
 ## 相關說明
 
 - **基準資料集**：使用 benchmark:// 協議可自動下載並載入標準化的資料集，詳見 benchmark:// 文檔。

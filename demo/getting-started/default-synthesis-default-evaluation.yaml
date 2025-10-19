@@ -1,0 +1,58 @@
+---
+Loader:
+  data:
+    filepath: 'benchmark/adult-income.csv'
+Splitter:
+  basic_split:
+    num_samples: 1
+    train_split_ratio: 0.8
+Preprocessor:
+  default:
+    method: 'default'
+Synthesizer:
+  default:
+    method: 'default'
+Postprocessor:
+  default:
+    method: 'default'
+Evaluator:
+  validity_check:
+    method: sdmetrics-diagnosticreport
+  fidelity_check:
+    method: sdmetrics-qualityreport
+  singling_out_risk:
+    method: anonymeter-singlingout
+  linkability_risk:
+    method: anonymeter-linkability
+    aux_cols:
+      -
+        - workclass
+        - education
+        - occupation
+        - race
+        - gender
+      -
+        - age
+        - marital-status
+        - relationship
+        - native-country
+        - income
+  inference_risk:
+    method: 'anonymeter-inference'
+    secret: 'income'
+  classification_utility:
+    method: mlutility
+    task_type: classification
+    target: income
+Reporter:
+  save_data:
+    method: 'save_data'
+    source: 'Postprocessor'
+  save_report:
+    method: 'save_report'
+    granularity:
+      - 'global'
+      - 'columnwise'
+      - 'pairwise'
+      - 'details'
+...

@@ -2,10 +2,9 @@
 title: Package Pre-download
 type: docs
 weight: 5
-prev: docs/installation
+prev: docs/installation/docker-offline-deployment
+next: docs/installation
 ---
-
-# Package Pre-download
 
 Suitable for environments **without network connection** and **without Docker support**.
 

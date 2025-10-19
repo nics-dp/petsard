@@ -30,6 +30,66 @@ classifiers = [
 ]
 requires-python = ">=3.10,<3.12" # Python 3.12 目前仍被 anonymeter 衝突限制
 
+# 核心依賴（pip install petsard 時自動安裝）
+# Core dependencies (automatically installed with pip install petsard)
+# 包含 exec + load-benchmark + syn + eval 群組的所有依賴
+# Includes all dependencies from exec + load-benchmark + syn + eval groups
+dependencies = [
+    # exec group - 執行功能
+    "pandas>=2.3.2,<3",
+    "pyyaml>=6.0.2,<7",
+    "numpy>=1.26.4,<2",
+    "python-dateutil>=2.9.0.post0,<3",
+    "pytz>=2025.2",
+    "tzdata>=2025.2",
+    # load-benchmark group - 基準資料集支援
+    "requests>=2.32.5,<3",
+    # eval group - 隱私風險評估功能
+    "anonymeter>=1.0.0,<2",
+    "sdmetrics>=0.23.0,<1",
+    "xgboost>=3.0.5",
+    "imblearn>=0.0",
+    "scikit-learn>=1.7.1,<2",
+    "joblib>=1.5.2,<2",
+    "numba>=0.61.2,<1",
+    "plotly>=6.3.0,<7",
+    "scipy>=1.15.3,<2 ; python_full_version < '3.11'",
+    "scipy>=1.16.0,<2 ; python_full_version >= '3.11'",
+    # syn group - 合成資料生成功能
+    "sdv>=1.26.0,<2",
+    "torch>=2.8.0,<3",
+    "boto3>=1.40.25,<2",
+    "botocore>=1.40.25,<2",
+    "faker>=37.6.0,<38",
+    "filelock>=3.19.1,<4",
+    "narwhals>=1.45.0,<3",
+    "platformdirs>=4.4.0,<5",
+    "s3transfer>=0.13.1,<1",
+    "threadpoolctl>=3.6.0,<4",
+    "typing-extensions>=4.15.0,<5",
+    "urllib3>=2.5.0,<3",
+    "fsspec>=2025.9.0",
+    "jinja2>=3.1.6,<4",
+    "networkx>=3.4.2,<3.5 ; python_full_version < '3.11'",
+    "networkx>=3.5,<4 ; python_full_version >= '3.11'",
+    "nvidia-cublas-cu12>=12.6.4.1,<13 ; platform_machine == 'x86_64' and sys_platform == 'linux'",
+    "nvidia-cuda-cupti-cu12>=12.6.80,<13 ; platform_machine == 'x86_64' and sys_platform == 'linux'",
+    "nvidia-cuda-nvrtc-cu12>=12.6.77,<13 ; platform_machine == 'x86_64' and sys_platform == 'linux'",
+    "nvidia-cuda-runtime-cu12>=12.6.77,<13 ; platform_machine == 'x86_64' and sys_platform == 'linux'",
+    "nvidia-cudnn-cu12>=9.5.1.17,<10 ; platform_machine == 'x86_64' and sys_platform == 'linux'",
+    "nvidia-cufft-cu12>=11.3.0.4,<12 ; platform_machine == 'x86_64' and sys_platform == 'linux'",
+    "nvidia-cufile-cu12>=1.11.1.6,<2 ; platform_machine == 'x86_64' and sys_platform == 'linux'",
+    "nvidia-curand-cu12>=10.3.7.77,<11 ; platform_machine == 'x86_64' and sys_platform == 'linux'",
+    "nvidia-cusolver-cu12>=11.7.1.2,<12 ; platform_machine == 'x86_64' and sys_platform == 'linux'",
+    "nvidia-cusparse-cu12>=12.5.4.2,<13 ; platform_machine == 'x86_64' and sys_platform == 'linux'",
+    "nvidia-cusparselt-cu12>=0.6.3,<1 ; platform_machine == 'x86_64' and sys_platform == 'linux'",
+    "nvidia-nccl-cu12>=2.26.2,<3 ; platform_machine == 'x86_64' and sys_platform == 'linux'",
+    "nvidia-nvjitlink-cu12>=12.6.85,<13 ; platform_machine == 'x86_64' and sys_platform == 'linux'",
+    "nvidia-nvtx-cu12>=12.6.77,<13 ; platform_machine == 'x86_64' and sys_platform == 'linux'",
+    "sympy>=1.14.0,<2",
+    "triton>=3.4.0,<4 ; platform_machine == 'x86_64' and sys_platform == 'linux'",
+]
+
 [project.urls]
 Repository = "https://github.com/nics-tw/petsard"
 Documentation = "https://nics-tw.github.io/petsard/"
@@ -195,7 +255,31 @@ dev-tools = [
 
 # PyPI 向下相容：optional-dependencies（舊版 pip 使用）
 # Backward compatibility for PyPI: optional-dependencies (for older pip)
+# 注意：核心依賴已在 [project.dependencies] 中定義，這裡只列出額外功能
+# Note: Core dependencies are defined in [project.dependencies], only additional features listed here
 [project.optional-dependencies]
+# Jupyter 支援（適用於 Docker 環境中使用 Jupyter）
+# Jupyter support (for use in Docker environments)
+jupyter = [
+    "ipykernel>=6.30.1,<7",
+    "ipython>=8.3.0,<9 ; python_full_version < '3.11'",
+    "ipython>=9.4.0,<10 ; python_full_version >= '3.11'",
+    "jupyterlab>=4.4.7,<5",
+    "notebook>=7.4.5,<8",
+    "pyzmq>=27.0.2,<28",
+    "debugpy>=1.8.16,<2",
+    "decorator>=5.2.1,<6",
+    "ipython-pygments-lexers>=1.1.1,<2 ; python_version >= '3.11'",
+    "prompt-toolkit>=3.0.52,<4",
+    "psutil>=7.0.0,<8",
+]
+# Excel 檔案支援
+# Excel file support
+excel = [
+    "openpyxl>=3.1.5,<4",
+]
+# 資料科學功能（向下相容，等同於 jupyter）
+# Data science functionality (backward compatible, equivalent to jupyter)
 ds = [
     "ipykernel>=6.30.1,<7",
     "ipython>=8.3.0,<9 ; python_full_version < '3.11'",
@@ -209,6 +293,8 @@ ds = [
     "prompt-toolkit>=3.0.52,<4",
     "psutil>=7.0.0,<8",
 ]
+# 完整功能（Jupyter + Excel）
+# Full functionality (Jupyter + Excel)
 all = [
     "ipykernel>=6.30.1,<7",
     "ipython>=8.3.0,<9 ; python_full_version < '3.11'",
@@ -222,8 +308,9 @@ all = [
     "prompt-toolkit>=3.0.52,<4",
     "psutil>=7.0.0,<8",
     "openpyxl>=3.1.5,<4",
-    "requests>=2.32.5,<3",
 ]
+# 開發工具（完整功能 + 開發與測試工具）
+# Development tools (full functionality + development and testing tools)
 dev = [
     "ipykernel>=6.30.1,<7",
     "ipython>=8.3.0,<9 ; python_full_version < '3.11'",
@@ -237,7 +324,6 @@ dev = [
     "prompt-toolkit>=3.0.52,<4",
     "psutil>=7.0.0,<8",
     "openpyxl>=3.1.5,<4",
-    "requests>=2.32.5,<3",
     "pip-audit>=2.7.3",
     "pytest>=8.4.2",
     "pytest-cov>=6.3.0",

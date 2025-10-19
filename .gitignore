@@ -6,6 +6,7 @@
 # 執行結果 Execution results
 **/*.csv
 **/*.log
+**/petsard_schema_*.yaml
 # 第三方執行結果：SDV Third-party execution results: SDV
 **/.sample.csv.temp*
 

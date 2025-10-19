@@ -389,13 +389,13 @@ class ReporterSaveValidation(BaseReporter):
                 module = key[0]
                 exp_name = key[1]
                 source_name = key[2]
-                # 格式: {output}[Validation]_Source[來源名稱]_Constrainer[實驗名稱]
-                filename = f"{output_prefix}[Validation]_Source[{source_name}]_{module}[{exp_name}]"
+                # 格式: {output}_[Validation]_Source[來源名稱]_Constrainer[實驗名稱]
+                filename = f"{output_prefix}_[Validation]_Source[{source_name}]_{module}[{exp_name}]"
             elif isinstance(key, tuple) and len(key) == 2:
                 # 單一 source 格式: (Module, experiment_name)
                 module = key[0]
                 exp_name = key[1]
-                filename = f"{output_prefix}[Validation]_{module}[{exp_name}]"
+                filename = f"{output_prefix}_[Validation]_{module}[{exp_name}]"
             else:
                 # 其他格式（向後相容）
                 key_str = (
@@ -403,7 +403,7 @@ class ReporterSaveValidation(BaseReporter):
                     if isinstance(key, tuple)
                     else str(key)
                 )
-                filename = f"{output_prefix}[Validation]_{key_str}"
+                filename = f"{output_prefix}_[Validation]_{key_str}"
         else:
             # When using custom output, directly use specified name / 自訂 output 時，直接使用指定的名稱
             filename = output_prefix

@@ -1,28 +1,28 @@
 ---
-title: 預設合成
+title: 以預設參數做資料合成
 type: docs
 weight: 7
 ---
 
 產生隱私強化合成資料的最簡單方式。
-目前的預測合成方式採用 SDV 的 Gaussian Copula。
+目前的預設合成方式採用 SDV 的 Gaussian Copula。
 
 請點擊下方按鈕在 Colab 中執行範例：
 
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/nics-dp/petsard/blob/main/demo/tutorial/default-synthesis.ipynb)
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/nics-dp/petsard/blob/main/demo/getting-started/default-synthesis.ipynb)
 
 ```yaml
 Loader:
   load_csv:
     filepath: benchmark/adult-income.csv
 Preprocessor:
-  demo:
+  default:
     method: 'default'
 Synthesizer:
-  demo:
-    method: 'default' # sdv-single_table-gaussiancopula
+  default:
+    method: 'default'
 Postprocessor:
-  demo:
+  default:
     method: 'default'
 Reporter:
   output:
@@ -37,7 +37,7 @@ Reporter:
 - **`load_csv`**: 實驗名稱，可自由命名，建議使用描述性名稱
 - **`filepath`**: 資料檔案路徑
   - 值：`benchmark/adult-income.csv`
-  - 說明：指定要載入的資料檔案位置
+  - 說明：指定要載入的資料檔案位置。此處示範使用 `adult-income.csv` 檔案，您可以替換成自己的 CSV 檔案路徑
   - 支援格式：CSV、TSV、Excel（需安裝 openpyxl）、OpenDocument
   - 可使用相對路徑或絕對路徑
   - 也支援 `benchmark://` 協議來自動下載標準資料集
@@ -53,11 +53,11 @@ Loader:
     schema: benchmark/adult-income_schema.yaml
 ```
 
-關於 Schema 的詳細說明，請參考 [Schema YAML 文檔](../../petsard-yaml/loader-yaml/#schema-yaml)。
+關於 Schema 的詳細說明，請參考 [Schema YAML 文檔](../../schema-yaml/)。
 
 ### Preprocessor（資料前處理模組）
 
-- **`demo`**: 實驗名稱，可自由命名
+- **`default`**: 實驗名稱，可自由命名
 - **`method`**: 前處理方法
   - 值：`default`
   - 說明：使用預設的處理序列，包含以下步驟：
@@ -68,16 +68,15 @@ Loader:
 
 ### Synthesizer（合成資料產生模組）
 
-- **`demo`**: 實驗名稱，可自由命名
+- **`default`**: 實驗名稱，可自由命名
 - **`method`**: 合成方法
   - 值：`default`
   - 說明：使用預設的合成方法，即 **SDV Gaussian Copula**
   - Gaussian Copula 是一種基於統計的合成方法，能夠捕捉變數間的相關性
-  - 註解中標示的 `sdv-single_table-gaussiancopula` 說明其完整方法名稱
 
 ### Postprocessor（資料後處理模組）
 
-- **`demo`**: 實驗名稱，可自由命名
+- **`default`**: 實驗名稱，可自由命名
 - **`method`**: 後處理方法
   - 值：`default`
   - 說明：自動執行 Preprocessor 的逆向操作，將合成資料還原為原始格式

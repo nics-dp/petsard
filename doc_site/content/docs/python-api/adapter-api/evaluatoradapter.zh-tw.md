@@ -1,6 +1,6 @@
 ---
 title: "EvaluatorAdapter"
-weight: 395
+weight: 6
 ---
 
 EvaluatorAdapter 處理資料評估，支援原始、合成和控制資料集的比較評估。

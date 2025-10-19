@@ -203,6 +203,7 @@ class MediatorOutlier(Mediator):
             to cope with global behaviours.
         """
         super().__init__()
+        self._logger = logging.getLogger(f"PETsARD.{self.__class__.__name__}")
         self._config: dict = config["outlier"]
         self.model = None
 
@@ -210,20 +211,48 @@ class MediatorOutlier(Mediator):
         # such as Isolation Forest and Local Outlier Factor
         self._global_model_indicator: bool = False
 
+        # Track detected methods for warning
+        global_methods_found = []
+        field_specific_methods = []
+
         # if any column in the config sets outlier method
         # as isolation forest or local outlier factor
         # it sets the overall transformation as that one
         for _col, obj in self._config.items():
             if isinstance(obj, OutlierIsolationForest):
-                self.model = IsolationForest()
-                self._global_model_indicator = True
-                break
+                global_methods_found.append((_col, "IsolationForest"))
+                if not self._global_model_indicator:
+                    self.model = IsolationForest()
+                    self._global_model_indicator = True
             elif isinstance(obj, OutlierLOF):
-                self.model = LocalOutlierFactor()
-                self._global_model_indicator = True
-                break
-            else:
-                pass
+                global_methods_found.append((_col, "LOF"))
+                if not self._global_model_indicator:
+                    self.model = LocalOutlierFactor()
+                    self._global_model_indicator = True
+            elif isinstance(obj, (OutlierIQR, OutlierZScore)):
+                field_specific_methods.append((_col, type(obj).__name__))
+
+        # Warning 1: Multiple global methods detected
+        if len(global_methods_found) > 1:
+            methods_str = ", ".join(
+                [f"{col}={method}" for col, method in global_methods_found]
+            )
+            self._logger.warning(
+                f"⚠️ Multiple global outlier methods detected: {methods_str}. "
+                f"Only the first one ({global_methods_found[0][1]}) will be used for ALL numerical columns."
+            )
+
+        # Warning 2: Mixing global and field-specific methods
+        if self._global_model_indicator and field_specific_methods:
+            global_method = global_methods_found[0][1]
+            ignored_fields = ", ".join(
+                [f"{col}={method}" for col, method in field_specific_methods]
+            )
+            self._logger.warning(
+                f"⚠️ Global outlier method ({global_method}) will override field-specific methods. "
+                f"Ignored settings: {ignored_fields}. "
+                f"All numerical columns will be processed using {global_method}."
+            )
 
     def _fit(self, data: None) -> None:
         """

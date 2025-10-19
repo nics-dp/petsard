@@ -613,11 +613,11 @@ def display_results(results: dict, max_rows: int = 3) -> None:
     Handles DataFrame results by showing only first few rows / 處理 DataFrame 結果，只顯示前幾行
 
     Args:
-        results: Dictionary from exec.get_result() / 來自 exec.get_result() 的字典
+        results: Dictionary from exec_now.get_result() / 來自 exec_now.get_result() 的字典
         max_rows: Maximum rows to display for DataFrames / DataFrame 顯示的最大行數
 
     Example:
-        >>> results = exec.get_result()
+        >>> results = exec_now.get_result()
         >>> display_results(results)
     """
     if not results:

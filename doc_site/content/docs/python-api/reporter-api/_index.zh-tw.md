@@ -218,7 +218,7 @@ Reporter 支援兩種檔名命名策略：
 
 **範例：**
 - `petsard_Synthesizer[exp1].csv`
-- `petsard[Report]_eval1_[global].csv`
+- `petsard_Reporter[eval1_global].csv`
 - `petsard_timing_report.csv`
 
 ### Compact 策略
@@ -242,7 +242,7 @@ reporter = Reporter(
     granularity='global',
     naming_strategy='traditional'
 )
-# 輸出：petsard[Report]_eval1_[global].csv
+# 輸出：petsard_Reporter[eval1_global].csv
 
 # Compact 策略範例
 reporter = Reporter(
@@ -276,7 +276,7 @@ from petsard import Reporter
 reporter = Reporter(method='save_report', granularity='global')
 processed = reporter.create({('Evaluator', 'eval1_[global]'): global_results})
 reporter.report(processed)
-# 產生：petsard[Report]_eval1_[global].csv
+# 產生：petsard_Reporter[eval1_global].csv
 ```
 
 ### 產生評估報告（多重粒度）
@@ -296,9 +296,9 @@ processed = reporter.create({
 })
 reporter.report(processed)
 # 產生：
-# - petsard[Report]_eval1_[global].csv
-# - petsard[Report]_eval1_[columnwise].csv
-# - petsard[Report]_eval1_[details].csv
+# - petsard_Reporter[eval1_global].csv
+# - petsard_Reporter[eval1_columnwise].csv
+# - petsard_Reporter[eval1_details].csv
 ```
 
 ### 儲存時間資訊

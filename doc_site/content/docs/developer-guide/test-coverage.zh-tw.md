@@ -757,4 +757,61 @@ python -c "from tests.loader.test_loader import run_stress_demo; run_stress_demo
 
 > **字串字面值處理修正（2025年10月）**：`FieldConstrainer` 的 `_extract_fields()` 方法已修正，能正確處理包含運算符的字串字面值（如 `'<=50K'`、`'>50K'`）。修正前，這些字串內的運算符會被錯誤地解析為比較運算符，導致 `50K` 被誤認為欄位名。現在方法會在提取欄位名之前先移除所有單引號和雙引號內的內容，確保字串字面值被正確識別。
 
+#### `ReporterSaveSchema`
+
+> tests/reporter/test_reporter_save_schema.py
+
+測試表詮釋資料（Schema）輸出功能的全面測試（30 個測試）：
+
+**初始化測試（6 個測試）：**
+- `test_init_with_string_source`：測試使用單一字串 source 初始化
+- `test_init_with_list_source`：測試使用多個 source 列表初始化
+- `test_init_with_custom_output`：測試自訂輸出前綴配置
+- `test_init_with_yaml_output`：測試啟用 YAML 輸出選項
+- `test_init_without_source_raises_error`：測試缺少 source 參數的錯誤處理
+- `test_init_with_invalid_source_type`：測試無效 source 類型的錯誤處理（數值、tuple、混合列表）
+
+**Create 方法測試（5 個測試）：**
+- `test_create_with_single_source`：測試從單一來源模組提取表詮釋資料
+- `test_create_with_multiple_sources`：測試從多個來源模組提取表詮釋資料
+- `test_create_with_all_sources`：測試處理所有可用來源
+- `test_create_with_nonexistent_source`：測試處理不存在的來源模組
+- `test_create_skips_none_dataframes`：測試跳過 None DataFrame 值
+
+**Schema 推斷測試（4 個測試）：**
+- `test_infer_schema_basic_structure`：測試基本 schema 結構生成（columns、shape）
+- `test_infer_schema_column_info`：測試欄位資訊推斷（dtype、nullable、unique_count）
+- `test_infer_schema_numeric_statistics`：測試數值統計計算（min、max、mean）
+- `test_infer_schema_categorical_info`：測試類別資訊提取（categories 列表）
+
+**Schema 攤平測試（3 個測試）：**
+- `test_flatten_source_schema_basic`：測試基本 schema 攤平為單一行
+- `test_flatten_source_schema_columns`：測試欄位屬性攤平（dtype、nullable、statistics）
+- `test_flatten_source_schema_categories`：測試類別值攤平（使用管線符號分隔）
+
+**報告生成測試（5 個測試）：**
+- `test_report_csv_output`：測試 CSV summary 檔案生成（檔名包含 source 名稱）
+- `test_report_yaml_output`：測試可選的 YAML 檔案生成（每個 schema 一個檔案）
+- `test_report_filename_with_multiple_sources`：測試多個 source 模組的檔名生成（例如：`petsard_schema_Loader-Preprocessor-Synthesizer_summary.csv`）
+- `test_report_with_empty_data`：測試處理空資料輸入
+- `test_report_with_none_dataframes`：測試處理 None DataFrame 值
+
+**工廠整合測試（3 個測試）：**
+- `test_create_via_reporter_factory`：測試透過 Reporter 工廠類別創建
+- `test_factory_with_multiple_sources`：測試工廠方法使用多個 source 模組
+- `test_factory_without_source_raises_error`：測試工廠缺少 source 的錯誤處理
+
+**邊界情況測試（4 個測試）：**
+- `test_empty_dataframe`：測試處理空 DataFrame
+- `test_dataframe_with_all_nan`：測試處理全 NaN DataFrame
+- `test_dataframe_with_many_categories`：測試處理高基數類別資料（>10 個類別不記錄）
+- `test_save_yaml_error_handling`：測試無效路徑的 YAML 儲存錯誤處理
+
+**主要特色：**
+- **CSV Summary 輸出**：預設輸出格式，每個 source 一行，所有欄位屬性攤平
+- **檔名慣例**：包含所有 source 模組名稱（例如：`petsard_schema_Loader-Preprocessor_summary.csv`）
+- **Schema 推斷**：自動檢測 dtypes、nullable 狀態、統計值和類別
+- **可選 YAML**：由 `yaml_output` 參數控制（預設：false）
+- **全面測試**：30 個測試涵蓋初始化、schema 處理、輸出生成和邊界情況
+
 #### `

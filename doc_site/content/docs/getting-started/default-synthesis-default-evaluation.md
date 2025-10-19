@@ -1,5 +1,5 @@
 ---
-title: Default Synthesis Default Evaluation
+title: Data Synthesis and Evaluation with Default Parameters
 type: docs
 weight: 8
 ---
@@ -9,7 +9,7 @@ Current default evaluation uses SDMetrics Quality Report.
 
 Click the below button to run this example in Colab:
 
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/nics-dp/petsard/blob/main/demo/tutorial/default-synthesis-default-evaluation.ipynb)
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/nics-dp/petsard/blob/main/demo/getting-started/default-synthesis-default-evaluation.ipynb)
 
 ```yaml
 Loader:
@@ -214,3 +214,4 @@ Follow these steps to evaluate your synthetic data:
     * Clustering: Silhouette > 0.5
     * Regression: Adjusted R² > 0.7
   > Note: ROC AUC (Receiver Operating Characteristic Area Under Curve) measures the model's ability to distinguish between classes
+
