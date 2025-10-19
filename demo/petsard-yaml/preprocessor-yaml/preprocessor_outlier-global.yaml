@@ -1,0 +1,38 @@
+---
+Loader:
+  load_benchmark_with_schema:
+    filepath: 'benchmark://adult-income'
+    schema: 'benchmark://adult-income_schema'
+
+Preprocessor:
+  outlier-global-simple:
+    sequence:
+      - outlier
+    config:
+      # Simplified syntax: apply one global method to ALL numerical fields
+      outlier: 'outlier_isolationforest'
+
+      # Available global methods:
+      # - 'outlier_isolationforest': Isolation Forest algorithm
+      # - 'outlier_lof': Local Outlier Factor algorithm
+
+      # This is equivalent to:
+      # outlier:
+      #   age: 'outlier_isolationforest'
+      #   fnlwgt: 'outlier_isolationforest'
+      #   education-num: 'outlier_isolationforest'
+      #   capital-gain: 'outlier_isolationforest'
+      #   capital-loss: 'outlier_isolationforest'
+      #   hours-per-week: 'outlier_isolationforest'
+
+Reporter:
+  save_data:
+    method: save_data
+    source:
+      - Preprocessor
+  save_schema:
+    method: save_schema
+    source:
+      - Loader
+      - Preprocessor
+...

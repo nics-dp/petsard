@@ -1,0 +1,32 @@
+---
+Loader:
+  load_benchmark_with_schema:
+    filepath: benchmark://adult-income
+    schema: benchmark://adult-income_schema
+
+Preprocessor:
+  outlier-field-specific:
+    sequence:
+      - outlier
+    config:
+      outlier:
+        age: 'outlier_zscore'       # Uses Z-Score method for age field
+        fnlwgt: 'outlier_iqr'       # Uses IQR method for fnlwgt field
+        education-num: None         # Skip outlier handling for this field
+
+        # Note:
+        # - Fields set to None: No outlier handling will be applied
+        # - Fields not listed (e.g., capital-gain, capital-loss, hours-per-week):
+        #   Will use the default method (outlier_iqr)
+
+Reporter:
+  save_data:
+    method: save_data
+    source:
+      - Preprocessor
+  save_schema:
+    method: save_schema
+    source:
+      - Loader
+      - Preprocessor
+...
