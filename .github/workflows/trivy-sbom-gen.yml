@@ -26,7 +26,7 @@ jobs:
           hide-progress: true
 
       - name: Upload trivy sbom report as a Github artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: trivy-sbom
           path: "${{ github.workspace }}/dependency.sbom.json"
