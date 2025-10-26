@@ -94,7 +94,7 @@ jobs:
           outputs: type=oci,dest=${{ runner.temp }}/${{ github.event.repository.name }}-oci.tar
 
       - name: Upload artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: petsard-oci
           path: ${{ runner.temp }}/${{ github.event.repository.name }}-oci.tar
