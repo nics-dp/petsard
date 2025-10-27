@@ -160,12 +160,3 @@ pip install --group dev -e .   # 開發工具
 **開發推薦工具：**
 * `pyenv` - Python 版本管理
 * `uv` - 套件管理
-
-## 下一步
-
-安裝完成後，您可以：
-
-* 查看[快速入門](../getting-started)以獲取詳細範例
-* 查看 PETsARD YAML 文件了解設定方式
-* 探索基準資料集進行測試
-* 在 GitHub 儲存庫中檢視範例設定

@@ -6,6 +6,15 @@ flowchart
     DockerCheck1 -->|無| PyPIInstall[PyPI<br/>安裝]
     DockerCheck2 -->|有| DockerOffline[Docker<br/>離線部署]
     DockerCheck2 -->|無| PackageDownload[套件<br/>預下載]
+    
+    %% 深度學習支援檢查
+    DockerPrebuilt --> DLCheck{使用<br/>深度學習？}
+    PyPIInstall --> DLCheck
+    DockerOffline --> DLCheck
+    PackageDownload --> DLCheck
+    
+    DLCheck -->|是| CUDACheck[檢查<br/>CUDA 支援]
+    DLCheck -->|否| Complete[完成安裝]
 
     %% 馬卡龍配色
     style Start fill:#B0E0E6,stroke:#87CEEB,stroke-width:2px,color:#333
@@ -16,3 +25,6 @@ flowchart
     style PyPIInstall fill:#B4E7CE,stroke:#98D8C8,stroke-width:2px,color:#333
     style DockerOffline fill:#B4E7CE,stroke:#98D8C8,stroke-width:2px,color:#333
     style PackageDownload fill:#B4E7CE,stroke:#98D8C8,stroke-width:2px,color:#333
+    style DLCheck fill:#FFE4E1,stroke:#FFC0CB,stroke-width:2px,color:#333
+    style CUDACheck fill:#B4E7CE,stroke:#98D8C8,stroke-width:2px,color:#333
+    style Complete fill:#D3D3D3,stroke:#A9A9A9,stroke-width:2px,color:#333

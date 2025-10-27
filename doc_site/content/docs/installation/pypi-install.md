@@ -160,12 +160,3 @@ pip install --group dev -e .   # Development tools
 **Recommended tools for development:**
 * `pyenv` - Python version management
 * `uv` - Package management
-
-## Next Steps
-
-After installation, you can:
-
-* Check the [Getting Started](../getting-started) guide for detailed examples
-* Visit the PETsARD YAML documentation to learn about configuration
-* Explore benchmark datasets for testing
-* Review example configurations in the GitHub repository

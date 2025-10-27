@@ -181,12 +181,3 @@ for os in linux windows macos macos-arm; do
         --groups ds
 done
 ```
-
-## Next Steps
-
-After installation, you can:
-
-* Check the [Getting Started](../getting-started) guide for detailed examples
-* Visit the PETsARD YAML documentation to learn about configuration
-* Explore benchmark datasets for testing
-* Review example configurations in the GitHub repository
