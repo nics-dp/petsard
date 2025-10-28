@@ -1,7 +1,7 @@
 ---
 title: 安裝指引：執行環境檢查
 type: docs
-weight: 1
+weight: 2
 prev: docs
 next: docs/getting-started
 ---

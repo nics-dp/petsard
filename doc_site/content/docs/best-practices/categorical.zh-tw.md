@@ -2,7 +2,6 @@
 title: 類別變項 - 均勻編碼
 type: docs
 weight: 43
-prev: docs/best-practices/multi-table
 next: docs/best-practices/high-cardinality
 ---
 

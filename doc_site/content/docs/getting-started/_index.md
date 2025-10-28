@@ -1,7 +1,7 @@
 ---
 title: Getting Started
 type: docs
-weight: 50
+weight: 1
 ---
 
 

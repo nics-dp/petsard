@@ -2,7 +2,6 @@
 title: Multi-Timestamp data - Time Anchoring
 type: docs
 weight: 42
-prev: docs/best-practices/multi-table
 next: docs/best-practices/high-cardinality
 ---
 
@@ -13,7 +12,7 @@ A policy-based financial institution possesses rich enterprise financing-related
 ### Data Characteristics and Challenges
 
 - **Complex Table Structure**: Original data is distributed across multiple business systems' tables, involving company basic data, application records, financial tracking, and other different aspects
-  - Processing method see [Multi-Table data - Denormalization]({{< ref "multi-table" >}})
+  - Processing method see Multi-Table data - Denormalization
 - **Time-Series Data**: Contains multiple key time points (such as application date, approval date, tracking time, etc.), and there are logical sequential relationships between these time points
 
 ## Synthesis Challenges for Multi-Timestamp Data
@@ -24,7 +23,7 @@ In the field of synthetic data, multi-timestamp data requires special handling b
 
 ### Demonstration Data
 
-This simulation data is a wide table consolidated from [Multi-table Data - Denormalization]({{< ref "multi-table" >}}), with only date-related fields extracted here:
+This simulation data is a wide table consolidated from Multi-table Data - Denormalization, with only date-related fields extracted here:
 
 | company_id | established_date | first_apply_apply_date | first_apply_approval_date | latest_apply_apply_date | latest_apply_approval_date | latest_track_last_tracking_date |
 |------------|------------------|------------------------|---------------------------|--------------------------|----------------------------|--------------------------------|

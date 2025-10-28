@@ -137,7 +137,7 @@ class ProcessorTransformRules:
             output_logical_type="onehot_encoded",
             creates_columns=True,
             removes_columns=True,
-            context={"description": "One-Hot 編碼，創建多個二元欄位"},
+            context={"description": "獨熱編碼，創建多個二元欄位"},
         ),
         "encoder_uniform": TransformRule(
             processor_type="encoder",

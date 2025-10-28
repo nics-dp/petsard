@@ -1,7 +1,7 @@
 ---
 title: "Installation: Environment Check"
 type: docs
-weight: 1
+weight: 2
 prev: docs
 next: docs/getting-started
 ---
