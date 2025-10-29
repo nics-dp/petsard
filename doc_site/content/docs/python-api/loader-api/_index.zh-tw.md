@@ -103,9 +103,6 @@ schema_dict = {
 }
 loader = Loader('data.csv', schema=schema_dict)
 
-# 快速測試 - 只載入前 1000 列
-loader = Loader('large_data.csv', nrows=1000)
-
 # 載入資料
 data, schema = loader.load()
 ```
