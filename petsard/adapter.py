@@ -2476,6 +2476,8 @@ class ReporterAdapter(BaseAdapter):
                 pass  # 如果無法獲取 metadata，繼續處理
 
             # 特殊處理：如果是 Preprocessor/Postprocessor，展開 schema history
+            # CRITICAL FIX: Schema history 應該只影響 metadata，不影響 data
+            # 否則 save_data 會輸出重複的 CSV（各階段都是相同的資料）
             if module in ["Preprocessor", "Postprocessor"]:
                 try:
                     processor = status.get_processor()
@@ -2486,7 +2488,7 @@ class ReporterAdapter(BaseAdapter):
                                 f"Expanding {len(schema_history)} schema snapshots from {module}"
                             )
 
-                            # 為每個 snapshot 創建獨立的 data 和 metadata entry
+                            # 只為 metadata 創建獨立的 entry，不影響 data
                             for snapshot in schema_history:
                                 step_name = snapshot["step"]
                                 schema = snapshot["schema"]
@@ -2499,27 +2501,8 @@ class ReporterAdapter(BaseAdapter):
                                     f"{original_desc} | {step_info}".strip(" |")
                                 )
 
-                                # 創建帶有步驟後綴的 expt_name
-                                # 例如: ('Loader', 'default', 'Preprocessor', 'v1')
-                                # 變成: ('Loader', 'default', 'Preprocessor', 'v1_after_encoder')
-                                step_index_dict = index_dict.copy()
-                                original_expt = step_index_dict[module]
-                                step_index_dict[module] = f"{original_expt}_{step_name}"
-
-                                # 創建 index_tuple 和存儲 data
-                                step_index_tuple = tuple(
-                                    item
-                                    for pair in step_index_dict.items()
-                                    for item in pair
-                                )
-                                # 使用 result 作為 data（snapshot 本身沒有數據）
-                                data[step_index_tuple] = (
-                                    deepcopy(result)
-                                    if not isinstance(result, dict)
-                                    else deepcopy(result)
-                                )
-
                                 # 存儲對應的 metadata（帶步驟後綴）
+                                # 這樣 ReporterSaveSchema 就能獲取到 schema history
                                 metadata_key = f"{module}_{step_name}"
                                 metadata_dict[metadata_key] = step_schema
 
