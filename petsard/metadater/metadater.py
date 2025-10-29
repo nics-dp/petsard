@@ -277,6 +277,15 @@ class AttributeMetadater:
                         else True
                     )
 
+                    # CRITICAL FIX: Round float values before converting to int
+                    # This handles cases where float64 data (e.g., from synthesis)
+                    # contains decimal values (e.g., 1.5, 2.3) that need to be
+                    # converted to integers. Without rounding, astype("Int64") fails.
+                    # 關鍵修復：在轉換為整數前先四捨五入浮點數值
+                    # 這處理合成資料等來源的 float64 包含小數值的情況
+                    if pd.api.types.is_float_dtype(aligned):
+                        aligned = aligned.round()
+
                     if aligned.isnull().any() or nullable:
                         # 有空值或允許空值：使用 nullable Int64
                         aligned = aligned.astype("Int64")
