@@ -47,15 +47,17 @@ from petsard import Executor
 # From YAML file
 executor = Executor(config='path/to/config.yaml')
 
-# From dictionary
-config_dict = {
-    'Loader': {
-        'load_data': {
-            'filepath': 'data.csv'
-        }
-    }
-}
-executor = Executor(config=config_dict)
+# From YAML string
+config_yaml = """
+Loader:
+  load_data:
+    filepath: data.csv
+Synthesizer:
+  generate:
+    method: sdv
+    model: GaussianCopula
+"""
+executor = Executor(config=config_yaml)
 ```
 
 ### Execute Workflow
@@ -93,7 +95,7 @@ Executor(config, verbose=True)
 
 | Parameter | Type | Required | Default | Description |
 |-----------|------|----------|---------|-------------|
-| `config` | `str` or `dict` | Yes | - | YAML file path or configuration dictionary |
+| `config` | `str` | Yes | - | Configuration input: YAML file path or YAML string |
 | `verbose` | `bool` | No | `True` | Whether to display execution progress information |
 
 ### Return Value
@@ -107,33 +109,54 @@ Returns an Executor instance with initialized Config and Status.
 ```python
 from petsard import Executor
 
-# Create Executor
+# Create Executor from file
 exec = Executor(config='workflow_config.yaml')
 print("Configuration loaded successfully")
 ```
 
-**Example 2: Use configuration dictionary**
+**Example 2: Use YAML string**
 
 ```python
 from petsard import Executor
 
-# Define configuration
-config = {
-    'Loader': {
-        'load_csv': {
-            'filepath': 'data/input.csv'
-        }
-    },
-    'Synthesizer': {
-        'generate': {
-            'method': 'sdv',
-            'model': 'GaussianCopula',
-            'num_samples': 1000
-        }
-    }
-}
+# Define configuration as YAML string
+config_yaml = """
+Loader:
+  load_csv:
+    filepath: data/input.csv
 
-# Create Executor
+Synthesizer:
+  generate:
+    method: sdv
+    model: GaussianCopula
+    num_samples: 1000
+"""
+
+# Create Executor from YAML string
+exec = Executor(config=config_yaml)
+exec.run()
+```
+
+**Example 3: Dynamic YAML string generation**
+
+```python
+from petsard import Executor
+
+# Generate YAML string dynamically
+def create_config_yaml(filepath, model_name):
+    return f"""
+Loader:
+  load_data:
+    filepath: {filepath}
+
+Synthesizer:
+  generate:
+    method: sdv
+    model: {model_name}
+"""
+
+# Use dynamic configuration
+config = create_config_yaml('data/input.csv', 'CTGAN')
 exec = Executor(config=config)
 exec.run()
 ```
@@ -153,10 +176,13 @@ exec.run()
 
 ### Notes
 
+- **Input Type Detection**: Executor automatically detects whether `config` is a file path or YAML string:
+  - If the string is a valid file path → loads from file
+  - Otherwise → parses as YAML string
 - **Configuration Validation**: Config automatically validates configuration content during initialization
 - **Module Check**: Ensures all referenced modules exist in the system
-- **Path Handling**: Supports absolute and relative paths; relative paths resolve from current working directory
-- **Error Reporting**: Provides detailed error messages for configuration errors
+- **Path Handling**: File path supports absolute and relative paths; relative paths resolve from current working directory
+- **Error Reporting**: Provides detailed error messages for configuration errors and YAML parsing errors
 - **Memory Management**: Large configurations may consume more memory; consider splitting into multiple smaller workflows
 
 ## Method Documentation

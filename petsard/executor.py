@@ -61,7 +61,9 @@ class Executor:
     def __init__(self, config: str):
         """
         Args:
-            config (str): The configuration filename for the executor.
+            config (str): Configuration for the executor.
+                - If a valid file path: Load from YAML file
+                - Otherwise: Try to parse as YAML string
 
         Attributes:
             executor_config (ExecutorConfig): The configuration for the executor.
@@ -78,8 +80,14 @@ class Executor:
         self._setup_logger()
 
         # 3. load the configuration
-        self._logger.info(f"Loading configuration from {config}")
-        yaml_config: dict = self._get_config(yaml_file=config)
+        if not isinstance(config, str):
+            raise ConfigError(
+                f"Invalid config type: {type(config).__name__}. "
+                f"Expected str (file path or YAML string)."
+            )
+
+        self._logger.info(f"Processing configuration: {config[:100]}...")
+        yaml_config: dict = self._get_config(config_input=config)
 
         self.config = Config(config=yaml_config)
         self.sequence = self.config.sequence
@@ -151,23 +159,64 @@ class Executor:
         # setup this logger as a child of root logger
         self._logger = logging.getLogger(f"PETsARD.{self.__class__.__name__}")
 
-    def _get_config(self, yaml_file: str) -> dict:
+    def _get_config(self, config_input: str) -> dict:
         """
-        Load the configuration from a YAML file.
-        """
-        if not os.path.isfile(yaml_file):
-            raise ConfigError(f"YAML file {yaml_file} does not exist")
+        Load configuration from a file path or YAML string.
 
+        Args:
+            config_input: Either a file path or YAML string
+
+        Returns:
+            dict: Parsed YAML configuration
+
+        Raises:
+            ConfigError: If neither file path nor YAML string is valid
+        """
         yaml_config: dict = {}
-        with open(yaml_file) as yaml_file:
-            yaml_config = yaml.safe_load(yaml_file)
 
+        # First, try as file path
+        if os.path.isfile(config_input):
+            self._logger.info(f"Loading configuration from file: {config_input}")
+            try:
+                with open(config_input) as yaml_file:
+                    yaml_config = yaml.safe_load(yaml_file)
+                self._logger.info("✓ Successfully loaded configuration from file")
+            except Exception as e:
+                raise ConfigError(
+                    f"Failed to load YAML file '{config_input}': {str(e)}"
+                ) from e
+        else:
+            # If not a file, try to parse as YAML string
+            self._logger.info(
+                "Input is not a file path, attempting to parse as YAML string"
+            )
+            try:
+                yaml_config = yaml.safe_load(config_input)
+                if not isinstance(yaml_config, dict):
+                    raise ConfigError(
+                        f"YAML string parsed to {type(yaml_config).__name__}, expected dict. "
+                        f"Parsed value: {yaml_config}"
+                    )
+                self._logger.info(
+                    "✓ Successfully parsed configuration from YAML string"
+                )
+            except yaml.YAMLError as e:
+                raise ConfigError(
+                    f"Failed to parse input as YAML string. "
+                    f"Input (first 200 chars): {config_input[:200]}...\n"
+                    f"Error: {str(e)}\n"
+                    f"Note: Input was treated as YAML string because it's not a valid file path."
+                ) from e
+            except Exception as e:
+                raise ConfigError(
+                    f"Unexpected error while parsing YAML string: {str(e)}"
+                ) from e
+
+        # Process Executor config if present
         if "Executor" in yaml_config:
             self.executor_config.update(yaml_config["Executor"])
-
             self._setup_logger(reconfigure=True)
             self._logger.info("Logger reconfigured with settings from YAML")
-
             yaml_config.pop("Executor")
 
         return yaml_config
