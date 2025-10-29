@@ -51,11 +51,20 @@ def _map_attribute_to_sdv_type(attribute: Any) -> str:
     if isinstance(attribute, dict):
         logical_type = attribute.get("logical_type")
         attr_type = attribute.get("type")
+        category = attribute.get("category", False)
     else:
         logical_type = attribute.logical_type
         attr_type = attribute.type
+        # CRITICAL FIX: category 是存在 type_attr 裡，不是 Attribute 的直接屬性
+        category = (
+            attribute.type_attr.get("category", False) if attribute.type_attr else False
+        )
 
-    # 根據邏輯類型優先判斷
+    # 優先檢查 category 標記
+    if category is True:
+        return "categorical"
+
+    # 根據邏輯類型判斷
     if logical_type:
         logical = logical_type.lower()
         if logical in ["email", "phone"]:
@@ -67,11 +76,12 @@ def _map_attribute_to_sdv_type(attribute: Any) -> str:
 
     # 根據資料類型判斷
     if attr_type:
-        if "int" in attr_type or "float" in attr_type:
+        attr_type_str = str(attr_type).lower()
+        if "int" in attr_type_str or "float" in attr_type_str:
             return "numerical"
-        elif "bool" in attr_type:
+        elif "bool" in attr_type_str:
             return "boolean"
-        elif "datetime" in attr_type:
+        elif "datetime" in attr_type_str:
             return "datetime"
 
     # 預設為分類
@@ -141,6 +151,30 @@ class SDVSingleTableSynthesizer(BaseSynthesizer):
             )
             # Convert Schema to SDV format using local function
             sdv_metadata_dict = schema_to_sdv(metadata)
+
+            # DIAGNOSTIC: Log the actual metadata being sent to SDV
+            self._logger.info("=" * 80)
+            self._logger.info("📊 DIAGNOSTIC: Schema → SDV Metadata Conversion")
+            self._logger.info("=" * 80)
+            for col_name, col_info in sdv_metadata_dict["columns"].items():
+                # Get original attribute for comparison
+                orig_attr = metadata.attributes.get(col_name)
+                if orig_attr:
+                    category_flag = (
+                        orig_attr.type_attr.get("category", False)
+                        if orig_attr.type_attr
+                        else False
+                    )
+                    self._logger.info(
+                        f"  {col_name}: "
+                        f"type={orig_attr.type}, "
+                        f"category={category_flag} "
+                        f"→ sdtype='{col_info['sdtype']}'"
+                    )
+                else:
+                    self._logger.info(f"  {col_name}: sdtype='{col_info['sdtype']}'")
+            self._logger.info("=" * 80)
+
             # Create SDV Metadata object from the dictionary
             # Suppress the "No table name was provided" warning and log it instead
             with warnings.catch_warnings(record=True) as w:
@@ -238,6 +272,32 @@ class SDVSingleTableSynthesizer(BaseSynthesizer):
             # Create Schema from data and convert to SDV metadata
             schema = SchemaMetadater.from_data(data)
             sdv_metadata_dict = schema_to_sdv(schema)
+
+            # DIAGNOSTIC: Log the inferred metadata
+            self._logger.info("=" * 80)
+            self._logger.info(
+                "📊 DIAGNOSTIC: Inferred Schema → SDV Metadata (fit method)"
+            )
+            self._logger.info("=" * 80)
+            for col_name, col_info in sdv_metadata_dict["columns"].items():
+                # Get inferred attribute
+                attr = schema.attributes.get(col_name)
+                if attr:
+                    category_flag = (
+                        attr.type_attr.get("category", False)
+                        if attr.type_attr
+                        else False
+                    )
+                    actual_dtype = str(data[col_name].dtype)
+                    self._logger.info(
+                        f"  {col_name}: "
+                        f"dtype={actual_dtype}, "
+                        f"type={attr.type}, "
+                        f"category={category_flag} "
+                        f"→ sdtype='{col_info['sdtype']}'"
+                    )
+            self._logger.info("=" * 80)
+
             # Create SDV Metadata object from the dictionary
             # Suppress the "No table name was provided" warning and log it instead
             with warnings.catch_warnings(record=True) as w:

@@ -31,11 +31,12 @@ class ReporterSaveSchema(BaseReporter):
                 - yaml_output (bool, optional): 是否輸出 YAML 檔案，預設為 False
                 - properties (str | List[str], optional): 要輸出的屬性名稱，預設為所有屬性
                     支援的屬性：'type', 'category', 'dtype', 'nullable', 'unique_count',
-                               'min', 'max', 'mean', 'std', 'categories'
+                               'precision', 'min', 'max', 'mean', 'std', 'categories'
                     注意：
                     - 'type': schema 定義的類型（如 'str', 'int', 'float64'）
-                    - 'category': schema 中的 category 標記（True/False/None）
+                    - 'category': schema 中的 category 標記（True/False）
                     - 'dtype': 實際 pandas dtype（如 'float64', 'object'）
+                    - 'precision': 數值欄位的小數位數（從 type_attr 中取得）
 
         Raises:
             ConfigError: 如果配置中缺少 'source' 欄位，或 source/properties 格式不正確
@@ -89,6 +90,18 @@ class ReporterSaveSchema(BaseReporter):
         else:
             self._metadata_dict = {}
 
+        # 提取並存儲 schema_history（如果有）
+        if "schema_history" in data:
+            self._schema_history_dict = data.pop("schema_history")
+            self._logger.debug(
+                f"Received schema history for {len(self._schema_history_dict)} modules"
+            )
+            # 記錄每個模組的 snapshot 數量
+            for module, history in self._schema_history_dict.items():
+                self._logger.debug(f"  - {module}: {len(history)} snapshots")
+        else:
+            self._schema_history_dict = {}
+
         # 驗證輸入資料
         self._verify_create_input(data)
 
@@ -121,6 +134,50 @@ class ReporterSaveSchema(BaseReporter):
                         ]
                     )
                     processed_schemas[full_expt_name] = df
+
+        # 特殊處理：展開 Preprocessor 的 schema history
+        # metadata_dict 中可能包含 "Preprocessor_步驟名稱" 格式的 key
+        for source in self.config["source"]:
+            if source in ["Preprocessor", "Postprocessor"]:
+                # 查找所有以此模組開頭的 metadata entries
+                for meta_key in list(self._metadata_dict.keys()):
+                    if meta_key.startswith(f"{source}_"):
+                        # 提取步驟名稱
+                        step_name = meta_key[
+                            len(source) + 1 :
+                        ]  # 去掉 "Preprocessor_" 前綴
+
+                        # 找到對應的 data entry（如果有的話）
+                        # 但對於 schema history，我們主要關注 metadata
+                        # 所以即使沒有對應的 data，也要處理
+
+                        # 構建一個合成的 full_expt_name，包含步驟資訊
+                        # 從 processed_schemas 中找到原始的 Preprocessor entry
+                        base_expt_name = None
+                        for expt_name in processed_schemas.keys():
+                            if f"{source}[" in expt_name:
+                                base_expt_name = expt_name
+                                break
+
+                        if base_expt_name:
+                            # 在模組名稱後添加步驟資訊
+                            # 例如: "Loader[x]_Preprocessor[y]" -> "Loader[x]_Preprocessor[y_step_name]"
+                            step_expt_name = (
+                                base_expt_name.replace(
+                                    f"{source}[", f"{source}[{step_name}_"
+                                )
+                                .replace(f"[{step_name}_", "[")
+                                .replace("]", f"_{step_name}]")
+                            )
+
+                            # 使用與 base 相同的 dataframe（或空的）
+                            processed_schemas[step_expt_name] = processed_schemas.get(
+                                base_expt_name
+                            )
+
+                            self._logger.debug(
+                                f"Added schema history entry: {step_expt_name}"
+                            )
 
         self._logger.info(f"已處理 {len(processed_schemas)} 個模組的 schema 資訊")
         return processed_schemas
@@ -180,6 +237,21 @@ class ReporterSaveSchema(BaseReporter):
 
             df_output = pd.DataFrame(flattened_rows)
 
+            # 對列進行排序：source 在第一列，其他列按欄位名稱排序
+            # 格式：[欄位名稱]_屬性，這樣同一欄位的所有屬性會聚在一起
+            columns = list(df_output.columns)
+
+            # 分離 source 和其他列
+            if "source" in columns:
+                columns.remove("source")
+                # 對其他列排序
+                sorted_columns = ["source"] + sorted(columns)
+            else:
+                sorted_columns = sorted(columns)
+
+            # 重新排序 DataFrame
+            df_output = df_output[sorted_columns]
+
             # 生成包含所有 source 模組名稱的檔名（類似 save_data 的做法）
             source_names = "-".join(self.config["source"])
             csv_filename = f"{self.config['output']}_schema_{source_names}_summary.csv"
@@ -192,24 +264,81 @@ class ReporterSaveSchema(BaseReporter):
         """
         獲取實驗名稱對應的 metadata
 
+        支援格式：
+        - "Loader[default]_Preprocessor[v1]" (標準格式)
+        - "Loader[default]_Preprocessor[v1_after_encoder]" (schema history 格式)
+
         Args:
             expt_name: 實驗名稱
 
         Returns:
             Schema 或 None
         """
-        # 從 processed_data 中獲取 metadata（如果 Reporter 有傳遞）
-        if hasattr(self, "_metadata_dict"):
-            # expt_name 格式: "Loader[default]_Preprocessor[v1]"
-            # 需要解析出模組名稱
-            if "_" in expt_name:
-                parts = expt_name.split("_")
-                # 取最後一個模組
-                last_module = parts[-1].split("[")[0]
-            else:
-                last_module = expt_name.split("[")[0]
+        self._logger.debug(f"Looking up metadata for: {expt_name}")
 
-            return self._metadata_dict.get(last_module)
+        if not hasattr(self, "_metadata_dict"):
+            self._logger.warning("No _metadata_dict attribute found")
+            return None
+
+        # 記錄所有可用的 metadata keys
+        self._logger.debug(
+            f"Available metadata keys: {list(self._metadata_dict.keys())}"
+        )
+
+        # 找到最後一個模組部分
+        # 例如: "Loader[default]_Preprocessor[v1_after_encoder]"
+        # 我們需要提取 "Preprocessor" 和可能的 "after_encoder"
+        parts = expt_name.split("_")
+        self._logger.debug(f"Experiment name parts: {parts}")
+
+        # 找到最後一個包含方括號的部分
+        last_module_part = None
+        for part in reversed(parts):
+            if "[" in part and "]" in part:
+                last_module_part = part
+                last_module_index = parts.index(part)
+                break
+
+        if not last_module_part:
+            self._logger.warning(f"No module part with brackets found in: {expt_name}")
+            return None
+
+        # 提取模組名稱（方括號之前的部分）
+        last_module = last_module_part.split("[")[0]
+        self._logger.debug(f"Last module: {last_module}")
+
+        # 檢查是否有步驟後綴
+        # 方括號內容格式可能是: "v1_after_encoder"
+        bracket_content = last_module_part.split("[")[1].rstrip("]")
+        self._logger.debug(f"Bracket content: {bracket_content}")
+
+        # 檢查方括號後是否還有更多下劃線分隔的部分（這些可能是步驟名稱）
+        # 例如: "Loader[default]_Preprocessor[v1]_after_encoder"
+        remaining_parts = parts[last_module_index + 1 :]
+        self._logger.debug(f"Remaining parts after module: {remaining_parts}")
+
+        if remaining_parts:
+            # 有步驟後綴，例如: ["after", "encoder"]
+            step_suffix = "_".join(remaining_parts)
+            meta_key = f"{last_module}_{step_suffix}"
+            self._logger.debug(f"Trying step metadata key: {meta_key}")
+            metadata = self._metadata_dict.get(meta_key)
+
+            if metadata:
+                self._logger.debug(f"Found schema history metadata: {meta_key}")
+                return metadata
+            else:
+                self._logger.debug(f"Step metadata key not found: {meta_key}")
+
+        # 沒有步驟後綴，使用標準查找
+        self._logger.debug(f"Trying standard metadata key: {last_module}")
+        metadata = self._metadata_dict.get(last_module)
+        if metadata:
+            self._logger.debug(f"Found standard metadata: {last_module}")
+            return metadata
+        else:
+            self._logger.warning(f"Standard metadata key not found: {last_module}")
+
         return None
 
     def _infer_schema_from_dataframe(self, df, metadata=None) -> dict[str, Any]:
@@ -228,34 +357,109 @@ class ReporterSaveSchema(BaseReporter):
         # 取得要輸出的屬性列表
         properties = self.config.get("properties", None)
 
+        # Debug: 記錄 metadata 資訊
+        if metadata:
+            self._logger.debug(
+                f"Processing with metadata. Attributes count: {len(metadata.attributes) if hasattr(metadata, 'attributes') else 0}"
+            )
+        else:
+            self._logger.warning("No metadata provided for schema inference")
+
         # 為每個欄位記錄資訊
         for col in df.columns:
             col_info = {}
 
-            # 從 metadata 獲取 type 和 category（schema 定義的類型）
+            # 從 metadata 獲取屬性
             schema_type = None
             schema_category = None
+            schema_nullable = None
+            schema_precision = None
+
             if (
                 metadata
                 and hasattr(metadata, "attributes")
                 and col in metadata.attributes
             ):
-                schema_type = metadata.attributes[col].type
-                schema_category = metadata.attributes[col].category
+                attr = metadata.attributes[col]
+                schema_type = attr.type
 
-            # 基本屬性
+                # 從 type_attr 讀取屬性
+                if attr.type_attr:
+                    schema_category = attr.type_attr.get("category", False)
+                    schema_nullable = attr.type_attr.get("nullable", True)
+                    schema_precision = attr.type_attr.get("precision")
+                else:
+                    schema_category = False
+                    schema_nullable = True
+
+                self._logger.debug(
+                    f"Column {col}: type={schema_type}, category={schema_category}, nullable={schema_nullable}, precision={schema_precision}"
+                )
+            else:
+                # 沒有 metadata 時，從資料推斷
+                dtype_str = str(df[col].dtype)
+
+                # 推斷 category
+                if dtype_str == "category":
+                    schema_category = True
+                elif df[col].dtype == "object" and len(df[col]) > 0:
+                    unique_ratio = len(df[col].unique()) / len(df[col])
+                    schema_category = unique_ratio < 0.05
+                else:
+                    schema_category = False
+
+                # 推斷 nullable
+                schema_nullable = (
+                    bool(df[col].isna().any()) if len(df[col]) > 0 else True
+                )
+
+                self._logger.debug(
+                    f"Column {col}: No metadata found, inferred category={schema_category}, nullable={schema_nullable}"
+                )
+
+            # 基本屬性 - type 和 dtype 都應該輸出
             if properties is None or "type" in properties:
+                # 優先使用 schema type，沒有則使用推斷的類型
                 if schema_type:
                     col_info["type"] = schema_type
+                else:
+                    # 從 dtype 推斷 type（簡化版映射）
+                    dtype_str = str(df[col].dtype)
+                    type_mapping = {
+                        "int8": "int8",
+                        "int16": "int16",
+                        "int32": "int32",
+                        "int64": "int64",
+                        "float32": "float32",
+                        "float64": "float64",
+                        "bool": "boolean",
+                        "object": "string",
+                        "category": "string",
+                    }
+                    col_info["type"] = type_mapping.get(dtype_str, dtype_str)
 
             if properties is None or "category" in properties:
-                # 輸出 category，即使是 None 或 False 也要顯示
+                # 輸出 category（True/False），永遠不應該是 None
                 col_info["category"] = schema_category
+                self._logger.debug(
+                    f"Column {col}: Set category in col_info = {schema_category}"
+                )
 
             if properties is None or "dtype" in properties:
+                # dtype 永遠輸出（實際的 pandas dtype）
                 col_info["dtype"] = str(df[col].dtype)
+
+            # Precision（使用已經取得的 schema_precision）
+            if properties is None or "precision" in properties:
+                if schema_precision is not None:
+                    col_info["precision"] = schema_precision
+
             if properties is None or "nullable" in properties:
-                col_info["nullable"] = bool(df[col].isna().any())
+                # 使用已經取得的 schema_nullable
+                col_info["nullable"] = (
+                    schema_nullable if schema_nullable is not None else True
+                )
+
             if properties is None or "unique_count" in properties:
                 col_info["unique_count"] = int(df[col].nunique())
 
@@ -385,7 +589,8 @@ class ReporterSaveSchema(BaseReporter):
         將整個 source 的 schema 攤平為單一 row
 
         一個 source 變成一行，所有欄位的所有屬性攤平成列
-        例如: source, age_dtype, age_nullable, age_min, age_max, income_dtype, ...
+        使用 [欄位名稱]_屬性 格式，方便按字母排序時同一欄位的屬性會聚集在一起
+        例如: source, [age]_dtype, [age]_nullable, [age]_min, [age]_max, [income]_dtype, ...
 
         Args:
             source: 來源實驗名稱
@@ -403,12 +608,12 @@ class ReporterSaveSchema(BaseReporter):
                 if key == "statistics" and isinstance(value, dict):
                     # 第二層：statistics (如 min, max, mean)
                     for stat_key, stat_value in value.items():
-                        row[f"{column_name}_{stat_key}"] = stat_value
+                        row[f"[{column_name}]_{stat_key}"] = stat_value
                 elif key == "categories" and isinstance(value, list):
                     # 類別值列表，轉為字串
-                    row[f"{column_name}_categories"] = "|".join(str(v) for v in value)
+                    row[f"[{column_name}]_categories"] = "|".join(str(v) for v in value)
                 elif not isinstance(value, (dict, list)):
-                    # 其他簡單類型 (dtype, nullable, unique_count 等)
-                    row[f"{column_name}_{key}"] = value
+                    # 其他簡單類型 (dtype, nullable, unique_count, category, type 等)
+                    row[f"[{column_name}]_{key}"] = value
 
         return row

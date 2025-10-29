@@ -540,46 +540,16 @@ class Status:
                         f"記憶 Preprocessor 輸入 Schema（來自 {pre_module}）"
                     )
 
-                # 如果有推論的 Schema，使用推論的而非實際的
-                # 這確保了 Synthesizer 等後續模組能獲得正確的轉換後 Schema
-                # 但要保留實際計算的統計資訊
-                if module in self.inferred_schemas:
-                    inferred_metadata = self.inferred_schemas[module]
-                    self._logger.info(
-                        f"使用推論的 Preprocessor Schema（{len(inferred_metadata.attributes)} 個欄位）"
-                    )
-
-                    # 如果實際 metadata 有 stats 且 enable_stats=True，合併 stats 到推論的 Schema
-                    if new_metadata and new_metadata.enable_stats:
-                        self._logger.info("合併實際計算的統計資訊到推論 Schema")
-                        # 將實際計算的 stats 複製到推論的 Schema 中
-                        from dataclasses import replace
-
-                        # 更新推論 Schema 的 attributes 以包含實際 stats
-                        updated_attributes = {}
-                        for (
-                            attr_name,
-                            inferred_attr,
-                        ) in inferred_metadata.attributes.items():
-                            if attr_name in new_metadata.attributes:
-                                actual_attr = new_metadata.attributes[attr_name]
-                                # 保留推論的類型屬性，但使用實際的 stats
-                                updated_attr = replace(
-                                    inferred_attr, stats=actual_attr.stats
-                                )
-                                updated_attributes[attr_name] = updated_attr
-                            else:
-                                updated_attributes[attr_name] = inferred_attr
-
-                        # 創建合併後的 Schema：類型來自推論，stats 來自實際
-                        new_metadata = replace(
-                            inferred_metadata,
-                            attributes=updated_attributes,
-                            enable_stats=True,  # 確保 enable_stats 為 True
-                        )
-                        self._logger.info("✓ 統計資訊合併完成")
-                    else:
-                        new_metadata = inferred_metadata
+                # CRITICAL FIX: 使用 Preprocessor 實際輸出的 Schema，而不是推論的 Schema
+                # Preprocessor 執行後，其輸出 Schema 才是真實的資料結構（例如 EncoderUniform 後是 float64, category=False）
+                # 推論的 Schema 只用於預測，不應該覆蓋實際執行結果
+                #
+                # 修復前：使用推論 Schema（category=True, type=string）→ CTGAN 誤判為高基數分類
+                # 修復後：使用實際 Schema（category=False, type=float64）→ CTGAN 正確處理為數值
+                self._logger.info(
+                    f"使用 Preprocessor 實際輸出 Schema（{len(new_metadata.attributes)} 個欄位）"
+                )
+                # new_metadata 已經是 Preprocessor 的實際輸出，直接使用
 
             # 使用 SchemaMetadater.diff 追蹤變更
             if metadata_before is not None and hasattr(operator, "get_data"):

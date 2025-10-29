@@ -33,64 +33,78 @@ class AttributeMetadater:
             base_attribute: 基礎 Attribute（如果有），如果該 attribute 有 precision 定義則不推斷
             **kwargs: 其他參數
         """
-        # 推斷資料類型 Infer data type
-        dtype_str = str(data.dtype)
+        # 有 base_attribute 時：完全繼承屬性，不從資料重新推斷
+        # 沒有 base_attribute 時：從資料推斷（首次建立 schema）
 
-        # 基本類型映射
-        type_mapping = {
-            "int8": "int8",
-            "int16": "int16",
-            "int32": "int32",
-            "int64": "int64",
-            "float32": "float32",
-            "float64": "float64",
-            "bool": "boolean",
-            "object": "string",
-            "datetime64[ns]": "datetime64",
-        }
+        if base_attribute:
+            # === 有 base_attribute：直接繼承，保持 schema 定義的一致性 ===
+            data_type = base_attribute.type
+            logical_type = base_attribute.logical_type
 
-        data_type = type_mapping.get(dtype_str, "string")
-
-        # 推斷邏輯類型 Infer logical type
-        logical_type = cls._infer_logical_type(data)
-
-        # 推斷是否為分類資料 Infer if categorical
-        is_category = dtype_str == "category" or (
-            data.dtype == "object" and len(data.unique()) / len(data) < 0.05
-            if len(data) > 0
-            else False
-        )
-
-        # 計算統計資訊
-        stats = None
-        if enable_stats:
-            stats = cls._calculate_field_stats(data, logical_type)
-
-        # 計算數值欄位的精度 Calculate precision for numerical fields
-        # 如果 base_attribute 有 precision 定義，優先使用該精度，不推斷
-        type_attr = None
-        if data_type in ["float32", "float64"]:
-            # 檢查是否有 base_attribute 且有 precision 定義
-            if (
-                base_attribute
-                and base_attribute.type_attr
-                and "precision" in base_attribute.type_attr
-            ):
-                # 使用 base_attribute 定義的精度
-                type_attr = {"precision": base_attribute.type_attr["precision"]}
+            # 複製 type_attr
+            type_attr = {}
+            if base_attribute.type_attr:
+                # 完整繼承 type_attr（包含 category, nullable, precision 等）
+                type_attr = base_attribute.type_attr.copy()
             else:
-                # 沒有定義，從資料推斷精度
+                # base_attribute 沒有 type_attr，使用預設值
+                type_attr["category"] = False
+                type_attr["nullable"] = True
+
+        else:
+            # === 沒有 base_attribute：從資料推斷（首次建立 schema） ===
+            dtype_str = str(data.dtype)
+
+            # 簡化類型映射：只保留 int, float, str, date, datetime
+            type_mapping = {
+                "int8": "int",
+                "int16": "int",
+                "int32": "int",
+                "int64": "int",
+                "float32": "float",
+                "float64": "float",
+                "bool": "str",  # boolean 當作字串類別處理
+                "object": "str",
+                "datetime64[ns]": "datetime",
+            }
+
+            data_type = type_mapping.get(dtype_str, "str")
+
+            # 推斷邏輯類型 Infer logical type
+            logical_type = cls._infer_logical_type(data)
+
+            # 準備 type_attr
+            type_attr = {}
+
+            # 推斷是否為分類資料
+            is_category = dtype_str == "category" or (
+                data.dtype == "object" and len(data.unique()) / len(data) < 0.05
+                if len(data) > 0
+                else False
+            )
+            type_attr["category"] = is_category
+
+            # 推斷 nullable
+            type_attr["nullable"] = bool(data.isnull().any())
+
+            # 計算數值欄位的精度（只在首次推斷且為 float 時）
+            if data_type == "float":
                 precision = cls._infer_precision(data)
                 if precision is not None:
-                    type_attr = {"precision": precision}
+                    type_attr["precision"] = precision
+
+        # 計算統計資訊（無論有無 base_attribute 都要計算）
+        stats = None
+        if enable_stats:
+            stats = cls._calculate_field_stats(
+                data, data_type, type_attr.get("category", False), logical_type
+            )
 
         return Attribute(
             name=data.name,
             type=data_type,
-            type_attr=type_attr,
+            type_attr=type_attr if type_attr else None,
             logical_type=logical_type,
-            category=is_category,
-            enable_null=data.isnull().any(),
             enable_stats=enable_stats,
             stats=stats,
         )
@@ -210,7 +224,10 @@ class AttributeMetadater:
 
         # 檢查空值差異
         has_null = data.isnull().any()
-        if has_null and not attribute.enable_null:
+        nullable = (
+            attribute.type_attr.get("nullable", True) if attribute.type_attr else True
+        )
+        if has_null and not nullable:
             diff_result["changes"].append(
                 {
                     "field": "null_values",
@@ -228,7 +245,19 @@ class AttributeMetadater:
         data: pd.Series,
         strategy: dict[str, Any] | None = None,
     ) -> pd.Series:
-        """根據 Attribute 對齊 Series"""
+        """根據 Attribute 對齊 Series
+
+        Args:
+            attribute: 欄位屬性定義
+            data: 原始資料
+            strategy: 對齊策略（預留）
+
+        Returns:
+            對齊後的 Series
+
+        Raises:
+            ValueError: 當型別轉換失敗且 cast_errors='raise' 時
+        """
         from petsard.utils import safe_round
 
         aligned = data.copy()
@@ -237,40 +266,56 @@ class AttributeMetadater:
         if attribute.na_values:
             aligned = aligned.replace(attribute.na_values, pd.NA)
 
-        # 型別轉換
+        # 型別轉換（依據簡化後的類型系統）
         if attribute.type:
             try:
-                # CRITICAL FIX: Handle both "integer" (schema format) and "int64" (pandas dtype format)
-                # 關鍵修復：處理 "integer"（schema 格式）和 "int64"（pandas dtype 格式）
-                if attribute.type in ("integer", "int64", "int32", "int16", "int8"):
-                    # For integer types, always use nullable Int64 to handle potential NaN values
-                    # 對於整數類型，始終使用 nullable Int64 來處理潛在的 NaN 值
-                    if aligned.isnull().any():
+                if attribute.type == "int":
+                    # 整數類型：根據 nullable 決定使用 Int64 或優化的 int 類型
+                    nullable = (
+                        attribute.type_attr.get("nullable", True)
+                        if attribute.type_attr
+                        else True
+                    )
+
+                    if aligned.isnull().any() or nullable:
+                        # 有空值或允許空值：使用 nullable Int64
                         aligned = aligned.astype("Int64")
                     else:
-                        # No nulls, can use regular int64
-                        # 沒有空值，可以使用普通的 int64
-                        try:
+                        # 無空值：根據 enable_optimize_type 決定是否優化
+                        if attribute.enable_optimize_type:
+                            aligned = cls._optimize_int_dtype(aligned)
+                        else:
                             aligned = aligned.astype("int64")
-                        except (ValueError, TypeError):
-                            # If conversion fails, use Int64 anyway
-                            # 如果轉換失敗，仍然使用 Int64
-                            aligned = aligned.astype("Int64")
-                elif attribute.type == "boolean":
-                    aligned = aligned.astype("boolean")
-                elif attribute.type.startswith("datetime"):
-                    aligned = pd.to_datetime(aligned, errors=attribute.cast_errors)
-                elif attribute.type == "string":
+
+                elif attribute.type == "float":
+                    # 浮點數類型：根據 enable_optimize_type 決定是否優化
+                    if attribute.enable_optimize_type:
+                        aligned = cls._optimize_float_dtype(
+                            aligned, attribute.type_attr
+                        )
+                    else:
+                        aligned = aligned.astype("float64")
+
+                elif attribute.type == "str":
                     # 特殊處理：如果資料已經是數值類型，保持數值類型
                     # 這避免將 Preprocessor 編碼的數值資料轉回字串
                     if not pd.api.types.is_numeric_dtype(aligned):
-                        aligned = aligned.astype(attribute.type)
+                        aligned = aligned.astype("string")
                     # 如果已經是數值類型，保持不變
+
+                elif attribute.type in ["date", "datetime"]:
+                    aligned = pd.to_datetime(aligned, errors=attribute.cast_errors)
                 else:
+                    # 其他類型保持不變或嘗試轉換
                     aligned = aligned.astype(attribute.type)
-            except Exception:
+
+            except Exception as e:
                 if attribute.cast_errors == "raise":
-                    raise  # 保留原始 traceback
+                    raise ValueError(
+                        f"型別轉換失敗：欄位 '{attribute.name}' "
+                        f"無法從 {data.dtype} 轉換為 {attribute.type}\n"
+                        f"錯誤: {str(e)}"
+                    ) from e
                 # coerce: 保持原始資料
 
         # 處理數值精度（如果有設定）
@@ -288,6 +333,64 @@ class AttributeMetadater:
         return aligned
 
     @classmethod
+    def _optimize_int_dtype(cls, series: pd.Series) -> pd.Series:
+        """優化整數類型，選擇最小的合適 dtype
+
+        Args:
+            series: 整數 Series
+
+        Returns:
+            優化後的 Series
+        """
+        import numpy as np
+
+        # 先轉為 int64 確保型別正確
+        series_int = series.astype("int64")
+
+        # 取得最小和最大值
+        min_val = series_int.min()
+        max_val = series_int.max()
+
+        # 依據範圍選擇最小的 dtype
+        if min_val >= np.iinfo(np.int8).min and max_val <= np.iinfo(np.int8).max:
+            return series_int.astype("int8")
+        elif min_val >= np.iinfo(np.int16).min and max_val <= np.iinfo(np.int16).max:
+            return series_int.astype("int16")
+        elif min_val >= np.iinfo(np.int32).min and max_val <= np.iinfo(np.int32).max:
+            return series_int.astype("int32")
+        else:
+            return series_int  # int64
+
+    @classmethod
+    def _optimize_float_dtype(
+        cls, series: pd.Series, type_attr: dict[str, Any] | None
+    ) -> pd.Series:
+        """優化浮點數類型
+
+        根據精度需求選擇 float32 或 float64：
+        - 如果有 precision 且 <= 7: 使用 float32
+        - 否則使用 float64
+
+        Args:
+            series: 浮點數 Series
+            type_attr: 型別屬性（可能包含 precision）
+
+        Returns:
+            優化後的 Series
+        """
+        # 先轉為 float64 確保型別正確
+        series_float = series.astype("float64")
+
+        # 檢查精度設定
+        if type_attr and "precision" in type_attr:
+            precision = type_attr["precision"]
+            # float32 有效數字約 7 位，float64 約 15 位
+            if precision <= 7:
+                return series_float.astype("float32")
+
+        return series_float  # float64
+
+    @classmethod
     def validate(cls, attribute: Attribute, data: pd.Series) -> tuple[bool, list[str]]:
         """驗證 Series 是否符合 Attribute 定義"""
         errors = []
@@ -297,7 +400,10 @@ class AttributeMetadater:
             errors.append(f"Type mismatch: expected {attribute.type}, got {data.dtype}")
 
         # 空值驗證
-        if not attribute.enable_null and data.isnull().any():
+        nullable = (
+            attribute.type_attr.get("nullable", True) if attribute.type_attr else True
+        )
+        if not nullable and data.isnull().any():
             errors.append(f"Null values not allowed, found {data.isnull().sum()}")
 
         # 約束驗證
@@ -330,9 +436,23 @@ class AttributeMetadater:
 
     @classmethod
     def _calculate_field_stats(
-        cls, series: pd.Series, logical_type: str | None = None
+        cls,
+        series: pd.Series,
+        data_type: str,
+        is_category: bool,
+        logical_type: str | None = None,
     ) -> FieldStats:
         """計算欄位統計資訊
+
+        根據 type 和 category 決定計算哪些統計值：
+        - unique_count, category_distribution: 只在 category=True 時計算
+        - min, max, mean, std: 只在 type != 'str' 且 category=False 時計算
+
+        Args:
+            series: 資料 Series
+            data_type: 簡化後的資料類型 (int, float, str, date, datetime)
+            is_category: 是否為分類資料
+            logical_type: 邏輯類型
 
         統計計算邏輯在 Metadater 類別中實現
         """
@@ -341,9 +461,13 @@ class AttributeMetadater:
         row_count = len(series)
         na_count = series.isna().sum()
         na_percentage = (na_count / row_count) if row_count > 0 else 0.0
-        unique_count = series.nunique()
 
-        # 數值統計
+        # unique_count: 只在 category=True 時計算
+        unique_count = None
+        if is_category:
+            unique_count = series.nunique()
+
+        # 數值統計：只在 type != 'str' 且 category=False 時計算
         mean = None
         std = None
         min_val = None
@@ -352,9 +476,13 @@ class AttributeMetadater:
         q1 = None
         q3 = None
 
-        if pd.api.types.is_numeric_dtype(series) and not series.empty:
+        if (
+            data_type in ["int", "float", "date", "datetime"]
+            and not is_category
+            and not series.empty
+        ):
             non_na_series = series.dropna()
-            if len(non_na_series) > 0:
+            if len(non_na_series) > 0 and pd.api.types.is_numeric_dtype(non_na_series):
                 mean = float(non_na_series.mean())
                 std = float(non_na_series.std())
                 min_val = float(non_na_series.min())
@@ -363,31 +491,28 @@ class AttributeMetadater:
                 q1 = float(non_na_series.quantile(0.25))
                 q3 = float(non_na_series.quantile(0.75))
 
-        # 類別統計
+        # 類別統計：只在 category=True 時計算
         mode = None
         mode_frequency = None
         category_distribution = None
 
-        if not series.empty:
+        if is_category and not series.empty:
             mode_series = series.mode()
             if not mode_series.empty:
                 mode = mode_series.iloc[0]
                 mode_frequency = int((series == mode).sum())
 
-            # 如果是類別型態，計算分佈
-            if logical_type in ["string", "categorical", "boolean"]:
-                value_counts = series.value_counts()
-                # 限制最多記錄前 20 個類別
-                top_categories = value_counts.head(20)
-                category_distribution = {
-                    str(k): int(v) for k, v in top_categories.items()
-                }
+            # 計算類別分佈
+            value_counts = series.value_counts()
+            # 限制最多記錄前 20 個類別
+            top_categories = value_counts.head(20)
+            category_distribution = {str(k): int(v) for k, v in top_categories.items()}
 
         return FieldStats(
             row_count=row_count,
             na_count=int(na_count),
             na_percentage=round(na_percentage, 4),
-            unique_count=int(unique_count),
+            unique_count=int(unique_count) if unique_count is not None else None,
             mean=mean,
             std=std,
             min=min_val,
@@ -501,36 +626,52 @@ class SchemaMetadater:
     @staticmethod
     def _convert_field_to_attribute(name: str, field: dict[str, Any]) -> dict[str, Any]:
         """將 v1 field 格式轉換為 v2 attribute 格式"""
-        # 型別映射
+        # 簡化型別映射：統一為 int, float, str, date, datetime
         type_mapping = {
-            "int": "int64",
-            "float": "float64",
-            "str": "string",
-            "bool": "boolean",
-            "datetime": "datetime64",
+            "int": "int",
+            "int8": "int",
+            "int16": "int",
+            "int32": "int",
+            "int64": "int",
+            "integer": "int",
+            "float": "float",
+            "float32": "float",
+            "float64": "float",
+            "str": "str",
+            "string": "str",
+            "bool": "str",
+            "boolean": "str",
+            "date": "date",
+            "datetime": "datetime",
+            "datetime64": "datetime",
         }
 
         # 建立 attribute 設定
         attr = {
             "name": name,
-            "type": type_mapping.get(field.get("type", "string"), "string"),
+            "type": type_mapping.get(field.get("type", "str"), "str"),
             "logical_type": field.get("logical_type", ""),
-            "enable_null": True if field.get("na_values") else False,
         }
-
-        # 處理特殊屬性
-        if field.get("category_method") == "force":
-            attr["category"] = True
 
         # 合併 type_attr
         type_attr = {}
 
+        # nullable（從 na_values 推斷）
+        type_attr["nullable"] = True if field.get("na_values") else False
+
+        # 處理 category
+        if field.get("category_method") == "force":
+            type_attr["category"] = True
+
+        # precision
         if "precision" in field:
             type_attr["precision"] = field["precision"]
 
+        # datetime format
         if "datetime_format" in field:
             type_attr["format"] = field["datetime_format"]
 
+        # leading zeros
         if "leading_zeros" in field:
             leading = field["leading_zeros"]
             if leading.startswith("leading_"):
@@ -541,6 +682,43 @@ class SchemaMetadater:
             attr["type_attr"] = type_attr
 
         return attr
+
+    @staticmethod
+    def _normalize_attribute_config(config: dict[str, Any]) -> dict[str, Any]:
+        """標準化 attribute 配置，將頂層的 type_attr 相關屬性移入 type_attr 字典
+
+        處理 YAML 中直接定義在頂層的屬性如：
+        - category: true
+        - nullable: true
+        - precision: 2
+        - format: "%Y-%m-%d"
+        - width: 8
+
+        將它們移入 type_attr 字典中以符合內部結構。
+        """
+        config = config.copy()  # 避免修改原始字典
+
+        # 定義需要移入 type_attr 的屬性
+        type_attr_keys = ["category", "nullable", "precision", "format", "width"]
+
+        # 檢查是否有任何 type_attr 相關屬性在頂層
+        has_type_attr_in_top = any(key in config for key in type_attr_keys)
+
+        if has_type_attr_in_top:
+            # 確保有 type_attr 字典
+            if "type_attr" not in config:
+                config["type_attr"] = {}
+
+            # 將頂層的 type_attr 相關屬性移入 type_attr 字典
+            for key in type_attr_keys:
+                if key in config:
+                    # 只有當 type_attr 中還沒有這個屬性時才移入
+                    if key not in config["type_attr"]:
+                        config["type_attr"][key] = config[key]
+                    # 從頂層刪除
+                    del config[key]
+
+        return config
 
     @classmethod
     def from_dict(cls, config: dict[str, Any]) -> Schema:
@@ -554,6 +732,35 @@ class SchemaMetadater:
                     # 確保有 name 欄位
                     if "name" not in attr_config:
                         attr_config["name"] = attr_name
+
+                    # 應用簡化類型映射（與 fields 處理保持一致）
+                    if "type" in attr_config:
+                        type_mapping = {
+                            "int": "int",
+                            "int8": "int",
+                            "int16": "int",
+                            "int32": "int",
+                            "int64": "int",
+                            "integer": "int",
+                            "float": "float",
+                            "float32": "float",
+                            "float64": "float",
+                            "str": "str",
+                            "string": "str",
+                            "bool": "str",
+                            "boolean": "str",
+                            "date": "date",
+                            "datetime": "datetime",
+                            "datetime64": "datetime",
+                        }
+                        attr_config["type"] = type_mapping.get(
+                            attr_config["type"], attr_config["type"]
+                        )
+
+                    # 處理頂層的 type_attr 相關屬性（category, nullable, precision, format, width）
+                    # 將它們移入 type_attr 字典中
+                    attr_config = cls._normalize_attribute_config(attr_config)
+
                     attributes[attr_name] = AttributeMetadater.from_dict(attr_config)
                 else:
                     # 如果已經是 Attribute 物件，直接使用
@@ -567,18 +774,33 @@ class SchemaMetadater:
                     # 確保有 name 欄位
                     if "name" not in field_config:
                         field_config["name"] = field_name
-                    # 應用類型映射以統一類型名稱
+                    # 應用簡化類型映射
                     if "type" in field_config:
                         type_mapping = {
-                            "int": "int64",
-                            "float": "float64",
-                            "str": "string",
-                            "bool": "boolean",
-                            "datetime": "datetime64",
+                            "int": "int",
+                            "int8": "int",
+                            "int16": "int",
+                            "int32": "int",
+                            "int64": "int",
+                            "integer": "int",
+                            "float": "float",
+                            "float32": "float",
+                            "float64": "float",
+                            "str": "str",
+                            "string": "str",
+                            "bool": "str",
+                            "boolean": "str",
+                            "date": "date",
+                            "datetime": "datetime",
+                            "datetime64": "datetime",
                         }
                         field_config["type"] = type_mapping.get(
                             field_config["type"], field_config["type"]
                         )
+
+                    # 標準化 attribute 配置（處理頂層的 type_attr 屬性）
+                    field_config = cls._normalize_attribute_config(field_config)
+
                     attributes[field_name] = AttributeMetadater.from_dict(field_config)
                 else:
                     # 如果已經是 Attribute 物件，直接使用

@@ -527,26 +527,20 @@ class Loader:
             # 有 schema，需要從資料推斷並合併
             # 如果 schema 有 precision 定義，就使用該精度，不從資料推斷
             try:
-                # 傳遞 base_schema 給 from_data，讓它知道哪些欄位有 precision 定義
+                # 傳遞 base_schema 給 from_data，它會正確繼承所有屬性（type, category, nullable, precision 等）
                 inferred_schema = SchemaMetadater.from_data(data, base_schema=schema)
-                # 合併 schema 和 inferred_schema
-                # 優先使用原 schema 的設定，但補充推斷的資訊
-                for col_name, inferred_attr in inferred_schema.attributes.items():
-                    if col_name in schema.attributes:
-                        # 欄位已存在於 schema，保留原有設定（包括 precision）
-                        # 但更新推斷的資訊（如 stats）
-                        if (
-                            inferred_attr.stats
-                            and not schema.attributes[col_name].stats
-                        ):
-                            schema.attributes[col_name].stats = inferred_attr.stats
-                    else:
-                        # 新欄位，直接加入
-                        schema.attributes[col_name] = inferred_attr
-                        self._logger.debug(
-                            f"Added inferred attribute '{col_name}' to schema"
-                        )
-                self._logger.debug("Schema merged with inferred attributes")
+
+                # 直接使用 inferred_schema，因為它已經正確繼承了 base_schema 的所有屬性
+                # 保留原 schema 的 id, name, description 等元資訊
+                inferred_schema.id = schema.id
+                inferred_schema.name = schema.name
+                if hasattr(schema, "description") and schema.description:
+                    inferred_schema.description = schema.description
+
+                schema = inferred_schema
+                self._logger.debug(
+                    "Schema updated with inferred attributes (preserving base_schema properties)"
+                )
             except Exception as e:
                 error_msg = f"Failed to merge schema with data: {str(e)}"
                 self._logger.error(error_msg)

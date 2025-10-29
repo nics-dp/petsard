@@ -125,7 +125,7 @@ class ProcessorTransformRules:
             processor_type="encoder",
             processor_method="encoder_label",
             input_types=["categorical", "string"],
-            output_type="int64",
+            output_type="int",
             output_logical_type="encoded_categorical",
             context={"description": "Label 編碼，類別轉為整數"},
         ),
@@ -133,7 +133,7 @@ class ProcessorTransformRules:
             processor_type="encoder",
             processor_method="encoder_onehot",
             input_types=["categorical", "string"],
-            output_type="int64",
+            output_type="int",
             output_logical_type="onehot_encoded",
             creates_columns=True,
             removes_columns=True,
@@ -143,7 +143,7 @@ class ProcessorTransformRules:
             processor_type="encoder",
             processor_method="encoder_uniform",
             input_types=["categorical", "string"],
-            output_type="float64",
+            output_type="float",
             output_logical_type="uniform_encoded",
             context={"description": "Uniform 編碼，類別轉為均勻分布的浮點數"},
         ),
@@ -151,7 +151,7 @@ class ProcessorTransformRules:
             processor_type="encoder",
             processor_method="encoder_minguodate",
             input_types=["datetime", "string"],
-            output_type="int64",
+            output_type="int",
             output_logical_type="minguo_year",
             context={"description": "民國年編碼，日期轉為民國年整數"},
         ),
@@ -159,7 +159,7 @@ class ProcessorTransformRules:
             processor_type="encoder",
             processor_method="encoder_datediff",
             input_types=["datetime"],
-            output_type="int64",
+            output_type="int",
             output_logical_type="date_diff_days",
             context={"description": "日期差異編碼，計算與參考日期的天數差"},
         ),
@@ -168,7 +168,7 @@ class ProcessorTransformRules:
             processor_type="scaler",
             processor_method="scaler_standard",
             input_types=["numerical", "datetime"],
-            output_type="float64",
+            output_type="float",
             output_logical_type="standardized",
             context={"description": "標準化，轉為均值0標準差1的浮點數"},
         ),
@@ -176,7 +176,7 @@ class ProcessorTransformRules:
             processor_type="scaler",
             processor_method="scaler_minmax",
             input_types=["numerical", "datetime"],
-            output_type="float64",
+            output_type="float",
             output_logical_type="normalized",
             context={"description": "Min-Max 正規化，轉為 [0,1] 範圍的浮點數"},
         ),
@@ -184,7 +184,7 @@ class ProcessorTransformRules:
             processor_type="scaler",
             processor_method="scaler_log",
             input_types=["numerical"],
-            output_type="float64",
+            output_type="float",
             output_logical_type="log_transformed",
             context={"description": "對數轉換"},
         ),
@@ -192,7 +192,7 @@ class ProcessorTransformRules:
             processor_type="scaler",
             processor_method="scaler_log1p",
             input_types=["numerical"],
-            output_type="float64",
+            output_type="float",
             output_logical_type="log1p_transformed",
             context={"description": "Log(1+x) 轉換"},
         ),
@@ -200,7 +200,7 @@ class ProcessorTransformRules:
             processor_type="scaler",
             processor_method="scaler_zerocenter",
             input_types=["numerical", "datetime"],
-            output_type="float64",
+            output_type="float",
             output_logical_type="zero_centered",
             context={"description": "零中心化"},
         ),
@@ -208,7 +208,7 @@ class ProcessorTransformRules:
             processor_type="scaler",
             processor_method="scaler_timeanchor",
             input_types=["datetime"],
-            output_type="float64",
+            output_type="float",
             output_logical_type="time_anchored",
             context={"description": "時間錨點標準化"},
         ),
@@ -217,7 +217,7 @@ class ProcessorTransformRules:
             processor_type="discretizing",
             processor_method="discretizing_kbins",
             input_types=["numerical", "datetime"],
-            output_type="int64",
+            output_type="int",
             output_logical_type="discretized",
             context={"description": "K-Bins 離散化，連續值轉為離散區間"},
         ),
@@ -243,24 +243,25 @@ class ProcessorTransformRules:
         output_type = rule.output_type if rule.output_type else attribute.type
         type_changed = output_type != attribute.type
 
-        # 如果型別改變（特別是從數值型別轉為其他型別），精度資訊可能無效
-        # 但我們仍然保留 type_attr，讓後續的 Postprocessor 可以使用原始的精度資訊
-        type_attr = attribute.type_attr
+        # 複製並更新 type_attr
+        type_attr = (attribute.type_attr or {}).copy()
+
+        # 更新 nullable（如果規則影響）
+        if rule.affects_nullable:
+            type_attr["nullable"] = rule.nullable_after
+
+        # category 預設保持不變（從原 type_attr 繼承）
 
         # 創建新的 Attribute，保留大部分原始資訊
         new_attr_dict = {
             "name": attribute.name,
             "description": attribute.description,
             "type": output_type,
-            "type_attr": type_attr,  # 保留精度資訊
-            "category": attribute.category,  # 預設保持不變
+            "type_attr": type_attr,
             "logical_type": rule.output_logical_type
             if rule.output_logical_type
             else attribute.logical_type,
             "enable_optimize_type": attribute.enable_optimize_type,
-            "enable_null": rule.nullable_after
-            if rule.affects_nullable
-            else attribute.enable_null,
             "enable_stats": attribute.enable_stats,
             "stats": None,  # 統計資訊在轉換後會改變，暫時設為 None
             "na_values": attribute.na_values,
@@ -291,25 +292,26 @@ class ProcessorTransformRules:
         output_type = transform_info.get("output_type") or attribute.type
         type_changed = output_type != attribute.type
 
-        # 如果型別改變（特別是從數值型別轉為其他型別），精度資訊可能無效
-        # 但我們仍然保留 type_attr，讓後續的 Postprocessor 可以使用原始的精度資訊
-        type_attr = attribute.type_attr
+        # 複製並更新 type_attr
+        type_attr = (attribute.type_attr or {}).copy()
+
+        # 更新 category（如果有指定）
+        if transform_info.get("output_category") is not None:
+            type_attr["category"] = transform_info["output_category"]
+
+        # 更新 nullable（如果規則影響）
+        if transform_info.get("affects_nullable"):
+            type_attr["nullable"] = transform_info.get("nullable_after", True)
 
         # 創建新的 Attribute，保留大部分原始資訊
         new_attr_dict = {
             "name": attribute.name,
             "description": attribute.description,
             "type": output_type,
-            "type_attr": type_attr,  # 保留精度資訊
-            "category": transform_info.get("output_category")
-            if transform_info.get("output_category") is not None
-            else attribute.category,
+            "type_attr": type_attr,
             "logical_type": transform_info.get("output_logical_type")
             or attribute.logical_type,
             "enable_optimize_type": attribute.enable_optimize_type,
-            "enable_null": transform_info.get("nullable_after")
-            if transform_info.get("affects_nullable")
-            else attribute.enable_null,
             "enable_stats": attribute.enable_stats,
             "stats": None,  # 統計資訊在轉換後會改變，暫時設為 None
             "na_values": attribute.na_values,
@@ -425,14 +427,19 @@ class SchemaInferencer:
                     new_attr = ProcessorTransformRules.apply_transform_info(
                         current_attr, transform_info
                     )
+                    # 從 type_attr 讀取 category
+                    category_before = (current_attr.type_attr or {}).get(
+                        "category", False
+                    )
+                    category_after = (new_attr.type_attr or {}).get("category", False)
                     col_changes.append(
                         {
                             "processor": processor_type,
                             "method": method_name,
                             "type_before": current_attr.type,
                             "type_after": new_attr.type,
-                            "category_before": current_attr.category,
-                            "category_after": new_attr.category,
+                            "category_before": category_before,
+                            "category_after": category_after,
                             "logical_type_before": current_attr.logical_type,
                             "logical_type_after": new_attr.logical_type,
                         }
@@ -501,7 +508,6 @@ class SchemaInferencer:
             stage="preprocessed",
             parent_schema_id=input_schema.id,
             enable_optimize_type=input_schema.enable_optimize_type,
-            enable_null=input_schema.enable_null,
             enable_stats=False,  # 推論的 Schema 沒有統計資訊
             stats=None,
             created_at=datetime.now(),
@@ -550,21 +556,26 @@ class SchemaInferencer:
 
         將 Attribute 的 type 映射到處理器使用的類別：
         numerical, categorical, datetime, object
+
+        簡化類型系統：int, float, str, date, datetime
         """
         if not attribute.type:
             return "object"
 
         type_str = str(attribute.type).lower()
 
-        if "int" in type_str or "float" in type_str:
+        # 簡化類型判斷
+        if type_str == "int" or type_str == "float":
             return "numerical"
-        elif type_str in ["string", "str", "binary"]:
-            return "categorical"
-        elif type_str == "boolean":
-            return "categorical"
-        elif "datetime" in type_str or type_str in ["date", "time", "timestamp"]:
+        elif type_str == "str":
+            # str 類型：檢查 category 屬性決定是否為類別
+            if attribute.type_attr and attribute.type_attr.get("category") is True:
+                return "categorical"
+            else:
+                return "categorical"  # str 預設當作類別處理
+        elif type_str in ["date", "datetime"]:
             return "datetime"
-        elif attribute.category is True:
+        elif attribute.type_attr and attribute.type_attr.get("category") is True:
             return "categorical"
         else:
             return "object"
@@ -671,24 +682,24 @@ class SchemaInferencer:
 
         Returns:
             推斷的資料類型：'numerical', 'categorical', 'datetime', 'object'
+
+        簡化類型系統：int, float, str, date, datetime
         """
-        # 與 Processor._get_field_infer_dtype() 使用相同的邏輯
+        # 簡化類型判斷邏輯
         data_type_str = str(attribute.type).lower() if attribute.type else "object"
 
-        # Map specific types to legacy categories
-        if "int" in data_type_str or "float" in data_type_str:
+        # 簡化類型映射
+        if data_type_str == "int" or data_type_str == "float":
             return "numerical"
-        elif data_type_str in ["string", "str", "binary"]:
-            return "categorical"
-        elif data_type_str == "boolean":
-            return "categorical"
-        elif "datetime" in data_type_str or data_type_str in [
-            "date",
-            "time",
-            "timestamp",
-        ]:
+        elif data_type_str == "str":
+            # str 類型：檢查 category 屬性
+            if attribute.type_attr and attribute.type_attr.get("category") is True:
+                return "categorical"
+            else:
+                return "categorical"  # str 預設當作類別處理
+        elif data_type_str in ["date", "datetime"]:
             return "datetime"
-        elif attribute.category is True:
+        elif attribute.type_attr and attribute.type_attr.get("category") is True:
             return "categorical"
         else:
             return "object"
