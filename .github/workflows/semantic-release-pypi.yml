@@ -75,7 +75,7 @@ jobs:
       # Execute semantic version analysis, automatically determine version and create tags
       - name: Action | Semantic Version Release
         id: release
-        uses: python-semantic-release/python-semantic-release@v10.4.1
+        uses: python-semantic-release/python-semantic-release@v10.5.0
         with:
           github_token: ${{ secrets.MATHEME_JUSTYN_SEMANTIC }}  # 使用你的正確 token 名稱
 
