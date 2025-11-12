@@ -170,7 +170,11 @@ class Processor:
     MAX_SEQUENCE_LENGTH: int = 4  # Maximum number of procedures allowed in sequence
     DEFAULT_SEQUENCE: list[str] = ["missing", "outlier", "encoder", "scaler"]
 
-    def __init__(self, metadata: Schema, config: dict = None) -> None:
+    def __init__(
+        self,
+        metadata: Schema,
+        config: dict = None,
+    ) -> None:
         """
         Args:
             metadata (Schema):
@@ -207,6 +211,7 @@ class Processor:
             _inverse_sequence (list): The sequence for inverse transformation.
             _na_percentage_global (float): The global NA percentage.
             _rng (np.random.Generator): The random number generator for NA imputation.
+            _schema_history (list): History of schema states at each processing step.
         """
 
         # Setup logging
@@ -219,9 +224,19 @@ class Processor:
         self.logger.debug("config is provided:")
         self.logger.debug(f"config is provided: {config}")
 
-        # Initialize metadata
-        self._metadata: Schema = metadata
-        self.logger.debug("Schema metadata loaded.")
+        # CRITICAL FIX: Create a deep copy of metadata to avoid modifying the original
+        # Processor 不應該修改傳入的 metadata，而是創建自己的副本
+        # This ensures that transformations don't corrupt the original schema
+        self._metadata: Schema = deepcopy(metadata)
+        self.logger.debug(
+            "Schema metadata loaded (deep copy created to preserve original)"
+        )
+
+        # Initialize schema tracking (always enabled)
+        self._schema_history = []
+        self.logger.debug("Schema tracking enabled - will record schema at each step")
+        # Record initial schema
+        self._record_schema_snapshot("initial", metadata)
 
         # Initialize processing state
         self._is_fitted: bool = False
@@ -603,6 +618,11 @@ class Processor:
 
         self.transformed: pd.DataFrame = data.copy()
 
+        # Record schema before transformation
+        self._record_schema_snapshot(
+            "before_transform", self._metadata, self.transformed
+        )
+
         for processor in self._fitting_sequence:
             if isinstance(processor, str):
                 self.logger.debug(f"Executing {processor} processing")
@@ -664,6 +684,11 @@ class Processor:
                         )
 
                 self.logger.info(f"{processor} transformation done.")
+
+                # Record schema after each processor step
+                self._record_schema_snapshot(
+                    f"after_{processor}", self._metadata, self.transformed
+                )
             else:
                 # if the processor is not a string,
                 # it should be a mediator, which transforms the data directly.
@@ -698,6 +723,12 @@ class Processor:
                     f"after transformation: data shape: {self.transformed.shape}"
                 )
                 self.logger.info(f"{type(processor).__name__} transformation done.")
+
+                # Record schema after mediator
+                mediator_name = type(processor).__name__
+                self._record_schema_snapshot(
+                    f"after_{mediator_name}", self._metadata, self.transformed
+                )
 
         # Update global row count after preprocessing
         # Note: SchemaMetadata doesn't have mutable global stats like old Metadata
@@ -960,10 +991,13 @@ class Processor:
                 )
 
             # Update category if specified in SCHEMA_TRANSFORM
+            # CRITICAL FIX: category 存在 type_attr 裡，不是 Attribute 的直接屬性
             if transform_info.get("output_category") is not None:
-                old_category = attribute.category
+                if not attribute.type_attr:
+                    attribute.type_attr = {}
+                old_category = attribute.type_attr.get("category")
                 new_category = transform_info["output_category"]
-                attribute.category = new_category
+                attribute.type_attr["category"] = new_category
                 self.logger.debug(
                     f"Updated schema for '{col}': category {old_category} → {new_category} "
                     f"(processor: {type(obj).__name__})"
@@ -990,3 +1024,131 @@ class Processor:
         aligned_data = SchemaMetadater.align(self._metadata, data)
 
         return aligned_data
+
+    def _record_schema_snapshot(
+        self, step_name: str, schema: Schema, data: pd.DataFrame = None
+    ) -> None:
+        """
+        Record a snapshot of the schema at a specific step.
+        記錄特定步驟的 schema 快照
+
+        Args:
+            step_name: Name of the processing step
+            schema: Current schema
+            data: Current data (optional, for dtype verification)
+        """
+        from copy import deepcopy
+
+        snapshot = {
+            "step": step_name,
+            "schema": deepcopy(schema),
+            "attributes_summary": {},
+        }
+
+        # Track changes from previous snapshot
+        changes = []
+        if self._schema_history:
+            prev_snapshot = self._schema_history[-1]
+            prev_attrs = prev_snapshot["attributes_summary"]
+        else:
+            prev_attrs = {}
+
+        # Record summary of each attribute
+        for attr_name, attr in schema.attributes.items():
+            attr_summary = {
+                "type": attr.type,
+                "category": attr.category,
+                "logical_type": attr.logical_type,
+            }
+
+            # If data is provided, record actual dtype
+            if data is not None and attr_name in data.columns:
+                attr_summary["actual_dtype"] = str(data[attr_name].dtype)
+                attr_summary["unique_count"] = data[attr_name].nunique()
+
+            snapshot["attributes_summary"][attr_name] = attr_summary
+
+            # Detect changes
+            if attr_name in prev_attrs:
+                prev = prev_attrs[attr_name]
+                if (
+                    prev.get("type") != attr.type
+                    or prev.get("category") != attr.category
+                ):
+                    changes.append(
+                        f"{attr_name}: type={prev.get('type')}→{attr.type}, "
+                        f"category={prev.get('category')}→{attr.category}"
+                    )
+
+        self._schema_history.append(snapshot)
+
+        # Log snapshot (DEBUG level - minimal log output, use save_schema for diagnostics)
+        if changes:
+            self.logger.debug(f"📸 [{step_name}]: {len(changes)} attr changed")
+        else:
+            self.logger.debug(f"📸 [{step_name}]: no changes")
+
+    def get_schema_history(self) -> list[dict]:
+        """
+        Get the history of schema changes during processing.
+        獲取處理過程中的 schema 變化歷史
+
+        Returns:
+            list[dict]: List of schema snapshots at each step
+        """
+        return deepcopy(self._schema_history)
+
+    def print_schema_history(self, columns: list[str] = None) -> None:
+        """
+        Print a formatted view of schema history for debugging.
+        輸出格式化的 schema 歷史，用於調試
+
+        Args:
+            columns: List of column names to focus on (None = all columns)
+        """
+        if not self._schema_history:
+            print("❌ No schema history available")
+            return
+
+        print("\n" + "=" * 80)
+        print("📊 SCHEMA HISTORY - Processor Transformation Steps")
+        print("=" * 80)
+
+        for i, snapshot in enumerate(self._schema_history):
+            step_name = snapshot["step"]
+            attrs = snapshot["attributes_summary"]
+
+            print(f"\n[{i}] Step: {step_name}")
+            print("-" * 80)
+
+            # Filter columns if specified
+            display_attrs = {
+                k: v for k, v in attrs.items() if columns is None or k in columns
+            }
+
+            if not display_attrs:
+                print("  (No matching columns)")
+                continue
+
+            # Print in table format
+            print(
+                f"{'Column':<20} {'Type':<15} {'Category':<10} {'Actual dtype':<15} {'Unique':<10}"
+            )
+            print("-" * 80)
+
+            for attr_name, attr_info in list(display_attrs.items())[
+                :10
+            ]:  # Show first 10
+                type_str = str(attr_info.get("type", "N/A"))[:14]
+                category_str = str(attr_info.get("category", "N/A"))
+                actual_dtype = attr_info.get("actual_dtype", "N/A")[:14]
+                unique_count = attr_info.get("unique_count", "N/A")
+
+                print(
+                    f"{attr_name:<20} {type_str:<15} {category_str:<10} {actual_dtype:<15} {unique_count:<10}"
+                )
+
+            if len(display_attrs) > 10:
+                print(f"... and {len(display_attrs) - 10} more columns")
+
+        print("\n" + "=" * 80)

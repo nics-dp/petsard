@@ -65,12 +65,3 @@ docker load -i petsard-latest.tar
 # Verify image was successfully imported
 docker images | grep petsard
 ```
-
-## Next Steps
-
-After installation, you can:
-
-* Check the [Getting Started](../getting-started) guide for detailed examples
-* Visit the PETsARD YAML documentation to learn about configuration
-* Explore benchmark datasets for testing
-* Review example configurations in the GitHub repository

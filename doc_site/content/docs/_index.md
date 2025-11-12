@@ -12,9 +12,23 @@ The main functionalities include dataset description, various dataset generation
 
 ## Design Structure
 
-The following outlines the design of the experiment workflow and the package structure of `PETsARD`:
+The following outlines the module design and execution workflow of `PETsARD`:
 
 <p align="center"><img src="/petsard/images/PETsARD_design_en.png"></p>
+
+### System Design
+
+PETsARD adopts a modular design with YAML-based configuration for data processing workflows. The system integrates multiple synthesis algorithms, built-in privacy assessment and quality evaluation, automatically generating visualization reports.
+
+### Ready to Use
+
+The system provides CLI interface and default configuration templates, supporting batch processing and detailed logging. Even users with basic data knowledge can quickly get started and effectively apply privacy-enhancing technologies.
+
+## User Guide
+
+For quick start, we provide comprehensive [Installation](installation) and [Best Practices](best-practices) guides, covering environment check, data governance, evaluation design, and attribute adjustment. Follow this workflow: verify environment compatibility before installation, apply governance standards during data preparation, select evaluation strategies based on use cases when configuring experiments, and optimize performance through attribute adjustment after execution.
+
+<p align="center"><img src="/petsard/images/best-practice.zh-tw.png"></p>
 
 ## Release History
 

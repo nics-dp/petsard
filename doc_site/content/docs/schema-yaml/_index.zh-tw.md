@@ -1,5 +1,5 @@
 ---
-title: "表詮釋資料 YAML"
+title: "Schema YAML"
 weight: 200
 ---
 

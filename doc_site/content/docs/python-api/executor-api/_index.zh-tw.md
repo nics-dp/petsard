@@ -43,9 +43,11 @@ def __init__(
 ### 參數
 
 - **config** : str, required
-    - YAML 配置檔案路徑
+    - 配置輸入：YAML 檔案路徑或 YAML 字串
     - 必要參數
-    - 支援相對路徑和絕對路徑
+    - Executor 會自動偵測輸入類型：
+        - 如果是有效的檔案路徑 → 從檔案載入
+        - 否則 → 解析為 YAML 字串
 
 ### 返回值
 
@@ -53,6 +55,8 @@ def __init__(
     - 初始化後的執行器實例
 
 ### 使用範例
+
+**範例 1：從 YAML 檔案載入**
 
 ```python
 from petsard import Executor
@@ -65,6 +69,52 @@ exec = Executor('/path/to/config.yaml')
 
 # 使用相對路徑
 exec = Executor('./configs/experiment.yaml')
+```
+
+**範例 2：使用 YAML 字串**
+
+```python
+from petsard import Executor
+
+# 定義 YAML 字串配置
+config_yaml = """
+Loader:
+  load_data:
+    filepath: data.csv
+
+Synthesizer:
+  generate:
+    method: sdv
+    model: GaussianCopula
+"""
+
+# 從 YAML 字串建立 Executor
+exec = Executor(config=config_yaml)
+exec.run()
+```
+
+**範例 3：動態生成 YAML 字串**
+
+```python
+from petsard import Executor
+
+# 動態生成 YAML 字串
+def create_config_yaml(filepath, model_name):
+    return f"""
+Loader:
+  load_data:
+    filepath: {filepath}
+
+Synthesizer:
+  generate:
+    method: sdv
+    model: {model_name}
+"""
+
+# 使用動態配置
+config = create_config_yaml('data/input.csv', 'CTGAN')
+exec = Executor(config=config)
+exec.run()
 ```
 
 ## 配置選項
@@ -143,8 +193,13 @@ class ExecutorConfig:
 
 ## 注意事項
 
-- **建議作法**：使用 YAML 配置檔而非直接使用 Python API
-- **配置驗證**：Executor 會在初始化時驗證配置檔案
+- **輸入類型偵測**：Executor 會自動偵測 `config` 是檔案路徑還是 YAML 字串：
+  - 如果字串是有效的檔案路徑 → 從檔案載入
+  - 否則 → 解析為 YAML 字串
+- **建議作法**：使用 YAML 配置檔或 YAML 字串，而非直接使用 Python API
+- **配置驗證**：Executor 會在初始化時驗證配置內容
+- **路徑處理**：檔案路徑支援絕對路徑和相對路徑；相對路徑從當前工作目錄解析
+- **錯誤報告**：提供詳細的配置錯誤和 YAML 解析錯誤訊息
 - **日誌記錄**：執行過程會產生詳細的日誌記錄
 - **模組順序**：Executor 會自動按照正確順序執行模組
 - **錯誤處理**：配置錯誤會在初始化時拋出 `ConfigError`

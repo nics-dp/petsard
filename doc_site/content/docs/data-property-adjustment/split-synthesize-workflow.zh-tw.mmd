@@ -1,0 +1,45 @@
+flowchart TD
+    Start([原始資料])
+    Split[外部拆分<br/>使用 SQL/Python<br/>依據關鍵變數切分]
+    Subset1[子集 1]
+    Subset2[子集 2]
+    Subset3[子集 N...]
+    Synth1[PETsARD 合成<br/>子集 1]
+    Synth2[PETsARD 合成<br/>子集 2]
+    Synth3[PETsARD 合成<br/>子集 N...]
+    Merge[外部合併<br/>使用 SQL/Python<br/>整合所有子集]
+    Eval[PETsARD 評測<br/>整體品質檢驗]
+    End([完成])
+
+    Start --> Split
+    Split --> Subset1
+    Split --> Subset2
+    Split --> Subset3
+    Subset1 --> Synth1
+    Subset2 --> Synth2
+    Subset3 --> Synth3
+    Synth1 --> Merge
+    Synth2 --> Merge
+    Synth3 --> Merge
+    Merge --> Eval
+    Eval --> End
+
+    style Start fill:#e1f5fe
+    style Split fill:#fff9c4
+    style Subset1 fill:#fff9c4
+    style Subset2 fill:#fff9c4
+    style Subset3 fill:#fff9c4
+    style Synth1 fill:#e1f5fe
+    style Synth2 fill:#e1f5fe
+    style Synth3 fill:#e1f5fe
+    style Merge fill:#fff9c4
+    style Eval fill:#e1f5fe
+    style End fill:#c8e6c9
+
+    classDef external fill:#fff9c4,stroke:#f57f17,stroke-width:2px
+    classDef petsard fill:#e1f5fe,stroke:#0277bd,stroke-width:2px
+    classDef complete fill:#c8e6c9,stroke:#388e3c,stroke-width:2px
+
+    class Split,Subset1,Subset2,Subset3,Merge external
+    class Synth1,Synth2,Synth3,Eval petsard
+    class End complete

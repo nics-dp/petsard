@@ -2,7 +2,6 @@
 title: Categorical variables - Uniform encoding
 type: docs
 weight: 43
-prev: docs/best-practices/multi-table
 next: docs/best-practices/high-cardinality
 ---
 

@@ -1,12 +1,12 @@
 ---
-title: 安裝指引
+title: 安裝指引：執行環境檢查
 type: docs
-weight: 1
+weight: 2
 prev: docs
 next: docs/getting-started
 ---
 
-## 執行環境檢查
+根據網路連線狀態與 Docker 支援情況選擇適合的安裝方式。推薦使用 Docker 預建方案，可確保環境一致性並簡化部署流程。若需深度學習功能，請確認 CUDA 支援。
 
 {{< mermaid-file file="content/docs/installation/environment-check-flow.zh-tw.mmd" >}}
 
@@ -41,52 +41,12 @@ next: docs/getting-started
   - 預先下載所有依賴套件
   - 傳輸到離線環境進行安裝
 
-## 快速開始
+### 深度學習支援
 
-### 使用 Docker（推薦）
-
-驗證 Docker 映像是否正常運作：
-
-```bash
-# 拉取最新版本
-docker pull ghcr.io/nics-dp/petsard:latest
-
-# 驗證安裝
-docker run --rm ghcr.io/nics-dp/petsard:latest python -c "
-import petsard
-print('✅ PETsARD 安裝成功！')
-"
-```
-
-- 互動式開發
-
-```bash
-# 啟動互動式 Python 會話
-docker run -it --entrypoint /opt/venv/bin/python3 \
-  -v $(pwd):/app/data \
-  ghcr.io/nics-dp/petsard:latest
-
-# 在容器內，您可以運行：
-# from petsard import Executor
-# print('PETsARD 已準備就緒！')
-```
-
-### 使用 PyPI 安裝
-
-驗證本地安裝是否成功：
-
-```bash
-# 安裝 PETsARD（推薦使用 uv，也可使用 pip）
-uv pip install petsard
-# 或
-pip install petsard
-
-# 驗證安裝
-python -c "
-import petsard
-print('✅ PETsARD 安裝成功！')
-"
-```
+- **[深度學習支援檢測](dl-support-check)** - 使用深度學習合成器的環境
+  - 檢查 NVIDIA GPU 驅動狀態
+  - 驗證 PyTorch 與 CUDA 支援
+  - 確認系統運算模式（CPU/GPU）
 
 ### 下一步
 

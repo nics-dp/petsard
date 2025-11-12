@@ -1,12 +1,12 @@
 ---
-title: Installation
+title: "Installation: Environment Check"
 type: docs
-weight: 1
+weight: 2
 prev: docs
 next: docs/getting-started
 ---
 
-## Environment Check
+Choose the appropriate installation method based on network connectivity and Docker support. Docker Prebuilt is recommended for consistent environments and simplified deployment. If deep learning features are needed, verify CUDA support.
 
 {{< mermaid-file file="content/docs/installation/environment-check-flow.mmd" >}}
 
@@ -41,52 +41,12 @@ Based on your environment conditions, please select the appropriate installation
   - Pre-download all dependency packages
   - Transfer to offline environment for installation
 
-## Quick Start
+### Deep Learning Support
 
-### Using Docker (Recommended)
-
-Verify the Docker image is working correctly:
-
-```bash
-# Pull the latest version
-docker pull ghcr.io/nics-dp/petsard:latest
-
-# Verify installation
-docker run --rm ghcr.io/nics-dp/petsard:latest python -c "
-import petsard
-print('✅ PETsARD installed successfully!')
-"
-```
-
-- Interactive Development
-
-```bash
-# Start interactive Python session
-docker run -it --entrypoint /opt/venv/bin/python3 \
-  -v $(pwd):/app/data \
-  ghcr.io/nics-dp/petsard:latest
-
-# Inside container, you can run:
-# from petsard import Executor
-# print('PETsARD is ready!')
-```
-
-### Using PyPI Install
-
-Verify local installation is successful:
-
-```bash
-# Install PETsARD (uv recommended, pip also works)
-uv pip install petsard
-# or
-pip install petsard
-
-# Verify installation
-python -c "
-import petsard
-print('✅ PETsARD installed successfully!')
-"
-```
+- **[Deep Learning Support Check](dl-support-check)** - Environments using deep learning synthesizers
+  - Check NVIDIA GPU driver status
+  - Verify PyTorch and CUDA support
+  - Confirm system computing mode (CPU/GPU)
 
 ### Next Steps
 

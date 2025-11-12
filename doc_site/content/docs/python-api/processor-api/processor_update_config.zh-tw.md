@@ -219,7 +219,7 @@ print("gender encoder:", type(config['encoder']['gender']).__name__)
 ### 編碼器
 - `encoder_uniform`：均勻編碼
 - `encoder_label`：標籤編碼
-- `encoder_onehot`：One-Hot 編碼
+- `encoder_onehot`：獨熱編碼
 - `encoder_date`：日期格式轉換（需要參數）
 
 ### 縮放器

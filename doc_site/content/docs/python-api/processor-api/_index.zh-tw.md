@@ -180,7 +180,7 @@ Processor 支援以下處理步驟：
 
 - `encoder_uniform`：均勻編碼（依頻率分配範圍）
 - `encoder_label`：標籤編碼（整數映射）
-- `encoder_onehot`：One-Hot 編碼
+- `encoder_onehot`：獨熱編碼
 - `encoder_date`：日期格式轉換
 
 ### 縮放器

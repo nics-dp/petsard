@@ -1,0 +1,19 @@
+flowchart
+    Start[資料準備] --> Describer[資料描述<br/>統計]
+    Describer --> MultiTable{是否為<br/>多表格？}
+    MultiTable -->|是| Denormalize[多表格關聯<br/>反正規化]
+    MultiTable -->|否| ConstraintCheck{是否需要<br/>約束條件？}
+    Denormalize --> ConstraintCheck
+    
+    ConstraintCheck -->|是| Constraints[商業邏輯<br/>約束定義]
+    ConstraintCheck -->|否| Complete[完成準備]
+    Constraints --> Complete
+
+    %% 馬卡龍配色
+    style Start fill:#B0E0E6,stroke:#87CEEB,stroke-width:2px,color:#333
+    style Describer fill:#B4E7CE,stroke:#98D8C8,stroke-width:2px,color:#333
+    style MultiTable fill:#E6E6FA,stroke:#DDA0DD,stroke-width:2px,color:#333
+    style Denormalize fill:#B4E7CE,stroke:#98D8C8,stroke-width:2px,color:#333
+    style ConstraintCheck fill:#E6E6FA,stroke:#DDA0DD,stroke-width:2px,color:#333
+    style Constraints fill:#B4E7CE,stroke:#98D8C8,stroke-width:2px,color:#333
+    style Complete fill:#D3D3D3,stroke:#A9A9A9,stroke-width:2px,color:#333

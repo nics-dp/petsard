@@ -3,7 +3,6 @@ title: 高基數變項 - 約束條件
 type: docs
 weight: 44
 prev: docs/best-practices/categorical
-next: docs/best-practices/high-cardinality-multi-table
 ---
 
 ## 個案背景

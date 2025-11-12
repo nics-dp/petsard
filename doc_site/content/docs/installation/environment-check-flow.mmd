@@ -6,6 +6,15 @@ flowchart TD
     DockerCheck1 -->|No| PyPIInstall[PyPI<br/>Install]
     DockerCheck2 -->|Yes| DockerOffline[Docker<br/>Offline Deployment]
     DockerCheck2 -->|No| PackageDownload[Package<br/>Pre-download]
+    
+    %% Deep Learning Support Check
+    DockerPrebuilt --> DLCheck{Use<br/>Deep Learning?}
+    PyPIInstall --> DLCheck
+    DockerOffline --> DLCheck
+    PackageDownload --> DLCheck
+    
+    DLCheck -->|Yes| CUDACheck[Check<br/>CUDA Support]
+    DLCheck -->|No| Complete[Installation Complete]
 
     %% Macaron color scheme
     style Start fill:#B0E0E6,stroke:#87CEEB,stroke-width:2px,color:#333
@@ -16,6 +25,9 @@ flowchart TD
     style PyPIInstall fill:#B4E7CE,stroke:#98D8C8,stroke-width:2px,color:#333
     style DockerOffline fill:#B4E7CE,stroke:#98D8C8,stroke-width:2px,color:#333
     style PackageDownload fill:#B4E7CE,stroke:#98D8C8,stroke-width:2px,color:#333
+    style DLCheck fill:#FFE4E1,stroke:#FFC0CB,stroke-width:2px,color:#333
+    style CUDACheck fill:#B4E7CE,stroke:#98D8C8,stroke-width:2px,color:#333
+    style Complete fill:#D3D3D3,stroke:#A9A9A9,stroke-width:2px,color:#333
 
     %% Legend styles
     style Legend1 fill:#B0E0E6,stroke:#87CEEB,stroke-width:2px,color:#333

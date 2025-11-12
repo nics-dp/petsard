@@ -62,7 +62,6 @@ The User Guide aims to assist developers in rapidly acquiring the necessary skil
 ### [**⭐ Best Practices 最佳實踐**](https://nics-dp.github.io/petsard/docs/best-practices/)
 - Handling categorical data 處理類別資料
 - High-cardinality data techniques 高基數資料技巧
-- Multi-table synthesis 多表合成
 - Multi-timestamp data handling 多時間戳資料處理
 
 ### [**⚙️ YAML Configuration YAML 配置**](https://nics-dp.github.io/petsard/docs/petsard-yaml/)

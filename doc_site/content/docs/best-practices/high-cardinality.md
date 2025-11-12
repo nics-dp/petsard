@@ -3,7 +3,6 @@ title: High-Cardinality variables - Constraints
 type: docs
 weight: 44
 prev: docs/best-practices/categorical
-next: docs/best-practices/high-cardinality-multi-table
 ---
 
 ## Case Background

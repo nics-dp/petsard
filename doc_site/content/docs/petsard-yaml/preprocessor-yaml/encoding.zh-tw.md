@@ -37,7 +37,7 @@ Preprocessor:
     method: 'default'
     config:
       encoder:
-        gender: 'encoder_onehot'       # One-Hot 編碼
+        gender: 'encoder_onehot'       # 獨熱編碼
         education: 'encoder_label'     # 標籤編碼
         country: 'encoder_uniform'     # 均勻編碼
         age: None                      # 數值欄位不編碼
@@ -64,7 +64,7 @@ Preprocessor:
 |--------|------|---------|------|
 | `encoder_uniform` | 均勻編碼 | 類別型 | 連續值 |
 | `encoder_label` | 標籤編碼 | 類別型 | 整數 |
-| `encoder_onehot` | One-Hot 編碼 | 類別型 | 多欄位（0/1） |
+| `encoder_onehot` | 獨熱編碼 | 類別型 | 多欄位（0/1） |
 | `encoder_date` | 日期格式轉換 | 日期時間型 | datetime |
 
 ## 處理器詳細說明
@@ -124,7 +124,7 @@ config:
 
 ### encoder_onehot
 
-**One-Hot 編碼**：為每個類別創建獨立的二元欄位。
+**獨熱編碼**：為每個類別創建獨立的二元欄位。
 
 **特性**：
 - 每個類別變成一個新欄位

@@ -871,7 +871,11 @@ class PreprocessorAdapter(BaseAdapter):
             input["data"], self._config
         )
 
-        self.processor = Processor(metadata=input["metadata"], config=expanded_config)
+        # Schema tracking is always enabled in Processor
+        self.processor = Processor(
+            metadata=input["metadata"],
+            config=expanded_config,
+        )
 
         if self._sequence is None:
             self._logger.debug("Using default processing sequence")
@@ -1235,6 +1239,26 @@ class PostprocessorAdapter(BaseAdapter):
         """
         result: pd.DataFrame = deepcopy(self.data_postproc)
         return result
+
+    def get_metadata(self) -> Schema:
+        """
+        Retrieve the metadata after postprocessing.
+
+        Returns:
+            (Schema): The updated metadata after postprocessing.
+        """
+        # Return the updated schema if available, otherwise return original schema
+        if hasattr(self, "_updated_schema") and self._updated_schema:
+            return deepcopy(self._updated_schema)
+        # Fallback to original schema from input
+        elif (
+            hasattr(self, "input")
+            and "original_schema" in self.input
+            and self.input["original_schema"]
+        ):
+            return deepcopy(self.input["original_schema"])
+        else:
+            return None
 
 
 class ConstrainerAdapter(BaseAdapter):
@@ -2437,6 +2461,7 @@ class ReporterAdapter(BaseAdapter):
 
         data = {}
         metadata_dict = {}  # 收集 metadata
+
         for module in full_expt.keys():
             index_dict = status.get_full_expt(module=module)
             result = status.get_result(module=module)
@@ -2449,6 +2474,43 @@ class ReporterAdapter(BaseAdapter):
                     metadata_dict[module] = module_metadata
             except Exception:
                 pass  # 如果無法獲取 metadata，繼續處理
+
+            # 特殊處理：如果是 Preprocessor/Postprocessor，展開 schema history
+            # CRITICAL FIX: Schema history 應該只影響 metadata，不影響 data
+            # 否則 save_data 會輸出重複的 CSV（各階段都是相同的資料）
+            if module in ["Preprocessor", "Postprocessor"]:
+                try:
+                    processor = status.get_processor()
+                    if processor and hasattr(processor, "get_schema_history"):
+                        schema_history = processor.get_schema_history()
+                        if schema_history:
+                            self._logger.debug(
+                                f"Expanding {len(schema_history)} schema snapshots from {module}"
+                            )
+
+                            # 只為 metadata 創建獨立的 entry，不影響 data
+                            for snapshot in schema_history:
+                                step_name = snapshot["step"]
+                                schema = snapshot["schema"]
+
+                                # 將步驟資訊添加到 Schema 的 description
+                                step_schema = deepcopy(schema)
+                                original_desc = step_schema.description or ""
+                                step_info = f"Processing step: {step_name}"
+                                step_schema.description = (
+                                    f"{original_desc} | {step_info}".strip(" |")
+                                )
+
+                                # 存儲對應的 metadata（帶步驟後綴）
+                                # 這樣 ReporterSaveSchema 就能獲取到 schema history
+                                metadata_key = f"{module}_{step_name}"
+                                metadata_dict[metadata_key] = step_schema
+
+                                self._logger.debug(f"  - Added snapshot: {step_name}")
+                except Exception as e:
+                    self._logger.debug(
+                        f"Could not expand schema history from {module}: {e}"
+                    )
 
             # if module.get_result is a dict,
             #   add key into expt_name: expt_name[key]
@@ -2467,7 +2529,9 @@ class ReporterAdapter(BaseAdapter):
                 data[index_tuple] = deepcopy(result)
         self.input["data"] = data
         self.input["data"]["exist_report"] = status.get_report()
-        self.input["metadata"] = metadata_dict  # 傳遞 metadata
+        self.input["metadata"] = (
+            metadata_dict  # 傳遞 metadata（已包含展開的 schema history）
+        )
 
         # Add timing data support
         if hasattr(status, "get_timing_report_data"):
