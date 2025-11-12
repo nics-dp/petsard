@@ -219,7 +219,7 @@ syn = [
 # Jupyter 筆記本支援
 # Jupyter notebook support
 jupyter = [
-    "ipykernel>=6.30.1,<7",                                 # Jupyter 核心支援
+    "ipykernel>=7.1.0,<8",                                  # Jupyter 核心支援
     "ipython>=8.3.0,<9 ; python_full_version < '3.11'",     # IPython（Python 3.10 版本）
     "ipython>=9.4.0,<10 ; python_full_version >= '3.11'",   # IPython（Python 3.11+ 版本）
     "jupyterlab>=4.4.7,<5",                                 # JupyterLab 支援
@@ -261,7 +261,7 @@ dev-tools = [
 # Jupyter 支援（適用於 Docker 環境中使用 Jupyter）
 # Jupyter support (for use in Docker environments)
 jupyter = [
-    "ipykernel>=6.30.1,<7",
+    "ipykernel>=6.30.1,<8",
     "ipython>=8.3.0,<9 ; python_full_version < '3.11'",
     "ipython>=9.4.0,<10 ; python_full_version >= '3.11'",
     "jupyterlab>=4.4.7,<5",
@@ -281,7 +281,7 @@ excel = [
 # 資料科學功能（向下相容，等同於 jupyter）
 # Data science functionality (backward compatible, equivalent to jupyter)
 ds = [
-    "ipykernel>=6.30.1,<7",
+    "ipykernel>=6.30.1,<8",
     "ipython>=8.3.0,<9 ; python_full_version < '3.11'",
     "ipython>=9.4.0,<10 ; python_full_version >= '3.11'",
     "jupyterlab>=4.4.7,<5",
@@ -296,7 +296,7 @@ ds = [
 # 完整功能（Jupyter + Excel）
 # Full functionality (Jupyter + Excel)
 all = [
-    "ipykernel>=6.30.1,<7",
+    "ipykernel>=6.30.1,<8",
     "ipython>=8.3.0,<9 ; python_full_version < '3.11'",
     "ipython>=9.4.0,<10 ; python_full_version >= '3.11'",
     "jupyterlab>=4.4.7,<5",
@@ -312,7 +312,7 @@ all = [
 # 開發工具（完整功能 + 開發與測試工具）
 # Development tools (full functionality + development and testing tools)
 dev = [
-    "ipykernel>=6.30.1,<7",
+    "ipykernel>=6.30.1,<8",
     "ipython>=8.3.0,<9 ; python_full_version < '3.11'",
     "ipython>=9.4.0,<10 ; python_full_version >= '3.11'",
     "jupyterlab>=4.4.7,<5",
