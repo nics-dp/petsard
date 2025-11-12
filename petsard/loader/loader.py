@@ -368,7 +368,7 @@ class Loader:
                             logical_type=col_type
                             if col_type in ["category", "datetime"]
                             else None,
-                            enable_null=True,
+                            nullable=True,
                         )
 
             # Merge legacy na_values
@@ -381,7 +381,7 @@ class Loader:
                             attributes[col] = Attribute(
                                 name=col,
                                 type="string",
-                                enable_null=True,
+                                nullable=True,
                             )
                         # 更新 na_values
                         attributes[col].na_values = (
