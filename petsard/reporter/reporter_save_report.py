@@ -823,8 +823,8 @@ class ReporterSaveReport(BaseReporter):
             experiment_name = full_expt_tuple[i + 1]
 
             if module_name in cls.SAVE_REPORT_AVAILABLE_MODULE:
-                report.insert(0, module_name, output_eval_name)
-                full_expt_name_postfix += module_name + output_eval_name
+                report.insert(0, module_name, f"[{output_eval_name}]")
+                full_expt_name_postfix += f"{module_name}[{output_eval_name}]"
             else:
                 report.insert(0, module_name, experiment_name)
 

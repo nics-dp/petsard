@@ -416,9 +416,12 @@ class SchemaInferencer:
                             continue
 
                     if transform_info.get("input_category") is not None:
-                        if current_attr.category != transform_info["input_category"]:
+                        current_category = (current_attr.type_attr or {}).get(
+                            "category", False
+                        )
+                        if current_category != transform_info["input_category"]:
                             self.logger.warning(
-                                f"欄位 '{col_name}' 的 category={current_attr.category} "
+                                f"欄位 '{col_name}' 的 category={current_category} "
                                 f"不匹配 '{method_name}' 的預期 input_category={transform_info['input_category']}"
                             )
                             continue

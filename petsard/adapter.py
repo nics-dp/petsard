@@ -1925,6 +1925,48 @@ class EvaluatorAdapter(BaseAdapter):
             # Remove schema from input as Evaluator.eval() doesn't accept it
             del input["schema"]
 
+        # Additional dtype harmonization: ensure all datasets have consistent dtypes
+        # This handles cases where SchemaMetadater.align() doesn't convert between integer precisions
+        # 額外的 dtype 統一：確保所有數據集具有一致的 dtype
+        # 這處理 SchemaMetadater.align() 無法在整數精度之間轉換的情況
+        if "data" in input and len(input["data"]) > 1:
+            # Use 'ori' as reference if available, otherwise use first dataset
+            reference_key = (
+                "ori" if "ori" in input["data"] else list(input["data"].keys())[0]
+            )
+            reference_df = input["data"][reference_key]
+
+            if reference_df is not None and not reference_df.empty:
+                reference_dtypes = dict(
+                    zip(reference_df.columns, reference_df.dtypes, strict=False)
+                )
+
+                for key, df in input["data"].items():
+                    if key == reference_key or df is None or df.empty:
+                        continue
+
+                    # Check and fix dtype mismatches
+                    for col in df.columns:
+                        if col in reference_dtypes:
+                            ref_dtype = reference_dtypes[col]
+                            current_dtype = df[col].dtype
+
+                            if ref_dtype != current_dtype:
+                                try:
+                                    # Attempt to convert to reference dtype
+                                    input["data"][key][col] = df[col].astype(ref_dtype)
+                                    self._logger.debug(
+                                        f"Converted '{key}' column '{col}' from {current_dtype} to {ref_dtype}"
+                                    )
+                                except Exception as e:
+                                    self._logger.warning(
+                                        f"Could not convert '{key}' column '{col}' from {current_dtype} to {ref_dtype}: {e}"
+                                    )
+
+                self._logger.info(
+                    "✓ Harmonized dtypes across all datasets for evaluation"
+                )
+
         self.evaluator.create()
         self._logger.debug("Evaluation model initialization completed")
 
