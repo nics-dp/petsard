@@ -4,8 +4,6 @@ type: docs
 weight: 5
 prev: docs/best-practices
 next: docs/api
-sidebar:
-  open: true
 ---
 
 ## 概述
