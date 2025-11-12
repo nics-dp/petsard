@@ -15,13 +15,12 @@ jobs:
     name: Semantic Release
     runs-on: ubuntu-latest
     steps:
-      # 檢出指定分支的程式碼並獲取完整歷史記錄
-      # Checkout the repository code with full Git history for semantic analysis
+      # 檢出指定分支的程式碼
+      # Checkout the repository code (v10.5.0+ automatically handles repository un-shallowing)
       - name: Setup | Checkout Repository on Release Branch
         uses: actions/checkout@v5
         with:
           ref: ${{ github.ref_name }}
-          fetch-depth: 0
           persist-credentials: false # 防止使用預設的 GITHUB_TOKEN
 
       # 強制重設本地分支到觸發工作流程的確切提交
@@ -29,40 +28,6 @@ jobs:
       - name: Setup | Force release branch to be at workflow sha
         run: |
           git reset --hard ${{ github.sha }}
-
-      # 驗證上游分支在工作流程執行期間沒有新的變更
-      # Verify that upstream branch hasn't changed during workflow execution
-      - name: Evaluate | Verify upstream has NOT changed
-        shell: bash
-        run: |
-          set +o pipefail
-
-          UPSTREAM_BRANCH_NAME="$(git status -sb | head -n 1 | cut -d' ' -f2 | grep -E '\.{3}' | cut -d'.' -f4)"
-          printf '%s\n' "Upstream branch name: $UPSTREAM_BRANCH_NAME"
-
-          set -o pipefail
-
-          if [ -z "$UPSTREAM_BRANCH_NAME" ]; then
-              printf >&2 '%s\n' "::error::Unable to determine upstream branch name!"
-              exit 1
-          fi
-
-          git fetch "${UPSTREAM_BRANCH_NAME%%/*}"
-
-          if ! UPSTREAM_SHA="$(git rev-parse "$UPSTREAM_BRANCH_NAME")"; then
-              printf >&2 '%s\n' "::error::Unable to determine upstream branch sha!"
-              exit 1
-          fi
-
-          HEAD_SHA="$(git rev-parse HEAD)"
-
-          if [ "$HEAD_SHA" != "$UPSTREAM_SHA" ]; then
-              printf >&2 '%s\n' "[HEAD SHA] $HEAD_SHA != $UPSTREAM_SHA [UPSTREAM SHA]"
-              printf >&2 '%s\n' "::error::Upstream has changed, aborting release..."
-              exit 1
-          fi
-
-          printf '%s\n' "Verified upstream branch has not changed, continuing with release..."
 
       # 安裝 uv 工具
       # Install uv tool
@@ -73,9 +38,10 @@ jobs:
 
       # 執行語意版本分析，自動決定版本號並建立標籤
       # Execute semantic version analysis, automatically determine version and create tags
+      # v10.5.0+ includes automatic repository un-shallowing and upstream version checking
       - name: Action | Semantic Version Release
         id: release
-        uses: python-semantic-release/python-semantic-release@v10.4.1
+        uses: python-semantic-release/python-semantic-release@v10.5.0
         with:
           github_token: ${{ secrets.MATHEME_JUSTYN_SEMANTIC }}  # 使用你的正確 token 名稱
 
@@ -98,14 +64,14 @@ jobs:
           # Extract version from tag
           TAG_VERSION="${{ steps.release.outputs.tag }}"
           VERSION="${TAG_VERSION#v}"  # 移除 'v' 前綴
-          
+
           # 更新 pyproject.toml 中的版本號
           # Update version in pyproject.toml
           sed -i "s/^version = .*/version = \"$VERSION\"/" pyproject.toml
-          
+
           echo "Building with version: $VERSION (from tag: $TAG_VERSION)"
           echo "Updated pyproject.toml: $(grep '^version = ' pyproject.toml)"
-          
+
           # 使用 --no-sources 確保建置時不使用 tool.uv.sources 設定，提升相容性
           # Use --no-sources to ensure build compatibility without tool.uv.sources
           uv build --no-sources
@@ -134,7 +100,7 @@ jobs:
       # 上傳構建檔案到 GitHub Releases 作為發布資產
       # Upload built files to GitHub Releases as release assets
       - name: Publish | Upload to GitHub Release Assets
-        uses: python-semantic-release/publish-action@v10.4.1
+        uses: python-semantic-release/publish-action@v10.5.0
         if: steps.release.outputs.released == 'true'
         with:
           github_token: ${{ secrets.WORKFLOW_TOKEN_CLASSICAL }}
