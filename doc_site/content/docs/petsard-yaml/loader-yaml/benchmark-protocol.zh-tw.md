@@ -41,6 +41,17 @@ Loader:
 | Adult Income (Original) | `benchmark://adult-income_ori` | 原始訓練資料（用於 demo） |
 | Adult Income (Control) | `benchmark://adult-income_control` | 控制組資料（用於 demo） |
 | Adult Income (Synthetic) | `benchmark://adult-income_syn` | SDV Gaussian Copula 合成資料（用於 demo） |
+| Taiwan Salary Statistics | `benchmark://taiwan-salary-statistics-300k` | 臺灣薪資統計資料集（300K 筆資料） |
+
+#### 臺灣薪資統計 Taiwan Salaries Statistics
+
+這是 2024 年 InnoServe 團隊用來出題目的模擬資料集，模擬勞動部職類別薪資調查統計。
+
+**說明**
+
+- 本資料參考行政院主計總處按月辦理之「[受僱員工薪資調查](https://earnings.dgbas.gov.tw/replies.aspx)」之編撰方法，模擬運用綜合所得稅檔連結勞工保險檔、勞退月提繳工資檔、全民健康保險檔之資料寬表結構
+- 模擬過程使用公開的 112 年彙總統計，參酌多項政府開放資料做數值模擬，資料內容皆不涉及任何真實存在的個人與法人單位。如有姓名或公司名稱雷同，純屬巧合
+- 本資料僅模擬本國籍勞工，但包含金門與連江等全國 20 個直轄市與縣市
 
 ### Best Practices 範例資料集
 
