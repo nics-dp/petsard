@@ -135,7 +135,7 @@ exec = [
     "pyyaml>=6.0.2,<7",   # YAML configuration file support / YAML 配置檔支援
     ###### Core lib above, SBOM related below ######
     # pandas dependencies
-    "numpy>=1.26.4,<2",
+    "numpy>=1.26.4,<3",
     "python-dateutil>=2.9.0.post0,<3",
     "pytz>=2025.2",
     "tzdata>=2025.2",
@@ -156,7 +156,7 @@ eval = [
     "imblearn>=0.0",          # Imbalanced data handling / 不平衡資料處理
     ###### Core lib above, SBOM related below ######
     # anonymeter, sdmetrics dependencies
-    "numpy>=1.26.4,<2",
+    "numpy>=1.26.4,<3",
     "scikit-learn>=1.7.1,<2",
     # anonymeter dependencies
     "joblib>=1.5.2,<2",
@@ -174,7 +174,7 @@ syn = [
     "torch>=2.8.0,<3",   # PyTorch deep learning models / PyTorch 深度學習模型
     ###### Core lib above, SBOM related below ######
     # sdv, torch dependencies
-    "numpy>=1.26.4,<2",
+    "numpy>=1.26.4,<3",
     "pytz>=2025.2",
     "scipy>=1.15.3,<2 ; python_full_version < '3.11'",
     "scipy>=1.16.0,<2 ; python_full_version >= '3.11'",
