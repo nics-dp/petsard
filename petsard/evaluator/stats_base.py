@@ -239,8 +239,8 @@ class StatsNUnique(BaseStats):
         Returns:
             (bool): True for all data types - nunique can be calculated for any type.
         """
-        # nunique 可以計算任何資料類型的唯一值數量
-        # 不再限制資料類型
+        # nunique can calculate unique value counts for any data type
+        # No longer restricting data types
         return True
 
     def _eval(self, data: dict[str, pd.Series]) -> int:
@@ -275,18 +275,18 @@ class StatsJSDivergence(BaseStats):
         col_ori = data.get("col_ori")
         col_syn = data.get("col_syn")
 
-        # 如果任一欄位不存在，返回 False
+        # If any column doesn't exist, return False
         if col_ori is None or col_syn is None:
             return False
 
-        # JS divergence 可以計算任何離散型資料
-        # 包括：bool、string、categorical、object 或作為類別使用的數值型態
+        # JS divergence can calculate any discrete data
+        # Including: bool, string, categorical, object, or numeric types used as categories
         return (
             (is_bool_dtype(col_ori) and is_bool_dtype(col_syn))
             or (is_string_dtype(col_ori) and is_string_dtype(col_syn))
             or (is_categorical_dtype(col_ori) and is_categorical_dtype(col_syn))
             or (is_object_dtype(col_ori) and is_object_dtype(col_syn))
-            # 允許數值型態（當作類別變數處理）
+            # Allow numeric types (treated as categorical variables)
             or (is_numeric_dtype(col_ori) and is_numeric_dtype(col_syn))
         )
 

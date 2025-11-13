@@ -24,7 +24,7 @@ class TestFieldProportionsTypeValidation:
             field_proportions=[{"fields": "age", "mode": "all", "tolerance": 0.1}]
         )
 
-        with pytest.raises(ValueError, match="僅支援類別變數"):
+        with pytest.raises(ValueError, match="only supports categorical fields"):
             config.verify_data(df, target_n_rows=4)
 
     def test_datetime_field_rejection(self):
@@ -42,7 +42,7 @@ class TestFieldProportionsTypeValidation:
             field_proportions=[{"fields": "date", "mode": "all", "tolerance": 0.1}]
         )
 
-        with pytest.raises(ValueError, match="僅支援類別變數"):
+        with pytest.raises(ValueError, match="only supports categorical fields"):
             config.verify_data(df, target_n_rows=4)
 
     def test_categorical_field_acceptance(self):
@@ -76,7 +76,7 @@ class TestFieldProportionsTypeValidation:
             ]
         )
 
-        with pytest.raises(ValueError, match="僅支援類別變數"):
+        with pytest.raises(ValueError, match="only supports categorical fields"):
             config.verify_data(df, target_n_rows=4)
 
     def test_error_message_details(self):
@@ -103,12 +103,12 @@ class TestFieldProportionsTypeValidation:
             config.verify_data(df, target_n_rows=4)
 
         error_message = str(exc_info.value)
-        assert "僅支援類別變數" in error_message
+        assert "only supports categorical fields" in error_message
         assert "age" in error_message
         assert "income" in error_message
         assert "date" in error_message
-        assert "數值型不支援" in error_message
-        assert "日期型不支援" in error_message
+        assert "numerical unsupported" in error_message
+        assert "datetime unsupported" in error_message
 
 
 class TestFieldProportionsConfig:

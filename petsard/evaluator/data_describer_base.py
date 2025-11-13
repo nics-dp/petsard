@@ -321,7 +321,7 @@ class DataDescriberCov(BaseDataDescriber):
         upper_indices = np.triu_indices_from(temp, k=1)
         temp.values[upper_indices] = np.nan
 
-        # 確保索引名稱不會與現有列名衝突
+        # Ensure index name doesn't conflict with existing column names
         index_name = "col1"
         if index_name in temp.columns:
             index_name = "index_col1"
@@ -354,7 +354,7 @@ class DataDescriberCorr(BaseDataDescriber):
         upper_indices = np.triu_indices_from(temp, k=1)
         temp.values[upper_indices] = np.nan
 
-        # 確保索引名稱不會與現有列名衝突
+        # Ensure index name doesn't conflict with existing column names
         index_name = "col1"
         if index_name in temp.columns:
             index_name = "index_col1"

@@ -276,7 +276,7 @@ class Describer(Evaluator):
         """
         Evaluate the data based on the configured mode.
 
-        簡化版：資料驗證已在 DescriberAdapter 處理，這裡只執行評估
+        Simplified version: Data validation is handled in DescriberAdapter, only executing evaluation here
 
         Args:
             data (dict): Input data dictionary
@@ -288,9 +288,9 @@ class Describer(Evaluator):
                 - For describe mode: Statistical summaries
                 - For compare mode: Comparison statistics with scores
         """
-        # 簡單的驗證，確保資料格式正確
+        # Simple validation to ensure correct data format
         if self.config.mode == "compare":
-            # 支援新的 base/target 和舊的 ori/syn（向後相容）
+            # Support new base/target and old ori/syn (backward compatible)
             has_new_format = "base" in data and "target" in data
             has_old_format = "ori" in data and "syn" in data
 
@@ -299,7 +299,7 @@ class Describer(Evaluator):
                 self._logger.error(error_msg)
                 raise ValueError(error_msg)
 
-            # 如果使用舊格式，映射到新格式（這個轉換已在 DescriberCompare._eval 中處理）
+            # If using old format, map to new format (this conversion is handled in DescriberCompare._eval)
             if has_old_format and not has_new_format:
                 self._logger.debug(
                     "Using backward compatibility: ori/syn format detected"

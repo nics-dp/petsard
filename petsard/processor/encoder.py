@@ -141,7 +141,7 @@ class Encoder:
 class EncoderUniform(SchemaTransformMixin, Encoder):
     """
     Implement a uniform encoder.
-    將類別資料轉換為均勻分佈的數值 (0-1)
+    Convert categorical data to uniformly distributed numeric values (0-1)
     """
 
     SCHEMA_TRANSFORM = schema_transform(
@@ -259,7 +259,7 @@ class EncoderUniform(SchemaTransformMixin, Encoder):
 class EncoderLabel(SchemaTransformMixin, Encoder):
     """
     Implement a label encoder.
-    將類別資料轉換為整數標籤
+    Convert categorical data to integer labels
     """
 
     PROC_TYPE = ("encoder", "discretizing")
@@ -326,7 +326,7 @@ class EncoderLabel(SchemaTransformMixin, Encoder):
 class EncoderOneHot(SchemaTransformMixin, Encoder):
     """
     Implement a one-hot encoder.
-    將類別資料轉換為多個二進制欄位 (one-hot encoding)
+    Convert categorical data to multiple binary columns (one-hot encoding)
     """
 
     SCHEMA_TRANSFORM = schema_transform(
@@ -565,9 +565,11 @@ class EncoderMinguoDate(Encoder):
                         month = int(parts[1])
                         day = int(parts[2])
                     except ValueError as e:
-                        raise ValueError(f"無法解析 YYY-MM-DD 格式: {value}") from e
+                        raise ValueError(
+                            f"Unable to parse YYY-MM-DD format: {value}"
+                        ) from e
                 else:
-                    raise ValueError(f"無效的 YYY-MM-DD 格式: {value}")
+                    raise ValueError(f"Invalid YYY-MM-DD format: {value}")
 
             elif "/" in value:
                 if self.input_format is None:
@@ -581,9 +583,11 @@ class EncoderMinguoDate(Encoder):
                         month = int(parts[1])
                         day = int(parts[2])
                     except ValueError as e:
-                        raise ValueError(f"無法解析 YYY/MM/DD 格式: {value}") from e
+                        raise ValueError(
+                            f"Unable to parse YYY/MM/DD format: {value}"
+                        ) from e
                 else:
-                    raise ValueError(f"無效的 YYY/MM/DD 格式: {value}")
+                    raise ValueError(f"Invalid YYY/MM/DD format: {value}")
 
             else:
                 if self.input_format is None:
@@ -603,10 +607,14 @@ class EncoderMinguoDate(Encoder):
                         month = (numeric_value % 10000) // 100
                         day = numeric_value % 100
                     except ValueError as e:
-                        raise ValueError(f"無法解析民國年格式: {value}") from e
+                        raise ValueError(
+                            f"Unable to parse Minguo year format: {value}"
+                        ) from e
 
         else:
-            raise ValueError(f"無法解析日期格式：{value} (類型: {type(value)})")
+            raise ValueError(
+                f"Unable to parse date format: {value} (type: {type(value)})"
+            )
 
         # Convert to AD year
         year = roc_year + 1911
@@ -633,14 +641,14 @@ class EncoderMinguoDate(Encoder):
                     fixed_date = date(fixed_year, fixed_month, min(fixed_day, max_day))
 
                     # Print fix warning (optional, can be commented out in production)
-                    original_str = f"{roc_year:03d}年{month:02d}月{day:02d}日"
+                    original_str = f"{roc_year:03d}/{month:02d}/{day:02d}"
                     fixed_str = (
-                        f"{fixed_year - 1911:03d}年{fixed_month:02d}月{fixed_date.day:02d}日"
+                        f"{fixed_year - 1911:03d}/{fixed_month:02d}/{fixed_date.day:02d}"
                         if fixed_year >= 1912
-                        else f"{fixed_year}年{fixed_month:02d}月{fixed_date.day:02d}日"
+                        else f"{fixed_year}/{fixed_month:02d}/{fixed_date.day:02d}"
                     )
                     print(
-                        f"警告：日期 {original_str} 已修正為 {fixed_str} (Level {strategy_level})"
+                        f"Warning: Date {original_str} has been fixed to {fixed_str} (Level {strategy_level})"
                     )
 
                     return self._format_output(fixed_date)
@@ -648,7 +656,7 @@ class EncoderMinguoDate(Encoder):
                     if strategy_level == len(fix_strategies):
                         # If all strategies fail
                         raise ValueError(
-                            f"無法修復日期： {roc_year:03d}年{month:02d}月{day:02d}日，錯誤: {str(e)}"
+                            f"Unable to fix date: {roc_year:03d}/{month:02d}/{day:02d}, error: {str(e)}"
                         ) from e
                     # Try next strategy
                     continue
@@ -673,7 +681,7 @@ class EncoderMinguoDate(Encoder):
             try:
                 value = pd.to_datetime(value).date()
             except Exception as e:
-                raise ValueError(f"無法解析 AD 日期字串: {value}") from e
+                raise ValueError(f"Unable to parse AD date string: {value}") from e
 
         # Handle pandas Timestamp
         if isinstance(value, pd.Timestamp):
@@ -685,7 +693,9 @@ class EncoderMinguoDate(Encoder):
 
         # Calculate ROC year
         if not isinstance(value, date):
-            raise ValueError(f"無法解析日期格式：{value} (類型: {type(value)})")
+            raise ValueError(
+                f"Unable to parse date format: {value} (type: {type(value)})"
+            )
 
         roc_year = value.year - 1911
 
@@ -702,21 +712,21 @@ class EncoderMinguoDate(Encoder):
                         fixed_date = date(fixed_year, fixed_month, fixed_day)
                         roc_year = fixed_year - 1911
                         print(
-                            f"警告：日期 {value} 早於民國元年，已修正為 {fixed_date} (Level {strategy_level})"
+                            f"Warning: Date {value} is before ROC era, fixed to {fixed_date} (Level {strategy_level})"
                         )
                         value = fixed_date
                         break
                     except Exception as e:
                         if strategy_level == len(fix_strategies):
                             raise ValueError(
-                                f"無法修復早於民國元年的日期： {value}"
+                                f"Unable to fix date before ROC era: {value}"
                             ) from e
                         continue
 
             # If no year fix strategy and not fixed
             if roc_year < 1:
                 raise ValueError(
-                    f"日期早於民國元年 {value.year}，且未提供有效的年份修復策略"
+                    f"Date is before ROC era {value.year}, and no valid year fix strategy provided"
                 )
 
         # Return formatted according to input_format or default
@@ -764,7 +774,7 @@ class EncoderMinguoDate(Encoder):
             data.apply(self._convert_minguo_to_ad)
         except Exception as e:
             raise ValueError(
-                f"無法解析日期格式，請檢查日期格式是否正確：{str(e)}"
+                f"Unable to parse date format, please check date format is correct: {str(e)}"
             ) from e
 
     def _transform(self, data: pd.Series) -> pd.Series:
@@ -811,7 +821,7 @@ class EncoderMinguoDate(Encoder):
         try:
             return data.apply(self._convert_ad_to_minguo)
         except Exception as e:
-            raise ValueError(f"無法轉換日期：{str(e)}") from e
+            raise ValueError(f"Unable to convert date: {str(e)}") from e
 
 
 class EncoderDateDiff(Encoder):
@@ -943,22 +953,22 @@ class EncoderDateDiff(Encoder):
         # Calculate the date
         return baseline_date + pd.Timedelta(days=days)
 
-    # 在 EncoderDateDiff 中
+    # In EncoderDateDiff
     def _fit(self, data: pd.Series | pd.DataFrame) -> None:
         """
-        適應 Processor 架構的 fit 方法
+        Fit method adapted for Processor architecture
 
         Args:
-            data: 可能是 pd.Series 或 pd.DataFrame
+            data: Can be either pd.Series or pd.DataFrame
         """
-        # 如果是 Series，將它轉換為只有一列的 DataFrame
+        # If Series, convert it to a single-column DataFrame
         if isinstance(data, pd.Series):
-            # 儲存 Series 名稱，以便之後使用
+            # Store Series name for later use
             self._series_name = data.name
             data = pd.DataFrame({data.name: data})
 
-        # 正常的 fit 邏輯...
-        # 驗證欄位存在
+        # Normal fit logic...
+        # Verify columns exist
         if self.baseline_date not in data.columns:
             raise ValueError(
                 f"Baseline date column '{self.baseline_date}' not found in data"
@@ -968,14 +978,14 @@ class EncoderDateDiff(Encoder):
             if col not in data.columns:
                 raise ValueError(f"Related date column '{col}' not found in data")
 
-        # 儲存原始資料類型
+        # Store original data types
         self._original_dtypes = {
             col: data[col].dtype
             for col in [self.baseline_date] + self.related_date_list
-            if col in data.columns  # 增加安全檢查
+            if col in data.columns  # Add safety check
         }
 
-        # 標記為已適配
+        # Mark as fitted
         self.is_fitted = True
 
     def _transform(self, X: pd.DataFrame) -> pd.DataFrame:

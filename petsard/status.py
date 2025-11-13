@@ -19,7 +19,7 @@ from petsard.synthesizer import Synthesizer
 @dataclass(frozen=True)
 class ExecutionSnapshot:
     """
-    簡化的執行快照
+    Simplified execution snapshot
     """
 
     snapshot_id: str
@@ -34,7 +34,7 @@ class ExecutionSnapshot:
 @dataclass(frozen=True)
 class TimingRecord:
     """
-    簡化的計時記錄
+    Simplified timing record
     """
 
     record_id: str
@@ -47,7 +47,7 @@ class TimingRecord:
     context: dict[str, Any] = field(default_factory=dict)
 
     def complete(self, end_time: datetime | None = None) -> "TimingRecord":
-        """完成計時記錄"""
+        """Complete timing record"""
         if end_time is None:
             end_time = datetime.now()
 
@@ -66,13 +66,13 @@ class TimingRecord:
 
     @property
     def formatted_duration(self) -> str:
-        """格式化的持續時間"""
+        """Formatted duration"""
         return f"{self.duration_seconds:.2f}s" if self.duration_seconds else "N/A"
 
 
 class TimingLogHandler(logging.Handler):
     """
-    簡化的計時日誌處理器
+    Simplified timing log handler
     """
 
     def __init__(self, status_instance):
@@ -83,7 +83,7 @@ class TimingLogHandler(logging.Handler):
         )
 
     def emit(self, record):
-        """處理計時日誌記錄"""
+        """Process timing log record"""
         try:
             message = record.getMessage()
             if not message.startswith("TIMING_"):
@@ -112,15 +112,15 @@ class TimingLogHandler(logging.Handler):
                 )
 
         except (ValueError, TypeError, AttributeError):
-            pass  # 靜默忽略解析錯誤
+            pass  # Silently ignore parsing errors
 
 
 class Status:
     """
-    以 Metadater 為核心的狀態管理器
+    Status manager centered on Metadater
 
-    提供完整的進度快照機制，追蹤每個模組執行前後的元資料變化。
-    保持與原有 Status 介面的相容性。
+    Provides complete progress snapshot mechanism, tracking metadata changes before and after each module execution.
+    Maintains compatibility with original Status interface.
     """
 
     def __init__(
@@ -131,82 +131,82 @@ class Status:
         max_timings: int = 10000,
     ):
         """
-        初始化狀態管理器
+        Initialize status manager
 
         Args:
-            config: 配置物件
-            max_snapshots: 最大快照數量，防止記憶體洩漏
-            max_changes: 最大變更記錄數量
-            max_timings: 最大計時記錄數量
+            config: Configuration object
+            max_snapshots: Maximum number of snapshots, prevents memory leak
+            max_changes: Maximum number of change records
+            max_timings: Maximum number of timing records
         """
         self.config = config
         self.sequence: list = config.sequence
         self._logger = logging.getLogger(f"PETsARD.{self.__class__.__name__}")
 
-        # 核心 Metadata 實例 - 儲存所有變更歷史
+        # Core Metadata instance - stores all change history
         self.metadata_obj = Metadata(
             id="status_metadata",
             name="Status Metadata",
             description="Metadata tracking for Status module",
         )
 
-        # 狀態儲存 - 保持與原有介面相容
+        # State storage - maintain compatibility with original interface
         self.status: dict = {}
         self.metadata: dict[str, Schema] = {}
 
-        # Schema 推論器 - 用於推論 pipeline 各階段的 Schema
+        # Schema inferencer - used to infer Schema at each stage of pipeline
         self.schema_inferencer = SchemaInferencer()
-        self.inferred_schemas: dict[str, Schema] = {}  # 儲存推論出的 Schema
+        self.inferred_schemas: dict[str, Schema] = {}  # Store inferred Schema
 
-        # Preprocessor input metadata 記憶 - 用於 Postprocessor 的多對一轉換還原
-        # 儲存 Preprocessor 的輸入 Schema，以便 Postprocessor 知道原始的 dtype
+        # Preprocessor input metadata memory - used for Postprocessor's many-to-one conversion restoration
+        # Store Preprocessor's input Schema so Postprocessor knows the original dtype
         self.preprocessor_input_schema: Schema | None = None
 
-        # 優化的快照功能 - 使用 deque 限制大小
+        # Optimized snapshot functionality - use deque to limit size
         self.max_snapshots = max_snapshots
         self.max_timings = max_timings
 
         self.snapshots: deque[ExecutionSnapshot] = deque(maxlen=max_snapshots)
         self._snapshot_counter = 0
 
-        # 快照索引，使用弱引用字典避免記憶體洩漏
+        # Snapshot index, use weak reference dict to avoid memory leak
         self._snapshot_index: dict[str, ExecutionSnapshot] = {}
 
-        # 優化的時間記錄功能
+        # Optimized time recording functionality
         self.timing_records: deque[TimingRecord] = deque(maxlen=max_timings)
         self._timing_counter = 0
-        self._active_timings: dict[str, TimingRecord] = {}  # 追蹤進行中的計時
+        self._active_timings: dict[str, TimingRecord] = {}  # Track active timing
 
-        # 原有功能的相容性支援
+        # Compatibility support for original features
         if "Splitter" in self.sequence:
             self.exist_train_indices: list[set] = []
         if "Reporter" in self.sequence:
             self.report: dict = {}
 
-        # 驗證結果儲存 - 用於 Constrainer validate 模式
+        # Validation result storage - used for Constrainer validate mode
         self._validation_results: dict[str, dict] = {}
 
-        # 設置 logging handler 來捕獲時間資訊
+        # Set up logging handler to capture timing information
         self._timing_handler = TimingLogHandler(self)
         self._timing_handler.setLevel(logging.INFO)
 
-        # 將 handler 添加到 PETsARD 的根 logger
+        # Add handler to PETsARD's root logger
         petsard_logger = logging.getLogger("PETsARD")
         petsard_logger.addHandler(self._timing_handler)
 
-        # 儲存當前實驗名稱的映射
+        # Store mapping of current experiment names
         self._current_experiments: dict[str, str] = {}
 
     def _generate_id(self, prefix: str, counter_attr: str) -> str:
         """
-        統一的 ID 生成方法，避免程式碼重複
+        Unified ID generation method, avoid code duplication
 
         Args:
-            prefix: ID 前綴 (如 'snapshot', 'change', 'timing')
-            counter_attr: 計數器屬性名稱 (如 '_snapshot_counter')
+            prefix: ID prefix (e.g., 'snapshot', 'change', 'timing')
+            counter_attr: Counter attribute name (e.g., '_snapshot_counter')
 
         Returns:
-            str: 生成的唯一 ID
+            str: Generated unique ID
         """
         current_counter = getattr(self, counter_attr)
         setattr(self, counter_attr, current_counter + 1)
@@ -214,11 +214,11 @@ class Status:
         return f"{prefix}_{current_counter + 1:06d}_{timestamp}"
 
     def _generate_snapshot_id(self) -> str:
-        """生成快照 ID"""
+        """Generate snapshot ID"""
         return self._generate_id("snapshot", "_snapshot_counter")
 
     def _generate_timing_id(self) -> str:
-        """生成計時 ID"""
+        """Generate timing ID"""
         return self._generate_id("timing", "_timing_counter")
 
     def _create_snapshot(
@@ -230,17 +230,17 @@ class Status:
         context: dict[str, Any] | None = None,
     ) -> ExecutionSnapshot:
         """
-        建立執行快照
+        Create execution snapshot
 
         Args:
-            module: 模組名稱
-            expt: 實驗名稱
-            metadata_before: 執行前元資料
-            metadata_after: 執行後元資料
-            context: 執行上下文
+            module: Module name
+            expt: Experiment name
+            metadata_before: Metadata before execution
+            metadata_after: Metadata after execution
+            context: Execution context
 
         Returns:
-            ExecutionSnapshot: 建立的快照
+            ExecutionSnapshot: Created snapshot
         """
         snapshot = ExecutionSnapshot(
             snapshot_id=self._generate_snapshot_id(),
@@ -253,20 +253,22 @@ class Status:
         )
 
         self.snapshots.append(snapshot)
-        # 更新索引
+        # Update index
         self._snapshot_index[snapshot.snapshot_id] = snapshot
-        # 如果超過限制，清理舊的索引項目
+        # If limit exceeded, clean up old index entries
         if (
             len(self.snapshots) == self.max_snapshots
             and len(self._snapshot_index) > self.max_snapshots
         ):
-            # 清理不在 deque 中的索引項目
+            # Clean up index entries not in deque
             valid_ids = {s.snapshot_id for s in self.snapshots}
             self._snapshot_index = {
                 k: v for k, v in self._snapshot_index.items() if k in valid_ids
             }
 
-        self._logger.debug(f"建立快照: {snapshot.snapshot_id} for {module}[{expt}]")
+        self._logger.debug(
+            f"Created snapshot: {snapshot.snapshot_id} for {module}[{expt}]"
+        )
         return snapshot
 
     def start_timing(
@@ -277,16 +279,16 @@ class Status:
         context: dict[str, Any] | None = None,
     ) -> str:
         """
-        開始計時
+        Start timing
 
         Args:
-            module: 模組名稱
-            expt: 實驗名稱
-            step: 步驟名稱
-            context: 額外的上下文資訊
+            module: Module name
+            expt: Experiment name
+            step: Step name
+            context: Additional context information
 
         Returns:
-            str: 計時記錄 ID
+            str: Timing record ID
         """
         timing_id = self._generate_timing_id()
         timing_key = f"{module}_{expt}_{step}"
@@ -301,7 +303,7 @@ class Status:
         )
 
         self._active_timings[timing_key] = timing_record
-        self._logger.debug(f"開始計時: {timing_key} - {timing_id}")
+        self._logger.debug(f"Start timing: {timing_key} - {timing_id}")
 
         return timing_id
 
@@ -313,26 +315,28 @@ class Status:
         context: dict[str, Any] | None = None,
     ) -> TimingRecord | None:
         """
-        結束計時
+        End timing
 
         Args:
-            module: 模組名稱
-            expt: 實驗名稱
-            step: 步驟名稱
-            context: 額外的上下文資訊
+            module: Module name
+            expt: Experiment name
+            step: Step name
+            context: Additional context information
 
         Returns:
-            Optional[TimingRecord]: 完成的計時記錄，如果沒有找到對應的開始記錄則返回 None
+            Optional[TimingRecord]: Completed timing record, returns None if no corresponding start record found
         """
         timing_key = f"{module}_{expt}_{step}"
 
         if timing_key not in self._active_timings:
-            self._logger.warning(f"找不到對應的開始計時記錄: {timing_key}")
+            self._logger.warning(
+                f"Cannot find corresponding start timing record: {timing_key}"
+            )
             return None
 
         active_timing = self._active_timings.pop(timing_key)
 
-        # 合併額外的上下文資訊
+        # Merge additional context information
         if context:
             merged_context = active_timing.context.copy()
             merged_context.update(context)
@@ -340,7 +344,7 @@ class Status:
             merged_context = active_timing.context
 
         completed_timing = active_timing.complete()
-        # 更新 context
+        # Update context
         completed_timing = TimingRecord(
             record_id=completed_timing.record_id,
             module_name=completed_timing.module_name,
@@ -357,7 +361,7 @@ class Status:
         formatted_duration = str(
             timedelta(seconds=round(completed_timing.duration_seconds))
         )
-        self._logger.debug(f"結束計時: {timing_key} - 耗時: {formatted_duration}")
+        self._logger.debug(f"End timing: {timing_key} - Duration: {formatted_duration}")
 
         return completed_timing
 
@@ -373,20 +377,20 @@ class Status:
         context: dict[str, Any] | None = None,
     ) -> TimingRecord:
         """
-        統一的計時記錄創建方法，避免程式碼重複
+        Unified timing record creation method, avoid code duplication
 
         Args:
-            timing_id: 計時記錄 ID
-            module: 模組名稱
-            expt: 實驗名稱
-            step: 步驟名稱
-            start_time: 開始時間
-            end_time: 結束時間
-            duration_seconds: 持續時間（秒）
-            context: 上下文資訊
+            timing_id: Timing record ID
+            module: Module name
+            expt: Experiment name
+            step: Step name
+            start_time: Start time
+            end_time: End time
+            duration_seconds: Duration in seconds
+            context: Context information
 
         Returns:
-            TimingRecord: 創建的計時記錄
+            TimingRecord: Created timing record
         """
         return TimingRecord(
             record_id=timing_id,
@@ -401,13 +405,13 @@ class Status:
 
     def _handle_timing_start(self, module: str, expt: str, step: str, timestamp: float):
         """
-        處理從 logging 解析的開始計時資訊
+        Process start timing information parsed from logging
 
         Args:
-            module: 模組名稱
-            expt: 實驗名稱
-            step: 步驟名稱
-            timestamp: 時間戳
+            module: Module name
+            expt: Experiment name
+            step: Step name
+            timestamp: Timestamp
         """
         try:
             timing_id = self._generate_timing_id()
@@ -424,10 +428,10 @@ class Status:
             )
 
             self._active_timings[timing_key] = timing_record
-            self._logger.debug(f"從 logging 開始計時: {timing_key} - {timing_id}")
+            self._logger.debug(f"Start timing from logging: {timing_key} - {timing_id}")
 
         except (ValueError, OSError) as e:
-            raise TimingError(f"無法處理計時開始事件: {e}") from e
+            raise TimingError(f"Unable to process timing start event: {e}") from e
 
     def _handle_timing_end(
         self,
@@ -439,15 +443,15 @@ class Status:
         context: dict[str, Any],
     ):
         """
-        處理從 logging 解析的結束計時資訊
+        Process end timing information parsed from logging
 
         Args:
-            module: 模組名稱
-            expt: 實驗名稱
-            step: 步驟名稱
-            timestamp: 結束時間戳
-            duration: 持續時間（秒）
-            context: 上下文資訊
+            module: Module name
+            expt: Experiment name
+            step: Step name
+            timestamp: End timestamp
+            duration: Duration in seconds
+            context: Context information
         """
         try:
             timing_key = f"{module}_{expt}_{step}"
@@ -455,7 +459,7 @@ class Status:
             rounded_duration = round(duration, 2) if duration is not None else None
 
             if timing_key in self._active_timings:
-                # 有對應的開始記錄
+                # Has corresponding start record
                 active_timing = self._active_timings.pop(timing_key)
                 merged_context = active_timing.context.copy()
                 merged_context.update(context)
@@ -471,7 +475,7 @@ class Status:
                     context=merged_context,
                 )
             else:
-                # 沒有對應的開始記錄，創建孤立記錄
+                # No corresponding start record, create orphaned record
                 timing_id = self._generate_timing_id()
                 start_time = datetime.fromtimestamp(timestamp - (duration or 0))
                 orphaned_context = {**context, "source": "logging", "orphaned": True}
@@ -495,29 +499,29 @@ class Status:
                 else "N/A"
             )
             self._logger.debug(
-                f"從 logging 結束計時: {timing_key} - 耗時: {formatted_duration}"
+                f"End timing from logging: {timing_key} - Duration: {formatted_duration}"
             )
 
         except (ValueError, OSError) as e:
-            raise TimingError(f"無法處理計時結束事件: {e}") from e
+            raise TimingError(f"Unable to process timing end event: {e}") from e
 
     def put(self, module: str, expt: str, operator: BaseAdapter):
         """
-        新增模組狀態和操作器到狀態字典
+        Add module status and operator to status dictionary
 
-        這是核心方法，整合了 Metadater 的快照功能
+        This is the core method, integrating Metadater's snapshot functionality
 
         Args:
-            module: 當前模組名稱
-            expt: 當前實驗名稱
-            operator: 當前操作器
+            module: Current module name
+            expt: Current experiment name
+            operator: Current operator
         """
-        # 記錄當前模組的實驗名稱，供 logging handler 使用
+        # Record current module's experiment name for logging handler use
         self._current_experiments[module] = expt
-        # 取得執行前的元資料狀態
+        # Get metadata state before execution
         metadata_before = self.metadata.get(module) if module in self.metadata else None
 
-        # 狀態更新邏輯 (保持原有邏輯)
+        # State update logic (maintain original logic)
         if module in self.status:
             module_seq_idx = self.sequence.index(module)
             module_to_keep = set(self.sequence[: module_seq_idx + 1])
@@ -525,38 +529,38 @@ class Status:
             for exist_module in keys_to_remove:
                 del self.status[exist_module]
 
-        # 使用 Metadater 管理元資料
+        # Use Metadater to manage metadata
         if module in ["Loader", "Splitter", "Preprocessor"]:
             new_metadata = operator.get_metadata()
 
-            # CRITICAL: 對於 Preprocessor，記憶其 input schema 供 Postprocessor 使用
-            # 這解決了多對一轉換（如 int64/float64 → float64）的可逆性問題
+            # CRITICAL: For Preprocessor, remember its input schema for Postprocessor use
+            # This solves the reversibility problem of many-to-one transformations (e.g., int64/float64 → float64)
             if module == "Preprocessor":
-                # 儲存 Preprocessor 的輸入 Schema（來自 Loader 或 Splitter）
+                # Store Preprocessor's input Schema (from Loader or Splitter)
                 pre_module = self.get_pre_module("Preprocessor")
                 if pre_module and pre_module in self.metadata:
                     self.preprocessor_input_schema = self.metadata[pre_module]
                     self._logger.info(
-                        f"記憶 Preprocessor 輸入 Schema（來自 {pre_module}）"
+                        f"Remember Preprocessor input Schema (from {pre_module})"
                     )
 
-                # CRITICAL FIX: 使用 Preprocessor 實際輸出的 Schema，而不是推論的 Schema
-                # Preprocessor 執行後，其輸出 Schema 才是真實的資料結構（例如 EncoderUniform 後是 float64, category=False）
-                # 推論的 Schema 只用於預測，不應該覆蓋實際執行結果
+                # CRITICAL FIX: Use Preprocessor's actual output Schema, not inferred Schema
+                # After Preprocessor execution, its output Schema is the real data structure (e.g., after EncoderUniform it's float64, category=False)
+                # Inferred Schema is only for prediction, should not override actual execution results
                 #
-                # 修復前：使用推論 Schema（category=True, type=string）→ CTGAN 誤判為高基數分類
-                # 修復後：使用實際 Schema（category=False, type=float64）→ CTGAN 正確處理為數值
+                # Before fix: Use inferred Schema (category=True, type=string) → CTGAN misidentifies as high cardinality category
+                # After fix: Use actual Schema (category=False, type=float64) → CTGAN correctly processes as numeric
                 self._logger.info(
-                    f"使用 Preprocessor 實際輸出 Schema（{len(new_metadata.attributes)} 個欄位）"
+                    f"Using Preprocessor actual output Schema ({len(new_metadata.attributes)} fields)"
                 )
-                # new_metadata 已經是 Preprocessor 的實際輸出，直接使用
+                # new_metadata is already Preprocessor's actual output, use directly
 
-            # 使用 SchemaMetadater.diff 追蹤變更
+            # Use SchemaMetadater.diff to track changes
             if metadata_before is not None and hasattr(operator, "get_data"):
-                # 計算差異
+                # Calculate differences
                 diff_result = SchemaMetadater.diff(metadata_before, operator.get_data())
 
-                # 記錄變更到 Metadata
+                # Record changes to Metadata
                 timestamp = datetime.now().isoformat()
                 change_record = {
                     "timestamp": timestamp,
@@ -566,8 +570,8 @@ class Status:
                     "diff": diff_result,
                 }
 
-                # 更新 Metadata 的 change_history 和 diffs
-                # 由於 Metadata 是 frozen，需要重建
+                # Update Metadata's change_history and diffs
+                # Since Metadata is frozen, need to rebuild
                 updated_change_history = list(self.metadata_obj.change_history)
                 updated_change_history.append(change_record)
 
@@ -587,23 +591,23 @@ class Status:
 
             self.set_metadata(module, new_metadata)
 
-        # Reporter 處理
+        # Reporter processing
         if module == "Reporter":
             self.set_report(report=operator.get_result())
 
-        # Splitter 處理 - 更新 exist_train_indices
+        # Splitter processing - update exist_train_indices
         if module == "Splitter" and hasattr(operator, "get_train_indices"):
             train_indices = operator.get_train_indices()
             self.update_exist_train_indices(train_indices)
 
-        # Constrainer 處理 - 儲存驗證結果
+        # Constrainer processing - store validation results
         if module == "Constrainer" and hasattr(operator, "get_validation_result"):
             validation_result = operator.get_validation_result()
             if validation_result is not None:
                 self.put_validation_result(module, validation_result)
-                self._logger.info(f"已儲存 {module}[{expt}] 的驗證結果")
+                self._logger.info(f"Stored validation result for {module}[{expt}]")
 
-        # 建立執行快照
+        # Create execution snapshot
         metadata_after = self.metadata.get(module)
         self._create_snapshot(
             module=module,
@@ -618,20 +622,20 @@ class Status:
             },
         )
 
-        # 更新狀態字典 (保持原有格式)
+        # Update status dictionary (maintain original format)
         temp = {}
         temp["expt"] = expt
         temp["operator"] = operator
         self.status[module] = temp
 
         self._logger.info(
-            f"狀態已更新: {module}[{expt}] - 快照數量: {len(self.snapshots)}"
+            f"Status updated: {module}[{expt}] - Snapshot count: {len(self.snapshots)}"
         )
 
-    # === 原有介面方法 (保持相容性) ===
+    # === Original interface methods (maintain compatibility) ===
 
     def set_report(self, report: dict) -> None:
-        """新增報告資料到報告字典"""
+        """Add report data to report dictionary"""
         if not hasattr(self, "report"):
             raise UnexecutedError
 
@@ -639,7 +643,7 @@ class Status:
             self.report[eval_expt_name] = report_data.copy()
 
     def get_pre_module(self, curr_module: str) -> str:
-        """取得序列中的前一個模組"""
+        """Get the previous module in the sequence"""
         module_idx = self.sequence.index(curr_module)
         if module_idx == 0:
             return None
@@ -647,11 +651,11 @@ class Status:
             return self.sequence[module_idx - 1]
 
     def get_result(self, module: str) -> dict | pd.DataFrame:
-        """取得特定模組的結果"""
+        """Get the result of a specific module"""
         return self.status[module]["operator"].get_result()
 
     def get_full_expt(self, module: str = None) -> dict:
-        """取得模組名稱和對應實驗名稱的字典"""
+        """Get dictionary of module names and corresponding experiment names"""
         if module is None:
             return {
                 seq_module: self.status[seq_module]["expt"]
@@ -672,15 +676,15 @@ class Status:
             }
 
     def get_exist_train_indices(self) -> list[set]:
-        """取得 Splitter 模組生成的唯一訓練索引集合列表"""
+        """Get the list of unique training index sets generated by the Splitter module"""
         return self.exist_train_indices
 
     def update_exist_train_indices(self, new_indices: list[set]) -> None:
         """
-        更新 exist_train_indices，將新的訓練索引加入到集合列表中
+        Update exist_train_indices by adding new training indices to the set list
 
         Args:
-            new_indices: 新的訓練索引集合列表 list[set]
+            new_indices: New training index set list[set]
         """
         if not hasattr(self, "exist_train_indices"):
             self.exist_train_indices = []
@@ -689,98 +693,98 @@ class Status:
             self.exist_train_indices.append(index_set)
 
     def set_metadata(self, module: str, metadata: Schema) -> None:
-        """設定給定模組的元資料"""
+        """Set metadata for the given module"""
         self.metadata[module] = metadata
 
     def get_metadata(self, module: str = "Loader") -> Schema:
-        """取得資料集的元資料"""
+        """Get metadata of the dataset"""
         if module not in self.metadata:
             raise UnexecutedError
         return self.metadata[module]
 
     def get_preprocessor_input_schema(self) -> Schema | None:
         """
-        取得 Preprocessor 的輸入 Schema
+        Get Preprocessor's input Schema
 
-        這用於 Postprocessor 的多對一轉換還原，
-        例如 int64 → scaler → float64 → inverse → int64
+        This is used for Postprocessor's many-to-one transformation restoration,
+        e.g., int64 → scaler → float64 → inverse → int64
 
         Returns:
-            Preprocessor 的輸入 Schema，如果不存在則返回 None
+            Preprocessor's input Schema, returns None if not exists
         """
         return self.preprocessor_input_schema
 
     def get_synthesizer(self) -> Synthesizer:
-        """取得合成器實例"""
+        """Get synthesizer instance"""
         if "Synthesizer" in self.status:
             return self.status["Synthesizer"]["operator"].synthesizer
         else:
             raise UnexecutedError
 
     def get_processor(self) -> Processor:
-        """取得資料集的處理器"""
+        """Get the dataset processor"""
         if "Preprocessor" in self.status:
             return self.status["Preprocessor"]["operator"].processor
         else:
             raise UnexecutedError
 
     def get_report(self) -> dict:
-        """取得 Reporter 模組生成的報告資料"""
+        """Get report data generated by Reporter module"""
         if not hasattr(self, "report"):
             raise UnexecutedError
         return self.report
 
     def put_validation_result(self, module: str, validation_result: dict) -> None:
         """
-        儲存 Constrainer 的驗證結果
+        Store Constrainer's validation result
 
         Args:
-            module: 模組名稱（通常是 "Constrainer"）
-            validation_result: 驗證結果字典，包含:
-                - total_rows (int): 總資料筆數
-                - passed_rows (int): 通過所有條件的資料筆數
-                - failed_rows (int): 未通過條件的資料筆數
-                - pass_rate (float): 通過率 (0.0 到 1.0)
-                - is_fully_compliant (bool): 是否百分百符合
-                - constraint_violations (dict): 各條件的違規統計
-                - violation_details (pd.DataFrame, optional): 違規記錄的詳細資訊
+            module: Module name (usually "Constrainer")
+            validation_result: Validation result dictionary containing:
+                - total_rows (int): Total number of data rows
+                - passed_rows (int): Number of rows passing all conditions
+                - failed_rows (int): Number of rows failing conditions
+                - pass_rate (float): Pass rate (0.0 to 1.0)
+                - is_fully_compliant (bool): Whether 100% compliant
+                - constraint_violations (dict): Violation statistics for each condition
+                - violation_details (pd.DataFrame, optional): Detailed violation records
         """
         if not hasattr(self, "_validation_results"):
             self._validation_results = {}
 
         self._validation_results[module] = validation_result
-        self._logger.debug(f"儲存驗證結果: {module}")
+        self._logger.debug(f"Store validation result: {module}")
 
     def get_validation_result(self, module: str = None) -> dict | None:
         """
-        取得 Constrainer 的驗證結果
+        Get Constrainer's validation result
 
         Args:
-            module: 模組名稱，如果為 None 則返回所有驗證結果
+            module: Module name, returns all validation results if None
 
         Returns:
-            dict: 驗證結果字典，如果不存在則返回 None
+            dict: Validation result dictionary, returns None if not exists
         """
         if not hasattr(self, "_validation_results"):
             return None
 
         if module is None:
-            # 返回所有驗證結果
+            # Return all validation results
             return self._validation_results.copy() if self._validation_results else None
 
         return self._validation_results.get(module)
 
-    # === 新增的快照和變更追蹤方法 ===
+    # === New snapshot and change tracking methods ===
 
     def get_snapshots(self, module: str = None) -> list[ExecutionSnapshot]:
         """
-        取得快照列表
+        Get snapshot list
 
         Args:
-            module: 可選的模組名稱過濾
+            module: Optional module name filter
 
         Returns:
-            List[ExecutionSnapshot]: 快照列表
+            List[ExecutionSnapshot]: Snapshot list
         """
         if module is None:
             return self.snapshots.copy()
@@ -789,25 +793,25 @@ class Status:
 
     def get_snapshot_by_id(self, snapshot_id: str) -> ExecutionSnapshot | None:
         """
-        根據 ID 取得特定快照 - 優化版本使用索引
+        Get specific snapshot by ID - optimized version using index
 
         Args:
-            snapshot_id: 快照 ID
+            snapshot_id: Snapshot ID
 
         Returns:
-            Optional[ExecutionSnapshot]: 快照物件或 None
+            Optional[ExecutionSnapshot]: Snapshot object or None
         """
         return self._snapshot_index.get(snapshot_id)
 
     def get_change_history(self, module: str = None) -> list[dict[str, Any]]:
         """
-        取得變更歷史
+        Get change history
 
         Args:
-            module: 可選的模組名稱過濾
+            module: Optional module name filter
 
         Returns:
-            List[dict]: 變更記錄列表
+            List[dict]: Change record list
         """
         if module is None:
             return self.metadata_obj.change_history
@@ -820,13 +824,13 @@ class Status:
 
     def get_metadata_evolution(self, module: str = "Loader") -> list[Schema]:
         """
-        取得特定模組的元資料演進歷史 - 優化版本避免重複
+        Get metadata evolution history for specific module - optimized version avoiding duplicates
 
         Args:
-            module: 模組名稱
+            module: Module name
 
         Returns:
-            List[Schema]: 元資料演進列表
+            List[Schema]: Metadata evolution list
         """
         evolution = []
         seen_ids = set()
@@ -849,52 +853,60 @@ class Status:
 
     def restore_from_snapshot(self, snapshot_id: str) -> bool:
         """
-        從快照恢復狀態 (基礎實作)
+        Restore state from snapshot (basic implementation)
 
         Args:
-            snapshot_id: 快照 ID
+            snapshot_id: Snapshot ID
 
         Returns:
-            bool: 是否成功恢復
+            bool: Whether restoration was successful
         """
         snapshot = self.get_snapshot_by_id(snapshot_id)
         if snapshot is None:
-            self._logger.error(f"找不到快照: {snapshot_id}")
+            self._logger.error(f"Cannot find snapshot: {snapshot_id}")
             return False
 
         try:
-            # 驗證快照完整性
+            # Validate snapshot integrity
             if not snapshot.metadata_after:
-                raise SnapshotError(f"快照 {snapshot_id} 沒有可恢復的元資料")
+                raise SnapshotError(
+                    f"Snapshot {snapshot_id} has no recoverable metadata"
+                )
 
             if not hasattr(snapshot.metadata_after, "schema_id"):
-                raise SnapshotError(f"快照 {snapshot_id} 的元資料格式無效")
+                raise SnapshotError(
+                    f"Snapshot {snapshot_id} has invalid metadata format"
+                )
 
-            # 恢復元資料狀態
+            # Restore metadata state
             self.metadata[snapshot.module_name] = snapshot.metadata_after
             self._logger.info(
-                f"已從快照 {snapshot_id} 恢復 {snapshot.module_name} 的元資料"
+                f"Restored {snapshot.module_name} metadata from snapshot {snapshot_id}"
             )
             return True
 
         except SnapshotError as e:
-            self._logger.error(f"快照恢復失敗: {e}")
+            self._logger.error(f"Snapshot restoration failed: {e}")
             return False
         except (AttributeError, KeyError) as e:
-            self._logger.error(f"快照資料存取錯誤: {e}")
+            self._logger.error(f"Snapshot data access error: {e}")
             return False
         except Exception as e:
-            self._logger.error(f"未預期的快照恢復錯誤: {e}", exc_info=True)
-            raise StatusError(f"快照恢復過程中發生未預期錯誤: {e}") from e
+            self._logger.error(
+                f"Unexpected snapshot restoration error: {e}", exc_info=True
+            )
+            raise StatusError(
+                f"Unexpected error during snapshot restoration: {e}"
+            ) from e
 
     def get_status_summary(self) -> dict[str, Any]:
         """
-        取得狀態摘要資訊
+        Get status summary information
 
         Returns:
-            Dict[str, Any]: 狀態摘要
+            Dict[str, Any]: Status summary
         """
-        # 計算變更統計
+        # Calculate change statistics
         total_changes = len(self.metadata_obj.change_history)
         last_change = (
             self.metadata_obj.change_history[-1]
@@ -915,13 +927,13 @@ class Status:
 
     def get_timing_records(self, module: str = None) -> list[TimingRecord]:
         """
-        取得特定模組的時間記錄
+        Get timing records for specific module
 
         Args:
-            module: 可選的模組名稱過濾，如果為 None 則返回所有記錄
+            module: Optional module name filter, returns all records if None
 
         Returns:
-            List[TimingRecord]: 時間記錄列表
+            List[TimingRecord]: Timing record list
         """
         if module is None:
             return self.timing_records.copy()
@@ -930,15 +942,15 @@ class Status:
 
     def get_timing_report_data(self) -> pd.DataFrame:
         """
-        取得適合 Reporter 使用的時間記錄資料 - 優化版本
+        Get timing record data suitable for Reporter use - optimized version
 
         Returns:
-            pd.DataFrame: 時間記錄的 DataFrame
+            pd.DataFrame: DataFrame of timing records
         """
         if not self.timing_records:
             return pd.DataFrame()
 
-        # 使用列表推導式和預分配，提升性能
+        # Use list comprehension and pre-allocation to improve performance
         data = [
             {
                 "record_id": record.record_id,
@@ -948,7 +960,7 @@ class Status:
                 "start_time": record.start_time.isoformat(),
                 "end_time": record.end_time.isoformat() if record.end_time else None,
                 "duration_seconds": record.duration_seconds,
-                **record.context,  # 展開 context 中的額外資訊
+                **record.context,  # Expand extra information from context
             }
             for record in self.timing_records
         ]
@@ -957,16 +969,16 @@ class Status:
 
     def get_data_by_module(self, modules: str | list[str]) -> dict[str, pd.DataFrame]:
         """
-        根據模組名稱獲取資料
-        專為 Describer 和 Reporter 設計，只使用模組名稱
+        Get data by module name
+        Designed specifically for Describer and Reporter, uses only module names
 
         Args:
-            modules: 模組名稱或名稱列表
+            modules: Module name or list of names
                 - 'Loader', 'Splitter', 'Preprocessor', 'Synthesizer', 'Postprocessor', 'Constrainer'
-                - 'Evaluator', 'Describer' 等
+                - 'Evaluator', 'Describer', etc.
 
         Returns:
-            dict[str, pd.DataFrame]: key 為模組名稱，value 為資料
+            dict[str, pd.DataFrame]: key is module name, value is data
         """
         if isinstance(modules, str):
             modules = [modules]
@@ -982,7 +994,7 @@ class Status:
             if isinstance(result, pd.DataFrame):
                 data_sources[module_name] = result
             elif isinstance(result, dict):
-                # 如果是字典（如 Splitter 的結果），展開為 module_key 格式
+                # If dictionary (like Splitter's result), expand to module_key format
                 for key, value in result.items():
                     if isinstance(value, pd.DataFrame):
                         data_sources[f"{module_name}_{key}"] = value

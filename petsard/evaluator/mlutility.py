@@ -45,7 +45,7 @@ class TaskType(Enum):
             "classification": cls.CLASSIFICATION,
             "clustering": cls.CLUSTERING,
             "regression": cls.REGRESSION,
-            # Aliases 別名
+            # Aliases
             "class": cls.CLASSIFICATION,
             "cluster": cls.CLUSTERING,
             "reg": cls.REGRESSION,
@@ -60,7 +60,7 @@ class TaskType(Enum):
 class MetricRegistry:
     """Metric registry - complete sklearn.metrics implementation"""
 
-    # Default metrics 預設指標
+    # Default metrics
     DEFAULT_METRICS = {
         TaskType.CLASSIFICATION: [
             "f1_score",
@@ -86,12 +86,12 @@ class MetricRegistry:
 
         cm = confusion_matrix(y_true, y_pred)
 
-        # Handle binary or multi-class classification 處理二元或多類別分類
+        # Handle binary or multi-class classification
         if cm.shape == (2, 2):
-            # Binary classification 二元分類
+            # Binary classification
             tn, fp, fn, tp = cm.ravel()
         else:
-            # Multi-class classification: compute micro-average 多類別分類：計算微平均
+            # Multi-class classification: compute micro-average
             tp = np.diag(cm).sum()
             fp = cm.sum(axis=0) - np.diag(cm)
             fn = cm.sum(axis=1) - np.diag(cm)
@@ -99,7 +99,7 @@ class MetricRegistry:
             fn = fn.sum()
             tn = cm.sum() - tp - fp - fn
 
-        # Compute all derived metrics 計算所有衍生指標
+        # Compute all derived metrics
         metrics = {
             "tp": int(tp),
             "tn": int(tn),
@@ -124,19 +124,19 @@ class MetricRegistry:
             else float("inf"),  # Diagnostic Odds Ratio
         }
 
-        # Compute other statistical metrics 計算其他統計指標
-        metrics["sensitivity"] = metrics["tpr"]  # Synonym 同義詞
-        metrics["specificity"] = metrics["tnr"]  # Synonym 同義詞
-        metrics["precision"] = metrics["ppv"]  # Synonym 同義詞
-        metrics["recall"] = metrics["tpr"]  # Synonym 同義詞
+        # Compute other statistical metrics
+        metrics["sensitivity"] = metrics["tpr"]  # Synonym
+        metrics["specificity"] = metrics["tnr"]  # Synonym
+        metrics["precision"] = metrics["ppv"]  # Synonym
+        metrics["recall"] = metrics["tpr"]  # Synonym
         metrics["informedness"] = metrics["tpr"] + metrics["tnr"] - 1  # Youden's J
         metrics["markedness"] = metrics["ppv"] + metrics["npv"] - 1
 
         return metrics
 
-    # 內建指標函數 - 完整的 sklearn.metrics
+    # Built-in metric functions - complete sklearn.metrics
     BUILTIN_METRICS = {
-        # 基本分類指標
+        # Basic classification metrics
         "accuracy": accuracy_score,
         "f1_score": lambda y_true, y_pred: f1_score(
             y_true,
@@ -168,10 +168,10 @@ class MetricRegistry:
             zero_division=0,
         ),
         "mcc": matthews_corrcoef,
-        # Metrics requiring probabilities (special handling) 需要概率的指標 (特殊處理)
+        # Metrics requiring probabilities (special handling)
         "roc_auc": None,
         "pr_auc": None,
-        # Confusion Matrix derived metrics (special handling) Confusion Matrix 衍生指標 (特殊處理)
+        # Confusion Matrix derived metrics (special handling)
         "tp": None,
         "tn": None,
         "fp": None,
@@ -190,7 +190,7 @@ class MetricRegistry:
         "markedness": None,
         "prevalence": None,
         "dor": None,
-        # Regression metrics 回歸指標
+        # Regression metrics
         "r2_score": r2_score,
         "mse": mean_squared_error,
         "mae": mean_absolute_error,
@@ -198,13 +198,13 @@ class MetricRegistry:
         "mape": lambda y_true, y_pred: np.mean(np.abs((y_true - y_pred) / y_true)) * 100
         if np.all(y_true != 0)
         else np.inf,
-        # Clustering metrics 聚類指標
+        # Clustering metrics
         "silhouette_score": silhouette_score,
     }
 
-    # Metric task compatibility 指標適用的任務類型
+    # Metric task compatibility
     METRIC_TASK_COMPATIBILITY = {
-        # Classification metrics 分類指標
+        # Classification metrics
         "accuracy": [TaskType.CLASSIFICATION],
         "f1_score": [TaskType.CLASSIFICATION],
         "f2_score": [TaskType.CLASSIFICATION],
@@ -232,13 +232,13 @@ class MetricRegistry:
         "markedness": [TaskType.CLASSIFICATION],
         "prevalence": [TaskType.CLASSIFICATION],
         "dor": [TaskType.CLASSIFICATION],
-        # Regression metrics 回歸指標
+        # Regression metrics
         "r2_score": [TaskType.REGRESSION],
         "mse": [TaskType.REGRESSION],
         "mae": [TaskType.REGRESSION],
         "rmse": [TaskType.REGRESSION],
         "mape": [TaskType.REGRESSION],
-        # Clustering metrics 聚類指標
+        # Clustering metrics
         "silhouette_score": [TaskType.CLUSTERING],
     }
 
@@ -250,12 +250,12 @@ class MetricRegistry:
         self, name: str, func: Callable, task_types: list[TaskType]
     ) -> None:
         """
-        註冊自訂指標
+        Register custom metric
 
         Args:
-            name: 指標名稱
-            func: 指標計算函數
-            task_types: 適用的任務類型
+            name: Metric name
+            func: Metric calculation function
+            task_types: Applicable task types
         """
         self.custom_metrics[name] = func
         if name not in self.METRIC_TASK_COMPATIBILITY:
@@ -263,13 +263,13 @@ class MetricRegistry:
 
     def get_metric(self, name: str) -> Callable:
         """
-        取得指標函數
+        Get metric function
 
         Args:
-            name: 指標名稱
+            name: Metric name
 
         Returns:
-            指標計算函數
+            Metric calculation function
         """
         if name in self.custom_metrics:
             return self.custom_metrics[name]
@@ -279,17 +279,17 @@ class MetricRegistry:
 
     def is_compatible(self, metric_name: str, task_type: TaskType) -> bool:
         """
-        檢查指標是否與任務類型相容
+        Check if metric is compatible with task type
 
         Args:
-            metric_name: 指標名稱
-            task_type: 任務類型
+            metric_name: Metric name
+            task_type: Task type
 
         Returns:
-            是否相容
+            Whether compatible
         """
         if metric_name in self.custom_metrics:
-            # Custom metrics are compatible with all tasks by default 自訂指標預設相容所有任務
+            # Custom metrics are compatible with all tasks by default
             return True
 
         if metric_name not in self.METRIC_TASK_COMPATIBILITY:
@@ -305,23 +305,23 @@ class MetricRegistry:
 @dataclass
 class MLUtilityConfig(BaseConfig):
     """
-    MLUtility 評估器配置
+    MLUtility evaluator configuration
 
     Attributes:
-        eval_method: 評估方法名稱 (mlutility)
-        experiment_design: 實驗設計方式
-            - 'dual_model_control': 雙模型控制組（預設）- ori和syn分別訓練，在control測試
-            - 'domain_transfer': 領域遷移 - syn訓練，在ori測試
-        resampling: 不平衡資料處理方法（僅限分類任務）
-            - None: 不處理（預設）
-            - 'smote-enn': 使用 SMOTE-ENN 合成少數類別並清理噪音樣本
-            - 'smote-tomek': 使用 SMOTE-Tomek 合成少數類別並清理邊界樣本
-        task_type: 任務類型
-        target: 目標欄位（分類/回歸任務需要）
-        metrics: 要計算的評估指標
-        n_clusters: 聚類數量（預設為5）
-        xgb_params: XGBoost 額外參數
-        random_state: 隨機種子
+        eval_method: Evaluation method name (mlutility)
+        experiment_design: Experiment design approach
+            - 'dual_model_control': Dual model control group (default) - train ori and syn separately, test on control
+            - 'domain_transfer': Domain transfer - train on syn, test on ori
+        resampling: Imbalanced data handling method (classification tasks only)
+            - None: No handling (default)
+            - 'smote-enn': Use SMOTE-ENN to synthesize minority class and clean noisy samples
+            - 'smote-tomek': Use SMOTE-Tomek to synthesize minority class and clean boundary samples
+        task_type: Task type
+        target: Target column (required for classification/regression tasks)
+        metrics: Evaluation metrics to compute
+        n_clusters: Number of clusters (default 5)
+        xgb_params: Additional XGBoost parameters
+        random_state: Random seed
     """
 
     eval_method: str
@@ -334,7 +334,7 @@ class MLUtilityConfig(BaseConfig):
     xgb_params: dict = field(default_factory=dict)
     random_state: int = 42
 
-    # Internal use 內部使用
+    # Internal use
     REQUIRED_INPUT_KEYS: list[str] = field(
         default_factory=lambda: ["ori", "syn", "control"]
     )
@@ -343,9 +343,9 @@ class MLUtilityConfig(BaseConfig):
     def __post_init__(self):
         super().__post_init__()
 
-        # Parse task type 解析任務類型
+        # Parse task type
         if self.task_type is None:
-            # Parse from eval_method 從 eval_method 解析
+            # Parse from eval_method
             method_suffix = self.eval_method.replace("mlutility-", "")
             try:
                 self.task_type = TaskType.from_string(method_suffix)
@@ -358,7 +358,7 @@ class MLUtilityConfig(BaseConfig):
         elif isinstance(self.task_type, str):
             self.task_type = TaskType.from_string(self.task_type)
 
-        # Validate target column 驗證目標欄位
+        # Validate target column
         if self.task_type in [TaskType.CLASSIFICATION, TaskType.REGRESSION]:
             if not self.target:
                 error_msg = f"Task type {self.task_type.name} requires a target column to be specified"
@@ -371,20 +371,20 @@ class MLUtilityConfig(BaseConfig):
                 )
                 self.target = None
 
-        # Validate experiment design 驗證實驗設計
+        # Validate experiment design
         if self.experiment_design not in ["dual_model_control", "domain_transfer"]:
             error_msg = f"Unsupported experiment design: {self.experiment_design}. Must be 'dual_model_control' or 'domain_transfer'"
             self._logger.error(error_msg)
             raise ConfigError(error_msg)
 
-        # Validate resampling method 驗證不平衡處理方法
+        # Validate resampling method
         if self.resampling is not None and self.resampling != "None":
             if self.resampling not in ["smote-enn", "smote-tomek"]:
                 error_msg = f"Unsupported resampling method: {self.resampling}. Supported methods are 'smote-enn' or 'smote-tomek'"
                 self._logger.error(error_msg)
                 raise ConfigError(error_msg)
 
-            # Resampling is only for classification tasks 只有分類任務可以使用不平衡處理
+            # Resampling is only for classification tasks
             if self.task_type != TaskType.CLASSIFICATION:
                 error_msg = f"Resampling method {self.resampling} is only available for classification tasks"
                 self._logger.error(error_msg)
@@ -397,18 +397,18 @@ class MLUtilityConfig(BaseConfig):
             # Treat string "None" as None
             self.resampling = None
 
-        # Adjust required input keys 調整必要輸入鍵
+        # Adjust required input keys
         if self.experiment_design == "domain_transfer":
-            # Domain transfer only needs ori and syn 領域遷移只需要 ori 和 syn
+            # Domain transfer only needs ori and syn
             self.REQUIRED_INPUT_KEYS = ["ori", "syn"]
 
-        # Set default metrics 設定預設指標
+        # Set default metrics
         metric_registry = MetricRegistry()
         if self.metrics is None:
             self.metrics = metric_registry.get_default_metrics(self.task_type)
             self._logger.info(f"Using default metrics: {self.metrics}")
         else:
-            # Validate metric compatibility 驗證指標是否相容
+            # Validate metric compatibility
             incompatible = []
             for metric in self.metrics:
                 if not metric_registry.is_compatible(metric, self.task_type):
@@ -421,18 +421,18 @@ class MLUtilityConfig(BaseConfig):
 
     def update_data(self, data: dict[str, pd.DataFrame]) -> None:
         """
-        驗證並更新資料相關配置
+        Validate and update data-related configuration
 
         Args:
-            data: 輸入資料字典
+            data: Input data dictionary
         """
-        # Validate required keys 驗證必要的鍵
+        # Validate required keys
         if not all(key in data for key in self.REQUIRED_INPUT_KEYS):
             error_msg = f"Missing required data keys: {self.REQUIRED_INPUT_KEYS}"
             self._logger.error(error_msg)
             raise ConfigError(error_msg)
 
-        # Validate data is not empty 驗證資料不為空
+        # Validate data is not empty
         for key in self.REQUIRED_INPUT_KEYS:
             df = data[key].dropna()
             if df.empty:
@@ -440,7 +440,7 @@ class MLUtilityConfig(BaseConfig):
                 self._logger.error(error_msg)
                 raise ConfigError(error_msg)
 
-        # Validate target column exists 驗證目標欄位存在
+        # Validate target column exists
         if self.target:
             for key in self.REQUIRED_INPUT_KEYS:
                 if self.target not in data[key].columns:
@@ -450,16 +450,16 @@ class MLUtilityConfig(BaseConfig):
                     self._logger.error(error_msg)
                     raise ConfigError(error_msg)
 
-        # Record data sizes 記錄資料大小
+        # Record data sizes
         self.n_rows = {key: data[key].shape[0] for key in self.REQUIRED_INPUT_KEYS}
         self._logger.debug(f"Data row counts: {self.n_rows}")
 
 
 class MLUtility(BaseEvaluator):
     """
-    簡化的機器學習效用評估器
+    Simplified machine learning utility evaluator
 
-    使用 XGBoost 進行分類和回歸，K-means 進行聚類
+    Uses XGBoost for classification and regression, K-means for clustering
     """
 
     REQUIRED_INPUT_KEYS: list[str] = ["ori", "syn", "control"]
@@ -467,10 +467,10 @@ class MLUtility(BaseEvaluator):
 
     def __init__(self, config: dict):
         """
-        初始化評估器
+        Initialize evaluator
 
         Args:
-            config: 配置字典
+            config: Configuration dictionary
         """
         super().__init__(config=config)
         self._logger = logging.getLogger(f"PETsARD.{self.__class__.__name__}")
@@ -481,96 +481,94 @@ class MLUtility(BaseEvaluator):
 
         self.metric_registry = MetricRegistry()
         self._impl = None
-        self._schema = (
-            None  # Store schema to determine column types 儲存 schema 以判斷欄位類型
-        )
+        self._schema = None  # Store schema to determine column types
 
     def _preprocess_data(
         self, data: dict[str, pd.DataFrame], schema=None
     ) -> tuple[dict[str, dict], str]:
         """
-        資料前處理
+        Data preprocessing
 
-        簡化的前處理流程：
-        1. 移除缺失值
-        2. 編碼類別變數（使用 OneHotEncoder）
-        3. 標準化數值特徵
-        4. 不平衡處理（僅分類任務，在訓練資料上應用 SMOTE-ENN 或 SMOTE-Tomek）
+        Simplified preprocessing flow:
+        1. Remove missing values
+        2. Encode categorical variables (using OneHotEncoder)
+        3. Standardize numerical features
+        4. Handle imbalanced data (classification tasks only, apply SMOTE-ENN or SMOTE-Tomek on training data)
 
-        重要：為避免資料洩漏，只使用 ori 和 syn 資料來訓練編碼器和標準化器。
-        - OneHotEncoder 設定 handle_unknown='ignore' 來處理未見過的類別
-        - control 資料使用訓練好的轉換器進行轉換
+        Important: To avoid data leakage, only use ori and syn data to train encoders and scalers.
+        - OneHotEncoder set handle_unknown='ignore' to handle unseen categories
+        - control data uses trained transformers for transformation
 
         Args:
-            data: 原始資料
-            schema: 資料 schema，用於判斷欄位類型
+            data: Raw data
+            schema: Data schema, used to determine column types
 
         Returns:
-            (前處理後的資料, 狀態碼)
+            (Preprocessed data, status code)
         """
         processed_data = {}
 
-        # Copy data 複製資料
+        # Copy data
         data_copy = {key: data[key].copy() for key in self.REQUIRED_INPUT_KEYS}
 
-        # Remove missing values 移除缺失值
+        # Remove missing values
         for key in self.REQUIRED_INPUT_KEYS:
             data_copy[key] = data_copy[key].dropna()
             if data_copy[key].empty:
                 return None, "empty_after_dropna"
 
-        # Separate features and target 分離特徵和目標
+        # Separate features and target
         if self.mlutility_config.target:
-            # Classification/regression task 分類/回歸任務
+            # Classification/regression task
             target_col = self.mlutility_config.target
 
-            # Extract target column first (after dropna) 先提取目標欄位（在 dropna 之後）
+            # Extract target column first (after dropna)
             y_data = {
                 key: data_copy[key][target_col].copy()
                 for key in self.REQUIRED_INPUT_KEYS
             }
 
-            # Check if target is constant 檢查目標是否為常數
+            # Check if target is constant
             for key in self.REQUIRED_INPUT_KEYS:
                 if data_copy[key][target_col].nunique() == 1:
                     return None, "constant_target"
 
-            # Prepare features (exclude target column) 準備特徵（排除目標欄位）
+            # Prepare features (exclude target column)
             feature_cols = [
                 col for col in data_copy["ori"].columns if col != target_col
             ]
 
-            # Separate feature data 分離特徵資料
+            # Separate feature data
             X_data = {
                 key: data_copy[key][feature_cols].copy()
                 for key in self.REQUIRED_INPUT_KEYS
             }
 
-            # Separate numerical and categorical features 分離數值和類別特徵
-            # Conservative check: if any dataset contains non-numeric content, treat as categorical 保守判斷：檢查所有資料集，如果任何一個包含非數值內容就視為類別
+            # Separate numerical and categorical features
+            # Conservative check: if any dataset contains non-numeric content, treat as categorical
             numerical_cols = []
             categorical_cols = []
 
             for col in feature_cols:
                 is_categorical = False
 
-                # Check all datasets 檢查所有資料集
+                # Check all datasets
                 for key in self.REQUIRED_INPUT_KEYS:
                     if col not in data_copy[key].columns:
                         continue
 
-                    # Check dtype first 先檢查 dtype
+                    # Check dtype first
                     dtype = data_copy[key][col].dtype
                     if dtype == "object" or dtype.name == "category":
                         is_categorical = True
                         break
 
-                    # For non-object types, try converting to numeric to confirm 對於非 object 類型，嘗試轉換為數值來確認
+                    # For non-object types, try converting to numeric to confirm
                     try:
-                        # Try converting to numeric, if it fails it's categorical 嘗試轉換為數值，如果失敗就是類別
+                        # Try converting to numeric, if it fails it's categorical
                         pd.to_numeric(data_copy[key][col], errors="raise")
                     except (ValueError, TypeError):
-                        # Cannot convert to numeric, treat as categorical column 無法轉換為數值，視為類別欄位
+                        # Cannot convert to numeric, treat as categorical column
                         is_categorical = True
                         break
 
@@ -582,13 +580,13 @@ class MLUtility(BaseEvaluator):
             self._logger.debug(f"Categorical columns: {categorical_cols}")
             self._logger.debug(f"Numerical columns: {numerical_cols}")
 
-            # Process categorical features (using OneHotEncoder) 處理類別特徵（使用 OneHotEncoder）
+            # Process categorical features (using OneHotEncoder)
             encoded_features = {}
             if categorical_cols:
                 encoder = OneHotEncoder(sparse_output=False, handle_unknown="ignore")
 
-                # Only use ori and syn data to train encoder to avoid data leakage 只使用 ori 和 syn 資料來訓練編碼器，避免資料洩漏
-                # handle_unknown='ignore' will encode unseen categories in control as all-zero vectors handle_unknown='ignore' 會將 control 中未見過的類別編碼為全零向量
+                # Only use ori and syn data to train encoder to avoid data leakage
+                # handle_unknown='ignore' will encode unseen categories in control as all-zero vectors
                 train_cat_data = pd.concat(
                     [
                         data_copy["ori"][categorical_cols],
@@ -597,24 +595,24 @@ class MLUtility(BaseEvaluator):
                 )
                 encoder.fit(train_cat_data)
 
-                # Encode categorical features for each dataset 編碼各資料集的類別特徵
+                # Encode categorical features for each dataset
                 for key in self.REQUIRED_INPUT_KEYS:
                     encoded = encoder.transform(data_copy[key][categorical_cols])
-                    # Create encoded column names 建立編碼後的欄位名稱
+                    # Create encoded column names
                     encoded_cols = []
                     for i, col in enumerate(categorical_cols):
                         for cat in encoder.categories_[i]:
                             encoded_cols.append(f"{col}_{cat}")
 
-                    # Store encoded features 儲存編碼後的特徵
+                    # Store encoded features
                     encoded_features[key] = pd.DataFrame(
                         encoded, columns=encoded_cols, index=data_copy[key].index
                     )
 
-            # Merge numerical features and encoded categorical features 合併數值特徵和編碼後的類別特徵
+            # Merge numerical features and encoded categorical features
             for key in self.REQUIRED_INPUT_KEYS:
                 if categorical_cols:
-                    # Merge numerical and encoded categorical features 合併數值和編碼後的類別特徵
+                    # Merge numerical and encoded categorical features
                     X_features = pd.concat(
                         [
                             data_copy[key][numerical_cols].reset_index(drop=True),
@@ -623,24 +621,24 @@ class MLUtility(BaseEvaluator):
                         axis=1,
                     )
                 else:
-                    # Only numerical features 只有數值特徵
+                    # Only numerical features
                     X_features = X_data[key][numerical_cols]
 
                 X_data[key] = X_features
 
-            # Standardize features 標準化特徵
-            # Only use ori and syn data to compute mean and std to avoid data leakage 只使用 ori 和 syn 資料來計算均值和標準差，避免資料洩漏
+            # Standardize features
+            # Only use ori and syn data to compute mean and std to avoid data leakage
             scaler_X = StandardScaler()
             X_train = pd.concat([X_data["ori"], X_data["syn"]])
             scaler_X.fit(X_train)
 
-            # Process target variable 處理目標變數
+            # Process target variable
             if self.mlutility_config.task_type == TaskType.CLASSIFICATION:
-                # Check if target column is already numeric 檢查目標欄位是否已經是數值型態
+                # Check if target column is already numeric
                 first_target = y_data["ori"]
 
                 if pd.api.types.is_numeric_dtype(first_target):
-                    # Target is already numeric, use directly 目標已經是數值，直接使用
+                    # Target is already numeric, use directly
                     self._logger.info(
                         f"Target column '{target_col}' is already numeric, no encoding needed"
                     )
@@ -649,13 +647,12 @@ class MLUtility(BaseEvaluator):
                         X_scaled = scaler_X.transform(X_data[key])
                         y_encoded = y_data[key].values
                 else:
-                    # Target is categorical, needs encoding 目標是類別型態，需要編碼
+                    # Target is categorical, needs encoding
                     self._logger.info(
                         f"Target column '{target_col}' is categorical, using LabelEncoder"
                     )
 
                     # Use only ori and syn data to build label encoding to avoid data leakage
-                    # 只使用 ori 和 syn 資料來建立標籤編碼，避免資料洩漏
                     label_encoder = LabelEncoder()
                     y_train = pd.concat([y_data["ori"], y_data["syn"]])
                     label_encoder.fit(y_train)
@@ -664,11 +661,11 @@ class MLUtility(BaseEvaluator):
                         X_scaled = scaler_X.transform(X_data[key])
                         y_encoded = label_encoder.transform(y_data[key])
 
-                        # Apply imbalanced data handling to training data 對訓練資料應用不平衡處理
+                        # Apply imbalanced data handling to training data
                         if self.mlutility_config.resampling and key in ["ori", "syn"]:
-                            # Only resample training data (ori and syn), not test data (control) 只對訓練資料（ori 和 syn）進行重採樣，不對測試資料（control）處理
+                            # Only resample training data (ori and syn), not test data (control)
                             try:
-                                # Conditionally import imbalanced-learn package 條件導入 imbalanced-learn 套件
+                                # Conditionally import imbalanced-learn package
                                 if self.mlutility_config.resampling == "smote-enn":
                                     try:
                                         from imblearn.combine import SMOTEENN
@@ -712,7 +709,7 @@ class MLUtility(BaseEvaluator):
                                     "y": y_resampled,
                                 }
                             except ImportError:
-                                # Re-raise ImportError 重新拋出 ImportError
+                                # Re-raise ImportError
                                 raise
                             except Exception as e:
                                 self._logger.warning(
@@ -723,14 +720,14 @@ class MLUtility(BaseEvaluator):
                                     "y": y_encoded,
                                 }
                         else:
-                            # control data or no resampling enabled control 資料或未啟用不平衡處理
+                            # control data or no resampling enabled
                             processed_data[key] = {
                                 "X": X_scaled,
                                 "y": y_encoded,
                             }
             else:
-                # Regression task, standardize target 回歸任務，標準化目標
-                # Only use ori and syn data to compute target mean and std 只使用 ori 和 syn 資料來計算目標變數的均值和標準差
+                # Regression task, standardize target
+                # Only use ori and syn data to compute target mean and std
                 scaler_y = StandardScaler()
                 y_train = pd.concat([y_data["ori"], y_data["syn"]]).values.reshape(
                     -1, 1
@@ -745,8 +742,8 @@ class MLUtility(BaseEvaluator):
                         ).ravel(),
                     }
         else:
-            # Clustering task 聚類任務
-            # Separate numerical and categorical features 分離數值和類別特徵
+            # Clustering task
+            # Separate numerical and categorical features
             feature_cols = list(data_copy["ori"].columns)
             numerical_cols = []
             categorical_cols = []
@@ -754,18 +751,18 @@ class MLUtility(BaseEvaluator):
             for col in feature_cols:
                 is_categorical = False
 
-                # Check all datasets 檢查所有資料集
+                # Check all datasets
                 for key in self.REQUIRED_INPUT_KEYS:
                     if col not in data_copy[key].columns:
                         continue
 
-                    # Check dtype first 先檢查 dtype
+                    # Check dtype first
                     dtype = data_copy[key][col].dtype
                     if dtype == "object" or dtype.name == "category":
                         is_categorical = True
                         break
 
-                    # For non-object types, try converting to numeric to confirm 對於非 object 類型，嘗試轉換為數值來確認
+                    # For non-object types, try converting to numeric to confirm
                     try:
                         pd.to_numeric(data_copy[key][col], errors="raise")
                     except (ValueError, TypeError):
@@ -780,12 +777,12 @@ class MLUtility(BaseEvaluator):
             self._logger.debug(f"Categorical columns: {categorical_cols}")
             self._logger.debug(f"Numerical columns: {numerical_cols}")
 
-            # Process categorical features 處理類別特徵
+            # Process categorical features
             encoded_features = {}
             if categorical_cols:
                 encoder = OneHotEncoder(sparse_output=False, handle_unknown="ignore")
 
-                # Only use ori and syn data to train encoder 只使用 ori 和 syn 資料來訓練編碼器
+                # Only use ori and syn data to train encoder
                 train_cat_data = pd.concat(
                     [
                         data_copy["ori"][categorical_cols],
@@ -794,25 +791,25 @@ class MLUtility(BaseEvaluator):
                 )
                 encoder.fit(train_cat_data)
 
-                # Encode categorical features for each dataset 編碼各資料集的類別特徵
+                # Encode categorical features for each dataset
                 for key in self.REQUIRED_INPUT_KEYS:
                     encoded = encoder.transform(data_copy[key][categorical_cols])
-                    # Create encoded column names 建立編碼後的欄位名稱
+                    # Create encoded column names
                     encoded_cols = []
                     for i, col in enumerate(categorical_cols):
                         for cat in encoder.categories_[i]:
                             encoded_cols.append(f"{col}_{cat}")
 
-                    # Store encoded features 儲存編碼後的特徵
+                    # Store encoded features
                     encoded_features[key] = pd.DataFrame(
                         encoded, columns=encoded_cols, index=data_copy[key].index
                     )
 
-            # Merge numerical features and encoded categorical features 合併數值特徵和編碼後的類別特徵
+            # Merge numerical features and encoded categorical features
             X_data = {}
             for key in self.REQUIRED_INPUT_KEYS:
                 if categorical_cols:
-                    # Merge numerical and encoded categorical features 合併數值和編碼後的類別特徵
+                    # Merge numerical and encoded categorical features
                     X_features = pd.concat(
                         [
                             data_copy[key][numerical_cols].reset_index(drop=True),
@@ -821,13 +818,13 @@ class MLUtility(BaseEvaluator):
                         axis=1,
                     )
                 else:
-                    # Only numerical features 只有數值特徵
+                    # Only numerical features
                     X_features = data_copy[key][numerical_cols]
 
                 X_data[key] = X_features
 
-            # Standardize features 標準化特徵
-            # Only use ori and syn data to compute mean and std 只使用 ori 和 syn 資料來計算均值和標準差
+            # Standardize features
+            # Only use ori and syn data to compute mean and std
             scaler = StandardScaler()
             X_train = pd.concat([X_data["ori"], X_data["syn"]])
             scaler.fit(X_train)
@@ -845,54 +842,54 @@ class MLUtility(BaseEvaluator):
         y_test: np.ndarray,
     ) -> dict[str, float]:
         """
-        分類任務評估
+        Classification task evaluation
 
-        使用 XGBoost 分類器，支援完整的 sklearn.metrics 指標
+        Uses XGBoost classifier, supports complete sklearn.metrics
         """
-        # Train model 訓練模型
+        # Train model
         model = XGBClassifier(
             random_state=self.mlutility_config.random_state,
             **self.mlutility_config.xgb_params,
         )
         model.fit(X_train, y_train)
 
-        # Predict 預測
+        # Predict
         y_pred = model.predict(X_test)
 
-        # Compute metrics requiring probabilities 計算需要概率的指標
+        # Compute metrics requiring probabilities
         try:
             y_proba = model.predict_proba(X_test)
             has_proba = True
         except Exception:
             has_proba = False
 
-        # Compute confusion matrix derived metrics 計算 confusion matrix 衍生指標
+        # Compute confusion matrix derived metrics
         cm_metrics = self.metric_registry.compute_confusion_matrix_metrics(
             y_test, y_pred
         )
 
-        # Compute metrics 計算指標
+        # Compute metrics
         results = {}
         for metric_name in self.mlutility_config.metrics:
-            # Check if it's a confusion matrix derived metric 檢查是否為 confusion matrix 衍生指標
+            # Check if it's a confusion matrix derived metric
             if metric_name in cm_metrics:
                 results[metric_name] = cm_metrics[metric_name]
                 continue
 
-            # Check if probabilities are needed 檢查是否需要概率
+            # Check if probabilities are needed
             if metric_name in ["roc_auc", "pr_auc"]:
                 if not has_proba:
                     results[metric_name] = np.nan
                     continue
 
-                # Compute metrics requiring probabilities 計算需要概率的指標
+                # Compute metrics requiring probabilities
                 if metric_name == "roc_auc":
-                    # Handle binary and multi-class classification 處理二元和多類別分類
+                    # Handle binary and multi-class classification
                     if len(np.unique(y_test)) == 2:
-                        # Binary classification 二元分類
+                        # Binary classification
                         results[metric_name] = roc_auc_score(y_test, y_proba[:, 1])
                     else:
-                        # Multi-class classification 多類別分類
+                        # Multi-class classification
                         try:
                             results[metric_name] = roc_auc_score(
                                 y_test, y_proba, multi_class="ovr", average="weighted"
@@ -908,7 +905,7 @@ class MLUtility(BaseEvaluator):
                         )
                         results[metric_name] = auc(recall, precision)
                     else:
-                        # Multi-class: compute average 多類別：計算平均
+                        # Multi-class: compute average
                         pr_aucs = []
                         for i in range(y_proba.shape[1]):
                             y_true_binary = (y_test == i).astype(int)
@@ -918,7 +915,7 @@ class MLUtility(BaseEvaluator):
                             pr_aucs.append(auc(recall, precision))
                         results[metric_name] = np.mean(pr_aucs)
             else:
-                # General metrics 一般指標
+                # General metrics
                 metric_func = self.metric_registry.get_metric(metric_name)
                 if metric_func is not None:
                     try:
@@ -941,21 +938,21 @@ class MLUtility(BaseEvaluator):
         y_test: np.ndarray,
     ) -> dict[str, float]:
         """
-        回歸任務評估
+        Regression task evaluation
 
-        使用 XGBoost 回歸器
+        Uses XGBoost regressor
         """
-        # Train model 訓練模型
+        # Train model
         model = XGBRegressor(
             random_state=self.mlutility_config.random_state,
             **self.mlutility_config.xgb_params,
         )
         model.fit(X_train, y_train)
 
-        # Predict 預測
+        # Predict
         y_pred = model.predict(X_test)
 
-        # Compute metrics 計算指標
+        # Compute metrics
         results = {}
         for metric_name in self.mlutility_config.metrics:
             metric_func = self.metric_registry.get_metric(metric_name)
@@ -967,11 +964,11 @@ class MLUtility(BaseEvaluator):
         self, X_train: np.ndarray, X_test: np.ndarray
     ) -> dict[str, float]:
         """
-        聚類任務評估
+        Clustering task evaluation
 
-        使用 K-means
+        Uses K-means
         """
-        # Train model 訓練模型
+        # Train model
         model = KMeans(
             n_clusters=self.mlutility_config.n_clusters,
             random_state=self.mlutility_config.random_state,
@@ -979,18 +976,18 @@ class MLUtility(BaseEvaluator):
         )
         model.fit(X_train)
 
-        # Predict 預測
+        # Predict
         labels = model.predict(X_test)
 
-        # Compute metrics 計算指標
+        # Compute metrics
         results = {}
         for metric_name in self.mlutility_config.metrics:
             if metric_name == "silhouette_score":
-                # Silhouette score needs special handling Silhouette score 需要特殊處理
+                # Silhouette score needs special handling
                 try:
                     score = silhouette_score(X_test, labels)
                 except ValueError:
-                    # Only one cluster or too few samples 只有一個群集或樣本太少
+                    # Only one cluster or too few samples
                     score = -1.0
                 results[metric_name] = score
             else:
@@ -1001,19 +998,19 @@ class MLUtility(BaseEvaluator):
 
     def _get_global_scores(self, results: dict[str, dict[str, float]]) -> pd.DataFrame:
         """
-        計算全域評分
+        Compute global scores
 
         Args:
-            results: 各資料集的評估結果
+            results: Evaluation results for each dataset
 
         Returns:
-            全域評分 DataFrame
+            Global scores DataFrame
         """
-        # Compute statistics for each metric 計算每個指標的統計值
+        # Compute statistics for each metric
         global_scores = []
 
         if self.mlutility_config.experiment_design == "domain_transfer":
-            # Domain transfer mode: only show syn_to_ori value 領域遷移模式：只顯示 syn_to_ori 值
+            # Domain transfer mode: only show syn_to_ori value
             for metric_name in self.mlutility_config.metrics:
                 syn_to_ori_score = results.get("syn_to_ori", {}).get(
                     metric_name, np.nan
@@ -1026,7 +1023,7 @@ class MLUtility(BaseEvaluator):
                     }
                 )
         else:
-            # Dual model control mode: horizontal display of ori/syn/diff 雙模型控制組模式：水平顯示 ori/syn/diff
+            # Dual model control mode: horizontal display of ori/syn/diff
             for metric_name in self.mlutility_config.metrics:
                 ori_score = results.get("ori", {}).get(metric_name, np.nan)
                 syn_score = results.get("syn", {}).get(metric_name, np.nan)
@@ -1044,16 +1041,16 @@ class MLUtility(BaseEvaluator):
 
     def _eval(self, data: dict[str, pd.DataFrame], schema=None) -> dict:
         """
-        執行評估
+        Execute evaluation
 
         Args:
-            data: 輸入資料
-            schema: 資料 schema（可選）
+            data: Input data
+            schema: Data schema (optional)
 
         Returns:
-            評估結果
+            Evaluation results
         """
-        # Adjust data requirements based on experiment design 根據實驗設計調整資料需求
+        # Adjust data requirements based on experiment design
         if self.mlutility_config.experiment_design == "domain_transfer":
             # Domain transfer mode: only needs ori and syn
             if "ori" not in data or "syn" not in data:
@@ -1069,14 +1066,14 @@ class MLUtility(BaseEvaluator):
                     "Dual model control mode requires 'ori', 'syn', 'control' data"
                 )
 
-        # Update configuration 更新配置
+        # Update configuration
         self.mlutility_config.update_data(data)
 
-        # Store schema 儲存 schema
+        # Store schema
         if schema is not None:
             self._schema = schema
 
-        # Preprocess with schema 前處理，傳入 schema
+        # Preprocess with schema
         processed_data, status = self._preprocess_data(data, schema=self._schema)
 
         if status != "success":
@@ -1091,7 +1088,7 @@ class MLUtility(BaseEvaluator):
                 "details": nan_results,
             }
 
-        # Select evaluation method based on task type 根據任務類型選擇評估方法
+        # Select evaluation method based on task type
         task_type = self.mlutility_config.task_type
 
         if task_type == TaskType.CLASSIFICATION:
@@ -1101,7 +1098,7 @@ class MLUtility(BaseEvaluator):
         else:  # CLUSTERING
             evaluate_func = self._evaluate_clustering
 
-        # Execute different evaluation flows based on experiment design 根據實驗設計執行不同的評估流程
+        # Execute different evaluation flows based on experiment design
         results = {}
 
         if self.mlutility_config.experiment_design == "domain_transfer":
@@ -1109,19 +1106,19 @@ class MLUtility(BaseEvaluator):
             self._logger.info("Using domain transfer experiment design")
 
             if task_type in [TaskType.CLASSIFICATION, TaskType.REGRESSION]:
-                # Supervised learning 有監督學習
+                # Supervised learning
                 syn_to_ori = evaluate_func(
                     X_train=processed_data["syn"]["X"],
                     y_train=processed_data["syn"]["y"],
                     X_test=processed_data["ori"]["X"],
                     y_test=processed_data["ori"]["y"],
                 )
-                # For compatibility, record results in both ori and syn 為了相容性，將結果同時記錄在 ori 和 syn
+                # For compatibility, record results in both ori and syn
                 results["syn_to_ori"] = syn_to_ori
                 results["ori"] = dict.fromkeys(self.mlutility_config.metrics, np.nan)
                 results["syn"] = syn_to_ori
             else:
-                # Unsupervised learning (clustering) 無監督學習（聚類）
+                # Unsupervised learning (clustering)
                 syn_to_ori = evaluate_func(
                     X_train=processed_data["syn"]["X"],
                     X_test=processed_data["ori"]["X"],
@@ -1136,7 +1133,7 @@ class MLUtility(BaseEvaluator):
 
             for data_type in ["ori", "syn"]:
                 if task_type in [TaskType.CLASSIFICATION, TaskType.REGRESSION]:
-                    # Supervised learning 有監督學習
+                    # Supervised learning
                     results[data_type] = evaluate_func(
                         X_train=processed_data[data_type]["X"],
                         y_train=processed_data[data_type]["y"],
@@ -1144,11 +1141,11 @@ class MLUtility(BaseEvaluator):
                         y_test=processed_data["control"]["y"],
                     )
                 else:
-                    # Unsupervised learning 無監督學習
+                    # Unsupervised learning
                     results[data_type] = evaluate_func(
                         X_train=processed_data[data_type]["X"],
                         X_test=processed_data["control"]["X"],
                     )
 
-        # Organize results 整理結果
+        # Organize results
         return {"global": self._get_global_scores(results), "details": results}

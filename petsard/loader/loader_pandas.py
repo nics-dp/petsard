@@ -75,7 +75,7 @@ class LoaderPandasExcel(LoaderBase):
             (pd.DataFrame)
                 Data in excel by pd.DataFrame format.
         """
-        # 檢查 openpyxl 是否已安裝
+        # Check if openpyxl is installed
         try:
             import openpyxl  # noqa: F401
         except ImportError as e:

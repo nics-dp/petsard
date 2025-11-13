@@ -225,7 +225,7 @@ class Processor:
         self.logger.debug(f"config is provided: {config}")
 
         # CRITICAL FIX: Create a deep copy of metadata to avoid modifying the original
-        # Processor 不應該修改傳入的 metadata，而是創建自己的副本
+        # Processor should not modify the passed-in metadata, but create its own copy
         # This ensures that transformations don't corrupt the original schema
         self._metadata: Schema = deepcopy(metadata)
         self.logger.debug(
@@ -954,15 +954,15 @@ class Processor:
         self, col: str, obj: object, processor_type: str
     ) -> None:
         """
-        Update metadata based on processor's SCHEMA_TRANSFORM rules
+                Update metadata based on processor's SCHEMA_TRANSFORM rules
+        Update metadata according to processor's SCHEMA_TRANSFORM rules
+        For example: encoder_uniform converts string to float64
 
-        根據 processor 的 SCHEMA_TRANSFORM 規則更新 metadata
-        例如：encoder_uniform 將 string 轉換為 float64
 
-        Args:
-            col: Column name being processed
-            obj: Processor object
-            processor_type: Type of processor (e.g., 'encoder', 'scaler')
+                Args:
+                    col: Column name being processed
+                    obj: Processor object
+                    processor_type: Type of processor (e.g., 'encoder', 'scaler')
         """
         # Check if processor has SCHEMA_TRANSFORM info
         if not hasattr(obj, "get_schema_transform_info"):
@@ -991,7 +991,7 @@ class Processor:
                 )
 
             # Update category if specified in SCHEMA_TRANSFORM
-            # CRITICAL FIX: category 存在 type_attr 裡，不是 Attribute 的直接屬性
+            # CRITICAL FIX: category is in type_attr, not a direct property of Attribute
             if transform_info.get("output_category") is not None:
                 if not attribute.type_attr:
                     attribute.type_attr = {}
@@ -1030,7 +1030,6 @@ class Processor:
     ) -> None:
         """
         Record a snapshot of the schema at a specific step.
-        記錄特定步驟的 schema 快照
 
         Args:
             step_name: Name of the processing step
@@ -1084,14 +1083,13 @@ class Processor:
 
         # Log snapshot (DEBUG level - minimal log output, use save_schema for diagnostics)
         if changes:
-            self.logger.debug(f"📸 [{step_name}]: {len(changes)} attr changed")
+            self.logger.debug(f"[SNAPSHOT] [{step_name}]: {len(changes)} attr changed")
         else:
-            self.logger.debug(f"📸 [{step_name}]: no changes")
+            self.logger.debug(f"[SNAPSHOT] [{step_name}]: no changes")
 
     def get_schema_history(self) -> list[dict]:
         """
         Get the history of schema changes during processing.
-        獲取處理過程中的 schema 變化歷史
 
         Returns:
             list[dict]: List of schema snapshots at each step
@@ -1101,7 +1099,6 @@ class Processor:
     def print_schema_history(self, columns: list[str] = None) -> None:
         """
         Print a formatted view of schema history for debugging.
-        輸出格式化的 schema 歷史，用於調試
 
         Args:
             columns: List of column names to focus on (None = all columns)
@@ -1111,7 +1108,7 @@ class Processor:
             return
 
         print("\n" + "=" * 80)
-        print("📊 SCHEMA HISTORY - Processor Transformation Steps")
+        print("[SCHEMA HISTORY] Processor Transformation Steps")
         print("=" * 80)
 
         for i, snapshot in enumerate(self._schema_history):

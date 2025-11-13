@@ -21,13 +21,13 @@ from petsard.synthesizer.synthesizer_base import BaseSynthesizer
 
 
 def schema_to_sdv(schema: Schema) -> dict[str, Any]:
-    """轉換 PETsARD Schema 為 SDV (Synthetic Data Vault) 格式
+    """Convert PETsARD Schema to SDV (Synthetic Data Vault) format
 
     Args:
-        schema: PETsARD Schema 物件
+        schema: PETsARD Schema object
 
     Returns:
-        dict: SDV metadata 格式的字典
+        dict: Dictionary in SDV metadata format
     """
     sdv_metadata = {"columns": {}, "METADATA_SPEC_VERSION": "SINGLE_TABLE_V1"}
 
@@ -39,15 +39,15 @@ def schema_to_sdv(schema: Schema) -> dict[str, Any]:
 
 
 def _map_attribute_to_sdv_type(attribute: Any) -> str:
-    """將 PETsARD Attribute 對應到 SDV sdtype
+    """Map PETsARD Attribute to SDV sdtype
 
     Args:
-        attribute: PETsARD Attribute 物件或 dict
+        attribute: PETsARD Attribute object or dict
 
     Returns:
         str: SDV sdtype
     """
-    # 處理 dict 和 Attribute 物件兩種情況
+    # Handle both dict and Attribute object cases
     if isinstance(attribute, dict):
         logical_type = attribute.get("logical_type")
         attr_type = attribute.get("type")
@@ -55,16 +55,16 @@ def _map_attribute_to_sdv_type(attribute: Any) -> str:
     else:
         logical_type = attribute.logical_type
         attr_type = attribute.type
-        # CRITICAL FIX: category 是存在 type_attr 裡，不是 Attribute 的直接屬性
+        # CRITICAL FIX: category is stored in type_attr, not as a direct Attribute property
         category = (
             attribute.type_attr.get("category", False) if attribute.type_attr else False
         )
 
-    # 優先檢查 category 標記
+    # Prioritize category flag check
     if category is True:
         return "categorical"
 
-    # 根據邏輯類型判斷
+    # Determine by logical type
     if logical_type:
         logical = logical_type.lower()
         if logical in ["email", "phone"]:
@@ -74,7 +74,7 @@ def _map_attribute_to_sdv_type(attribute: Any) -> str:
         elif logical in ["datetime", "date", "time"]:
             return "datetime"
 
-    # 根據資料類型判斷
+    # Determine by data type
     if attr_type:
         attr_type_str = str(attr_type).lower()
         if "int" in attr_type_str or "float" in attr_type_str:
@@ -84,7 +84,7 @@ def _map_attribute_to_sdv_type(attribute: Any) -> str:
         elif "datetime" in attr_type_str:
             return "datetime"
 
-    # 預設為分類
+    # Default to categorical
     return "categorical"
 
 
@@ -154,7 +154,7 @@ class SDVSingleTableSynthesizer(BaseSynthesizer):
 
             # DIAGNOSTIC: Log the actual metadata being sent to SDV
             self._logger.info("=" * 80)
-            self._logger.info("📊 DIAGNOSTIC: Schema → SDV Metadata Conversion")
+            self._logger.info("[DIAGNOSTIC] Schema -> SDV Metadata Conversion")
             self._logger.info("=" * 80)
             for col_name, col_info in sdv_metadata_dict["columns"].items():
                 # Get original attribute for comparison
@@ -276,7 +276,7 @@ class SDVSingleTableSynthesizer(BaseSynthesizer):
             # DIAGNOSTIC: Log the inferred metadata
             self._logger.info("=" * 80)
             self._logger.info(
-                "📊 DIAGNOSTIC: Inferred Schema → SDV Metadata (fit method)"
+                "[DIAGNOSTIC] Inferred Schema -> SDV Metadata (fit method)"
             )
             self._logger.info("=" * 80)
             for col_name, col_info in sdv_metadata_dict["columns"].items():

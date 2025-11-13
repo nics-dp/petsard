@@ -1,6 +1,6 @@
 [project]
 name = "petsard"
-version = "1.8.0"  # Version managed by semantic-release
+version = "1.9.0"  # Version managed by semantic-release
 description = "Facilitates data generation algorithm and their evaluation processes"
 authors = [{ name = "matheme-justyn", email = "matheme.justyn@gmail.com" }]
 keywords = [
@@ -17,7 +17,7 @@ keywords = [
     "data science",
     "machine learning",
 ]
-readme = "README.md" # PyPI 專案頁面顯示的 README 文件
+readme = "README.md" # README file displayed on PyPI project page / PyPI 專案頁面顯示的 README 文件
 classifiers = [
     "Development Status :: 5 - Production/Stable",
     "Natural Language :: English",
@@ -28,23 +28,23 @@ classifiers = [
     "Intended Audience :: Financial and Insurance Industry",
     "Intended Audience :: Legal Industry",
 ]
-requires-python = ">=3.10,<3.12" # Python 3.12 目前仍被 anonymeter 衝突限制
+requires-python = ">=3.10,<3.12" # Python 3.12 is currently limited due to anonymeter conflicts / Python 3.12 目前仍被 anonymeter 衝突限制
 
-# 核心依賴（pip install petsard 時自動安裝）
 # Core dependencies (automatically installed with pip install petsard)
-# 包含 exec + load-benchmark + syn + eval 群組的所有依賴
+# 核心依賴（pip install petsard 時自動安裝）
 # Includes all dependencies from exec + load-benchmark + syn + eval groups
+# 包含 exec + load-benchmark + syn + eval 群組的所有依賴
 dependencies = [
-    # exec group - 執行功能
+    # exec group - execution functionality / 執行功能
     "pandas>=2.3.2,<3",
     "pyyaml>=6.0.2,<7",
     "numpy>=1.26.4,<2",
     "python-dateutil>=2.9.0.post0,<3",
     "pytz>=2025.2",
     "tzdata>=2025.2",
-    # load-benchmark group - 基準資料集支援
+    # load-benchmark group - benchmark dataset support / 基準資料集支援
     "requests>=2.32.5,<3",
-    # eval group - 隱私風險評估功能
+    # eval group - privacy risk evaluation functionality / 隱私風險評估功能
     "anonymeter>=1.0.0,<2",
     "sdmetrics>=0.23.0,<1",
     "xgboost>=3.0.5",
@@ -55,7 +55,7 @@ dependencies = [
     "plotly>=6.3.0,<7",
     "scipy>=1.15.3,<2 ; python_full_version < '3.11'",
     "scipy>=1.16.0,<2 ; python_full_version >= '3.11'",
-    # syn group - 合成資料生成功能
+    # syn group - synthetic data generation functionality / 合成資料生成功能
     "sdv>=1.26.0,<2",
     "torch>=2.8.0,<3",
     "boto3>=1.40.25,<2",
@@ -95,12 +95,12 @@ Repository = "https://github.com/nics-tw/petsard"
 Documentation = "https://nics-tw.github.io/petsard/"
 "Bug Tracker" = "https://github.com/nics-tw/petsard/issues"
 
-# 依賴群組設定
 # Dependency Groups Configuration
+# 依賴群組設定
 [dependency-groups]
 
-# 標準功能群組（預設安裝）
 # Standard functionality group (default installation)
+# 標準功能群組（預設安裝）
 default = [
     {include-group = "exec"},
     {include-group = "load-benchmark"},
@@ -108,31 +108,31 @@ default = [
     {include-group = "eval"},
 ]
 
-# 資料科學功能群組
 # Data science functionality group
+# 資料科學功能群組
 ds = [
     {include-group = "default"},
     {include-group = "jupyter"},
 ]
 
-# 完整功能群組
 # Full functionality group
+# 完整功能群組
 all = [
     {include-group = "ds"},
     {include-group = "load-xlsx"},
 ]
 
-# 開發功能群組
 # Development functionality group
+# 開發功能群組
 dev = [
     {include-group = "all"},
     {include-group = "dev-tools"},
 ]
 
-# 執行功能群組 / Execution functionality group
+# Execution functionality group / 執行功能群組
 exec = [
-    "pandas>=2.3.2,<3",   # 資料操作與分析
-    "pyyaml>=6.0.2,<7",   # YAML 配置檔支援
+    "pandas>=2.3.2,<3",   # Data manipulation and analysis / 資料操作與分析
+    "pyyaml>=6.0.2,<7",   # YAML configuration file support / YAML 配置檔支援
     ###### Core lib above, SBOM related below ######
     # pandas dependencies
     "numpy>=1.26.4,<2",
@@ -141,19 +141,19 @@ exec = [
     "tzdata>=2025.2",
 ]
 
-# 基準資料集支援
 # Benchmark dataset support
+# 基準資料集支援
 load-benchmark = [
-    "requests>=2.32.5,<3",   # HTTP 請求下載資料集
+    "requests>=2.32.5,<3",   # HTTP requests for downloading datasets / HTTP 請求下載資料集
 ]
 
-# 隱私風險評估功能
 # Privacy risk evaluation functionality
+# 隱私風險評估功能
 eval = [
-    "anonymeter>=1.0.0,<2",   # 隱私風險評估
-    "sdmetrics>=0.23.0,<1",   # 合成資料品質指標
-    "xgboost>=3.0.5",         # 實用性評估
-    "imblearn>=0.0",          # 不平衡資料處理
+    "anonymeter>=1.0.0,<2",   # Privacy risk evaluation / 隱私風險評估
+    "sdmetrics>=0.23.0,<1",   # Synthetic data quality metrics / 合成資料品質指標
+    "xgboost>=3.0.5",         # Utility evaluation / 實用性評估
+    "imblearn>=0.0",          # Imbalanced data handling / 不平衡資料處理
     ###### Core lib above, SBOM related below ######
     # anonymeter, sdmetrics dependencies
     "numpy>=1.26.4,<2",
@@ -167,11 +167,11 @@ eval = [
     "scipy>=1.16.0,<2 ; python_full_version >= '3.11'",
 ]
 
-# 合成資料生成功能
 # Synthetic data generation functionality
+# 合成資料生成功能
 syn = [
-    "sdv>=1.26.0,<2",    # 合成資料生成
-    "torch>=2.8.0,<3",   # PyTorch 深度學習模型
+    "sdv>=1.26.0,<2",    # Synthetic data generation / 合成資料生成
+    "torch>=2.8.0,<3",   # PyTorch deep learning models / PyTorch 深度學習模型
     ###### Core lib above, SBOM related below ######
     # sdv, torch dependencies
     "numpy>=1.26.4,<2",
@@ -216,15 +216,15 @@ syn = [
     "triton>=3.4.0,<4 ; platform_machine == 'x86_64' and sys_platform == 'linux'",
 ]
 
-# Jupyter 筆記本支援
 # Jupyter notebook support
+# Jupyter 筆記本支援
 jupyter = [
-    "ipykernel>=7.1.0,<8",                                  # Jupyter 核心支援
-    "ipython>=8.3.0,<9 ; python_full_version < '3.11'",     # IPython（Python 3.10 版本）
-    "ipython>=9.4.0,<10 ; python_full_version >= '3.11'",   # IPython（Python 3.11+ 版本）
-    "jupyterlab>=4.4.7,<5",                                 # JupyterLab 支援
-    "notebook>=7.4.5,<8",                                   # Jupyter Notebook 支援
-    "pyzmq>=27.0.2,<28",                                    # Jupyter 訊息傳遞
+    "ipykernel>=7.1.0,<8",                                  # Jupyter kernel support / Jupyter 核心支援
+    "ipython>=8.3.0,<9 ; python_full_version < '3.11'",     # IPython (Python 3.10) / IPython（Python 3.10 版本）
+    "ipython>=9.4.0,<10 ; python_full_version >= '3.11'",   # IPython (Python 3.11+) / IPython（Python 3.11+ 版本）
+    "jupyterlab>=4.4.7,<5",                                 # JupyterLab support / JupyterLab 支援
+    "notebook>=7.4.5,<8",                                   # Jupyter Notebook support / Jupyter Notebook 支援
+    "pyzmq>=27.0.2,<28",                                    # Jupyter messaging / Jupyter 訊息傳遞
     ###### Core lib above, SBOM related below ######
     # ipykernel dependencies
     "debugpy>=1.8.16,<2",
@@ -236,30 +236,30 @@ jupyter = [
     "psutil>=7.0.0,<8",
 ]
 
-# Excel 檔案支援
 # Excel file support
+# Excel 檔案支援
 load-xlsx = [
-    "openpyxl>=3.1.5,<4",   # Excel 檔案讀寫
+    "openpyxl>=3.1.5,<4",   # Excel file reading and writing / Excel 檔案讀寫
 ]
 
-# 開發工具
 # Development tools
+# 開發工具
 dev-tools = [
-    "pip-audit>=2.7.3",                  # 安全稽核工具
-    "pytest>=8.4.2",                     # 測試框架
-    "pytest-cov>=6.3.0",                 # 測試覆蓋率報告
-    "python-semantic-release>=10.3.2",   # 發布自動化
-    "ruff>=0.12.12",                     # 程式碼檢查與格式化
-    "trove-classifiers>=2025.8.26.11",   # PyPI 分類器
+    "pip-audit>=2.7.3",                  # Security audit tool / 安全稽核工具
+    "pytest>=8.4.2",                     # Testing framework / 測試框架
+    "pytest-cov>=6.3.0",                 # Test coverage reporting / 測試覆蓋率報告
+    "python-semantic-release>=10.3.2",   # Release automation / 發布自動化
+    "ruff>=0.12.12",                     # Code linting and formatting / 程式碼檢查與格式化
+    "trove-classifiers>=2025.8.26.11",   # PyPI classifiers / PyPI 分類器
 ]
 
-# PyPI 向下相容：optional-dependencies（舊版 pip 使用）
 # Backward compatibility for PyPI: optional-dependencies (for older pip)
-# 注意：核心依賴已在 [project.dependencies] 中定義，這裡只列出額外功能
+# PyPI 向下相容：optional-dependencies（舊版 pip 使用）
 # Note: Core dependencies are defined in [project.dependencies], only additional features listed here
+# 注意：核心依賴已在 [project.dependencies] 中定義，這裡只列出額外功能
 [project.optional-dependencies]
-# Jupyter 支援（適用於 Docker 環境中使用 Jupyter）
 # Jupyter support (for use in Docker environments)
+# Jupyter 支援（適用於 Docker 環境中使用 Jupyter）
 jupyter = [
     "ipykernel>=6.30.1,<8",
     "ipython>=8.3.0,<9 ; python_full_version < '3.11'",
@@ -273,13 +273,13 @@ jupyter = [
     "prompt-toolkit>=3.0.52,<4",
     "psutil>=7.0.0,<8",
 ]
-# Excel 檔案支援
 # Excel file support
+# Excel 檔案支援
 excel = [
     "openpyxl>=3.1.5,<4",
 ]
-# 資料科學功能（向下相容，等同於 jupyter）
 # Data science functionality (backward compatible, equivalent to jupyter)
+# 資料科學功能（向下相容，等同於 jupyter）
 ds = [
     "ipykernel>=6.30.1,<8",
     "ipython>=8.3.0,<9 ; python_full_version < '3.11'",
@@ -293,8 +293,8 @@ ds = [
     "prompt-toolkit>=3.0.52,<4",
     "psutil>=7.0.0,<8",
 ]
-# 完整功能（Jupyter + Excel）
 # Full functionality (Jupyter + Excel)
+# 完整功能（Jupyter + Excel）
 all = [
     "ipykernel>=6.30.1,<8",
     "ipython>=8.3.0,<9 ; python_full_version < '3.11'",
@@ -309,8 +309,8 @@ all = [
     "psutil>=7.0.0,<8",
     "openpyxl>=3.1.5,<4",
 ]
-# 開發工具（完整功能 + 開發與測試工具）
 # Development tools (full functionality + development and testing tools)
+# 開發工具（完整功能 + 開發與測試工具）
 dev = [
     "ipykernel>=6.30.1,<8",
     "ipython>=8.3.0,<9 ; python_full_version < '3.11'",
@@ -332,26 +332,26 @@ dev = [
     "trove-classifiers>=2025.8.26.11",
 ]
 
-# 建置系統設定
 # Build system configuration
+# 建置系統設定
 [build-system]
 requires = ["uv_build>=0.8.15,<0.10.0"]
 build-backend = "uv_build"
 
-# uv 建置後端設定
 # uv build backend configuration
+# uv 建置後端設定
 [tool.uv.build-backend]
-module-name = "petsard"  # 模組名稱
-module-root = ""         # 模組根目錄（空字串表示專案根目錄）
+module-name = "petsard"  # Module name / 模組名稱
+module-root = ""         # Module root directory (empty string means project root) / 模組根目錄（空字串表示專案根目錄）
 
-# 程式碼品質檢查設定
 # Code quality checking configuration
+# 程式碼品質檢查設定
 [tool.ruff]
-line-length = 88          # 行長度限制
-target-version = "py311"  # 目標 Python 版本
+line-length = 88          # Line length limit / 行長度限制
+target-version = "py311"  # Target Python version / 目標 Python 版本
 
-# 選擇要檢查的規則
 # Select rules to check
+# 選擇要檢查的規則
 lint.select = [
     "E",  # pycodestyle errors
     "W",  # pycodestyle warnings
@@ -362,149 +362,149 @@ lint.select = [
     "UP", # pyupgrade
 ]
 
-# 忽略的規則
 # Ignored rules
+# 忽略的規則
 lint.ignore = [
-    "E501", # 行長度限制（已在 line-length 設定）
-    "UP038", # 已預訂於未來版本移除
+    "E501", # Line length limit (already set in line-length) / 行長度限制（已在 line-length 設定）
+    "UP038", # Scheduled for removal in future version / 已預訂於未來版本移除
 ]
 
-# 程式碼格式化設定
 # Code formatting configuration
+# 程式碼格式化設定
 [tool.ruff.format]
-quote-style = "double"                # 引號樣式
-indent-style = "space"                # 縮排樣式
-skip-magic-trailing-comma = false     # 不跳過魔法尾隨逗號
-line-ending = "auto"                  # 自動偵測行結尾
+quote-style = "double"                # Quote style / 引號樣式
+indent-style = "space"                # Indentation style / 縮排樣式
+skip-magic-trailing-comma = false     # Don't skip magic trailing comma / 不跳過魔法尾隨逗號
+line-ending = "auto"                  # Auto-detect line endings / 自動偵測行結尾
 
-# 語意化版本發布設定
 # Semantic versioning release configuration
+# 語意化版本發布設定
 [tool.semantic_release]
-tag_format = "v{version}"         # 版本標籤格式
-major_on_zero = false             # 不允許 0.x.x 版本作為主版本
-allow_zero_version = false        # 不允許 0.x.x 版本
-build_command = ""                # 建置指令（在 GitHub Actions 中處理）
-assets = []                       # 附加檔案
+tag_format = "v{version}"         # Version tag format / 版本標籤格式
+major_on_zero = false             # Disallow 0.x.x versions as major / 不允許 0.x.x 版本作為主版本
+allow_zero_version = false        # Disallow 0.x.x versions / 不允許 0.x.x 版本
+build_command = ""                # Build command (handled in GitHub Actions) / 建置指令（在 GitHub Actions 中處理）
+assets = []                       # Additional files / 附加檔案
 commit_message = "{version}\n\nAutomatically generated by python-semantic-release"
-commit_parser = "conventional"    # 提交訊息解析器
-logging_use_named_masks = false   # 日誌輸出設定
-commit = true                     # 確保提交版本變更
-push = true                       # 確保推送版本變更
-no_git_verify = false             # Git 提交驗證
+commit_parser = "conventional"    # Commit message parser / 提交訊息解析器
+logging_use_named_masks = false   # Logging output settings / 日誌輸出設定
+commit = true                     # Ensure version changes are committed / 確保提交版本變更
+push = true                       # Ensure version changes are pushed / 確保推送版本變更
+no_git_verify = false             # Git commit verification / Git 提交驗證
 
-# 發布分支設定
 # Release branch configuration
+# 發布分支設定
 
-# main 分支：正式發布版本
 # main branch: production releases
+# main 分支：正式發布版本
 [tool.semantic_release.branches.main]
-match = "main"        # 分支匹配模式
-prerelease = false    # 不建立預發布版本
+match = "main"        # Branch matching pattern / 分支匹配模式
+prerelease = false    # Don't create pre-release versions / 不建立預發布版本
 
-# dev 分支：預發布版本
 # dev branch: pre-release versions
+# dev 分支：預發布版本
 [tool.semantic_release.branches.dev]
-match = "dev"             # 分支匹配模式
-prerelease = true         # 建立預發布版本
-prerelease_token = "rc"   # 預發布標記（將生成符合 PEP 440 的 1.7.0rc1 格式）
+match = "dev"             # Branch matching pattern / 分支匹配模式
+prerelease = true         # Create pre-release versions / 建立預發布版本
+prerelease_token = "rc"   # Pre-release token (generates PEP 440 compliant 1.7.0rc1 format) / 預發布標記（將生成符合 PEP 440 的 1.7.0rc1 格式）
 
-# 變更日誌生成設定
 # Changelog generation configuration
+# 變更日誌生成設定
 [tool.semantic_release.changelog]
-template_dir = ".release/changelog-templates"  # 變更日誌模板目錄
-exclude_commit_patterns = []    # 排除的提交模式
-mode = "update"                 # 更新模式
-insertion_flag = "<!-- version list -->"  # 插入標記
+template_dir = ".release/changelog-templates"  # Changelog template directory / 變更日誌模板目錄
+exclude_commit_patterns = []    # Excluded commit patterns / 排除的提交模式
+mode = "update"                 # Update mode / 更新模式
+insertion_flag = "<!-- version list -->"  # Insertion flag / 插入標記
 
 [tool.semantic_release.changelog.default_templates]
-changelog_file = "CHANGELOG.md"  # 變更日誌檔案路徑
-output_format = "md"             # 輸出格式
-mask_initial_release = true      # 遮蔽初始發佈
+changelog_file = "CHANGELOG.md"  # Changelog file path / 變更日誌檔案路徑
+output_format = "md"             # Output format / 輸出格式
+mask_initial_release = true      # Mask initial release / 遮蔽初始發佈
 
-# 模板引擎設定
 # Template engine configuration
+# 模板引擎設定
 [tool.semantic_release.changelog.environment]
-block_start_string = "{%"         # 模板區塊起始符號
-block_end_string = "%}"           # 模板區塊結束符號
-variable_start_string = "{{"      # 變數起始符號
-variable_end_string = "}}"        # 變數結束符號
-comment_start_string = "{#"       # 註解起始符號
-comment_end_string = "#}"         # 註解結束符號
-trim_blocks = false               # 是否移除尾隨換行
-lstrip_blocks = false             # 是否移除前導空白
-newline_sequence = "\n"           # 換行符號
-keep_trailing_newline = false     # 保留尾隨換行
-extensions = []                   # 附加模板擴展
-autoescape = true                 # 自動轉義變數
+block_start_string = "{%"         # Template block start symbol / 模板區塊起始符號
+block_end_string = "%}"           # Template block end symbol / 模板區塊結束符號
+variable_start_string = "{{"      # Variable start symbol / 變數起始符號
+variable_end_string = "}}"        # Variable end symbol / 變數結束符號
+comment_start_string = "{#"       # Comment start symbol / 註解起始符號
+comment_end_string = "#}"         # Comment end symbol / 註解結束符號
+trim_blocks = false               # Remove trailing newlines / 是否移除尾隨換行
+lstrip_blocks = false             # Remove leading whitespace / 是否移除前導空白
+newline_sequence = "\n"           # Newline character / 換行符號
+keep_trailing_newline = false     # Keep trailing newline / 保留尾隨換行
+extensions = []                   # Additional template extensions / 附加模板擴展
+autoescape = true                 # Auto-escape variables / 自動轉義變數
 
-# 提交作者設定
 # Commit author configuration
+# 提交作者設定
 [tool.semantic_release.commit_author]
-env = "GIT_COMMIT_AUTHOR"                       # 環境變數名稱
-default = "semantic-release <semantic-release>" # 預設作者
+env = "GIT_COMMIT_AUTHOR"                       # Environment variable name / 環境變數名稱
+default = "semantic-release <semantic-release>" # Default author / 預設作者
 
-# 提交訊息解析設定
 # Commit message parsing configuration
+# 提交訊息解析設定
 [tool.semantic_release.commit_parser_options]
-allowed_tags = [ # 支援的提交類型
-    "feat",     # 新功能
-    "fix",      # 錯誤修復
-    "docs",     # 僅文檔變更
-    "style",    # 不影響代碼含義的變更
-    "refactor", # 既不修復錯誤也不增加功能的代碼變更
-    "perf",     # 提高性能的代碼變更
-    "test",     # 增加或修正現有測試
-    "chore",    # 構建過程或輔助工具的變更
-    "build",    # 影響構建系統的變更
-    "ci",       # CI 配置文件和腳本的變更
+allowed_tags = [ # Supported commit types / 支援的提交類型
+    "feat",     # New feature / 新功能
+    "fix",      # Bug fix / 錯誤修復
+    "docs",     # Documentation only changes / 僅文檔變更
+    "style",    # Changes that don't affect code meaning / 不影響代碼含義的變更
+    "refactor", # Code changes that neither fix bugs nor add features / 既不修復錯誤也不增加功能的代碼變更
+    "perf",     # Performance improvement / 提高性能的代碼變更
+    "test",     # Adding or correcting tests / 增加或修正現有測試
+    "chore",    # Changes to build process or auxiliary tools / 構建過程或輔助工具的變更
+    "build",    # Changes that affect the build system / 影響構建系統的變更
+    "ci",       # Changes to CI configuration files and scripts / CI 配置文件和腳本的變更
 ]
-minor_tags = ["feat"]          # 觸發次版本更新的類型
-patch_tags = [                 # 觸發修補版本更新的類型
-    "fix",      # 錯誤修復
-    "perf",     # 性能改進
-    "docs",     # 文檔變更
-    "style",    # 代碼格式（不影響邏輯）
-    "refactor", # 代碼重構
-    "test",     # 測試相關
-    "chore",    # 維護性變更
-    "build",    # 構建系統
-    "ci",       # CI 配置
+minor_tags = ["feat"]          # Types that trigger minor version update / 觸發次版本更新的類型
+patch_tags = [                 # Types that trigger patch version update / 觸發修補版本更新的類型
+    "fix",      # Bug fixes / 錯誤修復
+    "perf",     # Performance improvements / 性能改進
+    "docs",     # Documentation changes / 文檔變更
+    "style",    # Code formatting (doesn't affect logic) / 代碼格式（不影響邏輯）
+    "refactor", # Code refactoring / 代碼重構
+    "test",     # Test related / 測試相關
+    "chore",    # Maintenance changes / 維護性變更
+    "build",    # Build system / 構建系統
+    "ci",       # CI configuration / CI 配置
 ]
-default_bump_level = 0         # 預設更新級別 (0: patch, 1: minor, 2: major)
+default_bump_level = 0         # Default update level (0: patch, 1: minor, 2: major) / 預設更新級別 (0: patch, 1: minor, 2: major)
 
-# GitHub 倉庫設定
 # GitHub repository configuration
+# GitHub 倉庫設定
 [tool.semantic_release.remote]
-name = "origin"               # 遠端名稱
-type = "github"               # 倉庫類型
-ignore_token_for_push = false # 推送時不忽略認證令牌
+name = "origin"               # Remote name / 遠端名稱
+type = "github"               # Repository type / 倉庫類型
+ignore_token_for_push = false # Don't ignore auth token when pushing / 推送時不忽略認證令牌
 
-# GitHub 認證令牌設定
 # GitHub authentication token configuration
+# GitHub 認證令牌設定
 [tool.semantic_release.remote.token]
-env = "GITHUB_TOKEN"  # 環境變數名稱
+env = "GITHUB_TOKEN"  # Environment variable name / 環境變數名稱
 
-# 版本設定
 # Version configuration
+# 版本設定
 [tool.semantic_release.version]
-source = "commit"  # 從提交訊息自動決定版本
+source = "commit"  # Automatically determine version from commit messages / 從提交訊息自動決定版本
 version_toml = [
-    "pyproject.toml:project.version"  # 自動更新檔案中的版本
+    "pyproject.toml:project.version"  # Automatically update version in files / 自動更新檔案中的版本
 ]
-# 確保版本格式符合 PEP 440
 # Ensure version format complies with PEP 440
-# 版本範例：
-#   正式版本: 1.7.0
-#   預發布版本: 1.7.0rc1, 1.7.0rc2 (符合 PEP 440，無連字符)
+# 確保版本格式符合 PEP 440
+# Version examples / 版本範例：
+#   Production version / 正式版本: 1.7.0
+#   Pre-release version / 預發布版本: 1.7.0rc1, 1.7.0rc2 (PEP 440 compliant, no hyphen / 符合 PEP 440，無連字符)
 
-# 發布設定
 # Publishing configuration
+# 發布設定
 [tool.semantic_release.publish]
-dist_glob_patterns = ["dist/*"]  # 發布檔案模式
-upload_to_vcs_release = true     # 上傳到版本控制系統
+dist_glob_patterns = ["dist/*"]  # Publishing file patterns / 發布檔案模式
+upload_to_vcs_release = true     # Upload to version control system / 上傳到版本控制系統
 
-# 測試框架設定
 # Testing framework configuration
+# 測試框架設定
 [tool.pytest.ini_options]
 markers = [
     "stress: Stress test marker, used to identify tests requiring significant resources",
@@ -512,17 +512,17 @@ markers = [
     "excel: Excel file test marker, used to identify tests requiring openpyxl",
     "excel_zh: Excel 檔案測試標記，用於標識需要 openpyxl 的測試"
 ]
-testpaths = ["tests"]         # 測試路徑
-python_files = ["test_*.py"]  # Python 測試檔案模式
-python_classes = ["Test*"]    # Python 測試類別模式
-python_functions = ["test_*"] # Python 測試函數模式
-addopts = "-v --tb=short"     # 額外選項
+testpaths = ["tests"]         # Test paths / 測試路徑
+python_files = ["test_*.py"]  # Python test file pattern / Python 測試檔案模式
+python_classes = ["Test*"]    # Python test class pattern / Python 測試類別模式
+python_functions = ["test_*"] # Python test function pattern / Python 測試函數模式
+addopts = "-v --tb=short"     # Additional options / 額外選項
 
-# 測試覆蓋率設定
 # Test coverage configuration
+# 測試覆蓋率設定
 [tool.coverage.run]
-source = ["petsard"]  # 覆蓋率來源目錄
-omit = [              # 排除的檔案模式
+source = ["petsard"]  # Coverage source directory / 覆蓋率來源目錄
+omit = [              # Excluded file patterns / 排除的檔案模式
     "*/tests/*",
     "*/test_*",
     "*/__pycache__/*",
@@ -531,12 +531,12 @@ omit = [              # 排除的檔案模式
 ]
 
 [tool.coverage.report]
-exclude_lines = [     # 排除的程式行
+exclude_lines = [     # Excluded lines / 排除的程式行
     "pragma: no cover",
     "def __repr__",
     "raise AssertionError",
     "raise NotImplementedError",
     "if __name__ == .__main__.:"
 ]
-show_missing = true   # 顯示遺漏的行
-precision = 2         # 精確度
+show_missing = true   # Show missing lines / 顯示遺漏的行
+precision = 2         # Precision / 精確度

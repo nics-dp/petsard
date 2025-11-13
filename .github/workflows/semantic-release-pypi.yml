@@ -21,7 +21,9 @@ jobs:
         uses: actions/checkout@v5
         with:
           ref: ${{ github.ref_name }}
-          persist-credentials: false # 防止使用預設的 GITHUB_TOKEN
+          # 允許 semantic-release 提交版本更新
+          # Allow semantic-release to commit version updates
+          token: ${{ secrets.MATHEME_JUSTYN_SEMANTIC }}
 
       # 強制重設本地分支到觸發工作流程的確切提交
       # Force reset local branch to the exact commit that triggered the workflow
@@ -45,32 +47,27 @@ jobs:
         with:
           github_token: ${{ secrets.MATHEME_JUSTYN_SEMANTIC }}  # 使用你的正確 token 名稱
 
-      # 刷新本地程式碼狀態（不需要重新 checkout）
-      # Refresh local code state without re-checkout
-      - name: Setup | Refresh local state after version update
-        if: steps.release.outputs.released == 'true'
-        run: |
-          # 確保本地程式碼與遠端同步
-          # Ensure local code is in sync with remote
-          git fetch origin ${{ github.ref_name }}
-          git reset --hard origin/${{ github.ref_name }}
-
       # 使用 uv 建置 Python 套件發布檔案
       # Build Python package distribution files using uv
+      # semantic-release 已經更新了 pyproject.toml 並提交，無需手動更新
+      # semantic-release has already updated pyproject.toml and committed it
       - name: Publish | Build package with uv
         if: steps.release.outputs.released == 'true'
         run: |
-          # 從標籤中提取版本號
-          # Extract version from tag
+          # 驗證版本號與標籤一致
+          # Verify version matches the tag
           TAG_VERSION="${{ steps.release.outputs.tag }}"
-          VERSION="${TAG_VERSION#v}"  # 移除 'v' 前綴
+          VERSION="${TAG_VERSION#v}"
+          CURRENT_VERSION=$(grep '^version = ' pyproject.toml | sed 's/version = "\(.*\)".*/\1/')
 
-          # 更新 pyproject.toml 中的版本號
-          # Update version in pyproject.toml
-          sed -i "s/^version = .*/version = \"$VERSION\"/" pyproject.toml
+          echo "Tag version: $VERSION"
+          echo "pyproject.toml version: $CURRENT_VERSION"
 
-          echo "Building with version: $VERSION (from tag: $TAG_VERSION)"
-          echo "Updated pyproject.toml: $(grep '^version = ' pyproject.toml)"
+          if [ "$VERSION" != "$CURRENT_VERSION" ]; then
+            echo "⚠️  Warning: Version mismatch detected!"
+            echo "This should not happen if semantic-release is working correctly."
+            exit 1
+          fi
 
           # 使用 --no-sources 確保建置時不使用 tool.uv.sources 設定，提升相容性
           # Use --no-sources to ensure build compatibility without tool.uv.sources

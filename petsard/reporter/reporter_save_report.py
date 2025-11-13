@@ -1,6 +1,6 @@
 """
-純函式化的 ReporterSaveReport
-完全無狀態設計，專注於業務邏輯
+Pure functional ReporterSaveReport
+Completely stateless design, focused on business logic
 """
 
 import re
@@ -120,8 +120,8 @@ class ReporterSaveReportMap:
 
 class ReporterSaveReport(BaseReporter):
     """
-    純函式化的報告保存報告器
-    完全無狀態，專注於業務邏輯
+    Pure functional report saving reporter
+    Completely stateless, focused on business logic
     """
 
     SAVE_REPORT_KEY: str = DataFrameConstants.FULL_EXPT_NAME
@@ -147,10 +147,10 @@ class ReporterSaveReport(BaseReporter):
         """
         super().__init__(config)
 
-        # 處理 naming_strategy 參數
+        # Handle naming_strategy parameter
         naming_strategy = self.config.get("naming_strategy", "traditional")
         if naming_strategy not in ["traditional", "compact"]:
-            # 如果不是有效值，預設為 traditional
+            # If not a valid value, default to traditional
             naming_strategy = "traditional"
         self.config["naming_strategy"] = naming_strategy
 
@@ -158,7 +158,7 @@ class ReporterSaveReport(BaseReporter):
         if "granularity" not in self.config:
             raise ConfigError
 
-        # 支援 str 和 list[str] 兩種格式
+        # Support both str and list[str] formats
         granularity = self.config["granularity"]
         if isinstance(granularity, str):
             granularity_list = [granularity.lower()]
@@ -169,7 +169,7 @@ class ReporterSaveReport(BaseReporter):
         else:
             raise ConfigError
 
-        # 驗證所有 granularity 都是支援的
+        # Validate that all granularities are supported
         supported_granularities = [
             ReportGranularity.GLOBAL,
             ReportGranularity.COLUMNWISE,
@@ -190,7 +190,7 @@ class ReporterSaveReport(BaseReporter):
 
         self.config["granularity_list"] = granularity_list
         self.config["granularity_codes"] = granularity_codes
-        # 保持向後相容性
+        # Maintain backward compatibility
         self.config["granularity"] = granularity_list[0]
         self.config["granularity_code"] = granularity_codes[0]
 
@@ -208,7 +208,7 @@ class ReporterSaveReport(BaseReporter):
 
     def create(self, data: dict = None) -> dict[str, Any]:
         """
-        純函式：處理資料並返回結果，支援多個 granularity
+        Pure function: Process data and return results, supporting multiple granularities
 
         Args:
             data (dict): The data used for creating the report.
@@ -219,7 +219,7 @@ class ReporterSaveReport(BaseReporter):
                     - The value is the data of the report, pd.DataFrame.
 
         Returns:
-            dict[str, Any]: 處理後的報告資料，包含所有 granularity 的結果
+            dict[str, Any]: Processed report data containing results for all granularities
         """
         # verify input data
         self._verify_create_input(data)
@@ -228,16 +228,16 @@ class ReporterSaveReport(BaseReporter):
         data_copy = data.copy()
         exist_report = data_copy.pop("exist_report", None)
 
-        # 處理所有 granularity
+        # Process all granularities
         all_results = {}
 
         for granularity in self.config["granularity_list"]:
-            # 為每個 granularity 設置參數
+            # Set up parameters for each granularity
             eval_pattern, output_eval_name = (
                 self._setup_evaluation_parameters_for_granularity(granularity)
             )
 
-            # 處理這個 granularity 的實驗資料
+            # Process experiment data for this granularity
             final_report_data = self._process_all_experiments(
                 data_copy.copy(),
                 eval_pattern,
@@ -246,12 +246,12 @@ class ReporterSaveReport(BaseReporter):
                 granularity,
             )
 
-            # 生成這個 granularity 的結果
+            # Generate results for this granularity
             granularity_result = self._generate_final_result(
                 final_report_data, output_eval_name, granularity
             )
 
-            # 合併到總結果中
+            # Merge into total results
             if granularity_result and "Reporter" in granularity_result:
                 reporter_data = granularity_result["Reporter"]
                 if (
@@ -260,11 +260,11 @@ class ReporterSaveReport(BaseReporter):
                 ):
                     all_results[output_eval_name] = reporter_data
 
-        # 如果有任何結果，返回合併的結果
+        # If there are any results, return merged results
         if all_results:
             return {"Reporter": all_results}
         else:
-            # 如果沒有任何結果，返回所有 granularity 的警告
+            # If no results, return warnings for all granularities
             warning_results = {}
             for granularity in self.config["granularity_list"]:
                 eval_pattern, output_eval_name = (
@@ -282,20 +282,20 @@ class ReporterSaveReport(BaseReporter):
         self, processed_data: dict[str, Any] | None = None
     ) -> dict[str, Any] | None:
         """
-        純函式：生成並保存報告，支援多個 granularity
+        Pure function: Generate and save reports, supporting multiple granularities
 
         Args:
-            processed_data (dict[str, Any] | None): 處理後的資料
+            processed_data (dict[str, Any] | None): Processed data
 
         Returns:
-            dict[str, Any] | None: 生成的報告資料
+            dict[str, Any] | None: Generated report data
         """
         if not processed_data or "Reporter" not in processed_data:
             return {}
 
         reporter: dict = processed_data["Reporter"]
 
-        # 處理單一 granularity 的舊格式（向後相容）
+        # Handle old format with single granularity (backward compatibility)
         if "warnings" in reporter:
             import logging
 
@@ -307,23 +307,23 @@ class ReporterSaveReport(BaseReporter):
             )
             return processed_data
 
-        # 檢查是否為新的多 granularity 格式
+        # Check if it's the new multi-granularity format
         if "eval_expt_name" in reporter and "report" in reporter:
-            # 舊格式：單一 granularity
+            # Old format: single granularity
             return self._save_single_report(reporter, processed_data)
         else:
-            # 新格式：多 granularity
+            # New format: multiple granularities
             return self._save_multiple_reports(reporter, processed_data)
 
     def _save_single_report(self, reporter: dict, processed_data: dict) -> dict:
-        """保存單一報告（向後相容）"""
+        """Save single report (backward compatibility)"""
         if not all(key in reporter for key in ["eval_expt_name", "report"]):
             raise ConfigError
 
         eval_expt_name: str = reporter["eval_expt_name"]
         granularity = reporter.get("granularity")
 
-        # 根據 naming_strategy 決定檔名格式
+        # Determine filename format based on naming_strategy
         full_output = self._generate_report_filename(eval_expt_name, granularity)
 
         report: pd.DataFrame = reporter["report"]
@@ -334,7 +334,7 @@ class ReporterSaveReport(BaseReporter):
         return processed_data
 
     def _save_multiple_reports(self, reporter: dict, processed_data: dict) -> dict:
-        """保存多個 granularity 的報告"""
+        """Save reports for multiple granularities"""
         for eval_expt_name, report_data in reporter.items():
             if not isinstance(report_data, dict):
                 continue
@@ -357,7 +357,7 @@ class ReporterSaveReport(BaseReporter):
             if report is None:
                 continue
 
-            # 根據 naming_strategy 決定檔名格式
+            # Determine filename format based on naming_strategy
             full_output = self._generate_report_filename(
                 eval_expt_name, report_data.get("granularity")
             )
@@ -369,42 +369,42 @@ class ReporterSaveReport(BaseReporter):
         self, eval_expt_name: str, granularity: str = None
     ) -> str:
         """
-        根據 naming_strategy 生成報告檔名
+        Generate report filename based on naming_strategy
 
         Args:
-            eval_expt_name (str): 評估實驗名稱
-            granularity (str, optional): 粒度資訊
+            eval_expt_name (str): Evaluation experiment name
+            granularity (str, optional): Granularity information
 
         Returns:
-            str: 生成的檔名（不含副檔名）
+            str: Generated filename (without extension)
         """
         from petsard.reporter.reporter_base import ExperimentConfig, NamingStrategy
 
-        # 檢查是否有 naming_strategy 配置
+        # Check if naming_strategy configuration exists
         naming_strategy_str = self.config.get("naming_strategy", "traditional")
 
-        # 轉換為 NamingStrategy 枚舉
+        # Convert to NamingStrategy enum
         if naming_strategy_str == "compact":
             naming_strategy = NamingStrategy.COMPACT
         else:
             naming_strategy = NamingStrategy.TRADITIONAL
 
         if naming_strategy == NamingStrategy.TRADITIONAL:
-            # 傳統格式：petsard_Reporter[eval_name]
-            # eval_expt_name 現在不再包含中括號，所以直接添加
+            # Traditional format: petsard_Reporter[eval_name]
+            # eval_expt_name no longer includes brackets, so add them directly
             return f"{self.config['output']}_Reporter[{eval_expt_name}]"
         else:
-            # COMPACT 格式：petsard.report.Ev.eval_name.G
+            # COMPACT format: petsard.report.Ev.eval_name.G
             try:
-                # 嘗試從 eval_expt_name 解析出實驗名稱和粒度
+                # Attempt to parse experiment name and granularity from eval_expt_name
                 if "_[" in eval_expt_name and eval_expt_name.endswith("]"):
                     exp_name, granularity_part = eval_expt_name.rsplit("_[", 1)
-                    parsed_granularity = granularity_part[:-1]  # 移除結尾的 ]
+                    parsed_granularity = granularity_part[:-1]  # Remove trailing ]
                 else:
                     exp_name = eval_expt_name
                     parsed_granularity = granularity
 
-                # 創建 ExperimentConfig 來生成 COMPACT 檔名
+                # Create ExperimentConfig to generate COMPACT filename
                 config = ExperimentConfig(
                     module="Reporter",
                     exp_name=exp_name,
@@ -413,7 +413,7 @@ class ReporterSaveReport(BaseReporter):
                     naming_strategy=naming_strategy,
                 )
 
-                # 使用 report_filename 屬性，但移除 .csv 副檔名
+                # Use report_filename property, but remove .csv extension
                 filename = config.report_filename
                 if filename.endswith(".csv"):
                     filename = filename[:-4]
@@ -421,7 +421,7 @@ class ReporterSaveReport(BaseReporter):
                 return filename
 
             except Exception:
-                # 如果解析失敗，回退到傳統格式
+                # If parsing fails, fall back to traditional format
                 return f"{self.config['output']}[Report]_{eval_expt_name}"
 
     def _setup_evaluation_parameters(self) -> tuple[str, str]:
@@ -737,15 +737,15 @@ class ReporterSaveReport(BaseReporter):
     @classmethod
     def _reset_details_index(cls, report: pd.DataFrame) -> pd.DataFrame:
         """Reset index for details granularity."""
-        # Details granularity 通常保持原有的 index 結構
-        # 可能需要根據具體需求調整
+        # Details granularity typically maintains original index structure
+        # May need adjustment based on specific requirements
         return report.reset_index(drop=False)
 
     @classmethod
     def _reset_tree_index(cls, report: pd.DataFrame) -> pd.DataFrame:
         """Reset index for tree granularity."""
-        # Tree granularity 可能需要特殊的 index 處理
-        # 可能需要根據具體需求調整
+        # Tree granularity may require special index handling
+        # May need adjustment based on specific requirements
         return report.reset_index(drop=False)
 
     @classmethod
