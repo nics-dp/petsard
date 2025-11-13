@@ -126,12 +126,12 @@ class Splitter:
 
     def get_train_indices(self) -> list[set]:
         """
-        取得最後一次分割的訓練索引列表，用於向後相容性。
+        Get training index list from last split, for backward compatibility.
 
         Returns:
-            list[set]: 訓練索引集合列表
+            list[set]: List of training index sets
         """
-        # 這個方法主要用於向後相容，實際使用建議直接使用 split() 的返回值
+        # This method is mainly for backward compatibility, recommend using split() return value directly
         if hasattr(self, "_last_train_indices"):
             return self._last_train_indices
         return []
@@ -171,18 +171,18 @@ class Splitter:
         self, index: list, exist_train_indices: list[set] = None
     ) -> dict[int, dict[str, list[int]]]:
         """
-        拔靴法生成隨機索引樣本用於資料分割。
+        Generate random index samples for data splitting using bootstrap method.
 
         Args:
-            index (list): 待分割資料集的索引列表
-            exist_train_indices (list[set]): 現有的訓練索引集合列表，用於避免重疊
+            index (list): Index list of dataset to be split
+            exist_train_indices (list[set]): List of existing training index sets to avoid overlap
         """
         if self.config["random_state"] is not None:
             random.seed(self.config["random_state"])
 
         sample_size = round(len(index) * self.config["train_split_ratio"])
 
-        # 初始化現有訓練索引集合列表
+        # Initialize existing training index set list
         existing_train_sets = []
         if exist_train_indices:
             existing_train_sets = [
@@ -197,9 +197,9 @@ class Splitter:
             while attempts < self.config["max_attempts"]:
                 sampled_indices = set(random.sample(index, sample_size))
 
-                # 檢查是否與現有訓練集合重疊過多
+                # Check if overlap with existing training sets is acceptable
                 if self._check_overlap_acceptable(sampled_indices, existing_train_sets):
-                    # 將當前樣本加入現有訓練集合列表，供後續比較使用
+                    # Add current sample to existing training set list for subsequent comparison
                     existing_train_sets.append(sampled_indices)
 
                     sampled_index[n + 1] = {
@@ -226,24 +226,24 @@ class Splitter:
         self, new_train_sample: set, existing_train_sets: list[set]
     ) -> bool:
         """
-        檢查新訓練樣本與現有訓練集合的重疊是否可接受。
+        Check if overlap between new training sample and existing training sets is acceptable.
 
         Args:
-            new_train_sample (set): 新的訓練樣本索引集合
-            existing_train_sets (list[set]): 現有的訓練索引集合列表
+            new_train_sample (set): New training sample index set
+            existing_train_sets (list[set]): List of existing training index sets
 
         Returns:
-            bool: 如果重疊可接受則返回 True，否則返回 False
+            bool: Returns True if overlap is acceptable, False otherwise
         """
         max_overlap_ratio = self.config["max_overlap_ratio"]
 
         for existing_train_set in existing_train_sets:
-            # 1. 檢查是否完全一致
+            # 1. Check if completely identical
             if new_train_sample == existing_train_set:
                 return False
 
-            # 2. 檢查重疊比率是否超過限制
-            if max_overlap_ratio < 1.0:  # 只有在不是 100% 時才檢查
+            # 2. Check if overlap ratio exceeds limit
+            if max_overlap_ratio < 1.0:  # Only check when not 100%
                 overlap_size = len(new_train_sample.intersection(existing_train_set))
                 overlap_ratio = overlap_size / len(new_train_sample)
 

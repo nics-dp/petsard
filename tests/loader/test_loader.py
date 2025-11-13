@@ -692,9 +692,10 @@ class TestLoaderMetadataFeature:
                 # Verify that align was called
                 mock_align.assert_called_once()
 
-                # Verify that schema contains both fields
-                assert "nonexistent_field" in schema.attributes
+                # Verify that schema contains the fields from the actual data
+                # The nonexistent_field should not be in the returned schema since it's not in data
                 assert "age" in schema.attributes
+                assert "other_field" in schema.attributes
 
     def test_schema_transformation_error_handling(self, sample_csv_with_schema_needs):
         """Test error handling during schema transformations
@@ -1054,8 +1055,11 @@ class TestLoaderSchemaParameters:
 
     def test_nullable_int_parameter(self):
         """Test nullable_int parameter"""
-        # Schema uses enable_null instead of nullable_int
-        attributes = {"age": Attribute(name="age", type="int", enable_null=True)}
+        # Schema uses enable_null at schema level, not attribute level
+        # Use nullable in type_attr for attribute level
+        attributes = {
+            "age": Attribute(name="age", type="int", type_attr={"nullable": True})
+        }
         schema_config = Schema(
             id="test_schema",
             name="Test Schema",
@@ -1065,6 +1069,7 @@ class TestLoaderSchemaParameters:
 
         loader = Loader(filepath=self.temp_file.name, schema=schema_config)
         assert loader.config.schema.enable_null is True
+        assert loader.config.schema.attributes["age"].type_attr["nullable"] is True
 
     def test_nullable_int_invalid(self):
         """Test invalid nullable_int parameter"""

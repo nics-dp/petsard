@@ -1,6 +1,6 @@
 """
-純函式化的 ReporterSaveData
-完全無狀態設計，專注於業務邏輯
+Pure functional ReporterSaveData
+Completely stateless design, focused on business logic
 """
 
 from typing import Any
@@ -15,8 +15,8 @@ from petsard.reporter.reporter_base import (
 
 class ReporterSaveData(BaseReporter):
     """
-    純函式化的資料保存報告器
-    完全無狀態，專注於業務邏輯
+    Pure functional data saving reporter
+    Completely stateless, focused on business logic
     """
 
     def __init__(self, config: dict):
@@ -50,7 +50,7 @@ class ReporterSaveData(BaseReporter):
 
     def create(self, data: dict) -> dict[str, Any]:
         """
-        純函式：處理資料並返回結果
+        Pure function: Process data and return result
 
         Args:
             data (dict): The data dictionary.
@@ -58,7 +58,7 @@ class ReporterSaveData(BaseReporter):
                 See BaseReporter._verify_create_input() for format requirement.
 
         Returns:
-            dict[str, Any]: 處理後的資料字典
+            dict[str, Any]: Processed data dictionary
 
         Raises:
             ConfigError: If the index tuple is not an even number.
@@ -83,13 +83,13 @@ class ReporterSaveData(BaseReporter):
 
     def report(self, processed_data: dict[str, Any] | None = None) -> dict[str, Any]:
         """
-        純函式：生成並保存報告
+        Pure function: Generate and save report
 
         Args:
-            processed_data (dict[str, Any] | None): 處理後的資料
+            processed_data (dict[str, Any] | None): Processed data
 
         Returns:
-            dict[str, Any]: 生成的報告資料
+            dict[str, Any]: Generated report data
 
         Notes:
             Some of the data may be None, such as Evaluator.get_global/columnwise/pairwise. These will be skipped.

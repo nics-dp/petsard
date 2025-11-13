@@ -186,21 +186,21 @@ class FieldCombinationConstrainer:
             if isinstance(source_fields, str):
                 source_fields = (source_fields,)
 
-            # 初始化掩碼 - 默認保留所有行
+            # Initialize mask - keep all rows by default
             mask = pd.Series(True, index=result.index)
 
-            # 對每個源值-目標值對應關係
+            # For each source value-target value mapping
             for source_values, allowed_values in conditions.items():
                 if isinstance(source_values, str):
                     source_values = (source_values,)
 
-                # 找到匹配源值的行
+                # Find rows matching source values
                 source_mask = pd.Series(True, index=result.index)
                 for field, value in zip(source_fields, source_values, strict=False):
                     if self._is_na_value(value):
                         field_match = result[field].isna()
                     else:
-                        # 對於 category 類型，先轉換為字符串再比較
+                        # For category type, convert to string before comparison
                         if isinstance(result[field].dtype, pd.CategoricalDtype):
                             field_match = result[field].astype(str) == str(value)
                         else:
@@ -208,23 +208,23 @@ class FieldCombinationConstrainer:
 
                     source_mask &= field_match
 
-                # 規範化允許值為列表
+                # Normalize allowed values to list
                 if not isinstance(allowed_values, (list, tuple)):
                     allowed_values = [allowed_values]
 
-                # 檢查目標值
+                # Check target values
                 value_mask = result[target_field].isin(allowed_values)
 
-                # 更清晰的邏輯：
-                # - 源不匹配的行保留
-                # - 源匹配且目標合法的行保留
-                # - 源匹配但目標不合法的行移除
+                # Clear logic:
+                # - Keep rows with non-matching source
+                # - Keep rows with matching source and valid target
+                # - Remove rows with matching source but invalid target
                 row_mask = (~source_mask) | (source_mask & value_mask)
 
-                # 更新總掩碼
+                # Update total mask
                 mask &= row_mask
 
-            # 應用掩碼 - keep original index for validation tracking
+            # Apply mask - keep original index for validation tracking
             result = result[mask]
 
         return result

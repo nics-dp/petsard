@@ -76,7 +76,7 @@ class LoaderConfig(BaseConfig):
     )
     nrows: int | None = None  # Number of rows to read for quick testing
     schema: Schema | None = None
-    schema_path: str | None = None  # 記錄 schema 來源路徑（如果從檔案載入）
+    schema_path: str | None = None  # Record schema source path (if loaded from file)
 
     # Filepath related
     dir_name: str | None = None
@@ -258,18 +258,18 @@ class Loader:
         if isinstance(schema, dict):
             self._logger.debug("Schema provided as dictionary, converting to Schema")
             try:
-                # 使用 SchemaMetadater 的 from_dict 或 from_dict_v1 方法
-                # 檢查是否有舊格式的特徵
+                # Use SchemaMetadater's from_dict or from_dict_v1 methods
+                # Check for legacy format characteristics
                 has_global_params = any(
                     k in schema
                     for k in ["optimize_dtypes", "nullable_int", "infer_logical_types"]
                 )
 
                 if has_global_params:
-                    # v1.0 格式
+                    # v1.0 format
                     schema_obj = SchemaMetadater.from_dict_v1(schema)
                 else:
-                    # v2.0 格式 - 確保有 id
+                    # v2.0 format - ensure id is present
                     if "id" not in schema:
                         schema["id"] = "auto_generated_schema"
                     schema_obj = SchemaMetadater.from_dict(schema)
@@ -289,7 +289,7 @@ class Loader:
                     self._logger.error(error_msg)
                     raise ConfigError(error_msg)
 
-                # 使用 SchemaMetadater.from_yaml 直接載入
+                # Load directly using SchemaMetadater.from_yaml
                 schema_obj = SchemaMetadater.from_yaml(str(schema_path))
                 self._logger.debug(f"Successfully loaded schema from {schema}")
                 return schema_obj, str(schema_path)
@@ -357,7 +357,7 @@ class Loader:
                 )
                 for col_type, columns in self.config.column_types.items():
                     for col in columns:
-                        # 建立 Attribute 物件
+                        # Create Attribute object
                         type_mapping = {
                             "category": "category",
                             "datetime": "datetime64",
@@ -368,7 +368,7 @@ class Loader:
                             logical_type=col_type
                             if col_type in ["category", "datetime"]
                             else None,
-                            enable_null=True,
+                            nullable=True,
                         )
 
             # Merge legacy na_values
@@ -381,14 +381,14 @@ class Loader:
                             attributes[col] = Attribute(
                                 name=col,
                                 type="string",
-                                enable_null=True,
+                                nullable=True,
                             )
-                        # 更新 na_values
+                        # Update na_values
                         attributes[col].na_values = (
                             na_val if isinstance(na_val, list) else [na_val]
                         )
 
-            # 建立 Schema 物件
+            # Create Schema object
             merged_schema = Schema(
                 id=self.config.file_name or "default_schema",
                 name=self.config.base_name or "Default Schema",
@@ -511,11 +511,11 @@ class Loader:
         """
         self._logger.info("Processing with metadater")
 
-        # 如果沒有 schema，從資料建立
+        # If no schema exists, create one from data
         if schema is None or not schema.attributes:
             try:
                 schema = SchemaMetadater.from_data(data, base_schema=None)
-                # 現在可以直接修改屬性（已移除 frozen）
+                # Attributes can now be directly modified (frozen removed)
                 schema.id = self.config.file_name or "inferred_schema"
                 schema.name = self.config.base_name or "Inferred Schema"
                 self._logger.debug("Created schema from data without base_schema")
@@ -524,14 +524,14 @@ class Loader:
                 self._logger.error(error_msg)
                 raise UnableToFollowMetadataError(error_msg) from e
         else:
-            # 有 schema，需要從資料推斷並合併
-            # 如果 schema 有 precision 定義，就使用該精度，不從資料推斷
+            # Schema exists, need to infer from data and merge
+            # If schema has precision defined, use that precision without inferring from data
             try:
-                # 傳遞 base_schema 給 from_data，它會正確繼承所有屬性（type, category, nullable, precision 等）
+                # Pass base_schema to from_data, it will correctly inherit all attributes (type, category, nullable, precision, etc.)
                 inferred_schema = SchemaMetadater.from_data(data, base_schema=schema)
 
-                # 直接使用 inferred_schema，因為它已經正確繼承了 base_schema 的所有屬性
-                # 保留原 schema 的 id, name, description 等元資訊
+                # Use inferred_schema directly, as it has correctly inherited all base_schema attributes
+                # Preserve original schema's metadata (id, name, description, etc.)
                 inferred_schema.id = schema.id
                 inferred_schema.name = schema.name
                 if hasattr(schema, "description") and schema.description:
@@ -606,7 +606,6 @@ class Loader:
 if __name__ == "__main__":
     """
     Test script for Loader nrows parameter
-    測試 Loader nrows 參數功能
     """
     import os
     import sys
@@ -726,7 +725,6 @@ if __name__ == "__main__":
     # Run tests
     print("\n" + "=" * 60)
     print("Testing Loader nrows Parameter")
-    print("測試 Loader nrows 參數")
     print("=" * 60 + "\n")
 
     try:
@@ -736,7 +734,6 @@ if __name__ == "__main__":
 
         print("=" * 60)
         print("✅ ALL TESTS PASSED")
-        print("✅ 所有測試通過")
         print("=" * 60)
     except Exception as e:
         print("\n" + "=" * 60)

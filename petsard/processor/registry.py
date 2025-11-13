@@ -1,7 +1,7 @@
 """
 Processor Registry
 
-統一管理所有 Processor 類別及其 Schema 轉換規則
+Unified management of all Processor classes and their Schema transformation rules
 """
 
 from typing import Any
@@ -9,10 +9,10 @@ from typing import Any
 
 class ProcessorRegistry:
     """
-    Processor 註冊中心
+    Processor Registry Center
 
-    負責管理所有 Processor 類別的註冊和查詢
-    每個 Processor 可以註冊自己的 Schema 轉換資訊
+    Manages registration and lookup of all Processor classes
+    Each Processor can register its own Schema transformation information
     """
 
     _registry: dict[str, type] = {}
@@ -21,23 +21,23 @@ class ProcessorRegistry:
     @classmethod
     def register(cls, processor_class: type, name: str | None = None) -> type:
         """
-        註冊一個 Processor 類別
+        Register a Processor class
 
         Args:
-            processor_class: Processor 類別
-            name: 註冊名稱（如果未提供，從類別名稱生成）
+            processor_class: Processor class
+            name: Registration name (if not provided, generated from class name)
 
         Returns:
-            原始的 processor_class（用於裝飾器模式）
+            Original processor_class (for decorator pattern)
         """
         if name is None:
-            # 從類名生成名稱
+            # Generate name from class name
             name = cls._generate_name_from_class(processor_class)
 
-        # 註冊類別
+        # Register class
         cls._registry[name] = processor_class
 
-        # 如果類別有 get_schema_transform_info 方法，註冊轉換規則
+        # If class has get_schema_transform_info method, register transformation rules
         if hasattr(processor_class, "get_schema_transform_info"):
             cls._transform_rules[name] = processor_class.get_schema_transform_info()
 
@@ -46,87 +46,87 @@ class ProcessorRegistry:
     @classmethod
     def get_processor_class(cls, name: str) -> type | None:
         """
-        根據名稱獲取 Processor 類別
+        Get Processor class by name
 
         Args:
-            name: Processor 名稱
+            name: Processor name
 
         Returns:
-            Processor 類別，如果不存在則返回 None
+            Processor class, returns None if not exists
         """
         return cls._registry.get(name)
 
     @classmethod
     def get_transform_rule(cls, name: str) -> dict[str, Any] | None:
         """
-        根據名稱獲取 Schema 轉換規則
+        Get Schema transformation rules by name
 
         Args:
-            name: Processor 名稱
+            name: Processor name
 
         Returns:
-            轉換規則字典，如果不存在則返回 None
+            Transformation rules dictionary, returns None if not exists
         """
         return cls._transform_rules.get(name)
 
     @classmethod
     def list_processors(cls) -> list[str]:
         """
-        列出所有已註冊的 Processor 名稱
+        List all registered Processor names
 
         Returns:
-            Processor 名稱列表
+            List of Processor names
         """
         return list(cls._registry.keys())
 
     @classmethod
     def list_processors_with_rules(cls) -> list[str]:
         """
-        列出所有有 Schema 轉換規則的 Processor 名稱
+        List all Processor names with Schema transformation rules
 
         Returns:
-            Processor 名稱列表
+            List of Processor names
         """
         return list(cls._transform_rules.keys())
 
     @classmethod
     def clear(cls):
-        """清空註冊表（主要用於測試）"""
+        """Clear registry (mainly for testing)"""
         cls._registry.clear()
         cls._transform_rules.clear()
 
     @staticmethod
     def _generate_name_from_class(processor_class: type) -> str:
         """
-        從類名生成 Processor 名稱
+        Generate Processor name from class name
 
         Args:
-            processor_class: Processor 類別
+            processor_class: Processor class
 
         Returns:
-            生成的名稱（如 'encoder_label'）
+            Generated name (e.g., 'encoder_label')
         """
         import re
 
         name = processor_class.__name__
-        # 在大寫字母前插入底線，轉小寫
+        # Insert underscore before uppercase letters, convert to lowercase
         name = re.sub("([A-Z])", r"_\1", name).lower()
-        # 移除開頭的底線
+        # Remove leading underscore
         name = name.lstrip("_")
         return name
 
 
 def register_processor(name: str | None = None):
     """
-    Processor 註冊裝飾器
+    Processor registration decorator
 
-    使用方式:
+    Usage:
         @register_processor()
         class MissingMean(SchemaTransformMixin, Missing):
             SCHEMA_TRANSFORM = schema_transform(...)
 
     Args:
-        name: 自定義名稱（可選）
+        name: Custom name (optional)
     """
 
     def decorator(cls):

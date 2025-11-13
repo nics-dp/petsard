@@ -13,7 +13,6 @@ from petsard.exceptions import ConfigError
 class EvaluationScoreGranularityMap(Enum):
     """
     Mapping of the granularity of evaluation score.
-    評估分數粒度映射 Evaluation score granularity mapping
     """
 
     GLOBAL = auto()

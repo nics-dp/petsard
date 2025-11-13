@@ -28,6 +28,11 @@ datasets:
     filename: adult-income_syn.csv
     access: public
     sha256: 87df8e267710d83874d5ea07fc8d9fb7873ae461b00d04be0308536c04c806c3
+  # Taiwan salary statistics dataset (300K records)
+  taiwan-salary-statistics-300k:
+    filename: taiwan_salary_statistics_300k.csv
+    access: public
+    sha256: acfa4d161c3cd74e66037ad09b6502b4ad8917f6bde74c2573ab73e24c795faa
 
 
 # Best practices

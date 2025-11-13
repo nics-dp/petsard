@@ -1,8 +1,8 @@
 """
 Processor Schema Transform Mixin
 
-為 Processor 類別提供 Schema 轉換資訊的基礎設施
-每個 Processor 透過宣告類屬性來描述它如何影響 SchemaMetadata
+Provides infrastructure for Schema transformation information to Processor classes
+Each Processor describes how it affects SchemaMetadata through declared class attributes
 """
 
 from typing import Any, ClassVar
@@ -10,52 +10,52 @@ from typing import Any, ClassVar
 
 class SchemaTransformMixin:
     """
-    Schema 轉換 Mixin
+    Schema Transform Mixin
 
-    為 Processor 類別提供宣告 Schema 轉換規則的能力
-    子類別應該設定以下類屬性來描述它們如何轉換 Schema
+    Provides ability to declare Schema transformation rules for Processor classes
+    Subclasses should set the following class attributes to describe how they transform Schema
     """
 
-    # Schema 轉換規則
+    # Schema transformation rules
     SCHEMA_TRANSFORM: ClassVar[dict[str, Any]] = {
-        # 輸入類型限制 (None 表示接受所有類型)
+        # Input type constraints (None means accept all types)
         "input_types": None,  # list[str] | None
-        # 輸入是否為類別 (None 表示不限制)
+        # Whether input must be categorical (None means no constraint)
         "input_category": None,  # bool | None
-        # 輸出類型 (None 表示保持不變)
+        # Output type (None means keep unchanged)
         "output_type": None,  # str | None
-        # 輸出邏輯類型 (None 表示保持不變)
+        # Output logical type (None means keep unchanged)
         "output_logical_type": None,  # str | None
-        # 輸出是否為類別 (None 表示保持不變)
+        # Whether output is categorical (None means keep unchanged)
         "output_category": None,  # bool | None
-        # 是否創建新欄位 (如 OneHot)
+        # Whether creates new columns (e.g., OneHot)
         "creates_columns": False,  # bool
-        # 是否移除原欄位
+        # Whether removes original columns
         "removes_columns": False,  # bool
-        # 新欄位的命名模式 (如 OneHot 的後綴)
+        # Naming pattern for new columns (e.g., OneHot suffix)
         "column_pattern": None,  # str | None
-        # 是否影響可空性
+        # Whether affects nullability
         "affects_nullable": False,  # bool
-        # 轉換後的可空性 (None 表示保持不變)
+        # Nullability after transformation (None means keep unchanged)
         "nullable_after": None,  # bool | None
-        # 額外描述
+        # Additional description
         "description": "",  # str
     }
 
     @classmethod
     def get_schema_transform_info(cls) -> dict[str, Any]:
         """
-        獲取此 Processor 的 Schema 轉換資訊
+        Get Schema transformation information for this Processor
 
         Returns:
-            Schema 轉換規則字典
+            Schema transformation rules dictionary
         """
-        # 如果子類別沒有定義 SCHEMA_TRANSFORM，使用預設值
+        # If subclass hasn't defined SCHEMA_TRANSFORM, use default values
         if (
             not hasattr(cls, "SCHEMA_TRANSFORM")
             or cls.SCHEMA_TRANSFORM is SchemaTransformMixin.SCHEMA_TRANSFORM
         ):
-            # 返回預設規則：保持類型不變
+            # Return default rules: keep types unchanged
             return {
                 "input_types": None,
                 "input_category": None,
@@ -75,26 +75,26 @@ class SchemaTransformMixin:
     @classmethod
     def get_processor_name(cls) -> str:
         """
-        獲取 Processor 的名稱（用於註冊）
+        Get Processor name (for registration)
 
         Returns:
-            Processor 名稱（小寫，如 'encoder_label'）
+            Processor name (lowercase, e.g., 'encoder_label')
         """
-        # 從類名生成名稱，如 EncoderLabel -> encoder_label
+        # Generate name from class name, e.g., EncoderLabel -> encoder_label
         name = cls.__name__
 
-        # 處理駝峰命名
+        # Handle camelCase naming
         import re
 
-        # 在大寫字母前插入底線
+        # Insert underscore before uppercase letters
         name = re.sub("([A-Z])", r"_\1", name).lower()
-        # 移除開頭的底線
+        # Remove leading underscore
         name = name.lstrip("_")
 
         return name
 
 
-# Schema 轉換資訊的簡化工廠函數
+# Simplified factory function for Schema transformation information
 def schema_transform(
     input_types: list[str] | None = None,
     input_category: bool | None = None,
@@ -109,22 +109,22 @@ def schema_transform(
     description: str = "",
 ) -> dict[str, Any]:
     """
-    創建 Schema 轉換規則的工廠函數
+    Factory function to create Schema transformation rules
 
-    這是一個便利函數，讓 Processor 類別可以更簡潔地定義轉換規則
+    This is a convenience function allowing Processor classes to define transformation rules more concisely
 
     Args:
-        input_types: 接受的輸入類型列表
-        input_category: 輸入是否必須為類別 (None=不限制)
-        output_type: 輸出類型 (None=保持不變)
-        output_logical_type: 輸出邏輯類型 (None=保持不變)
-        output_category: 輸出是否為類別 (None=保持不變)
-        creates_columns: 是否創建新欄位
-        removes_columns: 是否移除原欄位
-        column_pattern: 新欄位命名模式
-        affects_nullable: 是否影響可空性
-        nullable_after: 轉換後的可空性
-        description: 轉換描述
+        input_types: List of accepted input types
+        input_category: Whether input must be categorical (None=no constraint)
+        output_type: Output type (None=keep unchanged)
+        output_logical_type: Output logical type (None=keep unchanged)
+        output_category: Whether output is categorical (None=keep unchanged)
+        creates_columns: Whether creates new columns
+        removes_columns: Whether removes original columns
+        column_pattern: Naming pattern for new columns
+        affects_nullable: Whether affects nullability
+        nullable_after: Nullability after transformation
+        description: Transformation description
 
     Example:
         class EncoderLabel(SchemaTransformMixin, Encoder):
@@ -132,7 +132,7 @@ def schema_transform(
                 input_category=True,
                 output_type="int64",
                 output_category=False,
-                description="Label encoding: 類別 -> 數值"
+                description="Label encoding: category -> numeric"
             )
     """
     return {

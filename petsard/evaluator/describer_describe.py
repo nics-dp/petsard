@@ -277,7 +277,7 @@ class DescriberDescribe(BaseEvaluator):
                     columnwise_desc_df[col].fillna(-1).astype(int).replace(-1, pd.NA)
                 )
             else:
-                # 安全處理 safe_round 可能返回 None 的情況
+                # Safely handle cases where safe_round might return None
                 rounded_series = columnwise_desc_df[col].apply(safe_round)
                 columnwise_desc_df[col] = rounded_series.fillna(pd.NA)
 

@@ -278,7 +278,7 @@ class BenchmarkerRequests(BaseBenchmarker):
             than confirm its SHA-256 is matched.
 
         """
-        # 檢查 requests 是否已安裝
+        # Check if requests is installed
         try:
             import requests
         except ImportError as e:

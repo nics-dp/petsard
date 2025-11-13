@@ -136,10 +136,10 @@ class PetsardGaussianCopulaSynthesizer(BaseSynthesizer):
     """
     A Gaussian Copula synthesizer for preprocessed data using PyTorch.
 
-    **重要假設**：
-    1. 輸入數據已預處理：類別變數已編碼為數值，數值變數已標準化
-    2. 不接受 string/object 類型的欄位
-    3. 所有欄位統一處理為 float，保留原始 dtype 用於還原
+    **Important Assumptions**:
+    1. Input data is preprocessed: categorical variables encoded as numeric, numeric variables standardized
+    2. Does not accept string/object type columns
+    3. All columns processed uniformly as float, preserving original dtype for restoration
 
     The Gaussian Copula approach:
     1. Validate data types (reject string/object)
@@ -382,7 +382,7 @@ class PetsardGaussianCopulaSynthesizer(BaseSynthesizer):
                 if NUMBA_AVAILABLE and col_time > 0:
                     speedup = first_col_time / col_time
                     self._logger.info(
-                        f"       [2/{n_cols}] '{col}': {col_time:.3f}s (🚀 {speedup:.1f}x speedup after JIT)"
+                        f"       [2/{n_cols}] '{col}': {col_time:.3f}s ({speedup:.1f}x speedup after JIT)"
                     )
                 else:
                     self._logger.info(f"       [2/{n_cols}] '{col}': {col_time:.3f}s")

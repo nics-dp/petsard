@@ -238,6 +238,10 @@ class TestLoaderAdapter:
         config = {"filepath": "test.csv"}
         test_data = pd.DataFrame({"A": [1, 2, 3], "B": [4, 5, 6]})
         mock_metadata = Mock(spec=Schema)
+        mock_metadata.id = "test_schema"
+        mock_metadata.name = "test"
+        mock_metadata.description = "test schema"
+        mock_metadata.enable_stats = False
 
         with patch("petsard.adapter.Loader") as mock_loader_class:
             mock_loader = Mock()
@@ -258,6 +262,10 @@ class TestLoaderAdapter:
         config = {"filepath": "benchmark://adult-income"}
         test_data = pd.DataFrame({"A": [1, 2, 3], "B": [4, 5, 6]})
         mock_metadata = Mock(spec=Schema)
+        mock_metadata.id = "test_schema"
+        mock_metadata.name = "test"
+        mock_metadata.description = "test schema"
+        mock_metadata.enable_stats = False
 
         with patch("petsard.adapter.Loader") as mock_loader_class:
             with patch(
@@ -583,6 +591,10 @@ class TestLoaderAdapter:
         config = {"filepath": "test.csv", "schema": "benchmark://adult-income-schema"}
         test_data = pd.DataFrame({"A": [1, 2, 3], "B": [4, 5, 6]})
         mock_metadata = Mock(spec=Schema)
+        mock_metadata.id = "test_schema"
+        mock_metadata.name = "test"
+        mock_metadata.description = "test schema"
+        mock_metadata.enable_stats = False
 
         with patch("petsard.adapter.Loader") as mock_loader_class:
             with patch(
@@ -636,6 +648,10 @@ class TestLoaderAdapter:
         }
         test_data = pd.DataFrame({"A": [1, 2, 3], "B": [4, 5, 6]})
         mock_metadata = Mock(spec=Schema)
+        mock_metadata.id = "test_schema"
+        mock_metadata.name = "test"
+        mock_metadata.description = "test schema"
+        mock_metadata.enable_stats = False
 
         with patch("petsard.adapter.Loader") as mock_loader_class:
             with patch(
@@ -756,9 +772,11 @@ class TestSplitterAdapter:
     def test_run(self):
         """測試執行"""
         config = {"method": "random", "test_size": 0.2}
+        mock_metadata = Mock(spec=Schema)
+        mock_metadata.enable_stats = False
         input_data = {
             "data": pd.DataFrame({"A": [1, 2, 3]}),
-            "metadata": Mock(spec=Schema),
+            "metadata": mock_metadata,
             "exist_train_indices": [],
         }
 
@@ -770,11 +788,16 @@ class TestSplitterAdapter:
                     "validation": pd.DataFrame({"A": [3]}),
                 }
             }
-            mock_metadata = Mock(spec=Schema)
+            mock_result_metadata = Mock(spec=Schema)
+            mock_result_metadata.enable_stats = False
+            # 讓 metadata 是一個可以 in 檢查的字典
+            mock_metadata_dict = {
+                1: {"train": mock_result_metadata, "validation": mock_result_metadata}
+            }
             mock_train_indices = {1: [0, 1]}
             mock_splitter.split.return_value = (
                 mock_data,
-                mock_metadata,
+                mock_metadata_dict,
                 mock_train_indices,
             )
             mock_splitter_class.return_value = mock_splitter
@@ -792,7 +815,7 @@ class TestSplitterAdapter:
 
             # Check that results are stored correctly
             assert operator.data == mock_data
-            assert operator.metadata == mock_metadata
+            assert operator.metadata == mock_metadata_dict
             assert operator.train_indices == mock_train_indices
 
     def test_set_input_with_data(self):
@@ -906,14 +929,18 @@ class TestPreprocessorAdapter:
     def test_run_default_sequence(self):
         """測試預設序列執行"""
         config = {"method": "default"}
+        mock_metadata = Mock(spec=Schema)
+        mock_metadata.enable_stats = False
+        mock_metadata.attributes = {}  # 空字典，可以迭代
         input_data = {
             "data": pd.DataFrame({"A": [1, 2, 3]}),
-            "metadata": Mock(spec=Schema),
+            "metadata": mock_metadata,
         }
 
         with patch("petsard.adapter.Processor") as mock_processor_class:
             mock_processor = Mock()
             mock_processor.transform.return_value = pd.DataFrame({"A": [1, 2, 3]})
+            mock_processor._metadata = mock_metadata
             mock_processor_class.return_value = mock_processor
 
             operator = PreprocessorAdapter(config)
@@ -925,14 +952,18 @@ class TestPreprocessorAdapter:
     def test_run_custom_sequence(self):
         """測試自定義序列執行"""
         config = {"method": "custom", "sequence": ["encoder", "scaler"]}
+        mock_metadata = Mock(spec=Schema)
+        mock_metadata.enable_stats = False
+        mock_metadata.attributes = {}  # 空字典，可以迭代
         input_data = {
             "data": pd.DataFrame({"A": [1, 2, 3]}),
-            "metadata": Mock(spec=Schema),
+            "metadata": mock_metadata,
         }
 
         with patch("petsard.adapter.Processor") as mock_processor_class:
             mock_processor = Mock()
             mock_processor.transform.return_value = pd.DataFrame({"A": [1, 2, 3]})
+            mock_processor._metadata = mock_metadata
             mock_processor_class.return_value = mock_processor
 
             operator = PreprocessorAdapter(config)
@@ -1029,9 +1060,14 @@ class TestSynthesizerAdapter:
     def test_run(self):
         """測試執行"""
         config = {"method": "sdv", "model": "GaussianCopula"}
+        mock_metadata = Mock(spec=Schema)
+        mock_metadata.id = "test_schema"
+        mock_metadata.name = "test"
+        mock_metadata.description = "test schema"
+        mock_metadata.enable_stats = False
         input_data = {
             "data": pd.DataFrame({"A": [1, 2, 3]}),
-            "metadata": Mock(spec=Schema),
+            "metadata": mock_metadata,
         }
         synthetic_data = pd.DataFrame({"A": [4, 5, 6]})
 
@@ -1537,13 +1573,13 @@ class TestPrecisionRoundingInAdapters:
                 "price": Attribute(
                     name="price",
                     type="float64",
-                    enable_null=False,
+                    nullable=False,
                     type_attr={"precision": 2},
                 ),
                 "amount": Attribute(
                     name="amount",
                     type="float64",
-                    enable_null=False,
+                    nullable=False,
                     type_attr={"precision": 3},
                 ),
             },
@@ -1579,7 +1615,7 @@ class TestPrecisionRoundingInAdapters:
                 "value": Attribute(
                     name="value",
                     type="float64",
-                    enable_null=False,
+                    nullable=False,
                     type_attr={"precision": 2},
                 )
             },
@@ -1680,7 +1716,7 @@ class TestPrecisionRoundingInAdapters:
                 "amount": Attribute(
                     name="amount",
                     type="float64",
-                    enable_null=False,
+                    nullable=False,
                     type_attr={"precision": 3},
                 )
             },
