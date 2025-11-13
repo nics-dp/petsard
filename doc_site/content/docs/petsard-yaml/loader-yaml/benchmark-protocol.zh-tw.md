@@ -42,6 +42,7 @@ Loader:
 | Adult Income (Control) | `benchmark://adult-income_control` | 控制組資料（用於 demo） |
 | Adult Income (Synthetic) | `benchmark://adult-income_syn` | SDV Gaussian Copula 合成資料（用於 demo） |
 | Taiwan Salary Statistics | `benchmark://taiwan-salary-statistics-300k` | 臺灣薪資統計資料集（300K 筆資料） |
+| Taiwan Salary Statistics (No DI) | `benchmark://taiwan-salary-statistics-300k-no-di` | 臺灣薪資統計資料集 - 無直接識別資料（300K 筆，已移除姓名、身分證字號，拆分生日與地址） |
 
 #### 臺灣薪資統計 Taiwan Salaries Statistics
 
