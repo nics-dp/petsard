@@ -60,7 +60,7 @@ dependencies = [
     "torch>=2.8.0,<3",
     "boto3>=1.40.25,<2",
     "botocore>=1.40.25,<2",
-    "faker>=37.6.0,<38",
+    "faker>=37.6.0,<39",
     "filelock>=3.19.1,<4",
     "narwhals>=1.45.0,<3",
     "platformdirs>=4.4.0,<5",
@@ -182,7 +182,7 @@ syn = [
     # sdv dependencies
     "boto3>=1.40.25,<2",
     "botocore>=1.40.25,<2",
-    "faker>=37.6.0,<38",
+    "faker>=37.6.0,<39",
     "filelock>=3.19.1,<4",
     "joblib>=1.5.2,<2",
     "narwhals>=1.45.0,<3",
