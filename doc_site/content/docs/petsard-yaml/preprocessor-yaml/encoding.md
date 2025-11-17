@@ -17,7 +17,7 @@ Most synthesis algorithms only support synthesis of numerical fields. Even when 
 
 Click the button below to run the complete example in Colab:
 
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/nics-tw/petsard/blob/main/demo/getting-started/use-cases/data-preprocessing/encoding-category.ipynb)
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/nics-tw/petsard/blob/main/demo/petsard-yaml/preprocessor-yaml/preprocessor_encoding.ipynb)
 
 ### Using Default Encoding
 
@@ -78,13 +78,6 @@ Preprocessor:
 - Outputs continuous values (between 0.0 and 1.0)
 - High-frequency categories get larger numerical ranges
 
-**Example**:
-```yaml
-config:
-  encoder:
-    education: 'encoder_uniform'
-```
-
 **Encoding Example**:
 ```
 Original data: ['high', 'low', 'medium', 'low', 'low']
@@ -105,13 +98,6 @@ Encoding result:
 - Outputs integers (0, 1, 2, ...)
 - Does not preserve order relationships between categories
 
-**Example**:
-```yaml
-config:
-  encoder:
-    gender: 'encoder_label'
-```
-
 **Encoding Example**:
 ```
 Original data: ['Male', 'Female', 'Male', 'Other']
@@ -130,13 +116,6 @@ Encoding result:
 - Each category becomes a new field
 - Outputs multiple fields (0 or 1)
 - Does not assume order relationships between categories
-
-**Example**:
-```yaml
-config:
-  encoder:
-    color: 'encoder_onehot'
-```
 
 **Encoding Example**:
 ```
@@ -176,54 +155,19 @@ Encoding result (3 new fields):
   - `'erase'`: Set to NA
   - `'replace'`: Use replacement rules
 
-**Examples**:
-```yaml
-config:
-  encoder:
-    # Basic usage
-    created_at: 'encoder_date'
-    
-    # Minguo calendar format
-    doc_date:
-      method: 'encoder_date'
-      input_format: '%MinguoY-%m-%d'
-      date_type: 'date'
-    
-    # With timezone
-    event_time:
-      method: 'encoder_date'
-      date_type: 'datetime_tz'
-      tz: 'Asia/Taipei'
-      invalid_handling: 'erase'
-```
-
 ## Processing Logic
 
 ### Categorical Encoding (Uniform/Label/OneHot)
 
-```
-Training phase (fit):
-  Learn category mapping rules
-
-Transform phase (transform):
-  Convert categories to numerical values based on mapping rules
-
-Inverse transform phase (inverse_transform):
-  Restore numerical values to categories based on mapping rules
-```
+- **Training phase (fit)**: Learn category mapping rules
+- **Transform phase (transform)**: Convert categories to numerical values based on mapping rules
+- **Inverse transform phase (inverse_transform)**: Restore numerical values to categories based on mapping rules
 
 ### Date Encoding (Date)
 
-```
-Training phase (fit):
-  No training needed
-
-Transform phase (transform):
-  Parse and convert to standard date format
-
-Inverse transform phase (inverse_transform):
-  Keep date format or convert to date string
-```
+- **Training phase (fit)**: No training needed
+- **Transform phase (transform)**: Parse and convert to standard date format
+- **Inverse transform phase (inverse_transform)**: Keep date format or convert to date string
 
 ## Default Behavior
 
@@ -287,11 +231,3 @@ Preprocessor:
 - **Timezone Handling**: datetime_tz type preserves timezone information
 - **Restoration Accuracy**: Uniform encoding may have slight errors during restoration
 - **Mutually Exclusive with discretizing**: Cannot use encoder and discretizing simultaneously
-
-## Related Documentation
-
-- [Processor API - fit()]({{< ref "/docs/python-api/processor-api/processor_fit" >}})
-- [Processor API - transform()]({{< ref "/docs/python-api/processor-api/processor_transform" >}})
-- [Processor API - inverse_transform()]({{< ref "/docs/python-api/processor-api/processor_inverse_transform" >}})
-- [Scaling]({{< ref "scaling" >}})
-- [Discretizing]({{< ref "discretizing" >}})

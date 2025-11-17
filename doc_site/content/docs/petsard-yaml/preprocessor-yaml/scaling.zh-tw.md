@@ -72,13 +72,6 @@ x' = (x - μ) / σ
 - 消除量綱影響
 - 適合大多數機器學習演算法
 
-**範例**：
-```yaml
-config:
-  scaler:
-    income: 'scaler_standard'
-```
-
 ### scaler_minmax
 
 **最小-最大縮放**：線性縮放到 [0, 1] 範圍。
@@ -92,13 +85,6 @@ x' = (x - min) / (max - min)
 - 保留資料分布形狀
 - 輸出範圍固定
 - 對離群值敏感
-
-**範例**：
-```yaml
-config:
-  scaler:
-    age: 'scaler_minmax'
-```
 
 ### scaler_zerocenter
 
@@ -114,13 +100,6 @@ x' = x - μ
 - 保留原始資料的變異程度
 - 適合需要保持原始尺度的情況
 
-**範例**：
-```yaml
-config:
-  scaler:
-    temperature: 'scaler_zerocenter'
-```
-
 ### scaler_log
 
 **對數轉換**：對數值進行對數轉換。
@@ -134,13 +113,6 @@ x' = log(x)
 - 只適用於正數
 - 壓縮大數值，擴展小數值
 - 適合處理偏態分布
-
-**範例**：
-```yaml
-config:
-  scaler:
-    salary: 'scaler_log'
-```
 
 **注意**：資料必須為正數，否則會產生錯誤。
 
@@ -158,13 +130,6 @@ x' = log(1 + x)
 - 數值穩定性更好
 - 還原時使用 exp(x') - 1
 
-**範例**：
-```yaml
-config:
-  scaler:
-    count: 'scaler_log1p'
-```
-
 ### scaler_timeanchor
 
 **時間錨點縮放**：計算與參考時間的時間差。
@@ -180,61 +145,25 @@ config:
 - 適合處理時間序列資料
 - 需要另一個日期欄位作為參考點
 
-**範例**：
-```yaml
-config:
-  scaler:
-    created_at:
-      method: 'scaler_timeanchor'
-      reference: 'event_time'
-      unit: 'D'
-    
-    update_time:
-      method: 'scaler_timeanchor'
-      reference: 'created_at'
-      unit: 'S'
-```
-
 ## 處理邏輯
 
 ### 統計縮放（Standard/MinMax/ZeroCenter）
 
-```
-訓練階段（fit）：
-  計算統計參數（均值、標準差、最小值、最大值）
-
-轉換階段（transform）：
-  使用統計參數縮放資料
-
-還原階段（inverse_transform）：
-  使用統計參數反縮放
-```
+- **訓練階段（fit）**：計算統計參數（均值、標準差、最小值、最大值）
+- **轉換階段（transform）**：使用統計參數縮放資料
+- **還原階段（inverse_transform）**：使用統計參數反縮放
 
 ### 對數轉換（Log/Log1p）
 
-```
-訓練階段（fit）：
-  無需訓練
-
-轉換階段（transform）：
-  套用對數函數
-
-還原階段（inverse_transform）：
-  套用指數函數
-```
+- **訓練階段（fit）**：無需訓練
+- **轉換階段（transform）**：套用對數函數
+- **還原階段（inverse_transform）**：套用指數函數
 
 ### 時間錨點（TimeAnchor）
 
-```
-訓練階段（fit）：
-  記錄參考欄位
-
-轉換階段（transform）：
-  計算與參考時間的差值
-
-還原階段（inverse_transform）：
-  加回參考時間，還原為絕對時間
-```
+- **訓練階段（fit）**：記錄參考欄位
+- **轉換階段（transform）**：計算與參考時間的差值
+- **還原階段（inverse_transform）**：加回參考時間，還原為絕對時間
 
 ## 預設行為
 
@@ -300,11 +229,3 @@ Preprocessor:
 - **還原精確度**：所有縮放方法都可精確還原（在數值精度範圍內）
 - **合成資料**：合成資料的縮放值可能略微超出訓練資料範圍
 - **與 discretizing 配合**：如果使用 discretizing，通常不需要 scaler
-
-## 相關文件
-
-- [Processor API - fit()]({{< ref "/docs/python-api/processor-api/processor_fit" >}})
-- [Processor API - transform()]({{< ref "/docs/python-api/processor-api/processor_transform" >}})
-- [Processor API - inverse_transform()]({{< ref "/docs/python-api/processor-api/processor_inverse_transform" >}})
-- [編碼]({{< ref "encoding" >}})
-- [離散化]({{< ref "discretizing" >}})

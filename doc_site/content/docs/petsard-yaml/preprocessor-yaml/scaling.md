@@ -72,13 +72,6 @@ x' = (x - μ) / σ
 - Eliminates scale effects
 - Suitable for most machine learning algorithms
 
-**Example**:
-```yaml
-config:
-  scaler:
-    income: 'scaler_standard'
-```
-
 ### scaler_minmax
 
 **Min-Max Scaling**: Linear scaling to [0, 1] range.
@@ -92,13 +85,6 @@ x' = (x - min) / (max - min)
 - Preserves data distribution shape
 - Fixed output range
 - Sensitive to outliers
-
-**Example**:
-```yaml
-config:
-  scaler:
-    age: 'scaler_minmax'
-```
 
 ### scaler_zerocenter
 
@@ -114,13 +100,6 @@ x' = x - μ
 - Preserves original data variance
 - Suitable when original scale needs to be maintained
 
-**Example**:
-```yaml
-config:
-  scaler:
-    temperature: 'scaler_zerocenter'
-```
-
 ### scaler_log
 
 **Log Transformation**: Applies logarithmic transformation to values.
@@ -134,13 +113,6 @@ x' = log(x)
 - Only applicable to positive numbers
 - Compresses large values, expands small values
 - Suitable for handling skewed distributions
-
-**Example**:
-```yaml
-config:
-  scaler:
-    salary: 'scaler_log'
-```
 
 **Note**: Data must be positive, otherwise it will produce errors.
 
@@ -158,13 +130,6 @@ x' = log(1 + x)
 - Better numerical stability
 - Uses exp(x') - 1 for inverse transformation
 
-**Example**:
-```yaml
-config:
-  scaler:
-    count: 'scaler_log1p'
-```
-
 ### scaler_timeanchor
 
 **Time Anchor Scaling**: Calculates time difference from a reference time.
@@ -180,61 +145,25 @@ config:
 - Suitable for time series data
 - Requires another date field as reference point
 
-**Examples**:
-```yaml
-config:
-  scaler:
-    created_at:
-      method: 'scaler_timeanchor'
-      reference: 'event_time'
-      unit: 'D'
-    
-    update_time:
-      method: 'scaler_timeanchor'
-      reference: 'created_at'
-      unit: 'S'
-```
-
 ## Processing Logic
 
 ### Statistical Scaling (Standard/MinMax/ZeroCenter)
 
-```
-Training phase (fit):
-  Calculate statistical parameters (mean, standard deviation, min, max)
-
-Transform phase (transform):
-  Scale data using statistical parameters
-
-Inverse transform phase (inverse_transform):
-  Unscale using statistical parameters
-```
+- **Training phase (fit)**: Calculate statistical parameters (mean, standard deviation, min, max)
+- **Transform phase (transform)**: Scale data using statistical parameters
+- **Inverse transform phase (inverse_transform)**: Unscale using statistical parameters
 
 ### Log Transformation (Log/Log1p)
 
-```
-Training phase (fit):
-  No training needed
-
-Transform phase (transform):
-  Apply logarithmic function
-
-Inverse transform phase (inverse_transform):
-  Apply exponential function
-```
+- **Training phase (fit)**: No training needed
+- **Transform phase (transform)**: Apply logarithmic function
+- **Inverse transform phase (inverse_transform)**: Apply exponential function
 
 ### Time Anchor (TimeAnchor)
 
-```
-Training phase (fit):
-  Record reference field
-
-Transform phase (transform):
-  Calculate difference from reference time
-
-Inverse transform phase (inverse_transform):
-  Add back reference time to restore absolute time
-```
+- **Training phase (fit)**: Record reference field
+- **Transform phase (transform)**: Calculate difference from reference time
+- **Inverse transform phase (inverse_transform)**: Add back reference time to restore absolute time
 
 ## Default Behavior
 
@@ -300,11 +229,3 @@ Preprocessor:
 - **Restoration Accuracy**: All scaling methods can be precisely restored (within numerical precision)
 - **Synthetic Data**: Scaled values of synthetic data may slightly exceed training data range
 - **With discretizing**: If using discretizing, scaler is typically not needed
-
-## Related Documentation
-
-- [Processor API - fit()]({{< ref "/docs/python-api/processor-api/processor_fit" >}})
-- [Processor API - transform()]({{< ref "/docs/python-api/processor-api/processor_transform" >}})
-- [Processor API - inverse_transform()]({{< ref "/docs/python-api/processor-api/processor_inverse_transform" >}})
-- [Encoding]({{< ref "encoding" >}})
-- [Discretizing]({{< ref "discretizing" >}})

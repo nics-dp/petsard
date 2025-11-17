@@ -17,7 +17,7 @@ weight: 3
 
 請點擊下方按鈕在 Colab 中執行完整範例：
 
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/nics-tw/petsard/blob/main/demo/getting-started/use-cases/data-preprocessing/encoding-category.ipynb)
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/nics-tw/petsard/blob/main/demo/petsard-yaml/preprocessor-yaml/preprocessor_encoding.ipynb)
 
 ### 使用預設編碼
 
@@ -78,13 +78,6 @@ Preprocessor:
 - 輸出為連續值（0.0 到 1.0 之間）
 - 高頻類別獲得較大的數值範圍
 
-**範例**：
-```yaml
-config:
-  encoder:
-    education: 'encoder_uniform'
-```
-
 **編碼示例**：
 ```
 原始資料：['high', 'low', 'medium', 'low', 'low']
@@ -105,13 +98,6 @@ config:
 - 輸出為整數（0, 1, 2, ...）
 - 不保留類別間的順序關係
 
-**範例**：
-```yaml
-config:
-  encoder:
-    gender: 'encoder_label'
-```
-
 **編碼示例**：
 ```
 原始資料：['Male', 'Female', 'Male', 'Other']
@@ -130,13 +116,6 @@ config:
 - 每個類別變成一個新欄位
 - 輸出為多個欄位（0 或 1）
 - 不假設類別間有順序關係
-
-**範例**：
-```yaml
-config:
-  encoder:
-    color: 'encoder_onehot'
-```
 
 **編碼示例**：
 ```
@@ -176,54 +155,19 @@ config:
   - `'erase'`：設為 NA
   - `'replace'`：使用替換規則
 
-**範例**：
-```yaml
-config:
-  encoder:
-    # 基本使用
-    created_at: 'encoder_date'
-    
-    # 民國年格式
-    doc_date:
-      method: 'encoder_date'
-      input_format: '%MinguoY-%m-%d'
-      date_type: 'date'
-    
-    # 含時區
-    event_time:
-      method: 'encoder_date'
-      date_type: 'datetime_tz'
-      tz: 'Asia/Taipei'
-      invalid_handling: 'erase'
-```
-
 ## 處理邏輯
 
 ### 類別編碼（Uniform/Label/OneHot）
 
-```
-訓練階段（fit）：
-  學習類別映射規則
-
-轉換階段（transform）：
-  依映射規則將類別轉為數值
-
-還原階段（inverse_transform）：
-  依映射規則將數值還原為類別
-```
+- **訓練階段（fit）**：學習類別映射規則
+- **轉換階段（transform）**：依映射規則將類別轉為數值
+- **還原階段（inverse_transform）**：依映射規則將數值還原為類別
 
 ### 日期編碼（Date）
 
-```
-訓練階段（fit）：
-  無需訓練
-
-轉換階段（transform）：
-  解析並轉換為標準日期格式
-
-還原階段（inverse_transform）：
-  保持日期格式或轉為日期字串
-```
+- **訓練階段（fit）**：無需訓練
+- **轉換階段（transform）**：解析並轉換為標準日期格式
+- **還原階段（inverse_transform）**：保持日期格式或轉為日期字串
 
 ## 預設行為
 
@@ -287,11 +231,3 @@ Preprocessor:
 - **時區處理**：datetime_tz 類型會保留時區資訊
 - **還原精確度**：Uniform 編碼還原時可能有輕微誤差
 - **與 discretizing 互斥**：不能同時使用 encoder 和 discretizing
-
-## 相關文件
-
-- [Processor API - fit()]({{< ref "/docs/python-api/processor-api/processor_fit" >}})
-- [Processor API - transform()]({{< ref "/docs/python-api/processor-api/processor_transform" >}})
-- [Processor API - inverse_transform()]({{< ref "/docs/python-api/processor-api/processor_inverse_transform" >}})
-- [縮放]({{< ref "scaling" >}})
-- [離散化]({{< ref "discretizing" >}})

@@ -65,15 +65,6 @@ Preprocessor:
 - 輸出為整數標籤（0, 1, 2, ...）
 - 減少資料維度和複雜度
 
-**範例**：
-```yaml
-config:
-  discretizing:
-    age:
-      method: 'discretizing_kbins'
-      n_bins: 5
-```
-
 **離散化示例**：
 ```
 原始數值：[18, 25, 35, 45, 55, 65]
@@ -93,29 +84,15 @@ n_bins = 5
 
 ### 數值型資料（discretizing_kbins）
 
-```
-訓練階段（fit）：
-  計算並儲存區間邊界
-
-轉換階段（transform）：
-  依區間邊界將數值映射到整數標籤
-
-還原階段（inverse_transform）：
-  將整數標籤還原為區間中點值
-```
+- **訓練階段（fit）**：計算並儲存區間邊界
+- **轉換階段（transform）**：依區間邊界將數值映射到整數標籤
+- **還原階段（inverse_transform）**：將整數標籤還原為區間中點值
 
 ### 類別型資料（encoder_label）
 
-```
-訓練階段（fit）：
-  建立類別到整數的映射
-
-轉換階段（transform）：
-  依映射將類別轉為整數
-
-還原階段（inverse_transform）：
-  依映射將整數還原為類別
-```
+- **訓練階段（fit）**：建立類別到整數的映射
+- **轉換階段（transform）**：依映射將類別轉為整數
+- **還原階段（inverse_transform）**：依映射將整數還原為類別
 
 ## 預設行為
 
@@ -288,11 +265,3 @@ Preprocessor:
 - **合成器影響**：某些合成器（如 PAC-Synth、DPCTGAN）可能產生浮點數，系統會自動四捨五入
 - **適用場景**：適合需要離散化輸出的情況，如某些隱私保護演算法
 - **NA 處理**：後處理時會先移除 NA 值再進行還原
-
-## 相關文件
-
-- [Processor API - fit()]({{< ref "/docs/python-api/processor-api/processor_fit" >}})
-- [Processor API - transform()]({{< ref "/docs/python-api/processor-api/processor_transform" >}})
-- [Processor API - inverse_transform()]({{< ref "/docs/python-api/processor-api/processor_inverse_transform" >}})
-- [編碼]({{< ref "encoding" >}})
-- [縮放]({{< ref "scaling" >}})
