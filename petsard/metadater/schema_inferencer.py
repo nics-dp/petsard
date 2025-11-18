@@ -155,16 +155,6 @@ class ProcessorTransformRules:
                 "description": "Uniform encoding, categorical to uniformly distributed float"
             },
         ),
-        "encoder_minguodate": TransformRule(
-            processor_type="encoder",
-            processor_method="encoder_minguodate",
-            input_types=["datetime", "string"],
-            output_type="int",
-            output_logical_type="minguo_year",
-            context={
-                "description": "Minguo year encoding, date to Minguo year integer"
-            },
-        ),
         "encoder_datediff": TransformRule(
             processor_type="encoder",
             processor_method="encoder_datediff",

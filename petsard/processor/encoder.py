@@ -1,14 +1,10 @@
-import calendar
-import re
-from dataclasses import dataclass, field
-from datetime import date, datetime
 from typing import Any
 
 import numpy as np
 import pandas as pd
 from sklearn.preprocessing import LabelEncoder, OneHotEncoder
 
-from petsard.exceptions import ConfigError, UnfittedError
+from petsard.exceptions import UnfittedError
 from petsard.processor.schema_transform import SchemaTransformMixin, schema_transform
 
 
@@ -390,440 +386,6 @@ class EncoderOneHot(SchemaTransformMixin, Encoder):
         return data
 
 
-@dataclass
-class MinguoDateFixStrategiesConfig:
-    """
-    Configuration for MinguoDateEncoder fix strategies.
-
-    Attributes:
-        year (int): Fixed year value
-        month (int): Fixed month value
-        day (int): Fixed day value
-    """
-
-    fix_strategies: str | list[dict[str, int]] = field(default_factory=list)
-    year: int = None
-    month: int = None
-    day: int = None
-
-    RECOMMEND_FIX_STRATEGIES: list[dict[str, int]] = field(
-        default_factory=lambda: [
-            {"day": 1},  # Try fixing day first
-            {"month": 7, "day": 1},  # Then try fixing month and day
-        ]
-    )
-
-    def __post_init__(self):
-        if self.fix_strategies is None:
-            return  # default to empty list
-
-        if isinstance(self.fix_strategies, str):
-            if self.fix_strategies.lower() == "recommend":
-                self.fix_strategies = self.RECOMMEND_FIX_STRATEGIES
-            else:
-                raise ConfigError(
-                    "Invalid fix strategy. Must be a list of dictionaries or 'recommend'"
-                )
-
-        for fix_strategy in self.fix_strategies:
-            if not isinstance(fix_strategy, dict):
-                raise ConfigError(
-                    "Fix strategy must be a dictionary with 'year', 'month', and 'day' keys"
-                )
-            if not any(key in fix_strategy for key in ["year", "month", "day"]):
-                raise ConfigError(
-                    "Fix strategy must contain at least one of 'year', 'month', or 'day'"
-                )
-            if any(
-                not isinstance(value, int) or value <= 0
-                for strategy in self.fix_strategies
-                for key, value in strategy.items()
-            ):
-                raise ConfigError("All fix strategy values must be positive integers")
-
-            # AD 1677-09-21 00:12:43.145225 ~ 2262-04-11 23:47:16.854775807,
-            #   limits by pd.Timestamp
-            if "year" in fix_strategy and not 2261 >= fix_strategy["year"] >= 1678:
-                raise ConfigError(
-                    "Fix strategy year value must be within AD 1678 ~ 2261"
-                )
-            if "month" in fix_strategy and fix_strategy["month"] > 12:
-                raise ConfigError("Fix strategy month value must be between 1 and 12")
-            if "day" in fix_strategy and fix_strategy["day"] > 31:
-                raise ConfigError("Fix strategy day value must be between 1 and 31")
-
-            if all(key in fix_strategy for key in ["month", "day"]):
-                year: int = fix_strategy.get("year", 1)
-                if (
-                    calendar.monthrange(year, fix_strategy["month"])[1]
-                    < fix_strategy["day"]
-                ):
-                    raise ConfigError(
-                        "Fix strategy day value must be valid for the month"
-                    )
-
-            for key in ["year", "month", "day"]:
-                setattr(self, key, fix_strategy.get(key, None))
-
-
-class EncoderMinguoDate(Encoder):
-    """
-    Encoder for converting between Minguo (ROC) dates and Gregorian (AD) dates.
-
-    This encoder supports various input formats:
-    - Integer format (YYYMMDD): 1120903
-    - String formats: '112-09-03', '112/09/03', '1120903'
-    - pandas Timestamp and Python datetime objects
-
-    Attributes:
-        input_format (str): Format of the input date
-        fix_strategy (List[Dict]): Strategies for fixing invalid dates
-    """
-
-    def __init__(
-        self,
-        input_format: str | None = None,
-        output_format: str = "datetime",
-        fix_strategies: str | list[dict[str, int]] = None,
-    ) -> None:
-        """
-        Initialize the MinguoDateEncoder.
-
-        Args:
-            input_format: Optional format string for parsing input dates
-            output_format: Output format, one of: 'datetime', 'date', 'string'
-            fix_strategy (str | list[dict[str, int]]): List of strategies for fixing invalid dates
-        """
-        super().__init__()
-
-        self.input_format = input_format
-        self.output_format = output_format
-
-        # Default fix strategy if none provided
-        self.fix_strategies: MinguoDateFixStrategiesConfig = (
-            MinguoDateFixStrategiesConfig(fix_strategies=fix_strategies)
-        )
-
-        # Will be filled during fit
-        self.labels = []
-
-    def _convert_minguo_to_ad(self, value: Any) -> date | datetime | str | None:
-        """
-        Convert a Minguo date to an AD date.
-
-        Args:
-            value: Minguo date in supported formats
-
-        Returns:
-            Converted date in the specified output format
-        """
-        if value is None or pd.isna(value):
-            return None
-
-        # Handle pandas Timestamp
-        if isinstance(value, pd.Timestamp):
-            return self._format_output(value.to_pydatetime().date())
-
-        # Handle datetime objects
-        if isinstance(value, datetime):
-            return self._format_output(value.date())
-
-        # Already a date object, just format and return
-        if isinstance(value, date):
-            return self._format_output(value)
-
-        # Process integer and string formats
-        roc_year, month, day = None, None, None
-
-        # Handle numpy numeric types or Python float
-        if isinstance(value, (np.integer, np.floating, float, int)):
-            if isinstance(value, float):
-                value = int(value)
-
-            if self.input_format is None:
-                self.input_format = "int"
-
-            # Extract year, month, day from integer YYYMMDD format
-            roc_year = value // 10000
-            month = (value % 10000) // 100
-            day = value % 100
-
-        elif isinstance(value, str):
-            # Clean the string
-            value = value.strip()
-
-            # Try different string formats
-            if "-" in value:
-                if self.input_format is None:
-                    self.input_format = "str-"
-
-                # YYY-MM-DD format
-                parts = value.split("-")
-                if len(parts) == 3:
-                    try:
-                        roc_year = int(parts[0])
-                        month = int(parts[1])
-                        day = int(parts[2])
-                    except ValueError as e:
-                        raise ValueError(
-                            f"Unable to parse YYY-MM-DD format: {value}"
-                        ) from e
-                else:
-                    raise ValueError(f"Invalid YYY-MM-DD format: {value}")
-
-            elif "/" in value:
-                if self.input_format is None:
-                    self.input_format = "str/"
-
-                # YYY/MM/DD format
-                parts = value.split("/")
-                if len(parts) == 3:
-                    try:
-                        roc_year = int(parts[0])
-                        month = int(parts[1])
-                        day = int(parts[2])
-                    except ValueError as e:
-                        raise ValueError(
-                            f"Unable to parse YYY/MM/DD format: {value}"
-                        ) from e
-                else:
-                    raise ValueError(f"Invalid YYY/MM/DD format: {value}")
-
-            else:
-                if self.input_format is None:
-                    self.input_format = "str"
-
-                # YYYMMDD format
-                match = re.match(r"^(\d{3})(\d{2})(\d{2})$", value)
-                if match:
-                    roc_year = int(match.group(1))
-                    month = int(match.group(2))
-                    day = int(match.group(3))
-                else:
-                    # Try parsing as pure number
-                    try:
-                        numeric_value = int(value)
-                        roc_year = numeric_value // 10000
-                        month = (numeric_value % 10000) // 100
-                        day = numeric_value % 100
-                    except ValueError as e:
-                        raise ValueError(
-                            f"Unable to parse Minguo year format: {value}"
-                        ) from e
-
-        else:
-            raise ValueError(
-                f"Unable to parse date format: {value} (type: {type(value)})"
-            )
-
-        # Convert to AD year
-        year = roc_year + 1911
-
-        # Try to create valid date
-        try:
-            # First try with original date
-            ad_date = date(year, month, day)
-            return self._format_output(ad_date)
-        except ValueError:
-            fix_strategies: list[dict[str, int]] = self.fix_strategies.fix_strategies
-            # Apply fix strategies
-            for strategy_level, fix_dict in enumerate(fix_strategies, 1):
-                try:
-                    # Apply current fix strategy
-                    fixed_year = fix_dict.get("year", year)
-                    fixed_month = fix_dict.get("month", month)
-                    fixed_day = fix_dict.get("day", day)
-
-                    # Check date validity
-                    max_day = calendar.monthrange(fixed_year, fixed_month)[1]
-
-                    # Create date object
-                    fixed_date = date(fixed_year, fixed_month, min(fixed_day, max_day))
-
-                    # Print fix warning (optional, can be commented out in production)
-                    original_str = f"{roc_year:03d}/{month:02d}/{day:02d}"
-                    fixed_str = (
-                        f"{fixed_year - 1911:03d}/{fixed_month:02d}/{fixed_date.day:02d}"
-                        if fixed_year >= 1912
-                        else f"{fixed_year}/{fixed_month:02d}/{fixed_date.day:02d}"
-                    )
-                    print(
-                        f"Warning: Date {original_str} has been fixed to {fixed_str} (Level {strategy_level})"
-                    )
-
-                    return self._format_output(fixed_date)
-                except Exception as e:
-                    if strategy_level == len(fix_strategies):
-                        # If all strategies fail
-                        raise ValueError(
-                            f"Unable to fix date: {roc_year:03d}/{month:02d}/{day:02d}, error: {str(e)}"
-                        ) from e
-                    # Try next strategy
-                    continue
-
-    def _convert_ad_to_minguo(
-        self, value: date | datetime | str | None
-    ) -> int | str | None:
-        """
-        Convert an AD date to a Minguo date.
-
-        Args:
-            value: AD date in supported formats
-
-        Returns:
-            Minguo date in the format specified by input_format
-        """
-        if value is None or pd.isna(value):
-            return None
-
-        # Handle string input (if not already a date object)
-        if isinstance(value, str):
-            try:
-                value = pd.to_datetime(value).date()
-            except Exception as e:
-                raise ValueError(f"Unable to parse AD date string: {value}") from e
-
-        # Handle pandas Timestamp
-        if isinstance(value, pd.Timestamp):
-            value = value.to_pydatetime().date()
-
-        # Handle datetime
-        if isinstance(value, datetime):
-            value = value.date()
-
-        # Calculate ROC year
-        if not isinstance(value, date):
-            raise ValueError(
-                f"Unable to parse date format: {value} (type: {type(value)})"
-            )
-
-        roc_year = value.year - 1911
-
-        # Handle dates before ROC era
-        if roc_year < 1:
-            fix_strategies: list[dict[str, int]] = self.fix_strategies.fix_strategies
-            for strategy_level, fix_dict in enumerate(fix_strategies, 1):
-                if "year" in fix_dict:
-                    fixed_year = fix_dict["year"]
-                    fixed_month = fix_dict.get("month", value.month)
-                    fixed_day = fix_dict.get("day", value.day)
-
-                    try:
-                        fixed_date = date(fixed_year, fixed_month, fixed_day)
-                        roc_year = fixed_year - 1911
-                        print(
-                            f"Warning: Date {value} is before ROC era, fixed to {fixed_date} (Level {strategy_level})"
-                        )
-                        value = fixed_date
-                        break
-                    except Exception as e:
-                        if strategy_level == len(fix_strategies):
-                            raise ValueError(
-                                f"Unable to fix date before ROC era: {value}"
-                            ) from e
-                        continue
-
-            # If no year fix strategy and not fixed
-            if roc_year < 1:
-                raise ValueError(
-                    f"Date is before ROC era {value.year}, and no valid year fix strategy provided"
-                )
-
-        # Return formatted according to input_format or default
-        if not self.input_format or self.input_format == "int":
-            return roc_year * 10000 + value.month * 100 + value.day
-        elif self.input_format == "str":
-            return f"{roc_year:03d}{value.month:02d}{value.day:02d}"
-        elif self.input_format == "str-":
-            return f"{roc_year:03d}-{value.month:02d}-{value.day:02d}"
-        elif self.input_format == "str/":
-            return f"{roc_year:03d}/{value.month:02d}/{value.day:02d}"
-        else:
-            # Default to int format
-            return roc_year * 10000 + value.month * 100 + value.day
-
-    def _format_output(self, date_obj: date) -> date | datetime | str:
-        """
-        Format the output date according to output_format.
-
-        Args:
-            date_obj: Date object to format
-
-        Returns:
-            Formatted date according to output_format
-        """
-        if self.output_format == "date":
-            return date_obj
-        elif self.output_format == "datetime":
-            return datetime.combine(date_obj, datetime.min.time())
-        elif self.output_format == "string":
-            return date_obj.strftime("%Y-%m-%d")
-        else:
-            return date_obj  # Default to date object
-
-    def _fit(self, data: pd.Series) -> None:
-        """
-        Fit the encoder to the data.
-
-        Args:
-            data: Series of dates to encode
-        """
-        self.labels = data.unique().tolist()
-        # Try converting to validate
-        try:
-            data.apply(self._convert_minguo_to_ad)
-        except Exception as e:
-            raise ValueError(
-                f"Unable to parse date format, please check date format is correct: {str(e)}"
-            ) from e
-
-    def _transform(self, data: pd.Series) -> pd.Series:
-        """
-        Transform a series of Minguo dates to AD dates.
-
-        Args:
-            data: Series of Minguo dates
-
-        Returns:
-            Series of AD dates
-        """
-        transformed: pd.Series = data.apply(self._convert_minguo_to_ad)
-
-        # Convert to pandas datetime if not already
-        if not pd.api.types.is_datetime64_any_dtype(transformed):
-            # Handle out-of-bounds dates
-            max_date = pd.Timestamp.max.date()
-            min_date = pd.Timestamp.min.date()
-
-            transformed = transformed.apply(
-                lambda x: None
-                if pd.isna(x)
-                or (isinstance(x, date) and (x > max_date or x < min_date))
-                else x
-            )
-
-            # Convert to pandas datetime
-            if self.output_format != "string":
-                transformed = pd.to_datetime(transformed, errors="coerce")
-
-        return transformed
-
-    def _inverse_transform(self, data: pd.Series) -> pd.Series:
-        """
-        Transform a series of AD dates back to Minguo dates.
-
-        Args:
-            data: Series of AD dates
-
-        Returns:
-            Series of Minguo dates
-        """
-        try:
-            return data.apply(self._convert_ad_to_minguo)
-        except Exception as e:
-            raise ValueError(f"Unable to convert date: {str(e)}") from e
-
-
 class EncoderDateDiff(Encoder):
     """
     Encoder for calculating day differences between dates using a baseline date.
@@ -953,21 +515,54 @@ class EncoderDateDiff(Encoder):
         # Calculate the date
         return baseline_date + pd.Timedelta(days=days)
 
+    def fit(self, data: pd.DataFrame) -> None:
+        """
+        Fit method - override base class to handle DataFrame input
+
+        Args:
+            data: DataFrame containing the date columns
+        """
+        self._fit(data)
+        self._is_fitted = True
+
+    def transform(self, data: pd.DataFrame) -> pd.DataFrame:
+        """
+        Transform method - override base class to handle DataFrame input
+
+        Args:
+            data: DataFrame containing the date columns
+
+        Returns:
+            DataFrame with date differences
+        """
+        if not self._is_fitted:
+            raise UnfittedError("The object is not fitted. Use .fit() first.")
+
+        return self._transform(data)
+
+    def inverse_transform(self, data: pd.DataFrame) -> pd.DataFrame:
+        """
+        Inverse transform method - override base class to handle DataFrame input
+
+        Args:
+            data: DataFrame containing the baseline date and difference values
+
+        Returns:
+            DataFrame with dates calculated from differences
+        """
+        if not self._is_fitted:
+            raise UnfittedError("The object is not fitted. Use .fit() first.")
+
+        return self._inverse_transform(data)
+
     # In EncoderDateDiff
-    def _fit(self, data: pd.Series | pd.DataFrame) -> None:
+    def _fit(self, data: pd.DataFrame) -> None:
         """
         Fit method adapted for Processor architecture
 
         Args:
-            data: Can be either pd.Series or pd.DataFrame
+            data: DataFrame containing the date columns
         """
-        # If Series, convert it to a single-column DataFrame
-        if isinstance(data, pd.Series):
-            # Store Series name for later use
-            self._series_name = data.name
-            data = pd.DataFrame({data.name: data})
-
-        # Normal fit logic...
         # Verify columns exist
         if self.baseline_date not in data.columns:
             raise ValueError(
@@ -984,6 +579,10 @@ class EncoderDateDiff(Encoder):
             for col in [self.baseline_date] + self.related_date_list
             if col in data.columns  # Add safety check
         }
+
+        # Set labels to empty list for MediatorEncoder compatibility
+        # EncoderDateDiff doesn't use labels since it's not a categorical encoder
+        self.labels = []
 
         # Mark as fitted
         self.is_fitted = True
@@ -1072,4 +671,5 @@ class EncoderDateDiff(Encoder):
                         # If conversion fails, keep as datetime
                         pass
 
+        return result
         return result

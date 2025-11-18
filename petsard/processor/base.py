@@ -13,7 +13,6 @@ from petsard.processor.discretizing import DiscretizingKBins
 from petsard.processor.encoder import (
     EncoderDateDiff,
     EncoderLabel,
-    EncoderMinguoDate,
     EncoderOneHot,
     EncoderUniform,
 )
@@ -106,7 +105,6 @@ class ProcessorClassMap:
         "encoder_label": EncoderLabel,
         "encoder_onehot": EncoderOneHot,
         "encoder_uniform": EncoderUniform,
-        "encoder_minguodate": EncoderMinguoDate,
         "encoder_datediff": EncoderDateDiff,
         # missing
         "missing_drop": MissingDrop,
@@ -478,7 +476,11 @@ class Processor:
                     if processor not in obj.PROC_TYPE:
                         raise ValueError(f"Invalid processor from {col} in {processor}")
 
-                    obj.fit(data[col])
+                    # Special handling for EncoderDateDiff which needs the full DataFrame
+                    if isinstance(obj, EncoderDateDiff):
+                        obj.fit(data)
+                    else:
+                        obj.fit(data[col])
 
                 self.logger.info(f"{processor} fitting done.")
             else:
@@ -647,7 +649,11 @@ class Processor:
                             f"na_cnt={self.transformed[col].isna().sum()}"
                         )
 
-                    self.transformed[col] = obj.transform(self.transformed[col])
+                    # Special handling for EncoderDateDiff which needs the full DataFrame
+                    if isinstance(obj, EncoderDateDiff):
+                        self.transformed = obj.transform(self.transformed)
+                    else:
+                        self.transformed[col] = obj.transform(self.transformed[col])
 
                     # Update metadata based on processor's SCHEMA_TRANSFORM
                     self._update_metadata_after_transform(col, obj, processor)
@@ -663,7 +669,6 @@ class Processor:
                                 EncoderLabel,
                                 EncoderOneHot,
                                 EncoderUniform,
-                                EncoderMinguoDate,
                                 EncoderDateDiff,
                                 ScalerLog,
                                 ScalerLog1p,
@@ -849,7 +854,11 @@ class Processor:
                     ):
                         transformed[col] = transformed[col].round().astype(int)
 
-                    transformed[col] = obj.inverse_transform(transformed[col])
+                    # Special handling for EncoderDateDiff which needs the full DataFrame
+                    if isinstance(obj, EncoderDateDiff):
+                        transformed = obj.inverse_transform(transformed)
+                    else:
+                        transformed[col] = obj.inverse_transform(transformed[col])
 
                     # For Datetime after Scaler but not the target of ScalerAnchor (even reference will be affect)
                     if (
