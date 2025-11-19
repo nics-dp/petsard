@@ -101,6 +101,65 @@ class Executor:
         # NOTE: This attribute will be removed in v2.0.0 and replaced with run() return value
         self._execution_completed: bool = False
 
+    def _create_formatter(self) -> logging.Formatter:
+        """
+        Create log formatter with standardized format.
+
+        Returns:
+            logging.Formatter: Configured log formatter
+        """
+        return logging.Formatter(
+            "%(asctime)s - "  # timestamp
+            "%(name)-21s - "  # logger name (left align w/ 21 digits: 'PETsARD.Postprocessor')
+            "%(funcName)-17s - "  # function name (left align w/ 17 digits: 'inverse_transform')
+            "%(levelname)-8s - "  # logger level (left align w/ 8 digits: 'CRITICAL')
+            "%(message)s"  # message
+        )
+
+    def _create_file_handler(self, formatter: logging.Formatter) -> logging.FileHandler:
+        """
+        Create file handler for logging.
+
+        Args:
+            formatter: Log formatter to use
+
+        Returns:
+            logging.FileHandler: Configured file handler
+        """
+        log_dir = self.executor_config.log_dir
+
+        # Create log directory if it doesn't exist
+        if log_dir and not os.path.exists(log_dir):
+            os.makedirs(log_dir)
+
+        # Create log file
+        timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+        log_filename = self.executor_config.log_filename.replace(
+            "{timestamp}", timestamp
+        )
+        log_path = os.path.join(log_dir, log_filename)
+
+        # Create and configure file handler
+        file_handler = logging.FileHandler(log_path)
+        file_handler.setFormatter(formatter)
+        return file_handler
+
+    def _create_console_handler(
+        self, formatter: logging.Formatter
+    ) -> logging.StreamHandler:
+        """
+        Create console handler for logging.
+
+        Args:
+            formatter: Log formatter to use
+
+        Returns:
+            logging.StreamHandler: Configured console handler
+        """
+        console_handler = logging.StreamHandler()
+        console_handler.setFormatter(formatter)
+        return console_handler
+
     def _setup_logger(self, reconfigure=False):
         """
         Setting up the logger based on ExecutorConfig settings.
@@ -118,45 +177,22 @@ class Executor:
             logging.getLogger().handlers = []
             root_logger = logging.getLogger("PETsARD")
 
-        # setup logging level
+        # Setup logging level
         root_logger.setLevel(getattr(logging, self.executor_config.log_level.upper()))
 
-        # setup formatter
-        formatter = logging.Formatter(
-            "%(asctime)s - "  # timestamp
-            "%(name)-21s - "  # logger name (left align w/ 21 digits: 'PETsARD.Postprocessor')
-            "%(funcName)-17s - "  # function name (left align w/ 17 digits: 'inverse_transform')
-            "%(levelname)-8s - "  # logger level (left align w/ 8 digits: 'CRITICAL')
-            "%(message)s"  # message
-        )
+        # Create formatter
+        formatter = self._create_formatter()
 
-        # Handle file output
+        # Add appropriate handlers based on configuration
         if self.executor_config.log_output_type in ["file", "both"]:
-            log_dir = self.executor_config.log_dir
-
-            # Create log directory if it doesn't exist
-            if log_dir and not os.path.exists(log_dir):
-                os.makedirs(log_dir)
-
-            # Create log file
-            timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-            log_filename = self.executor_config.log_filename.replace(
-                "{timestamp}", timestamp
-            )
-            log_path = os.path.join(log_dir, log_filename)
-
-            # Create file handler
-            file_handler = logging.FileHandler(log_path)
-            file_handler.setFormatter(formatter)
+            file_handler = self._create_file_handler(formatter)
             root_logger.addHandler(file_handler)
 
-        # Handle stdout output
         if self.executor_config.log_output_type in ["stdout", "both"]:
-            console_handler = logging.StreamHandler()
-            console_handler.setFormatter(formatter)
+            console_handler = self._create_console_handler(formatter)
             root_logger.addHandler(console_handler)
 
-        # setup this logger as a child of root logger
+        # Setup this logger as a child of root logger
         self._logger = logging.getLogger(f"PETsARD.{self.__class__.__name__}")
 
     def _get_config(self, config_input: str) -> dict:
@@ -231,7 +267,7 @@ class Executor:
         """
         # Reset execution state
         self._execution_completed = False
-        start_time: time = time.time()
+        start_time: float = time.time()
         self._logger.info("Starting PETsARD execution workflow")
         while self.config.config.qsize() > 0:
             ops = self.config.config.get()
@@ -257,7 +293,7 @@ class Executor:
             # collect result
             self._set_result(module)
 
-        elapsed_time: time = time.time() - start_time
+        elapsed_time: float = time.time() - start_time
         formatted_elapsed_time: str = str(timedelta(seconds=round(elapsed_time)))
         self._logger.info(
             f"Completed PETsARD execution workflow (elapsed: {formatted_elapsed_time})"
