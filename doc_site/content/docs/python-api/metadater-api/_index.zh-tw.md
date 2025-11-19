@@ -87,6 +87,7 @@ Metadater 提供靜態類別方法（`@classmethod` 或 `@staticmethod`），不
 - `nullable`: 是否允許空值（`True`/`False`）
 - `logical_type`: 邏輯型別（選填，如 `email`, `phone`, `url` 等）
 - `na_values`: 自訂空值表示（選填）
+- `is_constant`: 標記所有值都相同的欄位（自動偵測，請勿手動設定）
 
 ## 使用情境
 

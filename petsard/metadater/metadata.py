@@ -33,6 +33,9 @@ class Attribute:
     null_strategy: str = "keep"
     default_value: Any = None
 
+    # Special data characteristics
+    is_constant: bool = False  # 標記所有值都相同的欄位
+
     # Constraints
     constraints: dict[str, Any] | None = None
 

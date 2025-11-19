@@ -9,6 +9,7 @@ from pandas.api.types import is_datetime64_any_dtype
 
 from petsard.exceptions import ConfigError, UnfittedError
 from petsard.metadater.metadata import Schema
+from petsard.processor.constant import ConstantProcessor
 from petsard.processor.discretizing import DiscretizingKBins
 from petsard.processor.encoder import (
     EncoderDateDiff,
@@ -243,6 +244,10 @@ class Processor:
             "Schema metadata loaded (deep copy created to preserve original)"
         )
 
+        # Initialize ConstantProcessor (always enabled, runs before all other processors)
+        self._constant_processor = ConstantProcessor()
+        self.logger.debug("ConstantProcessor initialized")
+
         # Initialize schema tracking (always enabled)
         self._schema_history = []
         self.logger.debug("Schema tracking enabled - will record schema at each step")
@@ -476,9 +481,41 @@ class Processor:
 
         self.logger.debug("Fitting sequence generation completed.")
 
+        # Fit ConstantProcessor first (before all other processors)
+        self.logger.info("Fitting ConstantProcessor...")
+        self._constant_processor.fit(data, self._metadata)
+        if self._constant_processor.constant_columns:
+            self.logger.info(
+                f"Detected {len(self._constant_processor.constant_columns)} constant columns: "
+                f"{list(self._constant_processor.constant_columns.keys())}"
+            )
+        else:
+            self.logger.info("No constant columns detected")
+
+        # Transform data using ConstantProcessor (remove constant columns)
+        data = self._constant_processor.transform(data)
+        self.logger.debug(f"Data shape after ConstantProcessor: {data.shape}")
+
+        # Remove constant columns from config to avoid processing them
+        if self._constant_processor.constant_columns:
+            for processor_type in self._config.keys():
+                for col_name in list(self._constant_processor.constant_columns.keys()):
+                    if col_name in self._config[processor_type]:
+                        del self._config[processor_type][col_name]
+                        self.logger.debug(
+                            f"Removed constant column '{col_name}' from {processor_type} config"
+                        )
+
         for processor in self._fitting_sequence:
             if isinstance(processor, str):
                 for col, obj in self._config[processor].items():
+                    # Skip constant columns (已被 ConstantProcessor 移除)
+                    if col not in data.columns:
+                        self.logger.debug(
+                            f"Skipping {processor} for constant column '{col}'"
+                        )
+                        continue
+
                     self.logger.debug(
                         f"{processor}: {type(obj).__name__} from {col} start processing."
                     )
@@ -633,6 +670,12 @@ class Processor:
 
         self.transformed: pd.DataFrame = data.copy()
 
+        # Apply ConstantProcessor first (remove constant columns)
+        self.transformed = self._constant_processor.transform(self.transformed)
+        self.logger.debug(
+            f"Data shape after ConstantProcessor.transform: {self.transformed.shape}"
+        )
+
         # Record schema before transformation
         self._record_schema_snapshot(
             "before_transform", self._metadata, self.transformed
@@ -643,6 +686,11 @@ class Processor:
                 self.logger.debug(f"Executing {processor} processing")
 
                 for col, obj in self._config[processor].items():
+                    # Skip constant columns (已被 ConstantProcessor 移除)
+                    if col not in self.transformed.columns:
+                        self.logger.debug(f"  > Skipping constant column '{col}'")
+                        continue
+
                     self.logger.debug(
                         f"{processor}: {type(obj).__name__} from {col} start transforming."
                     )
@@ -899,6 +947,12 @@ class Processor:
                     f"after transformation: data shape: {transformed.shape}"
                 )
                 self.logger.info(f"{type(processor).__name__} transformation done.")
+
+        # Apply ConstantProcessor last (restore constant columns)
+        transformed = self._constant_processor.inverse_transform(transformed)
+        self.logger.debug(
+            f"Data shape after ConstantProcessor.inverse_transform: {transformed.shape}"
+        )
 
         return self._align_dtypes(transformed)  # transformed
 

@@ -90,6 +90,7 @@ attributes:               # 必填：欄位屬性定義（也可寫為 fields）
 | 參數 | 類型 | 說明 |
 |------|------|------|
 | `stats` | `FieldStats` | 欄位統計資訊（使用 `enable_stats=True` 時自動計算） |
+| `is_constant` | `boolean` | 標記所有值都相同的欄位（系統自動偵測並處理，請勿手動設定） |
 | `created_at` | `datetime` | 建立時間（系統自動記錄） |
 | `updated_at` | `datetime` | 更新時間（系統自動記錄） |
 

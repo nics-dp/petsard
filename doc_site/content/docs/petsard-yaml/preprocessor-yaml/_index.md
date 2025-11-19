@@ -1,5 +1,5 @@
 ---
-title: "Preprocessor YAML (WIP)"
+title: "Preprocessor YAML"
 weight: 130
 ---
 
