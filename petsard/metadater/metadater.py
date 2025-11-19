@@ -99,6 +99,9 @@ class AttributeMetadater:
                 data, data_type, type_attr.get("category", False), logical_type
             )
 
+        # Detect constant columns (all values are the same)
+        is_constant = cls._detect_constant_column(data)
+
         return Attribute(
             name=data.name,
             type=data_type,
@@ -106,6 +109,7 @@ class AttributeMetadater:
             logical_type=logical_type,
             enable_stats=enable_stats,
             stats=stats,
+            is_constant=is_constant,
         )
 
     @classmethod
@@ -535,6 +539,29 @@ class AttributeMetadater:
             actual_dtype=str(series.dtype),
             logical_type=logical_type,
         )
+
+    @classmethod
+    def _detect_constant_column(cls, data: pd.Series) -> bool:
+        """檢測欄位是否所有值都相同（constant column）
+
+        Args:
+            data: 資料 Series
+
+        Returns:
+            bool: 如果所有非 NA 值都相同則返回 True
+        """
+        # 移除 NA 值
+        non_na_data = data.dropna()
+
+        # 如果所有值都是 NA，不視為 constant
+        if len(non_na_data) == 0:
+            return False
+
+        # 檢查 unique 值的數量
+        unique_count = non_na_data.nunique()
+
+        # 如果只有一個唯一值，則為 constant column
+        return unique_count == 1
 
 
 class SchemaMetadater:
