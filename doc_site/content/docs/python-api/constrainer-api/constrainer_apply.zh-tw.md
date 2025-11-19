@@ -19,7 +19,7 @@ def apply(
 - **df** : pd.DataFrame, required
     - 要套用約束的輸入資料框
     - 必要參數
-    
+
 - **target_rows** : int, optional
     - 目標列數
     - 由 `\1` 內部使用

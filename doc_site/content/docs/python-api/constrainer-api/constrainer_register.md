@@ -22,7 +22,7 @@ def register(
     - Constraint condition type name
     - Required parameter
     - Used to identify this constraint type in the configuration dictionary
-    
+
 - **constraint_class** : type, required
     - Class implementing the constraint condition
     - Required parameter
@@ -65,14 +65,14 @@ import pandas as pd
 
 class MinRowsConstrainer(BaseConstrainer):
     """Ensure data has at least specified number of rows"""
-    
+
     def __init__(self, config: dict):
         self.min_rows = config.get('min_rows', 10)
-    
+
     def validate_config(self, df: pd.DataFrame) -> bool:
         """Validate configuration validity"""
         return isinstance(self.min_rows, int) and self.min_rows > 0
-    
+
     def apply(self, df: pd.DataFrame) -> pd.DataFrame:
         """Apply constraint"""
         if len(df) < self.min_rows:
@@ -103,7 +103,7 @@ import pandas as pd
 
 class FieldRangeConstrainer(BaseConstrainer):
     """Constrain field range based on percentiles"""
-    
+
     def __init__(self, config: dict):
         """
         config: {
@@ -114,7 +114,7 @@ class FieldRangeConstrainer(BaseConstrainer):
         }
         """
         self.config = config
-    
+
     def validate_config(self, df: pd.DataFrame) -> bool:
         """Validate configuration"""
         for field, params in self.config.items():
@@ -125,21 +125,21 @@ class FieldRangeConstrainer(BaseConstrainer):
             if not (0 <= params.get('upper_percentile', 100) <= 100):
                 return False
         return True
-    
+
     def apply(self, df: pd.DataFrame) -> pd.DataFrame:
         """Apply percentile constraints"""
         result = df.copy()
-        
+
         for field, params in self.config.items():
             lower_p = params.get('lower_percentile', 0)
             upper_p = params.get('upper_percentile', 100)
-            
+
             lower_val = result[field].quantile(lower_p / 100)
             upper_val = result[field].quantile(upper_p / 100)
-            
+
             mask = (result[field] >= lower_val) & (result[field] <= upper_val)
             result = result[mask]
-        
+
         return result.reset_index(drop=True)
 
 # Register constraint
@@ -174,7 +174,7 @@ import pandas as pd
 
 class DependencyConstrainer(BaseConstrainer):
     """Constrain dependencies between fields"""
-    
+
     def __init__(self, config: list):
         """
         config: [
@@ -185,7 +185,7 @@ class DependencyConstrainer(BaseConstrainer):
         ]
         """
         self.rules = config
-    
+
     def validate_config(self, df: pd.DataFrame) -> bool:
         """Validate configuration"""
         for rule in self.rules:
@@ -194,20 +194,20 @@ class DependencyConstrainer(BaseConstrainer):
             if if_field not in df.columns or then_field not in df.columns:
                 return False
         return True
-    
+
     def apply(self, df: pd.DataFrame) -> pd.DataFrame:
         """Apply dependency constraints"""
         result = df.copy()
-        
+
         for rule in self.rules:
             if_field = rule['if']['field']
             if_value = rule['if']['value']
             then_field = rule['then']['field']
             then_condition = rule['then']['condition']
-            
+
             # Create condition mask
             if_mask = result[if_field] == if_value
-            
+
             if then_condition == 'IS NOT pd.NA':
                 then_mask = result[then_field].notna()
             elif then_condition == 'IS pd.NA':
@@ -215,10 +215,10 @@ class DependencyConstrainer(BaseConstrainer):
             else:
                 # Can extend other conditions
                 continue
-            
+
             # Retain rows satisfying "if...then..." rules
             result = result[~if_mask | (if_mask & then_mask)]
-        
+
         return result.reset_index(drop=True)
 
 # Register constraint
@@ -252,7 +252,7 @@ import numpy as np
 
 class OutlierConstrainer(BaseConstrainer):
     """Remove statistical outliers"""
-    
+
     def __init__(self, config: dict):
         """
         config: {
@@ -263,41 +263,41 @@ class OutlierConstrainer(BaseConstrainer):
         }
         """
         self.config = config
-    
+
     def validate_config(self, df: pd.DataFrame) -> bool:
         """Validate configuration"""
         for field in self.config.keys():
             if field not in df.columns:
                 return False
         return True
-    
+
     def apply(self, df: pd.DataFrame) -> pd.DataFrame:
         """Remove outliers"""
         result = df.copy()
-        
+
         for field, params in self.config.items():
             method = params.get('method', 'iqr')
             threshold = params.get('threshold', 1.5)
-            
+
             if method == 'iqr':
                 Q1 = result[field].quantile(0.25)
                 Q3 = result[field].quantile(0.75)
                 IQR = Q3 - Q1
-                
+
                 lower_bound = Q1 - threshold * IQR
                 upper_bound = Q3 + threshold * IQR
-                
+
                 mask = (result[field] >= lower_bound) & (result[field] <= upper_bound)
-                
+
             elif method == 'zscore':
                 z_scores = np.abs((result[field] - result[field].mean()) / result[field].std())
                 mask = z_scores < threshold
-            
+
             else:
                 continue
-            
+
             result = result[mask]
-        
+
         return result.reset_index(drop=True)
 
 # Register constraint
@@ -331,16 +331,16 @@ import pandas as pd
 # Define custom constraint class
 class UniqueValueConstrainer(BaseConstrainer):
     """Ensure values in specified fields are unique"""
-    
+
     def __init__(self, config: list):
         self.unique_fields = config
-    
+
     def validate_config(self, df: pd.DataFrame) -> bool:
         for field in self.unique_fields:
             if field not in df.columns:
                 return False
         return True
-    
+
     def apply(self, df: pd.DataFrame) -> pd.DataFrame:
         result = df.copy()
         for field in self.unique_fields:
@@ -365,7 +365,7 @@ config = {
             {'PhD': [70000, 80000, 90000]}
         )
     ],
-    
+
     # Custom constraints
     'unique_values': ['email', 'id']
 }

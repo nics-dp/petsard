@@ -115,11 +115,11 @@ results = executor.get_result()
 for exp_key in inferred_schemas.keys():
     inferred = inferred_schemas[exp_key]
     actual = results[exp_key]['schema']
-    
+
     print(f"\nExperiment: {exp_key}")
     print(f"Inferred columns: {len(inferred.columns)}")
     print(f"Actual columns: {len(actual.columns)}")
-    
+
     # Should match
     assert len(inferred.columns) == len(actual.columns)
     print("✓ Schema matches")
@@ -157,14 +157,14 @@ inferred_schemas = executor.get_inferred_schema()
 # Validate transformations
 for exp_key, schema in inferred_schemas.items():
     print(f"\n{exp_key}")
-    
+
     # Check if scaled columns are numeric
     for col in schema.columns:
         if 'age' in col.name or 'salary' in col.name:
             assert col.dtype in ['int', 'float'], \
                 f"Scaled column {col.name} should be numeric"
             print(f"✓ {col.name} is numeric (scaled)")
-        
+
         # Check if onehot encoded columns exist
         if col.name.startswith('city_'):
             assert col.dtype in ['int', 'bool'], \
@@ -207,11 +207,11 @@ print(f"Total combinations: {len(inferred_schemas)}")
 for exp_key, schema in inferred_schemas.items():
     print(f"\n{exp_key}")
     print(f"  Columns: {len(schema.columns)}")
-    
+
     # Categorize columns
     numeric_cols = [col for col in schema.columns if col.dtype in ['int', 'float']]
     categorical_cols = [col for col in schema.columns if col.dtype in ['str', 'object']]
-    
+
     print(f"  Numeric: {len(numeric_cols)}")
     print(f"  Categorical: {len(categorical_cols)}")
 ```
@@ -234,13 +234,13 @@ doc_dir.mkdir(exist_ok=True)
 for exp_key, schema in inferred_schemas.items():
     # Create filename from experiment key
     filename = exp_key.replace('[', '_').replace(']', '').replace('_', '-')
-    
+
     # Prepare schema documentation
     schema_doc = {
         'experiment': exp_key,
         'columns': []
     }
-    
+
     for col in schema.columns:
         col_info = {
             'name': col.name,
@@ -248,12 +248,12 @@ for exp_key, schema in inferred_schemas.items():
             'metadata': col.metadata if hasattr(col, 'metadata') else {}
         }
         schema_doc['columns'].append(col_info)
-    
+
     # Save to JSON
     output_path = doc_dir / f'{filename}_schema.json'
     with open(output_path, 'w') as f:
         json.dump(schema_doc, f, indent=2)
-    
+
     print(f"✓ Exported: {filename}_schema.json")
 ```
 
@@ -265,26 +265,26 @@ from petsard import Executor
 def validate_preprocessing_config(config):
     """Validate preprocessing configuration against Schema"""
     executor = Executor(config=config)
-    
+
     try:
         inferred_schemas = executor.get_inferred_schema()
-        
+
         # Check if all experiments have valid Schema
         if len(inferred_schemas) == 0:
             return False, "No schemas inferred"
-        
+
         for exp_key, schema in inferred_schemas.items():
             # Validate schema has columns
             if len(schema.columns) == 0:
                 return False, f"Empty schema for {exp_key}"
-            
+
             # Validate data types
             for col in schema.columns:
                 if col.dtype not in ['int', 'float', 'str', 'object', 'bool', 'datetime']:
                     return False, f"Invalid dtype {col.dtype} for {col.name}"
-        
+
         return True, "Validation passed"
-        
+
     except Exception as e:
         return False, str(e)
 
@@ -326,10 +326,10 @@ for strategy_name, preprocessing_config in strategies.items():
         'Preprocessor': {'preprocess': preprocessing_config},
         'Synthesizer': {'generate': {'method': 'sdv'}}
     }
-    
+
     executor = Executor(config=config)
     inferred_schemas = executor.get_inferred_schema()
-    
+
     for exp_key, schema in inferred_schemas.items():
         print(f"\nStrategy: {strategy_name}")
         print(f"  Total columns: {len(schema.columns)}")
@@ -401,7 +401,7 @@ schemas = executor.get_inferred_schema()
 for exp_key, schema in schemas.items():
     required_cols = ['age', 'income', 'education']
     actual_cols = [col.name for col in schema.columns]
-    
+
     missing = set(required_cols) - set(actual_cols)
     if missing:
         print(f"Warning: Missing columns in {exp_key}: {missing}")
@@ -420,7 +420,7 @@ for exp_key, schema in schemas.items():
     print(f"\n## {exp_key}")
     print("\n| Column | Type | Description |")
     print("|--------|------|-------------|")
-    
+
     for col in schema.columns:
         print(f"| {col.name} | {col.dtype} | Inferred from preprocessing |")
 ```
@@ -434,15 +434,15 @@ schemas = executor.get_inferred_schema()
 
 for exp_key, schema in schemas.items():
     print(f"\n{exp_key}")
-    
+
     # Check for potential issues
     if len(schema.columns) < 2:
         print("  ⚠️  Warning: Very few columns for synthesis")
-    
+
     numeric_count = sum(1 for col in schema.columns if col.dtype in ['int', 'float'])
     if numeric_count == 0:
         print("  ⚠️  Warning: No numeric columns")
-    
+
     if len(schema.columns) > 100:
         print("  ⚠️  Warning: Many columns may slow synthesis")
 ```

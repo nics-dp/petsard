@@ -79,13 +79,13 @@ Evaluator:
   # Step 1: Data validity diagnosis (should be close to 1.0)
   validity_check:
     method: sdmetrics-diagnosticreport
-  
+
   # Step 2: Privacy protection assessment (risk should be < 0.09)
   singling_out_risk:
     method: anonymeter-singlingout
     n_attacks: 100
     max_attempts: 1000
-  
+
   # Focus: Pursue high fidelity (higher score is better)
   fidelity_assessment:
     method: sdmetrics-qualityreport
@@ -128,17 +128,17 @@ Evaluator:
   # Step 1: Data validity diagnosis (should be close to 1.0)
   validity_check:
     method: sdmetrics-diagnosticreport
-  
+
   # Step 2: Privacy protection assessment (risk should be < 0.09)
   singling_out_risk:
     method: anonymeter-singlingout
     n_attacks: 100
     max_attempts: 1000
-  
+
   # Fidelity reaching threshold is sufficient (≥ 0.75)
   quality_assessment:
     method: sdmetrics-qualityreport
-  
+
   # Focus: Pursue high utility (evaluate based on task type)
   ml_utility_assessment:
     method: mlutility

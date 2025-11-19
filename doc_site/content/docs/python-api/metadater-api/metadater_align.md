@@ -21,7 +21,7 @@ def align(
   - Metadata definition (target structure)
   - Required parameter
   - Defines expected data structure, field order, types, etc.
-  
+
 - **data** : dict[str, pd.DataFrame], required
   - Data to be aligned with table names as keys and DataFrames as values
   - Required parameter
@@ -239,16 +239,16 @@ import pandas as pd
 # Simulate Loader's internal process
 def load_data_with_schema(filepath, schema_config):
     """Simulate how Loader uses Metadater.align()"""
-    
+
     # 1. Create metadata from configuration
     metadata = Metadater.from_dict(schema_config)
-    
+
     # 2. Read raw data
     raw_data = {'data': pd.read_csv(filepath)}
-    
+
     # 3. Align data structure
     aligned_data = Metadater.align(metadata, raw_data)
-    
+
     return aligned_data['data'], metadata
 
 # Usage example
@@ -319,17 +319,17 @@ import pandas as pd
 class DataPipeline:
     def __init__(self, schema_config):
         self.metadata = Metadater.from_dict(schema_config)
-    
+
     def process(self, raw_data):
         """Standardized data processing workflow"""
         # 1. Align data structure
         aligned = Metadater.align(self.metadata, raw_data)
-        
+
         # 2. Check differences
         diff = Metadater.diff(self.metadata, aligned)
         if diff:
             print("Warning: Data structure still has differences", diff)
-        
+
         # 3. Return standardized data
         return aligned
 
@@ -365,43 +365,43 @@ standardized_data = [pipeline.process(source) for source in sources]
   - Missing fields supplemented with NaN (or corresponding type null values)
   - Extra fields preserved at the end (fields not defined in metadata)
   - Type conversion attempted but not all conversions guaranteed to succeed
-  
+
 - **Non-Destructive Operation**:
   - Original input data not modified
   - Returns new DataFrame copies
   - Extra fields not removed
-  
+
 - **Type Conversion**:
   - Automatic attempts to convert to defined types
   - Conversion failures may retain original type or raise errors
   - Datetime type conversion requires correct format
-  
+
 - **Null Value Handling**:
   - Supplemented fields use NaN (numeric) or None (object)
   - Datetime types use NaT (Not a Time)
   - nullable setting doesn't affect alignment process, only validation
-  
+
 - **Performance Considerations**:
   - Large dataset alignment may be time-consuming
   - Frequent type conversions affect performance
   - Recommend one-time alignment during data loading phase
-  
+
 - **When to Use**:
   - Standardization after data loading
   - Before merging data from different sources
   - Ensuring data meets downstream module requirements
   - Standardization step in data pipeline
-  
+
 - **Relationship with Other Methods**:
   - Usually used after `diff()`
   - Loader internally calls this method automatically
   - Used with `from_dict()` or `from_data()` to create metadata
-  
+
 - **Error Handling**:
   - Type conversion failures may raise exceptions
   - Use try-except to handle possible errors
   - Check degree of differences with `diff()` before alignment
-  
+
 - **Best Practices**:
   - Align data early in data pipeline
   - Validate results meet expectations after alignment

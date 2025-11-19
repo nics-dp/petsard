@@ -95,13 +95,13 @@ from petsard.exceptions import ConfigError
 try:
     exec = Executor('config.yaml')
     exec.run()
-    
+
     if exec.is_execution_completed():
         results = exec.get_result()
         print("執行成功")
     else:
         print("執行未完成")
-        
+
 except ConfigError as e:
     print(f"配置錯誤：{e}")
 except Exception as e:

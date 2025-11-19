@@ -152,7 +152,7 @@ except Exception as e:
 def load_demo_module(module_path, class_name, logger, required_methods=None):
     # Generate demo-specific search paths
     demo_search_paths = _get_demo_search_paths(module_path)
-    
+
     # Use core functionality for loading
     return load_external_module(
         module_path=module_path,

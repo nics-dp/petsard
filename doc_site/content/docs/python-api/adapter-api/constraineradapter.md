@@ -108,7 +108,7 @@ constrained_data = adapter.get_result()
 ```yaml
 nan_groups:
   workclass: delete
-  
+
 field_constraints:
   - "age >= 18 & age <= 65"
   - "hours_per_week >= 1 & hours_per_week <= 99"

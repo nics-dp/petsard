@@ -113,10 +113,10 @@ EvaluatorAdapter uses fixed data source naming:
 - **ori (original data)**:
   - With Splitter: Takes Splitter's train
   - Without Splitter: Takes Loader's result
-  
+
 - **syn (synthetic data)**:
   - Takes previous module's result (usually Synthesizer or Postprocessor)
-  
+
 - **control (control data)**:
   - Only exists when Splitter is present
   - Takes Splitter's validation

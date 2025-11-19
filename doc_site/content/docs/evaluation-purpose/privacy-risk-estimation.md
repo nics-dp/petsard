@@ -91,7 +91,7 @@ Evaluator:
     method: anonymeter-singlingout
     n_attacks: 100  # Adjust based on data scale
     max_attempts: 1000  # Adjust based on data scale
-  
+
   # Linkability risk: split columns according to actual data partitioning
   linkability_risk:
     method: anonymeter-linkability
@@ -140,7 +140,7 @@ Evaluator:
     method: anonymeter-singlingout
     n_attacks: 100  # Adjust based on data scale
     max_attempts: 1000  # Adjust based on data scale
-  
+
   # Inference risk: use downstream task's dependent variable as secret
   inference_risk:
     method: anonymeter-inference

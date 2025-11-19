@@ -22,7 +22,7 @@ def from_data(
 - **data** : dict[str, pd.DataFrame], required
   - Dictionary of data tables where keys are table names and values are DataFrames
   - Required parameter
-  
+
 - **enable_stats** : bool, optional
   - Whether to calculate statistics (min, max, mean, etc.)
   - Default: `False`
@@ -109,7 +109,7 @@ print(f"Tables included: {list(metadata.schemas.keys())}")
 print(f"\nUsers table fields:")
 for attr_name in metadata.schemas['users'].attributes:
     print(f"  - {attr_name}")
-    
+
 print(f"\nOrders table fields:")
 for attr_name in metadata.schemas['orders'].attributes:
     print(f"  - {attr_name}")
@@ -205,23 +205,23 @@ print(f"Description: {metadata.description}")
   - If a field contains any null values (NaN, None), then `enable_null = True`
   - Table names (dictionary keys) become Schema `id`
   - Default `id` and `name` can be overridden via `**kwargs`
-  
+
 - **Data Type Support**:
   - Numeric types: `int`, `float`
   - Text types: `str`
   - Boolean type: `bool`
   - Datetime types: `datetime`
-  
+
 - **Performance Considerations**:
   - Large dataset inference may take longer
   - `enable_stats=True` increases processing time
   - Recommended to test with small samples first
-  
+
 - **Usage Recommendations**:
   - Suitable for quickly creating initial schema
   - Recommended to review inferred results and adjust as needed
   - Complex logical types may require manual definition
-  
+
 - **Integration with Loader**:
   - Loader internally uses this method to handle data loading without schema
   - General users can work through Loader's `schema` parameter without directly calling this method

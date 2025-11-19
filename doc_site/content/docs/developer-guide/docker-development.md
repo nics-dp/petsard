@@ -172,13 +172,13 @@ INCLUDE_JUPYTER=true/false
    ```bash
    # Build Jupyter image with Jupyter Lab (ARM64 optimized)
    docker buildx build --platform linux/arm64 --load --build-arg INCLUDE_JUPYTER=true -t petsard:jupyter --no-cache .
-   
+
    # Start container with Jupyter Lab
    docker run -it -p 8888:8888 \
      -v $(pwd)/data:/app/data \
      -v $(pwd)/notebooks:/app/notebooks \
      petsard:jupyter
-   
+
    # Access Jupyter Lab at http://localhost:8888
    ```
 
@@ -186,10 +186,10 @@ INCLUDE_JUPYTER=true/false
    ```bash
    # Run Python REPL for testing
    docker run -it --entrypoint /opt/venv/bin/python3 petsard:jupyter
-   
+
    # Run with data volume for testing
    docker run -it -v $(pwd):/app/data --entrypoint /opt/venv/bin/python3 petsard:jupyter
-   
+
    # Test PETsARD functionality inside container
    # python -m petsard.executor demo/getting-started/default-synthesis-default-evaluation.zh-tw.yaml
    ```
@@ -198,10 +198,10 @@ INCLUDE_JUPYTER=true/false
    ```bash
    # Test Jupyter build (with Jupyter Lab)
    docker build --build-arg INCLUDE_JUPYTER=true -t petsard:jupyter .
-   
+
    # Test standard build (without Jupyter)
    docker build --build-arg INCLUDE_JUPYTER=false -t petsard:standard .
-   
+
    # For ARM64 platforms
    docker buildx build --platform linux/arm64 --load --build-arg INCLUDE_JUPYTER=true -t petsard:jupyter --no-cache .
    ```

@@ -496,7 +496,7 @@ for dataset in datasets:
         'Synthesizer': {'generate': {'method': 'sdv'}},
         'Reporter': {'save': {'output_dir': f'output/{dataset}'}}
     }
-    
+
     executor = Executor(config=config, verbose=False)
     executor.run()
     print(f"Completed: {dataset}")

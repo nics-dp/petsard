@@ -20,7 +20,7 @@ def diff(
 - **metadata** : Metadata, required
   - 詮釋資料定義（期望的結構）
   - 必要參數
-  
+
 - **data** : dict[str, pd.DataFrame], required
   - 實際資料，鍵為表格名稱，值為 DataFrame
   - 必要參數
@@ -134,13 +134,13 @@ diff_report = Metadater.diff(metadata, actual_data)
 if 'table_diffs' in diff_report:
     for table_name, table_diff in diff_report['table_diffs'].items():
         print(f"\n表格: {table_name}")
-        
+
         if 'missing_columns' in table_diff:
             print(f"  缺失欄位: {table_diff['missing_columns']}")
-        
+
         if 'extra_columns' in table_diff:
             print(f"  額外欄位: {table_diff['extra_columns']}")
-        
+
         if 'type_mismatches' in table_diff:
             print(f"  型別不符: {table_diff['type_mismatches']}")
 ```
@@ -224,11 +224,11 @@ if diff_report:
     print("❌ 資料結構驗證失敗")
     print("\n差異報告：")
     print(diff_report)
-    
+
     # 記錄到日誌檔
     with open('validation_errors.log', 'a') as log:
         log.write(f"差異報告: {diff_report}\n")
-    
+
     sys.exit(1)
 else:
     print("✅ 資料結構驗證通過")
@@ -281,7 +281,7 @@ test_cases = [
 for test_case in test_cases:
     print(f"\n測試案例: {test_case['name']}")
     diff_report = Metadater.diff(metadata, {'measurements': test_case['data']})
-    
+
     if diff_report:
         print(f"  ❌ 發現差異: {diff_report}")
     else:
@@ -295,33 +295,33 @@ for test_case in test_cases:
   - 欄位完整性：檢查欄位是否全部存在
   - 型別一致性：檢查資料型別是否符合定義
   - 空值屬性：檢查 nullable 設定是否一致
-  
+
 - **差異報告結構**：
   - 空字典表示完全相符
   - 非空字典包含詳細的差異資訊
   - 差異報告可用於生成使用者友善的錯誤訊息
-  
+
 - **型別比較**：
   - 型別比較基於 pandas dtype
   - 某些型別轉換可能被視為相容（如 int64 vs int32）
   - 建議使用嚴格的型別定義
-  
+
 - **使用時機**：
   - 資料載入後的驗證
   - 資料轉換前的檢查
   - 持續整合/部署的資料品質檢查
   - 資料契約（Data Contract）驗證
-  
+
 - **效能考量**：
   - 大型資料集的差異檢測可能較耗時
   - 建議對關鍵欄位優先檢查
   - 可考慮抽樣檢查以提升效能
-  
+
 - **與 align() 的關係**：
   - `diff()` 僅報告差異，不修改資料
   - `align()` 會根據 metadata 調整資料結構
   - 建議先用 `diff()` 檢查，再決定是否使用 `align()`
-  
+
 - **錯誤處理**：
   - 如果輸入格式不正確可能引發例外
   - 建議使用 try-except 處理可能的錯誤

@@ -152,7 +152,7 @@ except Exception as e:
 def load_demo_module(module_path, class_name, logger, required_methods=None):
     # 生成 demo 特定的搜索路徑
     demo_search_paths = _get_demo_search_paths(module_path)
-    
+
     # 使用核心功能進行載入
     return load_external_module(
         module_path=module_path,

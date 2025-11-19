@@ -90,10 +90,10 @@ Config 會自動按照以下順序安排模組執行：
 Loader:
   load_data:           # ✓ 有效
     filepath: data.csv
-  
+
   load-benchmark:      # ✓ 有效
     filepath: benchmark://adult-income
-  
+
   load_custom_v2:      # ✓ 有效
     filepath: custom.csv
 ```
@@ -104,7 +104,7 @@ Loader:
 Loader:
   load_data_[1]:       # ✗ 無效：保留模式
     filepath: data.csv
-  
+
   load_[test]:         # ✗ 無效：保留模式
     filepath: test.csv
 ```

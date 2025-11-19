@@ -129,7 +129,7 @@ print(f"Total experiments: {len(results)}")
 for exp_key, exp_result in results.items():
     data = exp_result['data']
     schema = exp_result['schema']
-    
+
     print(f"\n{exp_key}")
     print(f"  Records: {len(data)}")
     print(f"  Columns: {len(data.columns)}")
@@ -151,17 +151,17 @@ for exp_key, exp_result in results.items():
     # Check required fields
     assert 'data' in exp_result, f"Missing data: {exp_key}"
     assert 'schema' in exp_result, f"Missing schema: {exp_key}"
-    
+
     data = exp_result['data']
     schema = exp_result['schema']
-    
+
     # Validate data
     assert not data.empty, f"Empty data: {exp_key}"
     assert len(data.columns) > 0, f"No columns: {exp_key}"
-    
+
     # Validate schema
     assert schema is not None, f"Invalid schema: {exp_key}"
-    
+
     print(f"✓ {exp_key} validation passed")
 ```
 
@@ -194,7 +194,7 @@ if target_key in results:
     target_result = results[target_key]
     data = target_result['data']
     schema = target_result['schema']
-    
+
     print(f"Target experiment: {target_key}")
     print(f"Data shape: {data.shape}")
 else:
@@ -233,7 +233,7 @@ results = executor.get_result()
 comparison = []
 for exp_key, exp_result in results.items():
     data = exp_result['data']
-    
+
     stats = {
         'experiment': exp_key,
         'rows': len(data),
@@ -269,14 +269,14 @@ output_dir.mkdir(exist_ok=True)
 for exp_key, exp_result in results.items():
     data = exp_result['data']
     schema = exp_result['schema']
-    
+
     # Clean experiment name for filename
     filename = exp_key.replace('[', '_').replace(']', '').replace('_', '-')
-    
+
     # Save data
     data_path = output_dir / f"{filename}.csv"
     data.to_csv(data_path, index=False)
-    
+
     # Save schema info
     schema_path = output_dir / f"{filename}_schema.txt"
     with open(schema_path, 'w') as f:
@@ -284,7 +284,7 @@ for exp_key, exp_result in results.items():
         f.write(f"Rows: {len(data)}\n")
         f.write(f"Columns: {len(data.columns)}\n")
         f.write(f"Schema: {schema}\n")
-    
+
     print(f"✓ Saved: {filename}")
 ```
 
@@ -302,16 +302,16 @@ results = executor.get_result()
 # Calculate statistics for each experiment
 for exp_key, exp_result in results.items():
     data = exp_result['data']
-    
+
     print(f"\n{exp_key}")
     print("=" * 60)
-    
+
     # Numeric columns
     numeric_data = data.select_dtypes(include=[np.number])
     if not numeric_data.empty:
         print("\nNumeric Statistics:")
         print(numeric_data.describe())
-    
+
     # Categorical columns
     categorical_data = data.select_dtypes(include=['object', 'category'])
     if not categorical_data.empty:
@@ -409,10 +409,10 @@ from petsard import Executor
 
 try:
     executor = Executor(config='config.yaml')
-    
+
     # Attempt to get results before running
     results = executor.get_result()  # May raise error
-    
+
 except Exception as e:
     print(f"Error: {e}")
     print("Please run executor.run() first")
