@@ -131,6 +131,7 @@ processor = Processor(metadata=schema, config=custom_config)
 
 Processor 支援以下處理步驟：
 
+0. **constant**：Constant columns 處理（自動執行，無需設定）
 1. **missing**：缺失值處理
 2. **outlier**：離群值處理
 3. **encoder**：類別變數編碼
@@ -138,6 +139,8 @@ Processor 支援以下處理步驟：
 5. **discretizing**：離散化（與 encoder 互斥）
 
 預設序列：`['missing', 'outlier', 'encoder', 'scaler']`
+
+**Constant Columns 自動處理**：Processor 會自動偵測並處理所有值都相同的欄位（constant columns）。這類欄位在合成資料生成時可能導致某些演算法（如 Copula）出現錯誤，因此會在前處理時自動移除，並在後處理時自動還原。此功能預設啟用且無需額外設定。
 
 ## 預設處理方式
 

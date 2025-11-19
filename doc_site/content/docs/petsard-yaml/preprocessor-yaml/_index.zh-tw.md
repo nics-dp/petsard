@@ -1,5 +1,5 @@
 ---
-title: "Preprocessor YAML（更新中）"
+title: "Preprocessor YAML"
 weight: 130
 ---
 
@@ -72,11 +72,16 @@ Preprocessor:
 
 Preprocessor 支援以下處理步驟，依序執行：
 
+0. **constant**：Constant columns 處理（系統自動執行，無需設定）
 1. **[missing]({{< ref "missing-handling" >}})**：缺失值處理
 2. **[outlier]({{< ref "outlier-handling" >}})**：離群值處理
 3. **[encoder]({{< ref "encoding" >}})**：類別變數編碼
 4. **[scaler]({{< ref "scaling" >}})**：數值正規化
 5. **[discretizing]({{< ref "discretizing" >}})**：離散化（與 encoder 互斥）
+
+{{< callout type="info" >}}
+**Constant Columns 自動處理**：系統會自動偵測並處理所有值都相同的欄位（constant columns）。這類欄位在合成資料生成時可能導致某些演算法（如 Copula）出現錯誤，因此會在前處理時自動移除，並在後處理（Postprocessor）時自動還原。此功能預設啟用且無需額外設定。
+{{< /callout >}}
 
 ## 預設處理方式
 
