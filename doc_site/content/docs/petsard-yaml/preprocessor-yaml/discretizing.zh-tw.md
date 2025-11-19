@@ -7,24 +7,11 @@ weight: 5
 
 ## 使用範例
 
-### 基本使用
-
-```yaml
-Preprocessor:
-  demo:
-    method: 'default'
-    sequence:
-      - missing
-      - outlier
-      - discretizing  # 使用離散化，不使用 encoder
-```
-
 ### 自訂 K-bins 參數
 
 ```yaml
 Preprocessor:
   custom:
-    method: 'default'
     sequence:
       - missing
       - outlier
@@ -122,7 +109,6 @@ n_bins = 5
 # ❌ 錯誤：不能同時使用
 Preprocessor:
   wrong:
-    method: 'default'
     sequence:
       - missing
       - encoder       # 錯誤！
@@ -133,7 +119,6 @@ Preprocessor:
 # ✅ 正確：只使用其中一個
 Preprocessor:
   correct:
-    method: 'default'
     sequence:
       - missing
       - outlier
@@ -146,7 +131,6 @@ Preprocessor:
 # ❌ 錯誤：discretizing 後面還有其他步驟
 Preprocessor:
   wrong:
-    method: 'default'
     sequence:
       - missing
       - discretizing
@@ -157,103 +141,10 @@ Preprocessor:
 # ✅ 正確：discretizing 是最後一步
 Preprocessor:
   correct:
-    method: 'default'
     sequence:
       - missing
       - outlier
       - discretizing  # 正確：最後一步
-```
-
-## 完整範例
-
-```yaml
-Loader:
-  load_data:
-    filepath: 'data.csv'
-    schema: 'schema.yaml'
-
-Preprocessor:
-  discretize_data:
-    method: 'default'
-    sequence:
-      - missing
-      - outlier
-      - discretizing  # 注意：沒有 encoder 和 scaler
-    config:
-      # 缺失值處理
-      missing:
-        age: 'missing_median'
-        income: 'missing_mean'
-      
-      # 離群值處理
-      outlier:
-        age: 'outlier_iqr'
-        income: 'outlier_iqr'
-      
-      # 離散化配置
-      discretizing:
-        # 數值型欄位
-        age:
-          method: 'discretizing_kbins'
-          n_bins: 10                    # 年齡分10個區間
-        income:
-          method: 'discretizing_kbins'
-          n_bins: 5                     # 收入分5個區間
-        hours_per_week:
-          method: 'discretizing_kbins'
-          n_bins: 8                     # 工時分8個區間
-        
-        # 類別型欄位（自動使用 encoder_label）
-        gender: 'encoder_label'
-        education: 'encoder_label'
-
-Synthesizer:
-  synthesize:
-    method: 'default'
-
-Postprocessor:
-  postprocess:
-    method: 'default'
-```
-
-## 使用案例
-
-### 1. 簡化資料分布
-
-```yaml
-# 將連續分布簡化為離散區間
-Preprocessor:
-  simplify:
-    method: 'default'
-    sequence:
-      - missing
-      - discretizing
-    config:
-      discretizing:
-        salary:
-          method: 'discretizing_kbins'
-          n_bins: 3  # 低/中/高三個級別
-```
-
-### 2. 減少資料維度
-
-```yaml
-# 降低數值精度，減少合成難度
-Preprocessor:
-  reduce_dimension:
-    method: 'default'
-    sequence:
-      - missing
-      - outlier
-      - discretizing
-    config:
-      discretizing:
-        age:
-          method: 'discretizing_kbins'
-          n_bins: 5
-        score:
-          method: 'discretizing_kbins'
-          n_bins: 10
 ```
 
 ## 注意事項
