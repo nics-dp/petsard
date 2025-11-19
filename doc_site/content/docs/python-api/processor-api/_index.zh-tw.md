@@ -1,5 +1,5 @@
 ---
-title: "Processor API（更新中）"
+title: "Processor API"
 weight: 330
 ---
 
@@ -184,7 +184,7 @@ Processor 支援以下處理步驟：
 - `encoder_uniform`：均勻編碼（依頻率分配範圍）
 - `encoder_label`：標籤編碼（整數映射）
 - `encoder_onehot`：獨熱編碼
-- `encoder_date`：日期格式轉換
+- `encoder_datediff`：日期差異編碼
 
 ### 縮放器
 
@@ -201,6 +201,17 @@ Processor 支援以下處理步驟：
 ### 離散化
 
 - `discretizing_kbins`：K-bins 離散化
+
+## 進階功能
+
+### Schema 追蹤（除錯用）
+
+Processor 提供 schema 追蹤功能，用於除錯和診斷處理過程中的型別變化：
+
+- `get_schema_history()`：取得所有處理步驟的 schema 快照列表
+- `print_schema_history(columns=None)`：以表格格式列印 schema 變化歷史
+
+這些方法主要用於開發和除錯，不建議在正式環境使用。
 
 ## 注意事項
 
