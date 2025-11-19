@@ -191,6 +191,9 @@ Processor 支援以下處理步驟：
 - `scaler_log`：對數轉換
 - `scaler_log1p`：log(1+x) 轉換
 - `scaler_timeanchor`：時間錨點縮放
+  - **單一參考模式** (`reference: str`)：將錨點欄位轉換為與參考欄位的時間差
+  - **多參考模式** (`reference: list[str]`)：錨點欄位保持為日期時間，將多個參考欄位轉換為與錨點的時間差
+  - 支援的時間單位：`'D'` (天) 或 `'S'` (秒)
 
 ### 離散化
 

@@ -267,24 +267,45 @@ class ScalerLog1p(Scaler):
 class ScalerTimeAnchor(Scaler):
     """
     Scale the data by time difference from a reference time series.
+
+    Supports both single reference (str) and multiple references (list).
+    When reference is a list, MediatorScaler will handle the multi-column expansion.
     """
 
-    def __init__(self, reference: str, unit: str = "D") -> None:
+    def __init__(self, reference: str | list[str], unit: str = "D") -> None:
         super().__init__()
         if unit not in ["D", "S"]:
             raise ValueError("unit must be either 'D'(days) or 'S'(seconds)")
         self.unit: str = unit
-        self.reference: str = reference
+        self.reference: str | list[str] = reference
+        # Mark whether this is multi-reference mode
+        self._is_multi_reference: bool = isinstance(reference, list)
+        self._reference_list: list[str] | None = (
+            reference if self._is_multi_reference else None
+        )
 
     def set_reference_time(self, reference_series: pd.Series) -> None:
-        """Set reference series for row-wise time difference calculation"""
+        """Set reference series for row-wise time difference calculation
+
+        Note: This is only used for single reference mode.
+        For multi-reference mode, MediatorScaler handles the reference setting.
+        """
         if not pd.api.types.is_datetime64_any_dtype(reference_series):
             raise ValueError("Reference data must be datetime type")
         self.reference_series = reference_series
 
     def _fit(self, data: np.ndarray) -> None:
-        """Validate data type and reference"""
-        # Check if reference series is set
+        """Validate data type and reference
+
+        For multi-reference mode, skip all validation as MediatorScaler handles it.
+        The anchor column will be checked during transform when converting references.
+        """
+        # Skip all fit validation for multi-reference mode
+        # MediatorScaler will validate datetime types during transform()
+        if self._is_multi_reference:
+            return
+
+        # Single reference mode: check if reference series is set
         if not hasattr(self, "reference_series"):
             raise ValueError(
                 "Reference series not set. Use set_reference_time() first."
@@ -300,8 +321,18 @@ class ScalerTimeAnchor(Scaler):
             raise ValueError("Target and reference must have same length")
 
     def _transform(self, data: np.ndarray) -> np.ndarray:
-        """Transform to time differences"""
+        """Transform to time differences
 
+        For multi-reference mode, return data unchanged (anchor column is not transformed).
+        MediatorScaler handles the transformation of reference columns.
+        """
+        # Multi-reference mode: anchor column should not be transformed
+        # MediatorScaler already handled transforming the reference columns
+        # Return 1D array to avoid dimension issues
+        if self._is_multi_reference:
+            return data.ravel()
+
+        # Single reference mode: transform as usual
         if len(data) != len(self.reference_series):
             raise ValueError("Target and reference must have same length")
 
@@ -313,7 +344,18 @@ class ScalerTimeAnchor(Scaler):
             return delta.dt.total_seconds().values.reshape(-1, 1)
 
     def _inverse_transform(self, data: np.ndarray) -> np.ndarray:
-        """Restore to original datetime"""
+        """Restore to original datetime
+
+        For multi-reference mode, return data unchanged (anchor column was not transformed).
+        MediatorScaler handles the inverse transformation of reference columns.
+        """
+        # Multi-reference mode: anchor column was not transformed, return as-is
+        # MediatorScaler already handled inverse transforming the reference columns
+        # Return 1D array to avoid dimension issues
+        if self._is_multi_reference:
+            return data.ravel()
+
+        # Single reference mode: inverse transform as usual
         if self.unit == "D":
             delta = pd.Series(data.ravel()) * pd.Timedelta(days=1)
         else:

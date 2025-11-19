@@ -452,13 +452,15 @@ class MediatorScaler(Mediator):
         Find and process TimeAnchor scalers with comprehensive error checking.
 
         This method validates TimeAnchor scaler configurations by checking:
-        - Reference column specification
+        - Reference column specification (string or list)
         - Correct unit setting
         - Reference column existence
         - Reference column datetime type
+
+        When reference is a list, it creates multiple output columns (one per reference).
         """
         self.time_anchor_cols: list[str] = []
-        self.reference_cols: dict[str, str] = {}
+        self.reference_cols: dict[str, str | list[str]] = {}
 
         for col, processor in self._config.items():
             # Check if it's a TimeAnchor scaler
@@ -471,6 +473,7 @@ class MediatorScaler(Mediator):
                     raise ValueError(
                         f"TimeAnchor scaler {col} has no reference column specified"
                     )
+
                 ref_col = processor.reference
 
                 # Validate unit, default to 'D'
@@ -483,43 +486,100 @@ class MediatorScaler(Mediator):
                         f"TimeAnchor scaler {col} has incorrect unit, must be 'D'(days) or 'S'(seconds)"
                     )
 
-                # Check if reference column exists in dataset
-                if ref_col not in data.columns:
-                    self.logger.error(
-                        f"Reference column {ref_col} does not exist in dataset"
-                    )
-                    raise ValueError(
-                        f"Reference column {ref_col} does not exist in dataset"
-                    )
+                # Handle both single reference (str) and multiple references (list)
+                ref_cols_to_check = [ref_col] if isinstance(ref_col, str) else ref_col
 
-                # Check if reference column is datetime type
-                # if not pd.api.types.is_datetime64_any_dtype(data[ref_col]):
-                #     self.logger.error(
-                #         f"Reference column {ref_col} must be datetime type"
-                #     )
-                #     raise ValueError(
-                #         f"Reference column {ref_col} must be datetime type"
-                #     )
+                for ref in ref_cols_to_check:
+                    # Check if reference column exists in dataset
+                    if ref not in data.columns:
+                        self.logger.error(
+                            f"Reference column {ref} does not exist in dataset"
+                        )
+                        raise ValueError(
+                            f"Reference column {ref} does not exist in dataset"
+                        )
 
                 self.time_anchor_cols.append(col)
                 self.reference_cols[col] = ref_col
 
-                processor.set_reference_time(data[ref_col])
+                # For list reference, we'll handle it in transform
+                # Don't set reference_time here for list references
+                if isinstance(ref_col, str):
+                    processor.set_reference_time(data[ref_col])
+                else:
+                    # Store that this processor has multiple references
+                    processor._is_multi_reference = True
+                    processor._reference_list = ref_col
 
     def _transform(self, data: pd.DataFrame) -> pd.DataFrame:
-        """Transform data, ensuring TimeAnchor operations are done first"""
-        # Set reference time series for each TimeAnchor scaler
-        for col in self.time_anchor_cols:
-            ref_col = self.reference_cols[col]
-            self._config[col].set_reference_time(data[ref_col])
+        """Transform data, ensuring TimeAnchor operations are done first
 
+        Design:
+        - Single reference: transforms anchor column using reference
+        - Multiple references: transforms reference columns using anchor as reference
+          (anchor stays as datetime, references become time differences)
+        """
         result = data.copy()
         self.original_dtypes = result.dtypes.to_dict()
 
+        # Track column mapping for multi-reference mode
+        self.map = {}
+
         # First transform TimeAnchor columns
-        for col, processor in self._config.items():
-            if isinstance(processor, ScalerTimeAnchor):
-                result[col] = processor.transform(data[col])
+        for col in self.time_anchor_cols:
+            processor = self._config[col]
+            if not isinstance(processor, ScalerTimeAnchor):
+                continue
+
+            ref_col = self.reference_cols[col]
+
+            # Handle multi-reference mode
+            if isinstance(ref_col, list):
+                self.logger.info(
+                    f"Processing TimeAnchor: anchor '{col}' stays as datetime, "
+                    f"transforming {len(ref_col)} reference columns to time differences"
+                )
+
+                # Ensure anchor column is datetime type
+                if not pd.api.types.is_datetime64_any_dtype(result[col]):
+                    self.logger.debug(f"Converting anchor '{col}' to datetime")
+                    result[col] = pd.to_datetime(result[col])
+
+                # Transform each reference column to time difference from anchor
+                for ref in ref_col:
+                    # Ensure reference column is datetime type
+                    if not pd.api.types.is_datetime64_any_dtype(result[ref]):
+                        self.logger.debug(f"Converting reference '{ref}' to datetime")
+                        result[ref] = pd.to_datetime(result[ref])
+
+                    # Use anchor (col) as reference time
+                    processor.set_reference_time(result[col])
+                    # Transform the reference column
+                    result[ref] = processor.transform(result[ref])
+
+                    self.logger.debug(
+                        f"  Transformed '{ref}': time difference from anchor '{col}' (in {processor.unit})"
+                    )
+
+                # Keep anchor column as-is (datetime)
+                # Track which reference columns were transformed
+                self.map[col] = ref_col
+
+            else:
+                # Single reference mode: transform anchor using reference
+                # Ensure both columns are datetime type
+                if not pd.api.types.is_datetime64_any_dtype(result[ref_col]):
+                    self.logger.debug(f"Converting reference '{ref_col}' to datetime")
+                    result[ref_col] = pd.to_datetime(result[ref_col])
+                if not pd.api.types.is_datetime64_any_dtype(result[col]):
+                    self.logger.debug(f"Converting anchor '{col}' to datetime")
+                    result[col] = pd.to_datetime(result[col])
+
+                processor.set_reference_time(result[ref_col])
+                result[col] = processor.transform(result[col])
+                self.logger.debug(
+                    f"Transformed anchor '{col}' using reference '{ref_col}'"
+                )
 
         # Then transform other columns
         for col, processor in self._config.items():
@@ -529,7 +589,13 @@ class MediatorScaler(Mediator):
         return result
 
     def _inverse_transform(self, data: pd.DataFrame) -> pd.DataFrame:
-        """Inverse transform data in the correct order"""
+        """Inverse transform data in the correct order
+
+        Design:
+        - Single reference: restore anchor from time difference
+        - Multiple references: restore reference columns from time differences
+          (anchor column is unchanged as it was kept as datetime)
+        """
         result = data.copy()
 
         # First inverse transform non-TimeAnchor columns
@@ -540,8 +606,28 @@ class MediatorScaler(Mediator):
         # Then inverse transform TimeAnchor columns
         for col, processor in self._config.items():
             if isinstance(processor, ScalerTimeAnchor):
-                result[col] = processor.inverse_transform(data[col])
-                if hasattr(self, "original_dtypes"):
-                    result[col] = result[col].astype(self.original_dtypes[col])
+                # Handle multi-reference mode
+                if hasattr(self, "map") and col in self.map:
+                    # Multi-reference: restore reference columns from time differences
+                    ref_cols = self.map[col]
+
+                    self.logger.debug(
+                        f"Inverse transforming {len(ref_cols)} reference columns using anchor '{col}'"
+                    )
+
+                    # Use anchor (col) as reference to restore each reference column
+                    processor.set_reference_time(data[col])
+                    for ref in ref_cols:
+                        result[ref] = processor.inverse_transform(data[ref])
+                        self.logger.debug(f"  Restored '{ref}' to datetime")
+
+                    # Anchor column stays as-is (it was never transformed)
+
+                else:
+                    # Single reference mode: restore anchor from time difference
+                    result[col] = processor.inverse_transform(data[col])
+
+                    if hasattr(self, "original_dtypes") and col in self.original_dtypes:
+                        result[col] = result[col].astype(self.original_dtypes[col])
 
         return result
