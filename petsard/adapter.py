@@ -22,7 +22,7 @@ class BaseAdapter:
     The interface of the objects used by Executor.run()
     """
 
-    def __init__(self, config: dict):
+    def __init__(self, config: dict) -> None:
         """
         Args:
             config (dict):
@@ -130,7 +130,206 @@ class BaseAdapter:
 
         return updated_schema
 
-    def run(self, input: dict):
+    def _handle_benchmark_download(
+        self, protocol_value: str, value_type: str = "filepath"
+    ) -> tuple[bool, str, object]:
+        """
+        統一處理 benchmark:// 協議的下載邏輯
+
+        Args:
+            protocol_value: 原始協議字串 (e.g., "benchmark://adult")
+            value_type: 值類型，"filepath" 或 "schema"
+
+        Returns:
+            tuple: (is_benchmark, local_path, benchmarker_config)
+        """
+        import re
+        from pathlib import Path
+
+        # Handle non-string values (e.g., dict, Schema objects)
+        if not isinstance(protocol_value, str):
+            return False, protocol_value, None
+
+        is_benchmark = protocol_value.lower().startswith("benchmark://")
+        if not is_benchmark:
+            return False, protocol_value, None
+
+        from petsard.exceptions import BenchmarkDatasetsError, UnsupportedMethodError
+        from petsard.loader.benchmarker import BenchmarkerConfig, BenchmarkerRequests
+
+        benchmark_name = re.sub(
+            r"^benchmark://", "", protocol_value, flags=re.IGNORECASE
+        ).lower()
+
+        self._logger.info(
+            f"Detected benchmark protocol for {value_type}: {benchmark_name}"
+        )
+
+        # Create BenchmarkerConfig
+        try:
+            benchmarker_config = BenchmarkerConfig(
+                benchmark_name=benchmark_name, filepath_raw=protocol_value
+            )
+        except UnsupportedMethodError as e:
+            error_msg = (
+                f"Unsupported benchmark {value_type} '{benchmark_name}': {str(e)}"
+            )
+            self._logger.error(error_msg)
+            raise BenchmarkDatasetsError(error_msg) from e
+
+        # Update to local path
+        local_path = str(
+            Path("benchmark").joinpath(benchmarker_config.benchmark_filename)
+        )
+        self._logger.debug(f"Updated {value_type} to local path: {local_path}")
+
+        # Download benchmark file
+        self._logger.info(f"Downloading benchmark {value_type}: {benchmark_name}")
+        try:
+            benchmarker = BenchmarkerRequests(
+                benchmarker_config.get_benchmarker_config()
+            )
+            benchmarker.download()
+            self._logger.debug(f"Benchmark {value_type} downloaded successfully")
+        except BenchmarkDatasetsError as e:
+            error_msg = f"Failed to download benchmark {value_type} '{benchmark_name}': {str(e)}"
+            self._logger.error(error_msg)
+            raise BenchmarkDatasetsError(error_msg) from e
+        except ImportError as e:
+            error_msg = (
+                f"Cannot download benchmark {value_type} '{benchmark_name}': "
+                f"requests library is required. Install with: pip install petsard[load-benchmark]"
+            )
+            self._logger.error(error_msg)
+            raise BenchmarkDatasetsError(error_msg) from e
+        except Exception as e:
+            error_msg = f"Failed to download benchmark {value_type} '{benchmark_name}': {str(e)}"
+            self._logger.error(error_msg)
+            raise BenchmarkDatasetsError(error_msg) from e
+
+        return True, local_path, benchmarker_config
+
+    def _resolve_data_source(
+        self, status, source_spec: str, key_aliases: dict | None = None
+    ) -> pd.DataFrame:
+        """
+        統一的資料來源解析邏輯，支援 "Module.key" 格式
+
+        Args:
+            status: Status 物件
+            source_spec: 資料來源規格 (e.g., "Loader" or "Splitter.train")
+            key_aliases: 別名映射字典 (e.g., {"ori": "train", "control": "validation"})
+
+        Returns:
+            pd.DataFrame: 解析後的資料
+
+        Raises:
+            ConfigError: 當找不到指定的資料來源時
+        """
+        if key_aliases is None:
+            key_aliases = {}
+
+        # Support "Module.key" format
+        if "." in source_spec:
+            module_name, data_key = source_spec.split(".", 1)
+
+            # Create reverse mapping for bidirectional lookup
+            reverse_aliases = {v: k for k, v in key_aliases.items()}
+
+            data = status.get_data_by_module(module_name)
+            if not data:
+                error_msg = f"No data found from module: {module_name}"
+                self._logger.error(error_msg)
+                raise ConfigError(error_msg)
+
+            # Search for specific key
+            search_keys = [data_key]
+            if data_key in key_aliases:
+                search_keys.append(key_aliases[data_key])
+            if data_key in reverse_aliases:
+                search_keys.append(reverse_aliases[data_key])
+
+            for available_key, df in data.items():
+                for search_key in search_keys:
+                    if (
+                        available_key == f"{module_name}_{search_key}"
+                        or available_key == search_key
+                    ):
+                        if search_key != data_key:
+                            self._logger.debug(
+                                f"Using data from module: {module_name}.{data_key} "
+                                f"(mapped to {search_key})"
+                            )
+                        else:
+                            self._logger.debug(
+                                f"Using data from module: {module_name}.{data_key}"
+                            )
+                        return df
+
+            error_msg = f"Key '{data_key}' not found in module '{module_name}'. Available keys: {list(data.keys())}"
+            self._logger.error(error_msg)
+            raise ConfigError(error_msg)
+        else:
+            # Simple module name
+            data = status.get_data_by_module(source_spec)
+            if data:
+                first_key = next(iter(data.keys()))
+                self._logger.debug(
+                    f"Using data from module: {source_spec} ({first_key})"
+                )
+                return data[first_key]
+            else:
+                error_msg = f"No data found from source: {source_spec}"
+                self._logger.error(error_msg)
+                raise ConfigError(error_msg)
+
+    def _get_metadata_with_priority(self, status, priority: list[str]) -> Schema | None:
+        """
+        按優先順序獲取 metadata
+
+        Args:
+            status: Status 物件
+            priority: 模組名稱的優先順序列表 (e.g., ["Loader", "Splitter", "Preprocessor"])
+
+        Returns:
+            Schema | None: 找到的 metadata，如果都找不到則回傳 None
+        """
+        for module in priority:
+            if module in status.status:
+                try:
+                    metadata = status.get_metadata(module)
+                    if metadata:
+                        self._logger.debug(f"Using metadata from {module}")
+                        return metadata
+                except Exception as e:
+                    self._logger.debug(f"Cannot get metadata from {module}: {e}")
+
+        self._logger.warning(f"Could not retrieve metadata from any of: {priority}")
+        return None
+
+    def _safe_copy(self, data):
+        """
+        統一的拷貝策略，根據資料類型決定拷貝方法
+
+        Args:
+            data: 要拷貝的資料
+
+        Returns:
+            拷貝後的資料
+        """
+        if data is None:
+            return None
+        elif isinstance(data, pd.DataFrame):
+            # DataFrame 的 copy() 通常足夠且較快
+            return data.copy()
+        elif isinstance(data, dict):
+            # dict 可能包含 DataFrame，需要深拷貝
+            return deepcopy(data)
+        else:
+            # 其他複雜結構使用深拷貝
+            return deepcopy(data)
+
+    def run(self, input: dict) -> None:
         """
         Execute the module's functionality.
 
@@ -239,7 +438,7 @@ class LoaderAdapter(BaseAdapter):
     For benchmark:// protocol files, it handles downloading before loading.
     """
 
-    def __init__(self, config: dict):
+    def __init__(self, config: dict) -> None:
         """
         Args:
             config (dict): Configuration parameters for the Loader.
@@ -261,157 +460,21 @@ class LoaderAdapter(BaseAdapter):
         # Copy config once at the beginning to avoid modifying the original
         config = config.copy()
 
-        # Check if filepath uses benchmark:// protocol
+        # Handle filepath benchmark protocol
         filepath = config.get("filepath", "")
-        self.is_benchmark = filepath.lower().startswith("benchmark://")
-        self.benchmarker_config = None
-
+        self.is_benchmark, local_filepath, self.benchmarker_config = (
+            self._handle_benchmark_download(filepath, "filepath")
+        )
         if self.is_benchmark:
-            # If benchmark protocol detected, prepare benchmarker
-            import re
-            from pathlib import Path
+            config["filepath"] = local_filepath
 
-            from petsard.exceptions import UnsupportedMethodError
-            from petsard.loader.benchmarker import BenchmarkerConfig
-
-            benchmark_name = re.sub(
-                r"^benchmark://", "", filepath, flags=re.IGNORECASE
-            ).lower()
-
-            self._logger.info(
-                f"Detected benchmark protocol for filepath: {benchmark_name}"
-            )
-
-            # Create BenchmarkerConfig
-            try:
-                self.benchmarker_config = BenchmarkerConfig(
-                    benchmark_name=benchmark_name, filepath_raw=filepath
-                )
-            except UnsupportedMethodError as e:
-                # Convert UnsupportedMethodError to BenchmarkDatasetsError
-                from petsard.exceptions import BenchmarkDatasetsError
-
-                error_msg = (
-                    f"Unsupported benchmark dataset '{benchmark_name}': {str(e)}"
-                )
-                self._logger.error(error_msg)
-                raise BenchmarkDatasetsError(error_msg) from e
-
-            # Update filepath in config to local path
-            local_filepath = Path("benchmark").joinpath(
-                self.benchmarker_config.benchmark_filename
-            )
-            config["filepath"] = str(local_filepath)
-
-            self._logger.debug(f"Updated filepath to local path: {local_filepath}")
-
-            # Download benchmark data file BEFORE initializing Loader
-            self._logger.info(
-                f"Downloading benchmark dataset in __init__: {benchmark_name}"
-            )
-            try:
-                from petsard.exceptions import BenchmarkDatasetsError
-                from petsard.loader.benchmarker import BenchmarkerRequests
-
-                benchmarker = BenchmarkerRequests(
-                    self.benchmarker_config.get_benchmarker_config()
-                )
-                benchmarker.download()
-                self._logger.debug(
-                    "Benchmark dataset downloaded successfully in __init__"
-                )
-            except BenchmarkDatasetsError as e:
-                error_msg = f"Failed to download benchmark dataset '{benchmark_name}' during initialization: {str(e)}"
-                self._logger.error(error_msg)
-                raise BenchmarkDatasetsError(error_msg) from e
-            except ImportError as e:
-                error_msg = (
-                    f"Cannot download benchmark dataset '{benchmark_name}': "
-                    f"requests library is required. Install with: pip install petsard[load-benchmark]"
-                )
-                self._logger.error(error_msg)
-                raise BenchmarkDatasetsError(error_msg) from e
-            except Exception as e:
-                error_msg = f"Failed to download benchmark dataset '{benchmark_name}' during initialization: {str(e)}"
-                self._logger.error(error_msg)
-                raise BenchmarkDatasetsError(error_msg) from e
-
-        # Check if schema uses benchmark:// protocol
+        # Handle schema benchmark protocol
         schema = config.get("schema", "")
-        self.is_schema_benchmark = isinstance(
-            schema, str
-        ) and schema.lower().startswith("benchmark://")
-        self.schema_benchmarker_config = None
-
+        self.is_schema_benchmark, local_schema, self.schema_benchmarker_config = (
+            self._handle_benchmark_download(schema, "schema")
+        )
         if self.is_schema_benchmark:
-            # If benchmark protocol detected for schema, prepare benchmarker
-            import re
-            from pathlib import Path
-
-            from petsard.exceptions import UnsupportedMethodError
-            from petsard.loader.benchmarker import BenchmarkerConfig
-
-            schema_benchmark_name = re.sub(
-                r"^benchmark://", "", schema, flags=re.IGNORECASE
-            ).lower()
-
-            self._logger.info(
-                f"Detected benchmark protocol for schema: {schema_benchmark_name}"
-            )
-
-            # Create BenchmarkerConfig for schema
-            try:
-                self.schema_benchmarker_config = BenchmarkerConfig(
-                    benchmark_name=schema_benchmark_name, filepath_raw=schema
-                )
-            except UnsupportedMethodError as e:
-                # Convert UnsupportedMethodError to BenchmarkDatasetsError
-                from petsard.exceptions import BenchmarkDatasetsError
-
-                error_msg = (
-                    f"Unsupported benchmark schema '{schema_benchmark_name}': {str(e)}"
-                )
-                self._logger.error(error_msg)
-                raise BenchmarkDatasetsError(error_msg) from e
-
-            # Update schema in config to local path
-            local_schema_path = Path("benchmark").joinpath(
-                self.schema_benchmarker_config.benchmark_filename
-            )
-            config["schema"] = str(local_schema_path)
-
-            self._logger.debug(f"Updated schema to local path: {local_schema_path}")
-
-            # Download benchmark schema file BEFORE initializing Loader
-            self._logger.info(
-                f"Downloading benchmark schema in __init__: {schema_benchmark_name}"
-            )
-            try:
-                from petsard.exceptions import BenchmarkDatasetsError
-                from petsard.loader.benchmarker import BenchmarkerRequests
-
-                benchmarker = BenchmarkerRequests(
-                    self.schema_benchmarker_config.get_benchmarker_config()
-                )
-                benchmarker.download()
-                self._logger.debug(
-                    "Benchmark schema downloaded successfully in __init__"
-                )
-            except BenchmarkDatasetsError as e:
-                error_msg = f"Failed to download benchmark schema '{schema_benchmark_name}' during initialization: {str(e)}"
-                self._logger.error(error_msg)
-                raise BenchmarkDatasetsError(error_msg) from e
-            except ImportError as e:
-                error_msg = (
-                    f"Cannot download benchmark schema '{schema_benchmark_name}': "
-                    f"requests library is required. Install with: pip install petsard[load-benchmark]"
-                )
-                self._logger.error(error_msg)
-                raise BenchmarkDatasetsError(error_msg) from e
-            except Exception as e:
-                error_msg = f"Failed to download benchmark schema '{schema_benchmark_name}' during initialization: {str(e)}"
-                self._logger.error(error_msg)
-                raise BenchmarkDatasetsError(error_msg) from e
+            config["schema"] = local_schema
 
         # Remove method parameter if exists, as Loader no longer accepts it
         config.pop("method", None)
@@ -420,7 +483,7 @@ class LoaderAdapter(BaseAdapter):
         self.loader = Loader(**config)
         self._schema_metadata = None  # Store the Schema
 
-    def _run(self, input: dict):
+    def _run(self, input: dict) -> None:
         """
         Executes the data loading process using the Loader instance.
         For benchmark:// protocol, downloads dataset first.
@@ -1013,7 +1076,7 @@ class SynthesizerAdapter(BaseAdapter):
         }
         return loader_config
 
-    def _run(self, input: dict):
+    def _run(self, input: dict) -> None:
         """
         Executes the data synthesizing using the Synthesizer instance.
 
@@ -1256,7 +1319,7 @@ class ConstrainerAdapter(BaseAdapter):
     using the configured Constrainer instance as a decorator.
     """
 
-    def __init__(self, config: dict):
+    def __init__(self, config: dict) -> None:
         """
         Initialize ConstrainerAdapter with given configuration.
 
@@ -1654,27 +1717,11 @@ class ConstrainerAdapter(BaseAdapter):
                 - is_custom_data (bool): Flag indicating if it's custom_data
                 - source_names (dict, optional): Mapping of data to source names
         """
-        # Get metadata for field type checking
+        # Get metadata for field type checking using unified method
         # Priority: Loader > Splitter > Preprocessor
-        try:
-            if "Loader" in status.status:
-                self._metadata = status.get_metadata("Loader")
-                self._logger.debug("Using metadata from Loader for field type checking")
-            elif "Splitter" in status.status:
-                self._metadata = status.get_metadata("Splitter")
-                self._logger.debug(
-                    "Using metadata from Splitter for field type checking"
-                )
-            elif "Preprocessor" in status.status:
-                self._metadata = status.get_metadata("Preprocessor")
-                self._logger.debug(
-                    "Using metadata from Preprocessor for field type checking"
-                )
-        except Exception as e:
-            self._logger.warning(
-                f"Could not retrieve metadata for field type checking: {e}"
-            )
-            self._metadata = None
+        self._metadata = self._get_metadata_with_priority(
+            status, ["Loader", "Splitter", "Preprocessor"]
+        )
 
         # Initialize Constrainer with metadata now that we have it
         if self.constrainer is None:
@@ -1690,80 +1737,17 @@ class ConstrainerAdapter(BaseAdapter):
             self.input["data"] = {}
             self.input["source_names"] = {}
 
+            # Define key aliases for user-familiar names
+            key_aliases = {
+                "ori": "train",
+                "control": "validation",
+            }
+
             for source_spec in self.source:
-                # Support "Module.key" format
-                if "." in source_spec:
-                    module_name, data_key = source_spec.split(".", 1)
-
-                    # Alias mapping: support user-familiar names
-                    # ori -> train, control -> validation
-                    key_aliases = {
-                        "ori": "train",
-                        "control": "validation",
-                    }
-                    # Create reverse mapping for bidirectional lookup
-                    reverse_aliases = {v: k for k, v in key_aliases.items()}
-
-                    data = status.get_data_by_module(module_name)
-                    if data:
-                        # Search for specific key
-                        found = False
-                        # First try original key name
-                        search_keys = [data_key]
-                        # If alias exists, also try alias
-                        if data_key in key_aliases:
-                            search_keys.append(key_aliases[data_key])
-                        if data_key in reverse_aliases:
-                            search_keys.append(reverse_aliases[data_key])
-
-                        for available_key, df in data.items():
-                            # Check all possible key name formats
-                            for search_key in search_keys:
-                                if (
-                                    available_key == f"{module_name}_{search_key}"
-                                    or available_key == search_key
-                                ):
-                                    self.input["data"][source_spec] = df
-                                    self.input["source_names"][source_spec] = (
-                                        source_spec
-                                    )
-                                    if search_key != data_key:
-                                        self._logger.debug(
-                                            f"Using data from module: {module_name}.{data_key} "
-                                            f"(mapped to {search_key})"
-                                        )
-                                    else:
-                                        self._logger.debug(
-                                            f"Using data from module: {module_name}.{data_key}"
-                                        )
-                                    found = True
-                                    break
-                            if found:
-                                break
-
-                        if not found:
-                            error_msg = f"Key '{data_key}' not found in module '{module_name}'. Available keys: {list(data.keys())}"
-                            self._logger.error(error_msg)
-                            raise ConfigError(error_msg)
-                    else:
-                        error_msg = f"No data found from module: {module_name}"
-                        self._logger.error(error_msg)
-                        raise ConfigError(error_msg)
-                else:
-                    # Simple module name
-                    data = status.get_data_by_module(source_spec)
-                    if data:
-                        # Get first available data
-                        first_key = next(iter(data.keys()))
-                        self.input["data"][source_spec] = data[first_key]
-                        self.input["source_names"][source_spec] = source_spec
-                        self._logger.debug(
-                            f"Using data from module: {source_spec} ({first_key})"
-                        )
-                    else:
-                        error_msg = f"No data found from source: {source_spec}"
-                        self._logger.error(error_msg)
-                        raise ConfigError(error_msg)
+                # Use unified data source resolution logic
+                df = self._resolve_data_source(status, source_spec, key_aliases)
+                self.input["data"][source_spec] = df
+                self.input["source_names"][source_spec] = source_spec
         else:
             # No source specified, use default behavior (data from previous module)
             pre_module = status.get_pre_module("Constrainer")
@@ -1794,28 +1778,28 @@ class ConstrainerAdapter(BaseAdapter):
 
         return self.input
 
-    def get_result(self):
+    def get_result(self) -> pd.DataFrame | dict:
         """
         Retrieve the constraining result.
 
         Returns:
-            pd.DataFrame or dict:
+            pd.DataFrame | dict:
                 - If validate mode: returns validation_result dict
                 - If resample mode: returns constrained data DataFrame
         """
         # If validation result exists (validate mode), return it
         # This allows Reporter to access validation results
         if self.validation_result is not None:
-            return deepcopy(self.validation_result)
+            return self._safe_copy(self.validation_result)
         # Otherwise return constrained data (resample mode)
-        return deepcopy(self.constrained_data)
+        return self._safe_copy(self.constrained_data)
 
-    def get_validation_result(self) -> dict:
+    def get_validation_result(self) -> dict | None:
         """
         Retrieve the validation result (only available in validate mode).
 
         Returns:
-            dict: Validation result containing:
+            dict | None: Validation result containing:
                 For single source:
                 - total_rows (int): Total number of data rows
                 - passed_rows (int): Number of rows passing all constraints
@@ -1832,9 +1816,11 @@ class ConstrainerAdapter(BaseAdapter):
         """
         # If multiple source validation results exist, return them
         if self.validation_results:
-            return deepcopy(self.validation_results)
+            return self._safe_copy(self.validation_results)
         # Otherwise return single validation result
-        return deepcopy(self.validation_result) if self.validation_result else None
+        return (
+            self._safe_copy(self.validation_result) if self.validation_result else None
+        )
 
     def _transform_field_combinations(self, config: dict) -> dict:
         """Transform field combinations from YAML list format to tuple format
@@ -1861,7 +1847,7 @@ class EvaluatorAdapter(BaseAdapter):
         using the configured Evaluator instance as a decorator.
     """
 
-    def __init__(self, config: dict):
+    def __init__(self, config: dict) -> None:
         """
         Attributes:
             evaluator (Evaluator):
@@ -1872,7 +1858,7 @@ class EvaluatorAdapter(BaseAdapter):
         self.evaluations: dict[str, pd.DataFrame] = None
         self._schema: Schema = None  # Store schema for data alignment
 
-    def _run(self, input: dict):
+    def _run(self, input: dict) -> None:
         """
         Executes the data evaluating using the Evaluator instance.
 
@@ -1987,21 +1973,11 @@ class EvaluatorAdapter(BaseAdapter):
             if "validation" in splitter_result:
                 self.input["data"]["control"] = splitter_result["validation"]
 
-        # Try to get schema for data alignment
+        # Try to get schema for data alignment using unified method
         # Priority: Loader > Splitter > Preprocessor
-        schema = None
-        try:
-            if "Loader" in status.status:
-                schema = status.get_metadata("Loader")
-                self._logger.debug("Using schema from Loader for data alignment")
-            elif "Splitter" in status.status:
-                schema = status.get_metadata("Splitter")
-                self._logger.debug("Using schema from Splitter for data alignment")
-            elif "Preprocessor" in status.status:
-                schema = status.get_metadata("Preprocessor")
-                self._logger.debug("Using schema from Preprocessor for data alignment")
-        except Exception as e:
-            self._logger.warning(f"Could not retrieve schema for data alignment: {e}")
+        schema = self._get_metadata_with_priority(
+            status, ["Loader", "Splitter", "Preprocessor"]
+        )
 
         if schema:
             self.input["schema"] = schema
@@ -2013,12 +1989,12 @@ class EvaluatorAdapter(BaseAdapter):
 
     def get_result(self) -> dict[str, pd.DataFrame]:
         """
-        Retrieve the pre-processing result.
+        Retrieve the evaluation results.
 
         Returns:
-            (dict[str, pd.DataFrame]): The evaluation results.
+            dict[str, pd.DataFrame]: The evaluation results.
         """
-        return deepcopy(self.evaluations)
+        return self._safe_copy(self.evaluations)
 
 
 class DescriberAdapter(BaseAdapter):
@@ -2027,7 +2003,7 @@ class DescriberAdapter(BaseAdapter):
         using the configured Describer instance as a decorator.
     """
 
-    def __init__(self, config: dict):
+    def __init__(self, config: dict) -> None:
         """
         Attributes:
             describer (Describer):
@@ -2167,7 +2143,7 @@ class DescriberAdapter(BaseAdapter):
         self.describer = Describer(**config)
         self.description: dict[str, pd.DataFrame] = None
 
-    def _run(self, input: dict):
+    def _run(self, input: dict) -> None:
         """
         Executes the data describing using the Describer instance.
 
@@ -2311,49 +2287,12 @@ class DescriberAdapter(BaseAdapter):
                 raise ConfigError(error_msg)
 
             for key, source_spec in source_mapping.items():
-                # Support "Module.key" format
-                if "." in source_spec:
-                    module_name, data_key = source_spec.split(".", 1)
-                    data = status.get_data_by_module(module_name)
-                    if data:
-                        # Search for specific key
-                        found = False
-                        for available_key, df in data.items():
-                            if (
-                                available_key == f"{module_name}_{data_key}"
-                                or available_key == data_key
-                            ):
-                                self.input["data"][key] = df
-                                self._logger.debug(
-                                    f"Using data from module: {module_name}.{data_key} as '{key}' for compare mode"
-                                )
-                                found = True
-                                break
-
-                        if not found:
-                            error_msg = f"Key '{data_key}' not found in module '{module_name}'. Available keys: {list(data.keys())}"
-                            self._logger.error(error_msg)
-                            raise ConfigError(error_msg)
-                    else:
-                        error_msg = f"No data found from module: {module_name}"
-                        self._logger.error(error_msg)
-                        raise ConfigError(error_msg)
-                else:
-                    # Simple module name
-                    data = status.get_data_by_module(source_spec)
-                    if data:
-                        # Get first available data
-                        first_key = next(iter(data.keys()))
-                        self.input["data"][key] = data[first_key]
-                        self._logger.debug(
-                            f"Using data from module: {source_spec} ({first_key}) as '{key}' for compare mode"
-                        )
-                    else:
-                        error_msg = (
-                            f"No data found from source: {source_spec} for '{key}'"
-                        )
-                        self._logger.error(error_msg)
-                        raise ConfigError(error_msg)
+                # Use unified data source resolution logic
+                df = self._resolve_data_source(status, source_spec)
+                self.input["data"][key] = df
+                self._logger.debug(
+                    f"Using data from '{source_spec}' as '{key}' for compare mode"
+                )
 
             # Get metadata (prefer first data source's metadata)
             for module_name in self.source:
@@ -2370,11 +2309,14 @@ class DescriberAdapter(BaseAdapter):
 
         return self.input
 
-    def get_result(self):
+    def get_result(self) -> dict[str, pd.DataFrame]:
         """
-        Retrieve the pre-processing result.
+        Retrieve the description results.
+
+        Returns:
+            dict[str, pd.DataFrame]: The description results.
         """
-        return deepcopy(self.description)
+        return self._safe_copy(self.description)
 
 
 class ReporterAdapter(BaseAdapter):
@@ -2396,7 +2338,7 @@ class ReporterAdapter(BaseAdapter):
 
     """
 
-    def __init__(self, config: dict):
+    def __init__(self, config: dict) -> None:
         super().__init__(config)
 
         # If Reporter has source parameter, extract it
@@ -2405,7 +2347,7 @@ class ReporterAdapter(BaseAdapter):
         self.reporter = Reporter(**config)
         self.report: dict = {}
 
-    def _run(self, input: dict):
+    def _run(self, input: dict) -> None:
         """
         Runs the Reporter to create and generate reports.
         Adapts to the new functional Reporter architecture
@@ -2595,12 +2537,12 @@ class ReporterAdapter(BaseAdapter):
 
         return self.input
 
-    def get_result(self):
+    def get_result(self) -> dict:
         """
-        Placeholder method for getting the result.
+        Get the report result.
 
         Returns:
-            (dict) key as module name,
-            value as raw/processed data (others) or report data (Reporter)
+            dict: key as module name,
+                value as raw/processed data (others) or report data (Reporter)
         """
-        return deepcopy(self.report)
+        return self._safe_copy(self.report)

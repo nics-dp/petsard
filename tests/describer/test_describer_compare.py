@@ -101,7 +101,7 @@ class TestDescriberCompare:
     @pytest.mark.integration
     def test_full_yaml_execution(self):
         """完整的 YAML 執行測試"""
-        yaml_path = "demo/petsard-yaml/describer-yaml/describer copy.yaml"
+        yaml_path = "demo/petsard-yaml/describer-yaml/describer-compare.yaml"
         yaml_file = Path(yaml_path)
 
         if not yaml_file.exists():

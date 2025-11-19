@@ -54,6 +54,8 @@ uv pip install petsard[dev]  # For development
 
 ### Method 1-b: Using pip
 
+**Modern pip (>= 25.0) with dependency-groups support:**
+
 ```bash
 # Default installation (recommended for most users)
 pip install petsard
@@ -62,6 +64,14 @@ pip install petsard
 pip install --group ds petsard    # For Docker environments with Jupyter
 pip install --group all petsard   # With xlsx file support
 pip install --group dev petsard   # For development
+```
+
+**Older pip (< 25.0) - backward compatible syntax:**
+
+```bash
+pip install petsard[ds]   # For Docker environments with Jupyter
+pip install petsard[all]  # With xlsx file support
+pip install petsard[dev]  # For development
 ```
 
 ### Method 1-c: Installing from TestPyPI (For Testing)
@@ -86,7 +96,13 @@ pip install --index-url https://test.pypi.org/simple/ --extra-index-url https://
 If you're installing in a restricted network environment (e.g., behind a corporate firewall or proxy), you may encounter SSL certificate verification issues. In such cases, you can use the `--trusted-host` parameter to bypass certificate verification:
 
 ```bash
+# Modern pip (>= 25.0)
 pip install --group ds petsard \
+  --trusted-host pypi.org \
+  --trusted-host files.pythonhosted.org
+
+# Older pip (< 25.0)
+pip install petsard[ds] \
   --trusted-host pypi.org \
   --trusted-host files.pythonhosted.org
 ```
@@ -94,7 +110,13 @@ pip install --group ds petsard \
 **For Jupyter Notebook users**, the syntax is the same:
 
 ```python
+# Modern pip (>= 25.0)
 %pip install --group ds petsard \
+  --trusted-host pypi.org \
+  --trusted-host files.pythonhosted.org
+
+# Older pip (< 25.0)
+%pip install petsard[ds] \
   --trusted-host pypi.org \
   --trusted-host files.pythonhosted.org
 ```
@@ -122,12 +144,19 @@ For development or custom builds.
 git clone https://github.com/nics-dp/petsard.git
 cd petsard
 
-# Install with pyproject.toml (recommended)
-pip install --group all -e .
-
-# Or install specific dependency groups
+# Using modern pip (>= 25.0) with dependency-groups
+pip install --group all -e .   # Complete functionality
 pip install --group ds -e .    # Data science features
 pip install --group dev -e .   # Development tools
+
+# Using older pip (< 25.0) - backward compatible
+pip install -e .[all]  # Complete functionality
+pip install -e .[ds]   # Data science features
+pip install -e .[dev]  # Development tools
+
+# Or using uv (recommended for development)
+uv sync --group all    # Complete functionality
+uv sync --group dev    # Development environment
 ```
 
 ### Method 2-b: Manual Download (Without Git)
@@ -147,12 +176,19 @@ Visit [PETsARD GitHub Releases](https://github.com/nics-dp/petsard/releases) or 
 unzip petsard-main.zip
 cd petsard-main
 
-# Install with pyproject.toml (recommended)
-pip install --group all -e .
-
-# Or install specific dependency groups
+# Using modern pip (>= 25.0) with dependency-groups
+pip install --group all -e .   # Complete functionality
 pip install --group ds -e .    # Data science features
 pip install --group dev -e .   # Development tools
+
+# Using older pip (< 25.0) - backward compatible
+pip install -e .[all]  # Complete functionality
+pip install -e .[ds]   # Data science features
+pip install -e .[dev]  # Development tools
+
+# Or using uv (recommended for development)
+uv sync --group all    # Complete functionality
+uv sync --group dev    # Development environment
 ```
 
 **Windows users** can use File Explorer to extract the ZIP file, then open Command Prompt or PowerShell in that folder to run the installation commands.

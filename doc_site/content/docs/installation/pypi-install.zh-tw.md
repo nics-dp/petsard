@@ -54,6 +54,8 @@ uv pip install petsard[dev]  # 用於開發
 
 ### 方式 1-b：使用 pip
 
+**現代化 pip（>= 25.0）支援 dependency-groups：**
+
 ```bash
 # 基本安裝（推薦給大多數使用者）
 pip install petsard
@@ -62,6 +64,14 @@ pip install petsard
 pip install --group ds petsard    # 適用於 Docker 環境中使用 Jupyter
 pip install --group all petsard   # 包含 xlsx 檔案支援
 pip install --group dev petsard   # 用於開發
+```
+
+**舊版 pip（< 25.0）- 向後相容語法：**
+
+```bash
+pip install petsard[ds]   # 適用於 Docker 環境中使用 Jupyter
+pip install petsard[all]  # 包含 xlsx 檔案支援
+pip install petsard[dev]  # 用於開發
 ```
 
 ### 方式 1-c：從 TestPyPI 安裝（測試用）
@@ -86,7 +96,13 @@ pip install --index-url https://test.pypi.org/simple/ --extra-index-url https://
 如果您在受限的網路環境中安裝（例如：企業防火牆後或透過代理伺服器），可能會遇到 SSL 憑證驗證問題。此時可以使用 `--trusted-host` 參數來略過憑證驗證：
 
 ```bash
+# 現代化 pip（>= 25.0）
 pip install --group ds petsard \
+  --trusted-host pypi.org \
+  --trusted-host files.pythonhosted.org
+
+# 舊版 pip（< 25.0）
+pip install petsard[ds] \
   --trusted-host pypi.org \
   --trusted-host files.pythonhosted.org
 ```
@@ -94,7 +110,13 @@ pip install --group ds petsard \
 **Jupyter Notebook 使用者**，語法相同：
 
 ```python
+# 現代化 pip（>= 25.0）
 %pip install --group ds petsard \
+  --trusted-host pypi.org \
+  --trusted-host files.pythonhosted.org
+
+# 舊版 pip（< 25.0）
+%pip install petsard[ds] \
   --trusted-host pypi.org \
   --trusted-host files.pythonhosted.org
 ```
@@ -122,12 +144,19 @@ pip install --group ds petsard \
 git clone https://github.com/nics-dp/petsard.git
 cd petsard
 
-# 使用 pyproject.toml 安裝（推薦）
-pip install --group all -e .
-
-# 或安裝特定依賴群組
+# 使用現代化 pip（>= 25.0）搭配 dependency-groups
+pip install --group all -e .   # 完整功能
 pip install --group ds -e .    # 資料科學功能
 pip install --group dev -e .   # 開發工具
+
+# 使用舊版 pip（< 25.0）- 向後相容
+pip install -e .[all]  # 完整功能
+pip install -e .[ds]   # 資料科學功能
+pip install -e .[dev]  # 開發工具
+
+# 或使用 uv（推薦用於開發）
+uv sync --group all    # 完整功能
+uv sync --group dev    # 開發環境
 ```
 
 ### 方式 2-b：手動下載（無需 Git）
@@ -147,12 +176,19 @@ pip install --group dev -e .   # 開發工具
 unzip petsard-main.zip
 cd petsard-main
 
-# 使用 pyproject.toml 安裝（推薦）
-pip install --group all -e .
-
-# 或安裝特定依賴群組
+# 使用現代化 pip（>= 25.0）搭配 dependency-groups
+pip install --group all -e .   # 完整功能
 pip install --group ds -e .    # 資料科學功能
 pip install --group dev -e .   # 開發工具
+
+# 使用舊版 pip（< 25.0）- 向後相容
+pip install -e .[all]  # 完整功能
+pip install -e .[ds]   # 資料科學功能
+pip install -e .[dev]  # 開發工具
+
+# 或使用 uv（推薦用於開發）
+uv sync --group all    # 完整功能
+uv sync --group dev    # 開發環境
 ```
 
 **Windows 使用者**可使用檔案總管直接解壓縮，然後在該資料夾開啟命令提示字元或 PowerShell 執行安裝指令。

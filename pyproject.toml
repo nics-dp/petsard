@@ -32,63 +32,9 @@ requires-python = ">=3.10,<3.12" # Python 3.12 is currently limited due to anony
 
 # Core dependencies (automatically installed with pip install petsard)
 # 核心依賴（pip install petsard 時自動安裝）
-# Includes all dependencies from exec + load-benchmark + syn + eval groups
-# 包含 exec + load-benchmark + syn + eval 群組的所有依賴
-dependencies = [
-    # exec group - execution functionality / 執行功能
-    "pandas>=2.3.2,<3",
-    "pyyaml>=6.0.2,<7",
-    "numpy>=1.26.4,<2",
-    "python-dateutil>=2.9.0.post0,<3",
-    "pytz>=2025.2",
-    "tzdata>=2025.2",
-    # load-benchmark group - benchmark dataset support / 基準資料集支援
-    "requests>=2.32.5,<3",
-    # eval group - privacy risk evaluation functionality / 隱私風險評估功能
-    "anonymeter>=1.0.0,<2",
-    "sdmetrics>=0.23.0,<1",
-    "xgboost>=3.0.5",
-    "imblearn>=0.0",
-    "scikit-learn>=1.7.1,<2",
-    "joblib>=1.5.2,<2",
-    "numba>=0.61.2,<1",
-    "plotly>=6.3.0,<7",
-    "scipy>=1.15.3,<2 ; python_full_version < '3.11'",
-    "scipy>=1.16.0,<2 ; python_full_version >= '3.11'",
-    # syn group - synthetic data generation functionality / 合成資料生成功能
-    "sdv>=1.26.0,<2",
-    "torch>=2.8.0,<3",
-    "boto3>=1.40.25,<2",
-    "botocore>=1.40.25,<2",
-    "faker>=37.6.0,<38",
-    "filelock>=3.19.1,<4",
-    "narwhals>=1.45.0,<3",
-    "platformdirs>=4.4.0,<5",
-    "s3transfer>=0.13.1,<1",
-    "threadpoolctl>=3.6.0,<4",
-    "typing-extensions>=4.15.0,<5",
-    "urllib3>=2.5.0,<3",
-    "fsspec>=2025.9.0",
-    "jinja2>=3.1.6,<4",
-    "networkx>=3.4.2,<3.5 ; python_full_version < '3.11'",
-    "networkx>=3.5,<4 ; python_full_version >= '3.11'",
-    "nvidia-cublas-cu12>=12.6.4.1,<13 ; platform_machine == 'x86_64' and sys_platform == 'linux'",
-    "nvidia-cuda-cupti-cu12>=12.6.80,<13 ; platform_machine == 'x86_64' and sys_platform == 'linux'",
-    "nvidia-cuda-nvrtc-cu12>=12.6.77,<13 ; platform_machine == 'x86_64' and sys_platform == 'linux'",
-    "nvidia-cuda-runtime-cu12>=12.6.77,<13 ; platform_machine == 'x86_64' and sys_platform == 'linux'",
-    "nvidia-cudnn-cu12>=9.5.1.17,<10 ; platform_machine == 'x86_64' and sys_platform == 'linux'",
-    "nvidia-cufft-cu12>=11.3.0.4,<12 ; platform_machine == 'x86_64' and sys_platform == 'linux'",
-    "nvidia-cufile-cu12>=1.11.1.6,<2 ; platform_machine == 'x86_64' and sys_platform == 'linux'",
-    "nvidia-curand-cu12>=10.3.7.77,<11 ; platform_machine == 'x86_64' and sys_platform == 'linux'",
-    "nvidia-cusolver-cu12>=11.7.1.2,<12 ; platform_machine == 'x86_64' and sys_platform == 'linux'",
-    "nvidia-cusparse-cu12>=12.5.4.2,<13 ; platform_machine == 'x86_64' and sys_platform == 'linux'",
-    "nvidia-cusparselt-cu12>=0.6.3,<1 ; platform_machine == 'x86_64' and sys_platform == 'linux'",
-    "nvidia-nccl-cu12>=2.26.2,<3 ; platform_machine == 'x86_64' and sys_platform == 'linux'",
-    "nvidia-nvjitlink-cu12>=12.6.85,<13 ; platform_machine == 'x86_64' and sys_platform == 'linux'",
-    "nvidia-nvtx-cu12>=12.6.77,<13 ; platform_machine == 'x86_64' and sys_platform == 'linux'",
-    "sympy>=1.14.0,<2",
-    "triton>=3.4.0,<4 ; platform_machine == 'x86_64' and sys_platform == 'linux'",
-]
+# Note: Uses dependency-groups for modular dependency management
+# 注意：使用 dependency-groups 進行模組化依賴管理
+dependencies = []
 
 [project.urls]
 Repository = "https://github.com/nics-tw/petsard"
@@ -129,16 +75,21 @@ dev = [
     {include-group = "dev-tools"},
 ]
 
-# Execution functionality group / 執行功能群組
-exec = [
-    "pandas>=2.3.2,<3",   # Data manipulation and analysis / 資料操作與分析
-    "pyyaml>=6.0.2,<7",   # YAML configuration file support / YAML 配置檔支援
-    ###### Core lib above, SBOM related below ######
-    # pandas dependencies
+# Common base dependencies shared across multiple groups
+# 多個群組共用的基礎依賴
+base-common = [
     "numpy>=1.26.4,<2",
-    "python-dateutil>=2.9.0.post0,<3",
     "pytz>=2025.2",
     "tzdata>=2025.2",
+]
+
+# Execution functionality group / 執行功能群組
+exec = [
+    {include-group = "base-common"},
+    "pandas>=2.3.2,<3",   # Data manipulation and analysis / 資料操作與分析
+    "pyyaml>=6.0.2,<7",   # YAML configuration file support / YAML 配置檔支援
+    # pandas additional dependencies
+    "python-dateutil>=2.9.0.post0,<3",
 ]
 
 # Benchmark dataset support
@@ -150,18 +101,15 @@ load-benchmark = [
 # Privacy risk evaluation functionality
 # 隱私風險評估功能
 eval = [
+    {include-group = "base-common"},
     "anonymeter>=1.0.0,<2",   # Privacy risk evaluation / 隱私風險評估
     "sdmetrics>=0.23.0,<1",   # Synthetic data quality metrics / 合成資料品質指標
     "xgboost>=3.0.5",         # Utility evaluation / 實用性評估
     "imblearn>=0.0",          # Imbalanced data handling / 不平衡資料處理
-    ###### Core lib above, SBOM related below ######
-    # anonymeter, sdmetrics dependencies
-    "numpy>=1.26.4,<2",
+    # Shared evaluation dependencies
     "scikit-learn>=1.7.1,<2",
-    # anonymeter dependencies
     "joblib>=1.5.2,<2",
     "numba>=0.61.2,<1",
-    # sdmetrics dependencies
     "plotly>=6.3.0,<7",
     "scipy>=1.15.3,<2 ; python_full_version < '3.11'",
     "scipy>=1.16.0,<2 ; python_full_version >= '3.11'",
@@ -170,34 +118,33 @@ eval = [
 # Synthetic data generation functionality
 # 合成資料生成功能
 syn = [
+    {include-group = "base-common"},
     "sdv>=1.26.0,<2",    # Synthetic data generation / 合成資料生成
     "torch>=2.8.0,<3",   # PyTorch deep learning models / PyTorch 深度學習模型
-    ###### Core lib above, SBOM related below ######
-    # sdv, torch dependencies
-    "numpy>=1.26.4,<2",
-    "pytz>=2025.2",
+    # Shared synthesis dependencies
     "scipy>=1.15.3,<2 ; python_full_version < '3.11'",
     "scipy>=1.16.0,<2 ; python_full_version >= '3.11'",
-    "tzdata>=2025.2",
-    # sdv dependencies
+    "joblib>=1.5.2,<2",
+    "numba>=0.61.2,<1",
+    "plotly>=6.3.0,<7",
+    # SDV specific dependencies
     "boto3>=1.40.25,<2",
     "botocore>=1.40.25,<2",
-    "faker>=37.6.0,<38",
+    "faker>=37.6.0,<39",
     "filelock>=3.19.1,<4",
-    "joblib>=1.5.2,<2",
     "narwhals>=1.45.0,<3",
-    "numba>=0.61.2,<1",
     "platformdirs>=4.4.0,<5",
-    "plotly>=6.3.0,<7",
     "s3transfer>=0.13.1,<1",
     "threadpoolctl>=3.6.0,<4",
     "typing-extensions>=4.15.0,<5",
     "urllib3>=2.5.0,<3",
-    # torch dependencies
+    # PyTorch specific dependencies
     "fsspec>=2025.9.0",
     "jinja2>=3.1.6,<4",
     "networkx>=3.4.2,<3.5 ; python_full_version < '3.11'",
     "networkx>=3.5,<4 ; python_full_version >= '3.11'",
+    "sympy>=1.14.0,<2",
+    # NVIDIA CUDA dependencies (Linux x86_64 only)
     "nvidia-cublas-cu12>=12.6.4.1,<13 ; platform_machine == 'x86_64' and sys_platform == 'linux'",
     "nvidia-cuda-cupti-cu12>=12.6.80,<13 ; platform_machine == 'x86_64' and sys_platform == 'linux'",
     "nvidia-cuda-nvrtc-cu12>=12.6.77,<13 ; platform_machine == 'x86_64' and sys_platform == 'linux'",
@@ -212,7 +159,6 @@ syn = [
     "nvidia-nccl-cu12>=2.26.2,<3 ; platform_machine == 'x86_64' and sys_platform == 'linux'",
     "nvidia-nvjitlink-cu12>=12.6.85,<13 ; platform_machine == 'x86_64' and sys_platform == 'linux'",
     "nvidia-nvtx-cu12>=12.6.77,<13 ; platform_machine == 'x86_64' and sys_platform == 'linux'",
-    "sympy>=1.14.0,<2",
     "triton>=3.4.0,<4 ; platform_machine == 'x86_64' and sys_platform == 'linux'",
 ]
 
@@ -225,14 +171,11 @@ jupyter = [
     "jupyterlab>=4.4.7,<5",                                 # JupyterLab support / JupyterLab 支援
     "notebook>=7.4.5,<8",                                   # Jupyter Notebook support / Jupyter Notebook 支援
     "pyzmq>=27.0.2,<28",                                    # Jupyter messaging / Jupyter 訊息傳遞
-    ###### Core lib above, SBOM related below ######
-    # ipykernel dependencies
+    # Jupyter dependencies
     "debugpy>=1.8.16,<2",
-    # ipython dependencies
     "decorator>=5.2.1,<6",
     "ipython-pygments-lexers>=1.1.1,<2 ; python_version >= '3.11'",
     "prompt-toolkit>=3.0.52,<4",
-    # jupyterlab dependencies
     "psutil>=7.0.0,<8",
 ]
 
@@ -253,83 +196,50 @@ dev-tools = [
     "trove-classifiers>=2025.8.26.11",   # PyPI classifiers / PyPI 分類器
 ]
 
-# Backward compatibility for PyPI: optional-dependencies (for older pip)
-# PyPI 向下相容：optional-dependencies（舊版 pip 使用）
-# Note: Core dependencies are defined in [project.dependencies], only additional features listed here
-# 注意：核心依賴已在 [project.dependencies] 中定義，這裡只列出額外功能
+# Backward compatibility for PyPI: optional-dependencies (for older pip versions)
+# PyPI 向下相容：optional-dependencies（支援舊版 pip）
+# Note: Kept minimal for backward compatibility. Use dependency-groups for modern pip.
+# 注意：為向後相容保持最小化。現代 pip 請使用 dependency-groups。
 [project.optional-dependencies]
-# Jupyter support (for use in Docker environments)
-# Jupyter 支援（適用於 Docker 環境中使用 Jupyter）
+# Jupyter support (minimal backward compatibility)
+# Jupyter 支援（最小向後相容）
 jupyter = [
-    "ipykernel>=6.30.1,<8",
+    "ipykernel>=7.1.0,<8",
     "ipython>=8.3.0,<9 ; python_full_version < '3.11'",
     "ipython>=9.4.0,<10 ; python_full_version >= '3.11'",
     "jupyterlab>=4.4.7,<5",
     "notebook>=7.4.5,<8",
-    "pyzmq>=27.0.2,<28",
-    "debugpy>=1.8.16,<2",
-    "decorator>=5.2.1,<6",
-    "ipython-pygments-lexers>=1.1.1,<2 ; python_version >= '3.11'",
-    "prompt-toolkit>=3.0.52,<4",
-    "psutil>=7.0.0,<8",
 ]
 # Excel file support
 # Excel 檔案支援
 excel = [
     "openpyxl>=3.1.5,<4",
 ]
-# Data science functionality (backward compatible, equivalent to jupyter)
-# 資料科學功能（向下相容，等同於 jupyter）
+# Data science functionality (alias for jupyter)
+# 資料科學功能（jupyter 的別名）
 ds = [
-    "ipykernel>=6.30.1,<8",
+    "ipykernel>=7.1.0,<8",
     "ipython>=8.3.0,<9 ; python_full_version < '3.11'",
     "ipython>=9.4.0,<10 ; python_full_version >= '3.11'",
     "jupyterlab>=4.4.7,<5",
     "notebook>=7.4.5,<8",
-    "pyzmq>=27.0.2,<28",
-    "debugpy>=1.8.16,<2",
-    "decorator>=5.2.1,<6",
-    "ipython-pygments-lexers>=1.1.1,<2 ; python_version >= '3.11'",
-    "prompt-toolkit>=3.0.52,<4",
-    "psutil>=7.0.0,<8",
 ]
 # Full functionality (Jupyter + Excel)
 # 完整功能（Jupyter + Excel）
 all = [
-    "ipykernel>=6.30.1,<8",
+    "ipykernel>=7.1.0,<8",
     "ipython>=8.3.0,<9 ; python_full_version < '3.11'",
     "ipython>=9.4.0,<10 ; python_full_version >= '3.11'",
     "jupyterlab>=4.4.7,<5",
     "notebook>=7.4.5,<8",
-    "pyzmq>=27.0.2,<28",
-    "debugpy>=1.8.16,<2",
-    "decorator>=5.2.1,<6",
-    "ipython-pygments-lexers>=1.1.1,<2 ; python_version >= '3.11'",
-    "prompt-toolkit>=3.0.52,<4",
-    "psutil>=7.0.0,<8",
     "openpyxl>=3.1.5,<4",
 ]
-# Development tools (full functionality + development and testing tools)
-# 開發工具（完整功能 + 開發與測試工具）
+# Development tools (minimal list, use dependency-groups dev for full set)
+# 開發工具（最小列表，完整開發環境請使用 dependency-groups dev）
 dev = [
-    "ipykernel>=6.30.1,<8",
-    "ipython>=8.3.0,<9 ; python_full_version < '3.11'",
-    "ipython>=9.4.0,<10 ; python_full_version >= '3.11'",
-    "jupyterlab>=4.4.7,<5",
-    "notebook>=7.4.5,<8",
-    "pyzmq>=27.0.2,<28",
-    "debugpy>=1.8.16,<2",
-    "decorator>=5.2.1,<6",
-    "ipython-pygments-lexers>=1.1.1,<2 ; python_version >= '3.11'",
-    "prompt-toolkit>=3.0.52,<4",
-    "psutil>=7.0.0,<8",
-    "openpyxl>=3.1.5,<4",
-    "pip-audit>=2.7.3",
     "pytest>=8.4.2",
     "pytest-cov>=6.3.0",
-    "python-semantic-release>=10.3.2",
     "ruff>=0.12.12",
-    "trove-classifiers>=2025.8.26.11",
 ]
 
 # Build system configuration
@@ -507,6 +417,10 @@ upload_to_vcs_release = true     # Upload to version control system / 上傳到�
 # 測試框架設定
 [tool.pytest.ini_options]
 markers = [
+    "unit: Unit test marker, used to identify isolated component tests",
+    "unit_zh: 單元測試標記，用於標識隔離的元件測試",
+    "integration: Integration test marker, used to identify tests that verify module interactions",
+    "integration_zh: 整合測試標記，用於標識驗證模組互動的測試",
     "stress: Stress test marker, used to identify tests requiring significant resources",
     "stress_zh: 壓力測試標記，用於標識需要大量資源的測試",
     "excel: Excel file test marker, used to identify tests requiring openpyxl",

@@ -12,9 +12,9 @@ datasets:
     sha256: 1f13ee2bf9d7c66098429281ab91fa1b51cbabd3b805cc365b3c6b44491ea2c0
   # Adult income dataset schema
   adult-income_schema:
-  filename: adult-income_schema.yaml
-  access: public
-  sha256: 96e9f0efca7aae910efb6e2e80c9b117d2ef4c22b1e3d32b3b7ffc096edfddbe
+    filename: adult-income_schema.yaml
+    access: public
+    sha256: 778177e8062fa54fd4a515180374f7c0c3a3121a57dc5bc1a1e348076c68d57d
   # Adult income dataset split and syn (sdv-gaussian-copula) result for demo
   adult-income_ori:
     filename: adult-income_ori.csv

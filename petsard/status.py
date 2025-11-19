@@ -1,14 +1,20 @@
 import logging
 import re
 from collections import deque
-from dataclasses import dataclass, field
-from datetime import datetime, timedelta
+from dataclasses import dataclass, field, replace
+from datetime import datetime
 from typing import Any
 
 import pandas as pd
 
 from petsard.adapter import BaseAdapter
-from petsard.exceptions import SnapshotError, StatusError, TimingError, UnexecutedError
+from petsard.exceptions import (
+    ConfigError,
+    SnapshotError,
+    StatusError,
+    TimingError,
+    UnexecutedError,
+)
 from petsard.metadater.metadata import Metadata, Schema
 from petsard.metadater.metadater import SchemaMetadater
 from petsard.metadater.schema_inferencer import SchemaInferencer
@@ -221,6 +227,25 @@ class Status:
         """Generate timing ID"""
         return self._generate_id("timing", "_timing_counter")
 
+    def _merge_context(
+        self, base_context: dict[str, Any], new_context: dict[str, Any] | None
+    ) -> dict[str, Any]:
+        """
+        Merge two context dictionaries.
+
+        Args:
+            base_context: Base context dictionary
+            new_context: New context to merge, can be None
+
+        Returns:
+            dict[str, Any]: Merged context dictionary
+        """
+        if new_context:
+            merged = base_context.copy()
+            merged.update(new_context)
+            return merged
+        return base_context
+
     def _create_snapshot(
         self,
         module: str,
@@ -337,11 +362,7 @@ class Status:
         active_timing = self._active_timings.pop(timing_key)
 
         # Merge additional context information
-        if context:
-            merged_context = active_timing.context.copy()
-            merged_context.update(context)
-        else:
-            merged_context = active_timing.context
+        merged_context = self._merge_context(active_timing.context, context)
 
         completed_timing = active_timing.complete()
         # Update context
@@ -358,10 +379,9 @@ class Status:
 
         self.timing_records.append(completed_timing)
 
-        formatted_duration = str(
-            timedelta(seconds=round(completed_timing.duration_seconds))
+        self._logger.debug(
+            f"End timing: {timing_key} - Duration: {completed_timing.formatted_duration}"
         )
-        self._logger.debug(f"End timing: {timing_key} - Duration: {formatted_duration}")
 
         return completed_timing
 
@@ -461,8 +481,7 @@ class Status:
             if timing_key in self._active_timings:
                 # Has corresponding start record
                 active_timing = self._active_timings.pop(timing_key)
-                merged_context = active_timing.context.copy()
-                merged_context.update(context)
+                merged_context = self._merge_context(active_timing.context, context)
 
                 completed_timing = self._create_timing_record(
                     timing_id=active_timing.record_id,
@@ -493,13 +512,8 @@ class Status:
 
             self.timing_records.append(completed_timing)
 
-            formatted_duration = (
-                str(timedelta(seconds=round(completed_timing.duration_seconds)))
-                if completed_timing.duration_seconds
-                else "N/A"
-            )
             self._logger.debug(
-                f"End timing from logging: {timing_key} - Duration: {formatted_duration}"
+                f"End timing from logging: {timing_key} - Duration: {completed_timing.formatted_duration}"
             )
 
         except (ValueError, OSError) as e:
@@ -579,8 +593,6 @@ class Status:
                 if timestamp not in updated_diffs:
                     updated_diffs[timestamp] = {}
                 updated_diffs[timestamp][module] = diff_result
-
-                from dataclasses import replace
 
                 self.metadata_obj = replace(
                     self.metadata_obj,
@@ -664,8 +676,6 @@ class Status:
             }
         else:
             if module not in self.sequence:
-                from petsard.exceptions import ConfigError
-
                 raise ConfigError
 
             module_idx = self.sequence.index(module) + 1

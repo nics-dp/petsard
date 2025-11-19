@@ -8,18 +8,12 @@ sidebar:
   open: false
 ---
 
-
-- [Development Guidelines]({{< ref "docs/developer-guide/development-guidelines" >}})
-  - Branch protection and merge guidelines
-  - Issue and PR workflows
-  - Package management and version control
+The PETsARD Developer Guide provides reference information for project development.
 
 ## Data Loading
-- [Benchmark Dataset Maintenance]({{< ref "docs/developer-guide/benchmark-datasets" >}})
-  - Maintaining and extending benchmark datasets
 
-## Development Environment
-- [Docker Development]({{< ref "docs/developer-guide/docker-development" >}})
-  - Docker container development and testing
-  - Multi-stage build optimization and security
-  - GitHub Container Registry integration
+Benchmark datasets are stored in AWS S3. The system automatically reads the list of available datasets from the configuration file.
+
+## Testing
+
+The test coverage document explains the project's test organization structure and detailed test cases.

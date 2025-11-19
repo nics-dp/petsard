@@ -346,7 +346,7 @@ class TestLoaderAdapter:
 
                     with pytest.raises(
                         BenchmarkDatasetsError,
-                        match="Failed to download benchmark dataset",
+                        match="Failed to download benchmark filepath 'adult-income'",
                     ):
                         LoaderAdapter(config)
 
@@ -1641,69 +1641,6 @@ class TestPrecisionRoundingInAdapters:
 
             # 驗證精度已應用
             assert operator.data_preproc["value"].tolist() == [1.12, 2.68, 3.11]
-
-    @pytest.mark.skip(reason="Mock setup needs refinement")
-    def test_postprocessor_precision_rounding_disabled(self):
-        """測試 Postprocessor 應用精度四捨五入"""
-        from petsard.adapter import PostprocessorAdapter
-        from petsard.metadater.metadata import Attribute, Schema
-
-        config = {"method": "default"}
-
-        # 建立原始 schema（Preprocessor input）
-        original_schema = Schema(
-            id="original_schema",
-            attributes={
-                "price": Attribute(
-                    name="price",
-                    type="float64",
-                    enable_null=False,
-                    type_attr={"precision": 2},
-                )
-            },
-        )
-
-        # 建立轉換後的 schema（Preprocessor output）
-        transformed_schema = Schema(
-            id="transformed_schema",
-            attributes={
-                "price": Attribute(
-                    name="price",
-                    type="float64",
-                    enable_null=False,
-                    type_attr={"precision": None},  # 轉換後可能失去精度資訊
-                )
-            },
-        )
-
-        input_data = {
-            "data": pd.DataFrame({"price": [10.123456, 20.678901]}),
-            "metadata": transformed_schema,
-        }
-
-        # 建立 mock status 來提供 preprocessor_input_schema
-        mock_status = Mock()
-        mock_status.get_pre_module.return_value = "Synthesizer"
-        mock_status.get_result.return_value = input_data["data"]
-        mock_status.get_metadata.return_value = transformed_schema
-        mock_status.get_preprocessor_input_schema.return_value = original_schema
-
-        with patch("petsard.adapter.Processor") as mock_processor_class:
-            mock_processor = Mock()
-            # Postprocessor transform 返回帶有多餘小數位數的資料
-            mock_processor.transform.return_value = pd.DataFrame(
-                {"price": [10.123456, 20.678901]}
-            )
-            mock_processor._metadata = original_schema
-            mock_processor._sequence = []
-            mock_processor_class.return_value = mock_processor
-
-            operator = PostprocessorAdapter(config)
-            operator.set_input(mock_status)
-            operator._run(operator.input)
-
-            # 驗證精度已應用（使用 preprocessor_input_schema 的精度）
-            assert operator.data_postproc["price"].tolist() == [10.12, 20.68]
 
     def test_precision_preservation_through_pipeline(self):
         """測試精度在整個 pipeline 中的保留"""
