@@ -146,6 +146,10 @@ class BaseAdapter:
         import re
         from pathlib import Path
 
+        # Handle non-string values (e.g., dict, Schema objects)
+        if not isinstance(protocol_value, str):
+            return False, protocol_value, None
+
         is_benchmark = protocol_value.lower().startswith("benchmark://")
         if not is_benchmark:
             return False, protocol_value, None

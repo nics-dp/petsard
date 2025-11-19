@@ -507,6 +507,10 @@ upload_to_vcs_release = true     # Upload to version control system / 上傳到�
 # 測試框架設定
 [tool.pytest.ini_options]
 markers = [
+    "unit: Unit test marker, used to identify isolated component tests",
+    "unit_zh: 單元測試標記，用於標識隔離的元件測試",
+    "integration: Integration test marker, used to identify tests that verify module interactions",
+    "integration_zh: 整合測試標記，用於標識驗證模組互動的測試",
     "stress: Stress test marker, used to identify tests requiring significant resources",
     "stress_zh: 壓力測試標記，用於標識需要大量資源的測試",
     "excel: Excel file test marker, used to identify tests requiring openpyxl",
