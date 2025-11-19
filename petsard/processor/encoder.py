@@ -286,6 +286,10 @@ class EncoderLabel(SchemaTransformMixin, Encoder):
         # Check if data contains NA values
         self._has_na = data.isna().any()
 
+        # Convert Categorical to object to allow adding marker
+        if isinstance(data.dtype, pd.CategoricalDtype):
+            data = data.astype(object)
+
         # Replace pd.NA with a marker string for sklearn compatibility
         data_processed = data.fillna(self._na_marker)
 
@@ -317,6 +321,10 @@ class EncoderLabel(SchemaTransformMixin, Encoder):
         Return:
             (np.ndarray): The transformed data.
         """
+        # Convert Categorical to object to allow adding marker
+        if isinstance(data.dtype, pd.CategoricalDtype):
+            data = data.astype(object)
+
         # Replace pd.NA with marker for sklearn compatibility
         data_processed = data.fillna(self._na_marker)
         return self.model.transform(data_processed)
