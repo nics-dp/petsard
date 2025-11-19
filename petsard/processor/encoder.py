@@ -270,18 +270,32 @@ class EncoderLabel(SchemaTransformMixin, Encoder):
     def __init__(self) -> None:
         super().__init__()
         self.model = LabelEncoder()
+        self._na_marker = "__PETSARD_NA_MARKER__"
+        self._has_na = False
 
     def _fit(self, data: pd.Series) -> None:
         """
         Gather information for transformation and reverse transformation.
 
+        Handles pd.NA values by replacing them with a special marker string
+        that sklearn's LabelEncoder can process.
+
         Args:
             data (pd.Series): The categorical data needed to be transformed.
         """
-        self.model.fit(data)
+        # Check if data contains NA values
+        self._has_na = data.isna().any()
 
-        # Get keys (original labels)
-        self.labels = list(self.model.classes_)
+        # Replace pd.NA with a marker string for sklearn compatibility
+        data_processed = data.fillna(self._na_marker)
+
+        self.model.fit(data_processed)
+
+        # Get keys (original labels) - replace marker back to pd.NA in labels
+        self.labels = [
+            pd.NA if label == self._na_marker else label
+            for label in self.model.classes_
+        ]
 
         self.cat_to_val = dict(
             zip(
@@ -295,18 +309,23 @@ class EncoderLabel(SchemaTransformMixin, Encoder):
         """
         Transform categorical data to a series of integer labels.
 
+        Handles pd.NA values by replacing them with the marker before transformation.
+
         Args:
             data (pd.Series): The categorical data needed to be transformed.
 
         Return:
             (np.ndarray): The transformed data.
         """
-
-        return self.model.transform(data)
+        # Replace pd.NA with marker for sklearn compatibility
+        data_processed = data.fillna(self._na_marker)
+        return self.model.transform(data_processed)
 
     def _inverse_transform(self, data: pd.Series) -> np.ndarray:
         """
         Inverse the transformed data to the categorical data.
+
+        Handles pd.NA values by converting the marker back to pd.NA.
 
         Args:
             data (pd.Series): The categorical data needed to
@@ -315,8 +334,16 @@ class EncoderLabel(SchemaTransformMixin, Encoder):
         Return:
             (np.ndarray): The inverse transformed data.
         """
+        result = self.model.inverse_transform(data)
 
-        return self.model.inverse_transform(data)
+        # Replace marker back to pd.NA if it was present in original data
+        if self._has_na:
+            result = np.array(
+                [pd.NA if val == self._na_marker else val for val in result],
+                dtype=object,
+            )
+
+        return result
 
 
 class EncoderOneHot(SchemaTransformMixin, Encoder):

@@ -152,9 +152,22 @@ class MediatorMap:  # pragma: no cover
 
     @classmethod
     def get_class_info(cls, processor_type: str):
+        """
+        Get mediator class information for a processor type.
+
+        Args:
+            processor_type: Type of processor (e.g., 'missing', 'outlier', 'encoder', 'scaler')
+
+        Returns:
+            dict: Mediator class info if available, None if processor doesn't need a mediator
+
+        Note:
+            Some processor types (e.g., 'discretizing') don't require a mediator.
+            This is by design and should not raise an error.
+        """
         mediator_class = cls.MEDIATOR_MAP.get(processor_type)
-        if mediator_class is None:
-            raise ConfigError(f"Invalid processor type of mediator: {processor_type}")
+        # Return None if processor type doesn't have a mediator (e.g., discretizing)
+        # The calling code should check for None before using the result
         return mediator_class
 
 
