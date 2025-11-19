@@ -1,0 +1,28 @@
+---
+Loader:
+  load_benchmark_with_schema:
+    filepath: benchmark://adult-income
+    schema: benchmark://adult-income_schema
+
+Preprocessor:
+  encoding-specific:
+    sequence:
+      - encoder
+    config:
+      encoder:
+        gender: 'encoder_onehot'          # One-Hot encoding
+        education: 'encoder_label'        # Label encoding
+        native-country: 'encoder_uniform' # Uniform encoding
+        income: None                      # No encoding
+
+Reporter:
+  save_data:
+    method: save_data
+    source:
+      - Preprocessor
+  save_schema:
+    method: save_schema
+    source:
+      - Loader
+      - Preprocessor
+...

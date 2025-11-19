@@ -7,24 +7,11 @@ weight: 5
 
 ## 使用範例
 
-### 基本使用
-
-```yaml
-Preprocessor:
-  demo:
-    method: 'default'
-    sequence:
-      - missing
-      - outlier
-      - discretizing  # 使用離散化，不使用 encoder
-```
-
 ### 自訂 K-bins 參數
 
 ```yaml
 Preprocessor:
   custom:
-    method: 'default'
     sequence:
       - missing
       - outlier
@@ -65,15 +52,6 @@ Preprocessor:
 - 輸出為整數標籤（0, 1, 2, ...）
 - 減少資料維度和複雜度
 
-**範例**：
-```yaml
-config:
-  discretizing:
-    age:
-      method: 'discretizing_kbins'
-      n_bins: 5
-```
-
 **離散化示例**：
 ```
 原始數值：[18, 25, 35, 45, 55, 65]
@@ -93,29 +71,15 @@ n_bins = 5
 
 ### 數值型資料（discretizing_kbins）
 
-```
-訓練階段（fit）：
-  計算並儲存區間邊界
-
-轉換階段（transform）：
-  依區間邊界將數值映射到整數標籤
-
-還原階段（inverse_transform）：
-  將整數標籤還原為區間中點值
-```
+- **訓練階段（fit）**：計算並儲存區間邊界
+- **轉換階段（transform）**：依區間邊界將數值映射到整數標籤
+- **還原階段（inverse_transform）**：將整數標籤還原為區間中點值
 
 ### 類別型資料（encoder_label）
 
-```
-訓練階段（fit）：
-  建立類別到整數的映射
-
-轉換階段（transform）：
-  依映射將類別轉為整數
-
-還原階段（inverse_transform）：
-  依映射將整數還原為類別
-```
+- **訓練階段（fit）**：建立類別到整數的映射
+- **轉換階段（transform）**：依映射將類別轉為整數
+- **還原階段（inverse_transform）**：依映射將整數還原為類別
 
 ## 預設行為
 
@@ -145,7 +109,6 @@ n_bins = 5
 # ❌ 錯誤：不能同時使用
 Preprocessor:
   wrong:
-    method: 'default'
     sequence:
       - missing
       - encoder       # 錯誤！
@@ -156,7 +119,6 @@ Preprocessor:
 # ✅ 正確：只使用其中一個
 Preprocessor:
   correct:
-    method: 'default'
     sequence:
       - missing
       - outlier
@@ -169,7 +131,6 @@ Preprocessor:
 # ❌ 錯誤：discretizing 後面還有其他步驟
 Preprocessor:
   wrong:
-    method: 'default'
     sequence:
       - missing
       - discretizing
@@ -180,103 +141,10 @@ Preprocessor:
 # ✅ 正確：discretizing 是最後一步
 Preprocessor:
   correct:
-    method: 'default'
     sequence:
       - missing
       - outlier
       - discretizing  # 正確：最後一步
-```
-
-## 完整範例
-
-```yaml
-Loader:
-  load_data:
-    filepath: 'data.csv'
-    schema: 'schema.yaml'
-
-Preprocessor:
-  discretize_data:
-    method: 'default'
-    sequence:
-      - missing
-      - outlier
-      - discretizing  # 注意：沒有 encoder 和 scaler
-    config:
-      # 缺失值處理
-      missing:
-        age: 'missing_median'
-        income: 'missing_mean'
-      
-      # 離群值處理
-      outlier:
-        age: 'outlier_iqr'
-        income: 'outlier_iqr'
-      
-      # 離散化配置
-      discretizing:
-        # 數值型欄位
-        age:
-          method: 'discretizing_kbins'
-          n_bins: 10                    # 年齡分10個區間
-        income:
-          method: 'discretizing_kbins'
-          n_bins: 5                     # 收入分5個區間
-        hours_per_week:
-          method: 'discretizing_kbins'
-          n_bins: 8                     # 工時分8個區間
-        
-        # 類別型欄位（自動使用 encoder_label）
-        gender: 'encoder_label'
-        education: 'encoder_label'
-
-Synthesizer:
-  synthesize:
-    method: 'default'
-
-Postprocessor:
-  postprocess:
-    method: 'default'
-```
-
-## 使用案例
-
-### 1. 簡化資料分布
-
-```yaml
-# 將連續分布簡化為離散區間
-Preprocessor:
-  simplify:
-    method: 'default'
-    sequence:
-      - missing
-      - discretizing
-    config:
-      discretizing:
-        salary:
-          method: 'discretizing_kbins'
-          n_bins: 3  # 低/中/高三個級別
-```
-
-### 2. 減少資料維度
-
-```yaml
-# 降低數值精度，減少合成難度
-Preprocessor:
-  reduce_dimension:
-    method: 'default'
-    sequence:
-      - missing
-      - outlier
-      - discretizing
-    config:
-      discretizing:
-        age:
-          method: 'discretizing_kbins'
-          n_bins: 5
-        score:
-          method: 'discretizing_kbins'
-          n_bins: 10
 ```
 
 ## 注意事項
@@ -288,11 +156,3 @@ Preprocessor:
 - **合成器影響**：某些合成器（如 PAC-Synth、DPCTGAN）可能產生浮點數，系統會自動四捨五入
 - **適用場景**：適合需要離散化輸出的情況，如某些隱私保護演算法
 - **NA 處理**：後處理時會先移除 NA 值再進行還原
-
-## 相關文件
-
-- [Processor API - fit()]({{< ref "/docs/python-api/processor-api/processor_fit" >}})
-- [Processor API - transform()]({{< ref "/docs/python-api/processor-api/processor_transform" >}})
-- [Processor API - inverse_transform()]({{< ref "/docs/python-api/processor-api/processor_inverse_transform" >}})
-- [編碼]({{< ref "encoding" >}})
-- [縮放]({{< ref "scaling" >}})

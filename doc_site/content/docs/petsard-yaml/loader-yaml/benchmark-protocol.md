@@ -42,6 +42,7 @@ Either local or benchmark-provided filepath and schema can be used interchangeab
 | Adult Income (Control) | `benchmark://adult-income_control` | Control group data (for demo) |
 | Adult Income (Synthetic) | `benchmark://adult-income_syn` | SDV Gaussian Copula synthetic data (for demo) |
 | Taiwan Salary Statistics | `benchmark://taiwan-salary-statistics-300k` | Taiwan salary statistics dataset (300K records) |
+| Taiwan Salary Statistics (No DI) | `benchmark://taiwan-salary-statistics-300k-no-di` | Taiwan salary statistics dataset - No Direct Identification (300K records, with name and ID removed, birth date and address split) |
 
 #### Taiwan Salaries Statistics
 

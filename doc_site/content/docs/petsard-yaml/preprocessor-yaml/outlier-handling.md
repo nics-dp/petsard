@@ -110,13 +110,6 @@ Uses Z-Score statistical method to identify outliers.
 - \|Z-Score\| > 3 is considered an outlier
 - Z-Score = (x - μ) / σ
 
-**Example**:
-```yaml
-config:
-  outlier:
-    age: 'outlier_zscore'
-```
-
 ### outlier_iqr
 
 Uses Interquartile Range (IQR) method to identify outliers.
@@ -125,13 +118,6 @@ Uses Interquartile Range (IQR) method to identify outliers.
 - Below Q1 - 1.5 × IQR
 - Above Q3 + 1.5 × IQR
 - IQR = Q3 - Q1
-
-**Example**:
-```yaml
-config:
-  outlier:
-    income: 'outlier_iqr'
-```
 
 ### outlier_isolationforest
 
@@ -142,14 +128,6 @@ Uses sklearn's Isolation Forest algorithm.
 - Suitable for multi-dimensional outlier detection
 - Automatically learns outlier patterns
 
-**Example**:
-```yaml
-config:
-  outlier:
-    age: 'outlier_isolationforest'
-    # ⚠️ Will automatically apply to all numerical fields
-```
-
 ### outlier_lof
 
 Uses Local Outlier Factor (LOF) algorithm.
@@ -159,43 +137,23 @@ Uses Local Outlier Factor (LOF) algorithm.
 - Density-based outlier detection
 - Considers local data distribution
 
-**Example**:
-```yaml
-config:
-  outlier:
-    income: 'outlier_lof'
-    # ⚠️ Will automatically apply to all numerical fields
-```
-
 ## Processing Logic
 
 ### General Outlier Handling (Z-Score, IQR)
 
-```
-Training phase (fit):
-  Calculate statistical parameters (mean, standard deviation, quartiles)
-
-Transform phase (transform):
+- **Training phase (fit)**: Calculate statistical parameters (mean, standard deviation, quartiles)
+- **Transform phase (transform)**:
   1. Identify outliers
   2. Remove rows containing outliers
-
-Inverse transform phase (inverse_transform):
-  ⚠️ Cannot be restored (outlier handling is irreversible)
-```
+- **Inverse transform phase (inverse_transform)**: ⚠️ Cannot be restored (outlier handling is irreversible)
 
 ### Global Outlier Handling (Isolation Forest, LOF)
 
-```
-Training phase (fit):
-  Train model using all numerical fields
-
-Transform phase (transform):
+- **Training phase (fit)**: Train model using all numerical fields
+- **Transform phase (transform)**:
   1. Predict outliers using the model
   2. Remove rows marked as outliers
-
-Inverse transform phase (inverse_transform):
-  ⚠️ Cannot be restored (outlier handling is irreversible)
-```
+- **Inverse transform phase (inverse_transform)**: ⚠️ Cannot be restored (outlier handling is irreversible)
 
 ## Default Behavior
 

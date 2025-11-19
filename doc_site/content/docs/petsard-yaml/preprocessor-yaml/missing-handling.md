@@ -116,42 +116,21 @@ Reporter:
 
 ### 1. Statistical Value Imputation (Mean/Median/Mode)
 
-```
-Training phase (fit):
-  Calculate and store statistical values (mean/median/mode)
-
-Transform phase (transform):
-  Fill NA with stored statistical values
-
-Inverse transform phase (inverse_transform):
-  Randomly insert NA according to the missing ratio of original data
-```
+- **Training phase (fit)**: Calculate and store statistical values (mean/median/mode)
+- **Transform phase (transform)**: Fill NA with stored statistical values
+- **Inverse transform phase (inverse_transform)**: Randomly insert NA according to the missing ratio of original data
 
 ### 2. Custom Value Imputation (Simple)
 
-```
-Training phase (fit):
-  Record the fill value
-
-Transform phase (transform):
-  Fill NA with specified value
-
-Inverse transform phase (inverse_transform):
-  Randomly insert NA according to the missing ratio of original data
-```
+- **Training phase (fit)**: Record the fill value
+- **Transform phase (transform)**: Fill NA with specified value
+- **Inverse transform phase (inverse_transform)**: Randomly insert NA according to the missing ratio of original data
 
 ### 3. Deletion (Drop)
 
-```
-Training phase (fit):
-  No training needed
-
-Transform phase (transform):
-  Delete rows containing NA
-
-Inverse transform phase (inverse_transform):
-  Randomly insert NA according to the missing ratio of original data
-```
+- **Training phase (fit)**: No training needed
+- **Transform phase (transform)**: Delete rows containing NA
+- **Inverse transform phase (inverse_transform)**: Randomly insert NA according to the missing ratio of original data
 
 ## Default Behavior
 
@@ -167,14 +146,14 @@ Default missing value handling for different data types:
 
 The `nullable` attribute in schema reflects the actual presence of missing values:
 
-### Loader Stage
-- Automatically detected from data: `nullable = data.isnull().any()`
-- If column has missing values → `nullable: true`
-- If column has no missing values → `nullable: false`
+- **Loader Stage**
+  - Automatically detected from data: `nullable = data.isnull().any()`
+  - If column has missing values → `nullable: true`
+  - If column has no missing values → `nullable: false`
 
-### Preprocessor Stage (with missing value processing)
-- Columns with `nullable: true` → After processing → `nullable: false`
-- Columns with `nullable: false` → Remains `nullable: false`
+- **Preprocessor Stage (with missing value processing)**
+  - Columns with `nullable: true` → After processing → `nullable: false`
+  - Columns with `nullable: false` → Remains `nullable: false`
 
 **Example Schema Evolution**:
 

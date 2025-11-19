@@ -43,7 +43,7 @@ jobs:
       # v10.5.0+ includes automatic repository un-shallowing and upstream version checking
       - name: Action | Semantic Version Release
         id: release
-        uses: python-semantic-release/python-semantic-release@v10.5.0
+        uses: python-semantic-release/python-semantic-release@v10.5.2
         with:
           github_token: ${{ secrets.MATHEME_JUSTYN_SEMANTIC }}  # 使用你的正確 token 名稱
 
@@ -97,7 +97,7 @@ jobs:
       # 上傳構建檔案到 GitHub Releases 作為發布資產
       # Upload built files to GitHub Releases as release assets
       - name: Publish | Upload to GitHub Release Assets
-        uses: python-semantic-release/publish-action@v10.5.0
+        uses: python-semantic-release/publish-action@v10.5.2
         if: steps.release.outputs.released == 'true'
         with:
           github_token: ${{ secrets.WORKFLOW_TOKEN_CLASSICAL }}

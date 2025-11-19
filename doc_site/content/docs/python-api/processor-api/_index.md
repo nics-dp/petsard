@@ -191,6 +191,9 @@ Default sequence: `['missing', 'outlier', 'encoder', 'scaler']`
 - `scaler_log`: Logarithmic transformation
 - `scaler_log1p`: log(1+x) transformation
 - `scaler_timeanchor`: Time anchor scaling
+  - **Single reference mode** (`reference: str`): Transform anchor field to time difference from reference field
+  - **Multiple reference mode** (`reference: list[str]`): Keep anchor field as datetime, transform multiple reference fields to time differences from anchor
+  - Supported time units: `'D'` (days) or `'S'` (seconds)
 
 ### Discretization
 

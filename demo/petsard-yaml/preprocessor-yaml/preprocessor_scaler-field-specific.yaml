@@ -1,0 +1,28 @@
+---
+Loader:
+  load_benchmark_with_schema:
+    filepath: benchmark://adult-income
+    schema: benchmark://adult-income_schema
+
+Preprocessor:
+  scaling-specific:
+    sequence:
+      - scaler
+    config:
+      scaler:
+        age: 'scaler_minmax'          # Min-Max scaling
+        fnlwgt: 'scaler_standard'     # Standardization
+        educational-num: 'scaler_log' # Log transformation
+        capital-loss: None            # No scaling for categorical field
+
+Reporter:
+  save_data:
+    method: save_data
+    source:
+      - Preprocessor
+  save_schema:
+    method: save_schema
+    source:
+      - Loader
+      - Preprocessor
+...

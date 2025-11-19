@@ -7,42 +7,70 @@ weight: 4
 
 ## 使用範例
 
-### 使用預設縮放
-
-```yaml
-Preprocessor:
-  demo:
-    method: 'default'
-    # 數值型欄位：使用標準化
-    # 類別型欄位：不縮放
-```
-
 ### 自訂特定欄位的縮放
 
 ```yaml
+---
+Loader:
+  load_benchmark_with_schema:
+    filepath: benchmark://adult-income
+    schema: benchmark://adult-income_schema
+
 Preprocessor:
-  custom:
-    method: 'default'
+  scaling-specific:
+    sequence:
+      - scaler
     config:
       scaler:
-        age: 'scaler_minmax'           # 最小-最大縮放
-        income: 'scaler_standard'      # 標準化
-        hours_per_week: 'scaler_log'   # 對數轉換
-        gender: None                   # 類別欄位不縮放
+        age: 'scaler_minmax'          # 最小-最大縮放
+        fnlwgt: 'scaler_standard'     # 標準化
+        educational-num: 'scaler_log' # 對數轉換
+        capital-loss: None            # 類別欄位不縮放
+
+Reporter:
+  save_data:
+    method: save_data
+    source:
+      - Preprocessor
+  save_schema:
+    method: save_schema
+    source:
+      - Loader
+      - Preprocessor
+...
 ```
 
 ### 時間錨點縮放
 
 ```yaml
+---
+Loader:
+  load_benchmark_with_schema:
+    filepath: benchmark://adult-income
+    schema: benchmark://adult-income_schema
+
 Preprocessor:
   time_scaling:
-    method: 'default'
+    sequence:
+      - scaler
     config:
       scaler:
         created_at:
           method: 'scaler_timeanchor'
-          reference: 'event_time'      # 參考時間欄位
-          unit: 'D'                    # 單位：天
+          reference: 'event_time'    # 參考時間欄位
+          unit: 'D'                  # 單位：天
+
+Reporter:
+  save_data:
+    method: save_data
+    source:
+      - Preprocessor
+  save_schema:
+    method: save_schema
+    source:
+      - Loader
+      - Preprocessor
+...
 ```
 
 ## 可用的處理器
@@ -72,13 +100,6 @@ x' = (x - μ) / σ
 - 消除量綱影響
 - 適合大多數機器學習演算法
 
-**範例**：
-```yaml
-config:
-  scaler:
-    income: 'scaler_standard'
-```
-
 ### scaler_minmax
 
 **最小-最大縮放**：線性縮放到 [0, 1] 範圍。
@@ -92,13 +113,6 @@ x' = (x - min) / (max - min)
 - 保留資料分布形狀
 - 輸出範圍固定
 - 對離群值敏感
-
-**範例**：
-```yaml
-config:
-  scaler:
-    age: 'scaler_minmax'
-```
 
 ### scaler_zerocenter
 
@@ -114,13 +128,6 @@ x' = x - μ
 - 保留原始資料的變異程度
 - 適合需要保持原始尺度的情況
 
-**範例**：
-```yaml
-config:
-  scaler:
-    temperature: 'scaler_zerocenter'
-```
-
 ### scaler_log
 
 **對數轉換**：對數值進行對數轉換。
@@ -134,13 +141,6 @@ x' = log(x)
 - 只適用於正數
 - 壓縮大數值，擴展小數值
 - 適合處理偏態分布
-
-**範例**：
-```yaml
-config:
-  scaler:
-    salary: 'scaler_log'
-```
 
 **注意**：資料必須為正數，否則會產生錯誤。
 
@@ -158,83 +158,67 @@ x' = log(1 + x)
 - 數值穩定性更好
 - 還原時使用 exp(x') - 1
 
-**範例**：
-```yaml
-config:
-  scaler:
-    count: 'scaler_log1p'
-```
-
 ### scaler_timeanchor
 
 **時間錨點縮放**：計算與參考時間的時間差。
 
 **參數**：
-- **reference** (`str`, 必要)：參考時間欄位名稱
+- **reference** (`str` 或 `list[str]`, 必要)：參考時間欄位名稱
+  - **單一參考** (`str`)：轉換錨點欄位為與參考欄位的時間差
+  - **多個參考** (`list[str]`)：保持錨點為日期，轉換所有參考欄位為與錨點的時間差
 - **unit** (`str`, 選用)：時間差單位
   - `'D'`：天（預設）
   - `'S'`：秒
 
 **特性**：
 - 將絕對時間轉為相對時間
-- 適合處理時間序列資料
-- 需要另一個日期欄位作為參考點
+- 支援一對一或一對多的時間關係
+- 適合處理多時間點資料（如：公司成立日 vs 多個申請/核准日期）
 
-**範例**：
+**使用模式**：
+
+1. **單一參考模式**（一個參考欄位）
 ```yaml
-config:
-  scaler:
-    created_at:
-      method: 'scaler_timeanchor'
-      reference: 'event_time'
-      unit: 'D'
-    
-    update_time:
-      method: 'scaler_timeanchor'
-      reference: 'created_at'
-      unit: 'S'
+scaler:
+  created_at:
+    method: 'scaler_timeanchor'
+    reference: 'event_time'  # 單一參考欄位
+    unit: 'D'
 ```
+結果：`created_at` 被轉換為與 `event_time` 的天數差異（數值），`event_time` 保持為日期
+
+2. **多參考模式**（多個參考欄位）
+```yaml
+scaler:
+  established_date:
+    method: 'scaler_timeanchor'
+    reference:  # 多個參考欄位（列表）
+      - 'first_apply_date'
+      - 'approval_date'
+      - 'tracking_date'
+    unit: 'D'
+```
+結果：`established_date` 保持為日期（錨點），三個參考欄位被轉換為與錨點的天數差異（數值）
 
 ## 處理邏輯
 
 ### 統計縮放（Standard/MinMax/ZeroCenter）
 
-```
-訓練階段（fit）：
-  計算統計參數（均值、標準差、最小值、最大值）
-
-轉換階段（transform）：
-  使用統計參數縮放資料
-
-還原階段（inverse_transform）：
-  使用統計參數反縮放
-```
+- **訓練階段（fit）**：計算統計參數（均值、標準差、最小值、最大值）
+- **轉換階段（transform）**：使用統計參數縮放資料
+- **還原階段（inverse_transform）**：使用統計參數反縮放
 
 ### 對數轉換（Log/Log1p）
 
-```
-訓練階段（fit）：
-  無需訓練
-
-轉換階段（transform）：
-  套用對數函數
-
-還原階段（inverse_transform）：
-  套用指數函數
-```
+- **訓練階段（fit）**：無需訓練
+- **轉換階段（transform）**：套用對數函數
+- **還原階段（inverse_transform）**：套用指數函數
 
 ### 時間錨點（TimeAnchor）
 
-```
-訓練階段（fit）：
-  記錄參考欄位
-
-轉換階段（transform）：
-  計算與參考時間的差值
-
-還原階段（inverse_transform）：
-  加回參考時間，還原為絕對時間
-```
+- **訓練階段（fit）**：記錄參考欄位
+- **轉換階段（transform）**：計算與參考時間的差值
+- **還原階段（inverse_transform）**：加回參考時間，還原為絕對時間
 
 ## 預設行為
 
@@ -257,40 +241,6 @@ config:
 | **Log1p** | 允許零值<br/>穩定 | 輕微壓縮 | 計數資料<br/>非負數 |
 | **TimeAnchor** | 相對時間<br/>易處理 | 需參考欄位 | 時間序列<br/>事件時間 |
 
-## 完整範例
-
-```yaml
-Loader:
-  load_data:
-    filepath: 'data.csv'
-    schema: 'schema.yaml'
-
-Preprocessor:
-  scale_data:
-    method: 'default'
-    sequence:
-      - missing
-      - outlier
-      - encoder
-      - scaler
-    config:
-      scaler:
-        # 數值欄位使用不同縮放方法
-        age: 'scaler_minmax'              # 年齡：0-1範圍
-        income: 'scaler_log1p'            # 收入：對數轉換
-        hours_per_week: 'scaler_standard' # 工時：標準化
-        
-        # 時間欄位
-        created_at:
-          method: 'scaler_timeanchor'
-          reference: 'birth_date'
-          unit: 'D'
-        
-        # 類別欄位不縮放
-        gender: None
-        education: None
-```
-
 ## 注意事項
 
 - **處理順序**：縮放通常是最後的前處理步驟（編碼之後）
@@ -300,11 +250,3 @@ Preprocessor:
 - **還原精確度**：所有縮放方法都可精確還原（在數值精度範圍內）
 - **合成資料**：合成資料的縮放值可能略微超出訓練資料範圍
 - **與 discretizing 配合**：如果使用 discretizing，通常不需要 scaler
-
-## 相關文件
-
-- [Processor API - fit()]({{< ref "/docs/python-api/processor-api/processor_fit" >}})
-- [Processor API - transform()]({{< ref "/docs/python-api/processor-api/processor_transform" >}})
-- [Processor API - inverse_transform()]({{< ref "/docs/python-api/processor-api/processor_inverse_transform" >}})
-- [編碼]({{< ref "encoding" >}})
-- [離散化]({{< ref "discretizing" >}})

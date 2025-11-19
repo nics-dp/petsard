@@ -13,7 +13,6 @@ from petsard.processor.discretizing import DiscretizingKBins
 from petsard.processor.encoder import (
     EncoderDateDiff,
     EncoderLabel,
-    EncoderMinguoDate,
     EncoderOneHot,
     EncoderUniform,
 )
@@ -106,7 +105,6 @@ class ProcessorClassMap:
         "encoder_label": EncoderLabel,
         "encoder_onehot": EncoderOneHot,
         "encoder_uniform": EncoderUniform,
-        "encoder_minguodate": EncoderMinguoDate,
         "encoder_datediff": EncoderDateDiff,
         # missing
         "missing_drop": MissingDrop,
@@ -154,9 +152,22 @@ class MediatorMap:  # pragma: no cover
 
     @classmethod
     def get_class_info(cls, processor_type: str):
+        """
+        Get mediator class information for a processor type.
+
+        Args:
+            processor_type: Type of processor (e.g., 'missing', 'outlier', 'encoder', 'scaler')
+
+        Returns:
+            dict: Mediator class info if available, None if processor doesn't need a mediator
+
+        Note:
+            Some processor types (e.g., 'discretizing') don't require a mediator.
+            This is by design and should not raise an error.
+        """
         mediator_class = cls.MEDIATOR_MAP.get(processor_type)
-        if mediator_class is None:
-            raise ConfigError(f"Invalid processor type of mediator: {processor_type}")
+        # Return None if processor type doesn't have a mediator (e.g., discretizing)
+        # The calling code should check for None before using the result
         return mediator_class
 
 
@@ -478,7 +489,11 @@ class Processor:
                     if processor not in obj.PROC_TYPE:
                         raise ValueError(f"Invalid processor from {col} in {processor}")
 
-                    obj.fit(data[col])
+                    # Special handling for EncoderDateDiff which needs the full DataFrame
+                    if isinstance(obj, EncoderDateDiff):
+                        obj.fit(data)
+                    else:
+                        obj.fit(data[col])
 
                 self.logger.info(f"{processor} fitting done.")
             else:
@@ -647,7 +662,11 @@ class Processor:
                             f"na_cnt={self.transformed[col].isna().sum()}"
                         )
 
-                    self.transformed[col] = obj.transform(self.transformed[col])
+                    # Special handling for EncoderDateDiff which needs the full DataFrame
+                    if isinstance(obj, EncoderDateDiff):
+                        self.transformed = obj.transform(self.transformed)
+                    else:
+                        self.transformed[col] = obj.transform(self.transformed[col])
 
                     # Update metadata based on processor's SCHEMA_TRANSFORM
                     self._update_metadata_after_transform(col, obj, processor)
@@ -663,7 +682,6 @@ class Processor:
                                 EncoderLabel,
                                 EncoderOneHot,
                                 EncoderUniform,
-                                EncoderMinguoDate,
                                 EncoderDateDiff,
                                 ScalerLog,
                                 ScalerLog1p,
@@ -849,7 +867,11 @@ class Processor:
                     ):
                         transformed[col] = transformed[col].round().astype(int)
 
-                    transformed[col] = obj.inverse_transform(transformed[col])
+                    # Special handling for EncoderDateDiff which needs the full DataFrame
+                    if isinstance(obj, EncoderDateDiff):
+                        transformed = obj.inverse_transform(transformed)
+                    else:
+                        transformed[col] = obj.inverse_transform(transformed[col])
 
                     # For Datetime after Scaler but not the target of ScalerAnchor (even reference will be affect)
                     if (
