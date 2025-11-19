@@ -23,7 +23,7 @@ def from_dict(config: dict) -> Metadata
 
 - **Metadata**
   - 根據配置建立的詮釋資料物件
-  - 包含所有定義的 Schema 和 Attribute
+  - 包含所有定義的 Schema 和欄位屬性
 
 ## 說明
 
@@ -33,7 +33,7 @@ def from_dict(config: dict) -> Metadata
 2. 程式化定義 schema
 3. 動態產生資料結構定義
 
-配置字典的結構應該對應 Metadata、Schema 和 Attribute 的層次關係。
+配置字典的結構應該對應 Metadata、Schema 和欄位屬性（Attribute）的層次關係。
 
 ## 基本範例
 
@@ -267,7 +267,7 @@ schemas:
 
 - **選填欄位**：
   - `name`, `description`: Metadata/Schema 層級的選填欄位
-  - `logical_type`: Attribute 層級的選填欄位
+  - `logical_type`: 欄位屬性層級的選填欄位
   - `na_values`: 自訂空值表示（選填）
 
 - **與 YAML 的關係**：

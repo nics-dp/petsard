@@ -134,25 +134,25 @@ classDiagram
     Metadater ..> Metadata : creates/operates
     SchemaMetadater ..> Schema : creates/operates
     AttributeMetadater ..> Attribute : creates/operates
-    
+
     %% Composition
     Metadata *-- Schema : contains
     Schema *-- Attribute : contains
     Datasets *-- Metadata : has
     Table *-- Schema : has
     Field *-- Attribute : has
-    
+
     %% Data Relations
     Datasets o-- Table : creates
     Table o-- Field : creates
-    
+
     %% Hierarchy
     Metadater --> SchemaMetadater : calls
     SchemaMetadater --> AttributeMetadater : calls
     Datasets --> Metadater : uses
     Table --> SchemaMetadater : uses
     Field --> AttributeMetadater : uses
-    
+
     %% Schema Inference Relations
     SchemaInferencer --> ProcessorTransformRules : uses
     ProcessorTransformRules --> TransformRule : uses

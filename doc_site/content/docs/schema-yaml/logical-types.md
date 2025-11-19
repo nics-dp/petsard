@@ -1,22 +1,34 @@
 ---
 title: "Logical Types"
-weight: 203
+weight: 5
 ---
 
-Logical types are used for semantic annotation and validation without changing the underlying storage type.
+Logical Type is a declarative attribute for annotating field semantics without changing the underlying data type.
 
-## Supported Logical Types
+## Usage
 
-| Logical Type | YAML Syntax | Description | Example Values |
-|---------|----------|------|--------|
-| **Email** | `logical_type: email` | Email address format | `user@example.com` |
-| **URL** | `logical_type: url` | Web URL | `https://example.com` |
-| **IP Address** | `logical_type: ip_address` | IP address | `192.168.1.1` |
-| **Phone** | `logical_type: phone` | Phone number | `+886-2-1234-5678` |
-| **Postal Code** | `logical_type: postal_code` | Postal code | `10045` |
+```yaml
+fields:
+  email:
+    name: email
+    type: str
+    logical_type: email  # Annotate this as an email field
+```
+
+## Common Logical Types
+
+- `email`: Email address
+- `url`: URL link
+- `phone`: Phone number
+
+## Auto-Inference
+
+When no schema is provided, the system checks string field data content:
+
+- If field values match email format (contains `@`), it automatically sets `logical_type: email`
+- Other logical types (`url`, `phone`) are not auto-inferred and must be manually specified in schema
 
 ## Notes
 
-- Logical types are only used for validation and do not change storage format
-- Underlying data type is typically `string`
-- Can be used together with basic types to provide additional semantic information
+- No data validation functionality; used only for semantic annotation
+- Underlying data type is determined by `type`; `logical_type` doesn't affect storage format
