@@ -7,42 +7,70 @@ Normalizes numerical data to a specific range or distribution to improve machine
 
 ## Usage Examples
 
-### Using Default Scaling
-
-```yaml
-Preprocessor:
-  demo:
-    method: 'default'
-    # Numerical fields: Use standardization
-    # Categorical fields: No scaling
-```
-
 ### Customizing Scaling for Specific Fields
 
 ```yaml
+---
+Loader:
+  load_benchmark_with_schema:
+    filepath: benchmark://adult-income
+    schema: benchmark://adult-income_schema
+
 Preprocessor:
-  custom:
-    method: 'default'
+  scaling-specific:
+    sequence:
+      - scaler
     config:
       scaler:
-        age: 'scaler_minmax'           # Min-Max scaling
-        income: 'scaler_standard'      # Standardization
-        hours_per_week: 'scaler_log'   # Log transformation
-        gender: None                   # No scaling for categorical field
+        age: 'scaler_minmax'          # Min-Max scaling
+        fnlwgt: 'scaler_standard'     # Standardization
+        educational-num: 'scaler_log' # Log transformation
+        capital-loss: None            # No scaling for categorical field
+
+Reporter:
+  save_data:
+    method: save_data
+    source:
+      - Preprocessor
+  save_schema:
+    method: save_schema
+    source:
+      - Loader
+      - Preprocessor
+...
 ```
 
 ### Time Anchor Scaling
 
 ```yaml
+---
+Loader:
+  load_benchmark_with_schema:
+    filepath: benchmark://adult-income
+    schema: benchmark://adult-income_schema
+
 Preprocessor:
   time_scaling:
-    method: 'default'
+    sequence:
+      - scaler
     config:
       scaler:
         created_at:
           method: 'scaler_timeanchor'
           reference: 'event_time'      # Reference time field
           unit: 'D'                    # Unit: days
+
+Reporter:
+  save_data:
+    method: save_data
+    source:
+      - Preprocessor
+  save_schema:
+    method: save_schema
+    source:
+      - Loader
+      - Preprocessor
+...
 ```
 
 ## Available Processors
@@ -135,15 +163,42 @@ x' = log(1 + x)
 **Time Anchor Scaling**: Calculates time difference from a reference time.
 
 **Parameters**:
-- **reference** (`str`, required): Reference time field name
+- **reference** (`str` or `list[str]`, required): Reference time field name(s)
+  - **Single reference** (`str`): Transforms anchor field to time difference from reference field
+  - **Multiple references** (`list[str]`): Keeps anchor as datetime, transforms all reference fields to time differences from anchor
 - **unit** (`str`, optional): Time difference unit
   - `'D'`: Days (default)
   - `'S'`: Seconds
 
 **Features**:
 - Converts absolute time to relative time
-- Suitable for time series data
-- Requires another date field as reference point
+- Supports one-to-one or one-to-many time relationships
+- Suitable for multi-timepoint data (e.g., company establishment date vs. multiple application/approval dates)
+
+**Usage Patterns**:
+
+1. **Single Reference Mode** (one reference field)
+```yaml
+scaler:
+  created_at:
+    method: 'scaler_timeanchor'
+    reference: 'event_time'  # Single reference field
+    unit: 'D'
+```
+Result: `created_at` is transformed to day difference from `event_time` (numerical), `event_time` remains as datetime
+
+2. **Multiple Reference Mode** (multiple reference fields)
+```yaml
+scaler:
+  established_date:
+    method: 'scaler_timeanchor'
+    reference:  # Multiple reference fields (list)
+      - 'first_apply_date'
+      - 'approval_date'
+      - 'tracking_date'
+    unit: 'D'
+```
+Result: `established_date` remains as datetime (anchor), three reference fields are transformed to day differences from anchor (numerical)
 
 ## Processing Logic
 
@@ -185,40 +240,6 @@ Default scaling for different data types:
 | **Log** | Handles skewness<br/>Compresses large values | Only for positive numbers | Income, population<br/>Right-skewed distribution |
 | **Log1p** | Allows zero values<br/>Stable | Slight compression | Count data<br/>Non-negative numbers |
 | **TimeAnchor** | Relative time<br/>Easy to process | Requires reference field | Time series<br/>Event times |
-
-## Complete Example
-
-```yaml
-Loader:
-  load_data:
-    filepath: 'data.csv'
-    schema: 'schema.yaml'
-
-Preprocessor:
-  scale_data:
-    method: 'default'
-    sequence:
-      - missing
-      - outlier
-      - encoder
-      - scaler
-    config:
-      scaler:
-        # Numerical fields using different scaling methods
-        age: 'scaler_minmax'              # Age: 0-1 range
-        income: 'scaler_log1p'            # Income: Log transformation
-        hours_per_week: 'scaler_standard' # Hours: Standardization
-        
-        # Time fields
-        created_at:
-          method: 'scaler_timeanchor'
-          reference: 'birth_date'
-          unit: 'D'
-        
-        # No scaling for categorical fields
-        gender: None
-        education: None
-```
 
 ## Notes
 
