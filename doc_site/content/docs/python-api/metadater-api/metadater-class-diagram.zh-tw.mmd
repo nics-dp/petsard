@@ -1,8 +1,10 @@
 classDiagram
+    %% 操作類別（Operation Classes）
     class Metadater {
-        <<main>>
+        <<operation>>
         +from_data(data: dict) Metadata
         +from_dict(config: dict) Metadata
+        +from_metadata(metadata: Metadata) Metadata
         +diff(metadata: Metadata, data: dict) dict
         +align(metadata: Metadata, data: dict) dict
         +get(metadata: Metadata, name: str) Schema
@@ -15,6 +17,8 @@ classDiagram
         <<operation>>
         +from_data(data: DataFrame) Schema
         +from_dict(config: dict) Schema
+        +from_yaml(filepath: str) Schema
+        +from_metadata(schema: Schema) Schema
         +diff(schema: Schema, data: DataFrame) dict
         +align(schema: Schema, data: DataFrame) DataFrame
         +get(schema: Schema, name: str) Attribute
@@ -27,48 +31,143 @@ classDiagram
         <<operation>>
         +from_data(data: Series) Attribute
         +from_dict(config: dict) Attribute
+        +from_metadata(attribute: Attribute) Attribute
         +diff(attribute: Attribute, data: Series) dict
         +align(attribute: Attribute, data: Series) Series
         +validate(attribute: Attribute, data: Series) tuple
+        +cast(attribute: Attribute, data: Series) Series
     }
 
+    %% 配置類別（Configuration Classes）
     class Metadata {
         <<dataclass>>
         +id: str
+        +name: str
+        +description: str
         +schemas: dict[str, Schema]
+        +enable_stats: bool
+        +stats: DatasetsStats
     }
 
     class Schema {
         <<dataclass>>
         +id: str
+        +name: str
+        +description: str
         +attributes: dict[str, Attribute]
+        +primary_key: list
+        +enable_stats: bool
+        +stats: TableStats
     }
 
     class Attribute {
         <<dataclass>>
         +name: str
         +type: str
-        +nullable: bool
+        +type_attr: dict
         +logical_type: str
+        +description: str
+        +enable_stats: bool
+        +stats: FieldStats
+        +is_constant: bool
     }
 
-    %% 操作關係
+    %% 資料抽象類別（Data Abstraction Classes）
+    class Datasets {
+        <<dataclass>>
+        +data: dict[str, DataFrame]
+        +metadata: Metadata
+        +create(data, metadata) Datasets
+        +get_table(name) Table
+        +validate() tuple
+        +diff() dict
+        +align() dict
+    }
+
+    class Table {
+        <<dataclass>>
+        +data: DataFrame
+        +schema: Schema
+        +create(data, schema) Table
+        +get_field(name) Field
+        +validate() tuple
+        +diff() dict
+        +align() DataFrame
+    }
+
+    class Field {
+        <<dataclass>>
+        +data: Series
+        +attribute: Attribute
+        +create(data, attribute) Field
+        +validate() tuple
+        +align() Series
+    }
+
+    %% Schema 推斷工具
+    class SchemaInferencer {
+        <<tool>>
+        +infer_preprocessor_output(schema, config) Schema
+        +infer_pipeline_schemas(schema, config) dict
+        +get_inference_history() list
+    }
+
+    class ProcessorTransformRules {
+        <<tool>>
+        +get_rule(method: str) TransformRule
+        +apply_rule(attribute, rule) Attribute
+        +apply_transform_info(attribute, info) Attribute
+        +RULES: dict
+    }
+
+    class TransformRule {
+        <<dataclass>>
+        +processor_type: str
+        +processor_method: str
+        +input_types: list
+        +output_type: str
+        +output_logical_type: str
+        +affects_nullable: bool
+    }
+
+    %% 操作關係（Operations）
     Metadater ..> Metadata : creates/operates
     SchemaMetadater ..> Schema : creates/operates
     AttributeMetadater ..> Attribute : creates/operates
-    
-    %% 組合關係
+
+    %% 組合關係（Composition）
     Metadata *-- Schema : contains
     Schema *-- Attribute : contains
-    
-    %% 階層呼叫
+    Datasets *-- Metadata : has
+    Table *-- Schema : has
+    Field *-- Attribute : has
+
+    %% 資料關係
+    Datasets o-- Table : creates
+    Table o-- Field : creates
+
+    %% 階層呼叫（Hierarchy）
     Metadater --> SchemaMetadater : calls
     SchemaMetadater --> AttributeMetadater : calls
+    Datasets --> Metadater : uses
+    Table --> SchemaMetadater : uses
+    Field --> AttributeMetadater : uses
+
+    %% Schema 推斷關係
+    SchemaInferencer --> ProcessorTransformRules : uses
+    ProcessorTransformRules --> TransformRule : uses
+    SchemaInferencer ..> Schema : infers
 
     %% 樣式標示
     style Metadater fill:#e6f3ff,stroke:#4a90e2,stroke-width:3px
-    style SchemaMetadater fill:#fff2e6,stroke:#ff9800,stroke-width:2px
-    style AttributeMetadater fill:#fff2e6,stroke:#ff9800,stroke-width:2px
-    style Metadata fill:#f0f8ff,stroke:#6495ed,stroke-width:2px
-    style Schema fill:#f0f8ff,stroke:#6495ed,stroke-width:2px
-    style Attribute fill:#f0f8ff,stroke:#6495ed,stroke-width:2px
+    style SchemaMetadater fill:#e6f3ff,stroke:#4a90e2,stroke-width:2px
+    style AttributeMetadater fill:#e6f3ff,stroke:#4a90e2,stroke-width:2px
+    style Metadata fill:#fff2e6,stroke:#ff9800,stroke-width:2px
+    style Schema fill:#fff2e6,stroke:#ff9800,stroke-width:2px
+    style Attribute fill:#fff2e6,stroke:#ff9800,stroke-width:2px
+    style Datasets fill:#f0f8ff,stroke:#6495ed,stroke-width:2px
+    style Table fill:#f0f8ff,stroke:#6495ed,stroke-width:2px
+    style Field fill:#f0f8ff,stroke:#6495ed,stroke-width:2px
+    style SchemaInferencer fill:#e8f5e9,stroke:#4caf50,stroke-width:2px
+    style ProcessorTransformRules fill:#e8f5e9,stroke:#4caf50,stroke-width:2px
+    style TransformRule fill:#e8f5e9,stroke:#4caf50,stroke-width:2px

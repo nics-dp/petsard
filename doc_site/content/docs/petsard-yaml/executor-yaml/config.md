@@ -90,10 +90,10 @@ Config automatically arranges module execution in the following order:
 Loader:
   load_data:           # ✓ Valid
     filepath: data.csv
-  
+
   load-benchmark:      # ✓ Valid
     filepath: benchmark://adult-income
-  
+
   load_custom_v2:      # ✓ Valid
     filepath: custom.csv
 ```
@@ -104,7 +104,7 @@ Loader:
 Loader:
   load_data_[1]:       # ✗ Invalid: Reserved pattern
     filepath: data.csv
-  
+
   load_[test]:         # ✗ Invalid: Reserved pattern
     filepath: test.csv
 ```

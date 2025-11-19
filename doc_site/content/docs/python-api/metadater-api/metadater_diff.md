@@ -20,7 +20,7 @@ def diff(
 - **metadata** : Metadata, required
   - Metadata definition (expected structure)
   - Required parameter
-  
+
 - **data** : dict[str, pd.DataFrame], required
   - Actual data with table names as keys and DataFrames as values
   - Required parameter
@@ -134,13 +134,13 @@ diff_report = Metadater.diff(metadata, actual_data)
 if 'table_diffs' in diff_report:
     for table_name, table_diff in diff_report['table_diffs'].items():
         print(f"\nTable: {table_name}")
-        
+
         if 'missing_columns' in table_diff:
             print(f"  Missing fields: {table_diff['missing_columns']}")
-        
+
         if 'extra_columns' in table_diff:
             print(f"  Extra fields: {table_diff['extra_columns']}")
-        
+
         if 'type_mismatches' in table_diff:
             print(f"  Type mismatches: {table_diff['type_mismatches']}")
 ```
@@ -224,11 +224,11 @@ if diff_report:
     print("❌ Data structure validation failed")
     print("\nDifference Report:")
     print(diff_report)
-    
+
     # Log to file
     with open('validation_errors.log', 'a') as log:
         log.write(f"Difference Report: {diff_report}\n")
-    
+
     sys.exit(1)
 else:
     print("✅ Data structure validation passed")
@@ -281,7 +281,7 @@ test_cases = [
 for test_case in test_cases:
     print(f"\nTest case: {test_case['name']}")
     diff_report = Metadater.diff(metadata, {'measurements': test_case['data']})
-    
+
     if diff_report:
         print(f"  ❌ Differences found: {diff_report}")
     else:
@@ -295,33 +295,33 @@ for test_case in test_cases:
   - Field completeness: Check if all fields are present
   - Type consistency: Check if data types match definitions
   - Null attributes: Check if nullable settings are consistent
-  
+
 - **Difference Report Structure**:
   - Empty dictionary indicates complete conformance
   - Non-empty dictionary contains detailed difference information
   - Difference reports can be used to generate user-friendly error messages
-  
+
 - **Type Comparison**:
   - Type comparison based on pandas dtype
   - Some type conversions may be considered compatible (e.g., int64 vs int32)
   - Strict type definitions recommended
-  
+
 - **When to Use**:
   - Validation after data loading
   - Checks before data transformation
   - Data quality checks in CI/CD
   - Data Contract validation
-  
+
 - **Performance Considerations**:
   - Difference detection for large datasets may be time-consuming
   - Recommend prioritizing critical field checks
   - Consider sampling for performance improvement
-  
+
 - **Relationship with align()**:
   - `diff()` only reports differences without modifying data
   - `align()` adjusts data structure according to metadata
   - Recommend using `diff()` to check first, then decide whether to use `align()`
-  
+
 - **Error Handling**:
   - Incorrect input format may raise exceptions
   - Use try-except to handle possible errors

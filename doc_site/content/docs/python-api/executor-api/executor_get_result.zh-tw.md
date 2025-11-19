@@ -83,7 +83,7 @@ results = exec.get_result()
 # 分析每組實驗結果
 for exp_name, result in results.items():
     print(f"\n處理實驗：{exp_name}")
-    
+
     # 根據結果類型處理
     if isinstance(result, dict):
         if 'data' in result:
@@ -143,7 +143,7 @@ for exp_name, result in results.items():
         print(f"  類型：{type(result)}")
         if isinstance(result, dict):
             print(f"  鍵：{result.keys()}")
-    
+
     # Evaluator 模組結果
     elif 'Evaluator' in exp_name:
         # 通常是 dict，包含評測報告

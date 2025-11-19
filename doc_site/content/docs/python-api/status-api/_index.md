@@ -518,18 +518,18 @@ try:
     executor.run()
 except Exception as e:
     print(f"Execution error: {e}")
-    
+
     # Check Status even after error
     if hasattr(executor, 'status'):
         status = executor.status
-        
+
         # Get partial results (if any)
         try:
             partial_results = status.get_result()
             print(f"Partial results: {len(partial_results)}")
         except:
             print("No partial results available")
-        
+
         # Check last snapshot
         if status.snapshots:
             last_snapshot = status.snapshots[-1]

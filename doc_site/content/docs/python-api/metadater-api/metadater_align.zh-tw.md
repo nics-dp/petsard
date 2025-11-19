@@ -21,7 +21,7 @@ def align(
   - 詮釋資料定義（目標結構）
   - 必要參數
   - 定義期望的資料結構、欄位順序、型別等
-  
+
 - **data** : dict[str, pd.DataFrame], required
   - 待對齊的資料，鍵為表格名稱，值為 DataFrame
   - 必要參數
@@ -239,16 +239,16 @@ import pandas as pd
 # 模擬 Loader 的內部流程
 def load_data_with_schema(filepath, schema_config):
     """模擬 Loader 如何使用 Metadater.align()"""
-    
+
     # 1. 從配置建立 metadata
     metadata = Metadater.from_dict(schema_config)
-    
+
     # 2. 讀取原始資料
     raw_data = {'data': pd.read_csv(filepath)}
-    
+
     # 3. 對齊資料結構
     aligned_data = Metadater.align(metadata, raw_data)
-    
+
     return aligned_data['data'], metadata
 
 # 使用範例
@@ -319,17 +319,17 @@ import pandas as pd
 class DataPipeline:
     def __init__(self, schema_config):
         self.metadata = Metadater.from_dict(schema_config)
-    
+
     def process(self, raw_data):
         """標準化資料處理流程"""
         # 1. 對齊資料結構
         aligned = Metadater.align(self.metadata, raw_data)
-        
+
         # 2. 檢查差異
         diff = Metadater.diff(self.metadata, aligned)
         if diff:
             print("警告：資料結構仍有差異", diff)
-        
+
         # 3. 返回標準化的資料
         return aligned
 
@@ -365,43 +365,43 @@ standardized_data = [pipeline.process(source) for source in sources]
   - 缺失欄位會補充為 NaN（或對應型別的空值）
   - 額外欄位會保留在最後（metadata 未定義的欄位）
   - 型別轉換會盡力執行，但不保證所有轉換都能成功
-  
+
 - **非破壞性操作**：
   - 不會修改原始輸入資料
   - 返回新的 DataFrame 副本
   - 額外欄位不會被移除
-  
+
 - **型別轉換**：
   - 自動嘗試轉換為定義的型別
   - 轉換失敗時可能保留原型別或引發錯誤
   - 日期時間型別轉換需要格式正確
-  
+
 - **空值處理**：
   - 補充的欄位會使用 NaN（數值）或 None（物件）
   - 日期時間型別使用 NaT (Not a Time)
   - nullable 設定不影響對齊過程，只影響驗證
-  
+
 - **效能考量**：
   - 大型資料集的對齊可能較耗時
   - 頻繁的型別轉換會影響效能
   - 建議在資料載入階段一次性對齊
-  
+
 - **使用時機**：
   - 資料載入後的標準化
   - 合併不同來源的資料前
   - 確保資料符合下游模組要求
   - 資料管線中的標準化步驟
-  
+
 - **與其他方法的關係**：
   - 通常在 `diff()` 之後使用
   - Loader 內部自動呼叫此方法
   - 配合 `from_dict()` 或 `from_data()` 建立 metadata
-  
+
 - **錯誤處理**：
   - 型別轉換失敗可能引發例外
   - 建議使用 try-except 處理可能的錯誤
   - 對齊前可先用 `diff()` 檢查差異程度
-  
+
 - **最佳實踐**：
   - 在資料管線早期階段對齊資料
   - 對齊後驗證結果是否符合預期

@@ -179,7 +179,7 @@ Tests for automatic reconciliation between data columns and schema definitions:
   - Extra data columns are automatically added to schema with inferred types
   - Schema is updated dynamically to accommodate actual data structure
   - Ensures no data loss when data has additional columns
-  
+
 - `test_data_schema_reconciliation_missing_columns`: Tests handling of missing columns defined in schema but not in data
   - Missing columns are automatically added to data with NA values
   - Data structure is aligned with schema requirements
@@ -1075,7 +1075,7 @@ Tests for **refactored DescriberCompare** implementation (6 tests, 1 skipped):
 - `test_js_divergence_type_validation`: Tests JS Divergence data type validation
   - Verifies both numeric and categorical data types correctly calculate JS Divergence
   - Confirms type checking has been properly extended to accept all valid data types
-  
+
 - `test_describer_compare_initialization`: Tests DescriberCompare initialization
   - Verifies internal creation of ori_describer and syn_describer instances
   - Confirms both DescriberDescribe instances are properly configured

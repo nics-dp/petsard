@@ -91,7 +91,7 @@ Evaluator:
     method: anonymeter-singlingout
     n_attacks: 100  # 根據資料規模調整
     max_attempts: 1000  # 根據資料規模調整
-  
+
   # 連結性風險：依實際分持方式拆分欄位
   linkability_risk:
     method: anonymeter-linkability
@@ -140,7 +140,7 @@ Evaluator:
     method: anonymeter-singlingout
     n_attacks: 100  # 根據資料規模調整
     max_attempts: 1000  # 根據資料規模調整
-  
+
   # 推論性風險：以下游任務的依變數作為機密
   inference_risk:
     method: anonymeter-inference

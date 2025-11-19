@@ -22,7 +22,7 @@ def from_data(
 - **data** : dict[str, pd.DataFrame], required
   - 資料表字典，鍵為表格名稱，值為 DataFrame
   - 必要參數
-  
+
 - **enable_stats** : bool, optional
   - 是否計算統計資料（如最小值、最大值、平均值等）
   - 預設值：`False`
@@ -76,7 +76,8 @@ print(f"欄位數量: {len(user_schema.attributes)}")
 
 # 檢視欄位屬性
 for attr_name, attr in user_schema.attributes.items():
-    print(f"- {attr_name}: {attr.type}, enable_null={attr.enable_null}")
+    nullable = attr.type_attr.get('nullable', True) if attr.type_attr else True
+    print(f"- {attr_name}: {attr.type}, nullable={nullable}")
 ```
 
 ## 進階範例
@@ -109,7 +110,7 @@ print(f"包含表格: {list(metadata.schemas.keys())}")
 print(f"\nUsers 表格欄位:")
 for attr_name in metadata.schemas['users'].attributes:
     print(f"  - {attr_name}")
-    
+
 print(f"\nOrders 表格欄位:")
 for attr_name in metadata.schemas['orders'].attributes:
     print(f"  - {attr_name}")
@@ -161,7 +162,8 @@ metadata = Metadater.from_data(data)
 # 檢查哪些欄位允許空值
 emp_schema = metadata.schemas['employees']
 for attr_name, attr in emp_schema.attributes.items():
-    nullable_status = "可為空" if attr.enable_null else "不可為空"
+    nullable = attr.type_attr.get('nullable', True) if attr.type_attr else True
+    nullable_status = "可為空" if nullable else "不可為空"
     print(f"{attr_name}: {nullable_status}")
 
 # 輸出範例：
@@ -175,26 +177,27 @@ for attr_name, attr in emp_schema.attributes.items():
 
 - **自動推斷規則**：
   - 欄位型別根據實際資料內容推斷
-  - 如果欄位包含任何空值（NaN, None），則 `enable_null = True`
+  - 如果欄位包含任何空值（NaN, None），則 `type_attr['nullable'] = True`
   - 表格名稱（字典的鍵）會作為 Schema 的 `id`
   - 可透過 `**kwargs` 覆寫預設的 `id` 和 `name`
-  
-- **資料型別支援**：
+  - 會自動偵測常數欄位（所有值都相同），設定 `is_constant = True`
+
+- **資料型別支援**（簡化型別系統）：
   - 數值型：`int`, `float`
   - 文字型：`str`
-  - 布林型：`bool`
+  - 日期型：`date`
   - 日期時間型：`datetime`
-  
+
 - **效能考量**：
   - 大型資料集推斷可能需要較長時間
   - `enable_stats=True` 會增加處理時間
   - 建議先用小樣本測試
-  
+
 - **使用建議**：
   - 適合快速建立初始 schema
   - 建議檢視推斷結果並依需求調整
   - 對於複雜邏輯型別，可能需要手動定義
-  
+
 - **與 Loader 整合**：
   - Loader 內部使用此方法處理無 schema 的資料載入
   - 一般使用者透過 Loader 的 `schema` 參數即可，無需直接呼叫

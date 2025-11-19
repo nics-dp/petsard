@@ -106,9 +106,8 @@ config = {
     },
     'encoder': {
         'doc_date': {
-            'method': 'encoder_date',
-            'input_format': '%MinguoY-%m-%d',
-            'date_type': 'date'
+            'method': 'encoder_datediff',
+            'reference': 'baseline_date'
         }
     }
 }
@@ -220,7 +219,7 @@ print("gender encoder:", type(config['encoder']['gender']).__name__)
 - `encoder_uniform`：均勻編碼
 - `encoder_label`：標籤編碼
 - `encoder_onehot`：獨熱編碼
-- `encoder_date`：日期格式轉換（需要參數）
+- `encoder_datediff`：日期差異編碼（需要參數）
 
 ### 縮放器
 - `scaler_standard`：標準化

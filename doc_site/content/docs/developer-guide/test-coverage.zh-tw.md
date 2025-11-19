@@ -606,7 +606,7 @@ python -c "from tests.loader.test_loader import run_stress_demo; run_stress_demo
 - `test_js_divergence_type_validation`：測試 JS Divergence 資料類型驗證
   - 驗證數值型和類別型資料都能正確計算 JS Divergence
   - 確認類型檢查已正確擴展以接受所有有效資料類型
-  
+
 - `test_describer_compare_initialization`：測試 DescriberCompare 初始化
   - 驗證內部創建 ori_describer 和 syn_describer 實例
   - 確認兩個 DescriberDescribe 實例都被正確配置

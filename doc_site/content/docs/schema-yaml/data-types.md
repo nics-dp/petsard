@@ -1,31 +1,37 @@
 ---
 title: "Data Types"
-weight: 202
+weight: 3
 ---
 
-Basic data types supported by Schema.
+PETsARD uses a simplified type system.
 
 ## Basic Types
 
-| Type Name | YAML Syntax | Description | Example Values |
-|---------|----------|------|--------|
-| **Integer** | `type: int64` | 64-bit integer | `123`, `-456` |
-| **Float** | `type: float64` | 64-bit floating point | `3.14`, `-0.5` |
-| **String** | `type: string` | Text data | `"Hello"`, `"123"` |
-| **Boolean** | `type: boolean` | True/false values | `true`, `false` |
-| **Datetime** | `type: datetime64` | Date and time | `"2024-01-15"`, `"2024-01-15 14:30:00"` |
+| Type | Description | Configuration |
+|------|-------------|---------------|
+| `int` | Integer | `type: int` or `type: integer` |
+| `float` | Float | `type: float` |
+| `str` | String | `type: str` or `type: string` |
+| `date` | Date | `type: date` |
+| `datetime` | Datetime | `type: datetime` |
 
 {{< callout type="info" >}}
-**Categorical Data**: Use the `category: true` parameter to mark categorical data, not `type: category`.
+**Note**: PETsARD does not support `type: category`. Categorical information should be marked using the `category: true` parameter, as this is treated as field attribute information rather than a data type.
 {{< /callout >}}
 
-## Type Mapping
+## Type Conversion Mapping
 
-| Pandas dtype | Schema type |
-|-------------|-------------|
-| int8, int16, int32, int64 | int64 |
-| uint8, uint16, uint32, uint64 | int64 |
-| float16, float32, float64 | float64 |
-| object, string | string |
-| bool | boolean |
-| datetime64 | datetime64 |
+The system automatically converts various pandas dtypes to simplified types:
+
+| Pandas dtype | PETsARD Type |
+|--------------|--------------|
+| int8, int16, int32, int64, Int64 | `int` |
+| uint8, uint16, uint32, uint64 | `int` |
+| float16, float32, float64 | `float` |
+| object, string | `str` |
+| bool, boolean | `str` |
+| datetime64[ns] | `datetime` |
+
+{{< callout type="info" >}}
+**Why Unify Types**: To support null value handling (using nullable integer) and ensure synthetic data compatibility (handling float → int conversion).
+{{< /callout >}}

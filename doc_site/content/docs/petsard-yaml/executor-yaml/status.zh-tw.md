@@ -42,11 +42,11 @@ Status 會追蹤資料的 Schema 在各模組間的變化：
 Loader:
   load_data:
     filepath: data.csv
-    
+
 Preprocessor:
   preprocess:
     method: default
-    
+
 Synthesizer:
   generate:
     method: sdv

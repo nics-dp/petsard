@@ -167,13 +167,13 @@ INCLUDE_JUPYTER=true/false
    ```bash
    # 建置包含 Jupyter Lab 的 Jupyter 映像檔（ARM64 優化）
    docker buildx build --platform linux/arm64 --load --build-arg INCLUDE_JUPYTER=true -t petsard:jupyter --no-cache .
-   
+
    # 啟動包含 Jupyter Lab 的容器
    docker run -it -p 8888:8888 \
      -v $(pwd)/data:/app/data \
      -v $(pwd)/notebooks:/app/notebooks \
      petsard:jupyter
-   
+
    # 在 http://localhost:8888 存取 Jupyter Lab
    ```
 
@@ -181,10 +181,10 @@ INCLUDE_JUPYTER=true/false
    ```bash
    # 運行 Python REPL 進行測試
    docker run -it --entrypoint /opt/venv/bin/python3 petsard:jupyter
-   
+
    # 使用資料卷運行測試
    docker run -it -v $(pwd):/app/data --entrypoint /opt/venv/bin/python3 petsard:jupyter
-   
+
    # 在容器內測試 PETsARD 功能
    # python -m petsard.executor demo/getting-started/default-synthesis-default-evaluation.zh-tw.yaml
    ```
@@ -193,10 +193,10 @@ INCLUDE_JUPYTER=true/false
    ```bash
    # 測試 Jupyter 建置（包含 Jupyter Lab）
    docker build --build-arg INCLUDE_JUPYTER=true -t petsard:jupyter .
-   
+
    # 測試標準建置（預設，不含 Jupyter）
    docker build -t petsard:latest .
-   
+
    # 針對 ARM64 平台
    docker buildx build --platform linux/arm64 --load --build-arg INCLUDE_JUPYTER=true -t petsard:jupyter --no-cache .
    ```

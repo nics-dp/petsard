@@ -1,5 +1,5 @@
 ---
-title: "Processor API (WIP)"
+title: "Processor API"
 weight: 330
 ---
 

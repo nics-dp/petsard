@@ -42,11 +42,11 @@ Status tracks Schema changes of data across modules:
 Loader:
   load_data:
     filepath: data.csv
-    
+
 Preprocessor:
   preprocess:
     method: default
-    
+
 Synthesizer:
   generate:
     method: sdv

@@ -85,13 +85,13 @@ from petsard import Executor
 try:
     executor = Executor(config='config.yaml')
     executor.run()
-    
+
     if not executor.is_execution_completed():
         raise RuntimeError("Execution failed to complete")
-    
+
     results = executor.get_result()
     print("Execution successful")
-    
+
 except Exception as e:
     print(f"Error: {e}")
 ```
@@ -107,12 +107,12 @@ import time
 def monitor_execution(executor, check_interval=5):
     """Monitor execution progress"""
     start_time = time.time()
-    
+
     while not executor.is_execution_completed():
         elapsed = time.time() - start_time
         print(f"Execution in progress... ({elapsed:.1f}s)")
         time.sleep(check_interval)
-    
+
     total_time = time.time() - start_time
     print(f"Execution completed in {total_time:.1f}s")
 
@@ -139,18 +139,18 @@ for data_file in data_files:
             'generate': {'method': 'sdv'}
         }
     }
-    
+
     try:
         executor = Executor(config=config, verbose=False)
         executor.run()
-        
+
         if executor.is_execution_completed():
             successful.append(data_file)
             print(f"✓ {data_file}")
         else:
             failed.append(data_file)
             print(f"✗ {data_file}")
-            
+
     except Exception as e:
         failed.append(data_file)
         print(f"✗ {data_file}: {e}")
@@ -172,11 +172,11 @@ executor1.run()
 if executor1.is_execution_completed():
     # Use results from first workflow in second workflow
     results1 = executor1.get_result()
-    
+
     # Second workflow
     executor2 = Executor(config='synthesis_config.yaml')
     executor2.run()
-    
+
     if executor2.is_execution_completed():
         results2 = executor2.get_result()
         print("Both workflows completed successfully")
@@ -203,16 +203,16 @@ if not executor.is_execution_completed():
     validation_passed = False
 else:
     print("✓ Execution completed")
-    
+
     # Check results
     results = executor.get_result()
-    
+
     if len(results) == 0:
         print("❌ No results generated")
         validation_passed = False
     else:
         print(f"✓ Generated {len(results)} results")
-    
+
     # Validate each result
     for exp_key, exp_result in results.items():
         if 'data' not in exp_result:
@@ -262,14 +262,14 @@ executor = Executor(config='config.yaml')
 
 try:
     executor.run()
-    
+
     if executor.is_execution_completed():
         logger.info("Execution completed successfully")
         results = executor.get_result()
         logger.info(f"Retrieved {len(results)} results")
     else:
         logger.warning("Execution completed but status is incomplete")
-        
+
 except Exception as e:
     logger.error(f"Execution failed: {e}")
 ```
@@ -286,19 +286,19 @@ def execute_with_retry(config, max_retries=3, retry_delay=5):
         try:
             executor = Executor(config=config)
             executor.run()
-            
+
             if executor.is_execution_completed():
                 return executor.get_result()
             else:
                 print(f"Attempt {attempt + 1} incomplete")
-                
+
         except Exception as e:
             print(f"Attempt {attempt + 1} failed: {e}")
-        
+
         if attempt < max_retries - 1:
             print(f"Retrying in {retry_delay} seconds...")
             time.sleep(retry_delay)
-    
+
     raise RuntimeError(f"Failed after {max_retries} attempts")
 
 # Use retry logic
@@ -457,16 +457,16 @@ results = executor.get_result()  # May fail if execution incomplete
 def validate_and_process(config):
     executor = Executor(config=config)
     executor.run()
-    
+
     # Validate
     if not executor.is_execution_completed():
         return None, "Execution failed"
-    
+
     results = executor.get_result()
-    
+
     if len(results) == 0:
         return None, "No results generated"
-    
+
     return results, "Success"
 
 results, message = validate_and_process('config.yaml')

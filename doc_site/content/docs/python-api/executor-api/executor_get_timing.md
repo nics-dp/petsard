@@ -155,10 +155,10 @@ timing = executor.get_timing()
 # Analyze each step
 for module in timing['module_name'].unique():
     module_data = timing[timing['module_name'] == module]
-    
+
     print(f"\n{module} Steps:")
     print("-" * 60)
-    
+
     for _, row in module_data.iterrows():
         print(f"  {row['step_name']}: {row['duration_seconds']:.2f}s")
         print(f"    Start: {row['start_time']}")
@@ -203,7 +203,7 @@ results = []
 for run_id in range(3):
     executor = Executor(config='config.yaml', verbose=False)
     executor.run()
-    
+
     timing = executor.get_timing()
     timing['run_id'] = run_id
     results.append(timing)

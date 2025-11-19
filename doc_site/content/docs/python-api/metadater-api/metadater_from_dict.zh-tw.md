@@ -23,7 +23,7 @@ def from_dict(config: dict) -> Metadata
 
 - **Metadata**
   - 根據配置建立的詮釋資料物件
-  - 包含所有定義的 Schema 和 Attribute
+  - 包含所有定義的 Schema 和欄位屬性
 
 ## 說明
 
@@ -33,7 +33,7 @@ def from_dict(config: dict) -> Metadata
 2. 程式化定義 schema
 3. 動態產生資料結構定義
 
-配置字典的結構應該對應 Metadata、Schema 和 Attribute 的層次關係。
+配置字典的結構應該對應 Metadata、Schema 和欄位屬性（Attribute）的層次關係。
 
 ## 基本範例
 
@@ -256,29 +256,29 @@ schemas:
   - `schemas` 是字典，鍵為表格名稱
   - 每個 schema 必須包含 `id` 和 `attributes`
   - 每個 attribute 必須包含 `name`, `type`, `nullable`
-  
+
 - **型別支援**：
   - 基本型別：`'int'`, `'float'`, `'str'`, `'bool'`, `'datetime'`
   - 確保型別字串正確，否則可能導致驗證失敗
-  
+
 - **欄位名稱**：
   - `name` 欄位定義實際的欄位名稱
   - 字典的鍵可以與 `name` 不同，但建議保持一致
-  
+
 - **選填欄位**：
   - `name`, `description`: Metadata/Schema 層級的選填欄位
-  - `logical_type`: Attribute 層級的選填欄位
+  - `logical_type`: 欄位屬性層級的選填欄位
   - `na_values`: 自訂空值表示（選填）
-  
+
 - **與 YAML 的關係**：
   - 此方法常用於處理從 YAML 檔案讀取的配置
   - Loader 內部使用此方法處理 `schema` 參數
   - 建議直接使用 YAML 配置而非手動建立字典
-  
+
 - **驗證建議**：
   - 建立後應驗證 metadata 結構是否符合預期
   - 大型配置建議拆分為多個 YAML 檔案管理
-  
+
 - **錯誤處理**：
   - 配置格式錯誤會引發例外
   - 建議使用 try-except 處理配置載入錯誤

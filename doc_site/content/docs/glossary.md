@@ -1,8 +1,6 @@
 ---
 title: "Glossary"
 weight: 999
-prev: docs/experimental-new-format
-next: docs
 ---
 
 Technical terms and definitions used in PETsARD documentation (alphabetically ordered).

@@ -25,32 +25,32 @@ def resample_until_satisfy(
     - 要套用約束的輸入資料框
     - 必要參數
     - 如果已有部分符合約束的資料，會作為基礎繼續補充
-    
+
 - **target_rows** : int, required
     - 目標列數
     - 必要參數
     - 最終返回的資料框將包含此數量的列
-    
+
 - **synthesizer** : Synthesizer, required
     - 用於生成合成資料的合成器實例
     - 必要參數
     - 必須是已經透過 `\1` 訓練過的合成器
-    
+
 - **postprocessor** : Postprocessor, optional
     - 資料轉換的後處理器
     - 用於將合成資料轉換回原始格式
     - 預設值：`None`
-    
+
 - **max_trials** : int, optional
     - 最大嘗試次數
     - 達到此次數後即使未滿足目標列數也會停止
     - 預設值：`300`
-    
+
 - **sampling_ratio** : float, optional
     - 每次生成的資料量是目標列數的倍數
     - 用於補償約束過濾造成的資料損失
     - 預設值：`10.0`（生成 10 倍的資料）
-    
+
 - **verbose_step** : int, optional
     - 每隔幾次嘗試顯示進度
     - 設為 `0` 關閉進度顯示
@@ -350,7 +350,7 @@ constrainer = Constrainer(config)
 # 測試不同的 sampling_ratio
 for ratio in [5.0, 10.0, 20.0, 50.0]:
     start_time = time.time()
-    
+
     result = constrainer.resample_until_satisfy(
         data=pd.DataFrame(),
         target_rows=100,
@@ -358,9 +358,9 @@ for ratio in [5.0, 10.0, 20.0, 50.0]:
         sampling_ratio=ratio,
         verbose_step=0  # 關閉進度顯示
     )
-    
+
     elapsed = time.time() - start_time
-    
+
     print(f"Sampling Ratio: {ratio}")
     print(f"  嘗試次數: {constrainer.resample_trails}")
     print(f"  執行時間: {elapsed:.2f} 秒")

@@ -79,13 +79,13 @@ Evaluator:
   # Step 1: 資料有效性診斷（應接近 1.0）
   validity_check:
     method: sdmetrics-diagnosticreport
-  
+
   # Step 2: 隱私保護力評估（風險應 < 0.09）
   singling_out_risk:
     method: anonymeter-singlingout
     n_attacks: 100
     max_attempts: 1000
-  
+
   # 重點：追求高保真度（分數越高越好）
   fidelity_assessment:
     method: sdmetrics-qualityreport
@@ -128,17 +128,17 @@ Evaluator:
   # Step 1: 資料有效性診斷（應接近 1.0）
   validity_check:
     method: sdmetrics-diagnosticreport
-  
+
   # Step 2: 隱私保護力評估（風險應 < 0.09）
   singling_out_risk:
     method: anonymeter-singlingout
     n_attacks: 100
     max_attempts: 1000
-  
+
   # 保真度達標即可（≥ 0.75）
   quality_assessment:
     method: sdmetrics-qualityreport
-  
+
   # 重點：追求高實用性（依任務類型評估）
   ml_utility_assessment:
     method: mlutility

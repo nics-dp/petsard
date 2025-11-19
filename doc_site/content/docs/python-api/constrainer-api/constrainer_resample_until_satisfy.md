@@ -25,32 +25,32 @@ def resample_until_satisfy(
     - Input dataframe to apply constraints to
     - Required parameter
     - If partially constrained data already exists, it serves as the base for further supplementation
-    
+
 - **target_rows** : int, required
     - Target number of rows
     - Required parameter
     - Final returned dataframe will contain this number of rows
-    
+
 - **synthesizer** : Synthesizer, required
     - Synthesizer instance for generating synthetic data
     - Required parameter
     - Must be a synthesizer already trained via `\1`
-    
+
 - **postprocessor** : Postprocessor, optional
     - Postprocessor for data transformation
     - Used to convert synthetic data back to original format
     - Default value: `None`
-    
+
 - **max_trials** : int, optional
     - Maximum number of attempts
     - Stops even if target row count not met after reaching this number
     - Default value: `300`
-    
+
 - **sampling_ratio** : float, optional
     - Multiple of target rows to generate each time
     - Used to compensate for data loss from constraint filtering
     - Default value: `10.0` (generate 10 times the data)
-    
+
 - **verbose_step** : int, optional
     - Display progress every N attempts
     - Set to `0` to disable progress display
@@ -350,7 +350,7 @@ constrainer = Constrainer(config)
 # Test different sampling_ratio values
 for ratio in [5.0, 10.0, 20.0, 50.0]:
     start_time = time.time()
-    
+
     result = constrainer.resample_until_satisfy(
         data=pd.DataFrame(),
         target_rows=100,
@@ -358,9 +358,9 @@ for ratio in [5.0, 10.0, 20.0, 50.0]:
         sampling_ratio=ratio,
         verbose_step=0  # Disable progress display
     )
-    
+
     elapsed = time.time() - start_time
-    
+
     print(f"Sampling Ratio: {ratio}")
     print(f"  Attempts: {constrainer.resample_trails}")
     print(f"  Execution time: {elapsed:.2f} seconds")
