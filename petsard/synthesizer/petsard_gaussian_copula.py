@@ -162,15 +162,15 @@ class PetsardGaussianCopulaSynthesizer(BaseSynthesizer):
 
         # Log Numba availability
         if NUMBA_AVAILABLE:
-            self._logger.info(
-                "✓ Numba JIT compilation enabled - expect 10-100x speedup after first run"
+            self._logger.debug(
+                "Numba JIT compilation enabled - expect 10-100x speedup after first run"
             )
         else:
-            self._logger.info(
-                "⚠ Numba not installed - using NumPy fallback (still 2-3x faster than scipy)"
+            self._logger.warning(
+                "Numba not installed - using NumPy fallback (performance will be slower)"
             )
             self._logger.info(
-                "  Install numba for maximum performance: pip install numba"
+                "Install numba for better performance: pip install numba"
             )
 
         # Device selection for PyTorch with smart threshold
@@ -258,7 +258,7 @@ class PetsardGaussianCopulaSynthesizer(BaseSynthesizer):
                 f"Please encode categorical variables as integers before using this synthesizer."
             )
 
-        self._logger.info("Data type validation passed - all columns are numeric")
+        self._logger.debug("Data type validation passed - all columns are numeric")
 
     def _record_dtypes(self, data: pd.DataFrame) -> None:
         """
@@ -727,7 +727,7 @@ class PetsardGaussianCopulaSynthesizer(BaseSynthesizer):
         n_samples = self.config.get("sample_num_rows")
         if n_samples is None:
             n_samples = self.training_data_rows
-            self._logger.info(
+            self._logger.debug(
                 f"sample_num_rows not specified, using training data size: {n_samples:,}"
             )
 

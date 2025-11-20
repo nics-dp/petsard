@@ -100,7 +100,7 @@ class EvaluatorConfig(BaseConfig):
             if self.method_code == EvaluatorMap.DEFAULT
             else self.method
         )
-        self._logger.info(
+        self._logger.debug(
             f"EvaluatorConfig initialized with method: {self.method}, eval_method: {self.eval_method}"
         )
 
@@ -138,14 +138,14 @@ class Evaluator:
         self._logger: logging.Logger = logging.getLogger(
             f"PETsARD.{self.__class__.__name__}"
         )
-        self._logger.info(
+        self._logger.debug(
             f"Initializing {self.__class__.__name__} with method: {method}"
         )
 
         self._configure_implementation(method=method, **kwargs)
 
         self._impl: BaseEvaluator = None
-        self._logger.info("≈ initialization completed")
+        self._logger.debug("Initialization completed")
 
     def _configure_implementation(self, method: str, **kwargs) -> None:
         """
@@ -188,7 +188,7 @@ class Evaluator:
         """
         Create a Evaluator object with the given data.
         """
-        self._logger.info("Creating {self.__class__.__name__} instance")
+        self._logger.debug("Creating evaluator instance")
 
         evaluator_class = self._create_evaluator_class()
         self._logger.debug(
@@ -239,7 +239,7 @@ class Evaluator:
 
         time_start: time = time.time()
 
-        self._logger.info(
+        self._logger.debug(
             f"Evaluating data with keys {list(data.keys())} using evaluation method: {self.config.eval_method}"
         )
         evaluated_report: dict[str, pd.DataFrame] = self._impl.eval(data=data)

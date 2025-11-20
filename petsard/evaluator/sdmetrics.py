@@ -261,7 +261,7 @@ class SDMetricsSingleTable(BaseEvaluator):
         Return:
             (dict[str, pd.DataFrame]): The evaluation result
         """
-        self._logger.info("Evaluating with data")
+        self._logger.debug("Evaluating with data")
 
         self._logger.debug("Initializing SDMetricsSingleTableConfig")
 
@@ -283,7 +283,7 @@ class SDMetricsSingleTable(BaseEvaluator):
             for warning in w:
                 self._logger.debug(f"Warning during _eval: {warning.message}")
 
-        self._logger.info("Successfully evaluating from data")
+        self._logger.debug("Successfully evaluating from data")
 
         sdmetrics_scores: dict[str, pd.DataFrame] = self._extract_scores()
         self._logger.debug(f"Extracted scores: {list(sdmetrics_scores.keys())}")
@@ -324,6 +324,6 @@ class SDMetricsSingleTable(BaseEvaluator):
                     f"Property not found for {granularity} level. Skipping."
                 )
                 scores[granularity] = None
-        self._logger.info("Successfully extracting scores")
+        self._logger.debug("Successfully extracting scores")
 
         return scores

@@ -285,7 +285,7 @@ class DescriberCompare(BaseEvaluator):
         Return:
             (dict[str, pd.DataFrame]): The evaluation result
         """
-        self._logger.info(
+        self._logger.debug(
             f"Starting comparison evaluation with {len(self.compare_config.stats_method)} methods"
         )
 
@@ -367,5 +367,5 @@ class DescriberCompare(BaseEvaluator):
                     global_result, orient="index"
                 ).T
 
-        self._logger.info("Comparison evaluation completed")
+        self._logger.debug("Comparison evaluation completed")
         return compare_result

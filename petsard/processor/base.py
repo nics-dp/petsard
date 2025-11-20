@@ -11,40 +11,18 @@ from petsard.exceptions import ConfigError, UnfittedError
 from petsard.metadater.metadata import Schema
 from petsard.processor.constant import ConstantProcessor
 from petsard.processor.discretizing import DiscretizingKBins
-from petsard.processor.encoder import (
-    EncoderDateDiff,
-    EncoderLabel,
-    EncoderOneHot,
-    EncoderUniform,
-)
-from petsard.processor.mediator import (
-    Mediator,
-    MediatorEncoder,
-    MediatorMissing,
-    MediatorOutlier,
-    MediatorScaler,
-)
-from petsard.processor.missing import (
-    MissingDrop,
-    MissingMean,
-    MissingMedian,
-    MissingMode,
-    MissingSimple,
-)
-from petsard.processor.outlier import (
-    OutlierIQR,
-    OutlierIsolationForest,
-    OutlierLOF,
-    OutlierZScore,
-)
-from petsard.processor.scaler import (
-    ScalerLog,
-    ScalerLog1p,
-    ScalerMinMax,
-    ScalerStandard,
-    ScalerTimeAnchor,
-    ScalerZeroCenter,
-)
+from petsard.processor.encoder import (EncoderDateDiff, EncoderLabel,
+                                       EncoderOneHot, EncoderUniform)
+from petsard.processor.mediator import (Mediator, MediatorEncoder,
+                                        MediatorMissing, MediatorOutlier,
+                                        MediatorScaler)
+from petsard.processor.missing import (MissingDrop, MissingMean, MissingMedian,
+                                       MissingMode, MissingSimple)
+from petsard.processor.outlier import (OutlierIQR, OutlierIsolationForest,
+                                       OutlierLOF, OutlierZScore)
+from petsard.processor.scaler import (ScalerLog, ScalerLog1p, ScalerMinMax,
+                                      ScalerStandard, ScalerTimeAnchor,
+                                      ScalerZeroCenter)
 
 
 class DefaultProcessorMap:
@@ -233,8 +211,7 @@ class Processor:
             f"Loaded metadata contains {len(metadata.attributes)} attributes"
         )
 
-        self.logger.debug("config is provided:")
-        self.logger.debug(f"config is provided: {config}")
+        self.logger.debug(f"Config provided: {config}")
 
         # CRITICAL FIX: Create a deep copy of metadata to avoid modifying the original
         # Processor should not modify the passed-in metadata, but create its own copy
@@ -372,15 +349,15 @@ class Processor:
 
         for col in field_names:
             infer_dtype = self._get_field_infer_dtype(col)
-            self.logger.debug(f"Processing column '{col}': inferred type {infer_dtype}")
+            self.logger.debug(f"Column '{col}': inferred type {infer_dtype}")
             for processor, obj in DefaultProcessorMap.PROCESSOR_MAP.items():
                 processor_class = obj[infer_dtype]
                 self.logger.debug(
-                    f"  > Setting {processor} processor: {processor_class.__name__}"
+                    f"  {processor}: {processor_class.__name__}"
                 )
                 self._config[processor][col] = processor_class()
 
-        self.logger.debug("Config generation completed")
+        self.logger.debug(f"Config generation completed for {len(field_names)} columns")
 
     def get_config(self, col: list = None) -> dict:
         """
@@ -475,22 +452,24 @@ class Processor:
                     self._fitting_sequence.insert(
                         self._fitting_sequence.index(proc_name) + 1, mediator
                     )
-                self.logger.info(f"{mediator_info['class'].__name__} is created.")
+                self.logger.debug(f"{mediator_info['class'].__name__} created")
 
         self._detect_edit_global_transformation()
 
         self.logger.debug("Fitting sequence generation completed.")
 
         # Fit ConstantProcessor first (before all other processors)
-        self.logger.info("Fitting ConstantProcessor...")
+        self.logger.debug("Fitting ConstantProcessor")
         self._constant_processor.fit(data, self._metadata)
         if self._constant_processor.constant_columns:
             self.logger.info(
-                f"Detected {len(self._constant_processor.constant_columns)} constant columns: "
-                f"{list(self._constant_processor.constant_columns.keys())}"
+                f"Detected {len(self._constant_processor.constant_columns)} constant columns"
+            )
+            self.logger.debug(
+                f"Constant columns: {list(self._constant_processor.constant_columns.keys())}"
             )
         else:
-            self.logger.info("No constant columns detected")
+            self.logger.debug("No constant columns detected")
 
         # Transform data using ConstantProcessor (remove constant columns)
         data = self._constant_processor.transform(data)
@@ -532,7 +511,7 @@ class Processor:
                     else:
                         obj.fit(data[col])
 
-                self.logger.info(f"{processor} fitting done.")
+                self.logger.info(f"Completed {processor} fitting")
             else:
                 # if the processor is not a string,
                 # it should be a mediator, which could be fitted directly.
@@ -543,7 +522,7 @@ class Processor:
                         f"mediator: {type(processor).__name__} start processing."
                     )
                     processor.fit(data)
-                    self.logger.info(f"{type(processor).__name__} fitting done.")
+                    self.logger.info(f"Completed {type(processor).__name__} fitting")
 
         # it is a shallow copy
         self._working_config = self._config.copy()
@@ -644,8 +623,7 @@ class Processor:
                 is_global_transformation = True
                 replaced_class = obj.__class__
                 self.logger.info(
-                    "Global transformation detected."
-                    + f" All processors will be replaced to {replaced_class}."
+                    f"Global transformation detected: using {replaced_class.__name__} for all columns"
                 )
                 break
 
@@ -749,7 +727,7 @@ class Processor:
                             f"na_cnt={self.transformed[col].isna().sum()}"
                         )
 
-                self.logger.info(f"{processor} transformation done.")
+                self.logger.info(f"Completed {processor} transformation")
 
                 # Record schema after each processor step
                 self._record_schema_snapshot(
@@ -788,7 +766,7 @@ class Processor:
                 self.logger.debug(
                     f"after transformation: data shape: {self.transformed.shape}"
                 )
-                self.logger.info(f"{type(processor).__name__} transformation done.")
+                self.logger.info(f"Completed {type(processor).__name__} transformation")
 
                 # Record schema after mediator
                 mediator_name = type(processor).__name__
@@ -865,7 +843,7 @@ class Processor:
             self._inverse_sequence.insert(
                 self._inverse_sequence.index("encoder"), self._mediator["encoder"]
             )
-            self.logger.info("MediatorEncoder is created.")
+            self.logger.debug("MediatorEncoder created for inverse transform")
 
         if "discretizing" in self._inverse_sequence:
             # if discretizing is in the procedure,
@@ -880,7 +858,7 @@ class Processor:
             self._inverse_sequence.insert(
                 self._inverse_sequence.index("scaler"), self._mediator["scaler"]
             )
-            self.logger.info("MediatorScaler is created.")
+            self.logger.debug("MediatorScaler created for inverse transform")
 
         self.logger.debug("Inverse sequence generation completed.")
 
@@ -931,7 +909,7 @@ class Processor:
                         transformed[col] = pd.to_datetime(transformed[col]).dt.date
 
                 self.logger.info(
-                    f"{type(processor).__name__} inverse transformation done."
+                    f"Completed {type(processor).__name__} inverse transformation"
                 )
             else:
                 # if the processor is not a string,
@@ -946,7 +924,7 @@ class Processor:
                 self.logger.debug(
                     f"after transformation: data shape: {transformed.shape}"
                 )
-                self.logger.info(f"{type(processor).__name__} transformation done.")
+                self.logger.info(f"Completed {type(processor).__name__} transformation")
 
         # Apply ConstantProcessor last (restore constant columns)
         transformed = self._constant_processor.inverse_transform(transformed)

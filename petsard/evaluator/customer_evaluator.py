@@ -3,7 +3,7 @@ import sys
 import pandas as pd
 
 from petsard.evaluator.evaluator_base import BaseEvaluator
-from petsard.exceptions import ConfigError
+from petsard.exceptions import ConfigError, CustomMethodEvaluatorError
 from petsard.utils import load_external_module
 
 
@@ -76,4 +76,15 @@ class CustomEvaluator(BaseEvaluator):
         Return:
             (dict[str, pd.DataFrame]): The evaluation result
         """
-        return self._impl.eval(data=data)
+        try:
+            return self._impl.eval(data=data)
+        except Exception as e:
+            error_msg = (
+                f"Error in custom evaluator '{self.config.get('class_name', 'Unknown')}': {str(e)}"
+            )
+            self._logger.error(error_msg)
+            raise CustomMethodEvaluatorError(
+                error_msg,
+                class_name=self.config.get('class_name'),
+                module_path=self.config.get('module_path')
+            ) from e

@@ -6,22 +6,11 @@ from enum import Enum, auto
 import numpy as np
 import pandas as pd
 from sklearn.cluster import KMeans
-from sklearn.metrics import (
-    accuracy_score,
-    auc,
-    confusion_matrix,
-    f1_score,
-    fbeta_score,
-    matthews_corrcoef,
-    mean_absolute_error,
-    mean_squared_error,
-    precision_recall_curve,
-    precision_score,
-    r2_score,
-    recall_score,
-    roc_auc_score,
-    silhouette_score,
-)
+from sklearn.metrics import (accuracy_score, auc, confusion_matrix, f1_score,
+                             fbeta_score, matthews_corrcoef,
+                             mean_absolute_error, mean_squared_error,
+                             precision_recall_curve, precision_score, r2_score,
+                             recall_score, roc_auc_score, silhouette_score)
 from sklearn.preprocessing import LabelEncoder, OneHotEncoder, StandardScaler
 from xgboost import XGBClassifier, XGBRegressor
 
@@ -366,7 +355,7 @@ class MLUtilityConfig(BaseConfig):
                 raise ConfigError(error_msg)
         elif self.task_type == TaskType.CLUSTERING:
             if self.target:
-                self._logger.info(
+                self._logger.debug(
                     "Clustering task does not require a target column, ignoring"
                 )
                 self.target = None
@@ -390,7 +379,7 @@ class MLUtilityConfig(BaseConfig):
                 self._logger.error(error_msg)
                 raise ConfigError(error_msg)
 
-            self._logger.info(
+            self._logger.debug(
                 f"Will use {self.resampling} for imbalanced data handling"
             )
         elif self.resampling == "None":
@@ -639,7 +628,7 @@ class MLUtility(BaseEvaluator):
 
                 if pd.api.types.is_numeric_dtype(first_target):
                     # Target is already numeric, use directly
-                    self._logger.info(
+                    self._logger.debug(
                         f"Target column '{target_col}' is already numeric, no encoding needed"
                     )
 
@@ -648,7 +637,7 @@ class MLUtility(BaseEvaluator):
                         y_encoded = y_data[key].values
                 else:
                     # Target is categorical, needs encoding
-                    self._logger.info(
+                    self._logger.debug(
                         f"Target column '{target_col}' is categorical, using LabelEncoder"
                     )
 
@@ -675,7 +664,7 @@ class MLUtility(BaseEvaluator):
                                             "Please install: pip install imbalanced-learn"
                                         ) from import_err
 
-                                    self._logger.info(
+                                    self._logger.debug(
                                         f"Applying SMOTE-ENN resampling to {key} data"
                                     )
                                     resampler = SMOTEENN(
@@ -690,7 +679,7 @@ class MLUtility(BaseEvaluator):
                                             "Please install: pip install imbalanced-learn"
                                         ) from import_err
 
-                                    self._logger.info(
+                                    self._logger.debug(
                                         f"Applying SMOTE-Tomek resampling to {key} data"
                                     )
                                     resampler = SMOTETomek(

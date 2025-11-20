@@ -1,5 +1,6 @@
 import pandas as pd
 
+from petsard.exceptions import UnableToLoadError
 from petsard.loader.loader_base import LoaderBase
 
 
@@ -48,7 +49,10 @@ class LoaderPandasCsv(LoaderBase):
         try:
             return pd.read_csv(filepath, **pandas_config)
         except Exception as e:
-            raise FileNotFoundError from e
+            raise UnableToLoadError(
+                f"Failed to load CSV file: {filepath}",
+                filepath=filepath
+            ) from e
 
 
 class LoaderPandasExcel(LoaderBase):
@@ -107,4 +111,7 @@ class LoaderPandasExcel(LoaderBase):
         try:
             return pd.read_excel(filepath, **pandas_config)
         except Exception as e:
-            raise FileNotFoundError from e
+            raise UnableToLoadError(
+                f"Failed to load Excel file: {filepath}",
+                filepath=filepath
+            ) from e

@@ -80,14 +80,14 @@ class ReporterSaveTiming(BaseReporter):
         if processed_data is None:
             import logging
 
-            logger = logging.getLogger(f"PETsARD.{__name__}")
+            logger = logging.getLogger(f"PETsARD.{__name__.split('.')[-1]}")
             logger.warning("No timing data found. No CSV file will be saved.")
             return None
 
         if processed_data.empty:
             import logging
 
-            logger = logging.getLogger(f"PETsARD.{__name__}")
+            logger = logging.getLogger(f"PETsARD.{__name__.split('.')[-1]}")
             logger.warning("No timing data found. No CSV file will be saved.")
             return None
 

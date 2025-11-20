@@ -86,7 +86,7 @@ class Executor:
                 f"Expected str (file path or YAML string)."
             )
 
-        self._logger.info(f"Processing configuration: {config[:100]}...")
+        self._logger.debug(f"Processing configuration: {config[:100]}...")
         yaml_config: dict = self._get_config(config_input=config)
 
         self.config = Config(config=yaml_config)
@@ -106,13 +106,23 @@ class Executor:
         Create log formatter with standardized format.
 
         Returns:
-            logging.Formatter: Configured log formatter
+            logging.Formatter: Configured log formatter with custom name handling
         """
-        return logging.Formatter(
+
+        class PETsARDFormatter(logging.Formatter):
+            """Custom formatter that removes 'PETsARD.' prefix from logger names."""
+
+            def format(self, record):
+                # Remove 'PETsARD.' prefix from logger name for cleaner output
+                if record.name.startswith("PETsARD."):
+                    record.name = record.name[8:]  # Remove 'PETsARD.' (8 chars)
+                return super().format(record)
+
+        return PETsARDFormatter(
             "%(asctime)s - "  # timestamp
-            "%(name)-21s - "  # logger name (left align w/ 21 digits: 'PETsARD.Postprocessor')
-            "%(funcName)-17s - "  # function name (left align w/ 17 digits: 'inverse_transform')
-            "%(levelname)-8s - "  # logger level (left align w/ 8 digits: 'CRITICAL')
+            "%(name)-24s - "  # module name (left align, 24 chars: 'PostprocessorAdapter')
+            "%(funcName)-30s - "  # function name (left align, 30 chars: '_log_missing_report_warning')
+            "%(levelname)-8s - "  # log level (left align, 8 chars: 'CRITICAL')
             "%(message)s"  # message
         )
 
@@ -212,18 +222,18 @@ class Executor:
 
         # First, try as file path
         if os.path.isfile(config_input):
-            self._logger.info(f"Loading configuration from file: {config_input}")
+            self._logger.debug(f"Loading configuration from file: {config_input}")
             try:
                 with open(config_input) as yaml_file:
                     yaml_config = yaml.safe_load(yaml_file)
-                self._logger.info("✓ Successfully loaded configuration from file")
+                self._logger.debug("Successfully loaded configuration from file")
             except Exception as e:
                 raise ConfigError(
                     f"Failed to load YAML file '{config_input}': {str(e)}"
                 ) from e
         else:
             # If not a file, try to parse as YAML string
-            self._logger.info(
+            self._logger.debug(
                 "Input is not a file path, attempting to parse as YAML string"
             )
             try:
@@ -233,8 +243,8 @@ class Executor:
                         f"YAML string parsed to {type(yaml_config).__name__}, expected dict. "
                         f"Parsed value: {yaml_config}"
                     )
-                self._logger.info(
-                    "✓ Successfully parsed configuration from YAML string"
+                self._logger.debug(
+                    "Successfully parsed configuration from YAML string"
                 )
             except yaml.YAMLError as e:
                 raise ConfigError(
@@ -252,7 +262,7 @@ class Executor:
         if "Executor" in yaml_config:
             self.executor_config.update(yaml_config["Executor"])
             self._setup_logger(reconfigure=True)
-            self._logger.info("Logger reconfigured with settings from YAML")
+            self._logger.debug("Logger reconfigured with settings from YAML")
             yaml_config.pop("Executor")
 
         return yaml_config
@@ -365,7 +375,7 @@ class Executor:
             self._logger.debug("No Preprocessor in config, skipping Schema inference")
             return
 
-        self._logger.info("Starting Schema inference for pipeline stages")
+        self._logger.debug("Starting Schema inference for pipeline stages")
 
         try:
             # Infer initial Schema from Loader config (if available)
@@ -378,7 +388,7 @@ class Executor:
             # Store config in status for later use
             self.status.inferred_schemas["_preprocessor_config"] = preprocessor_config
 
-            self._logger.info(
+            self._logger.debug(
                 f"Schema inference config prepared: will infer {len(preprocessor_config)} processing types after Loader execution"
             )
 
@@ -407,7 +417,7 @@ class Executor:
             loader_schema = self.status.get_metadata("Loader")
             preprocessor_config = self.status.inferred_schemas["_preprocessor_config"]
 
-            self._logger.info("Starting Preprocessor output Schema inference")
+            self._logger.debug("Starting Preprocessor output Schema inference")
 
             # Use SchemaInferencer to infer
             inferred_schema = self.status.schema_inferencer.infer_preprocessor_output(
@@ -417,7 +427,7 @@ class Executor:
             # Store inference result
             self.status.inferred_schemas["Preprocessor"] = inferred_schema
 
-            self._logger.info(
+            self._logger.debug(
                 f"Preprocessor Schema inference completed: {len(inferred_schema.attributes)} fields"
             )
 
@@ -426,7 +436,7 @@ class Executor:
             if inference_history:
                 last_inference = inference_history[-1]
                 changes_count = len(last_inference.get("changes", []))
-                self._logger.info(
+                self._logger.debug(
                     f"Detected {changes_count} field type transformations"
                 )
 

@@ -8,11 +8,8 @@ import pandas as pd
 import yaml
 
 from petsard.config_base import BaseConfig
-from petsard.exceptions import (
-    ConfigError,
-    UnableToFollowMetadataError,
-    UnsupportedMethodError,
-)
+from petsard.exceptions import (ConfigError, UnableToFollowMetadataError,
+                                UnsupportedMethodError)
 from petsard.metadater import Attribute, Schema, SchemaMetadater
 
 
@@ -214,7 +211,7 @@ class Loader:
         self._logger: logging.Logger = logging.getLogger(
             f"PETsARD.{self.__class__.__name__}"
         )
-        self._logger.info("Initializing Loader")
+        self._logger.debug("Initializing Loader")
         self._logger.debug(
             f"Loader parameters - filepath: {filepath}, column_types: {column_types}"
         )
@@ -409,9 +406,10 @@ class Loader:
         Returns:
             pd.DataFrame: Loaded dataframe
         """
-        from petsard.loader.loader_pandas import LoaderPandasCsv, LoaderPandasExcel
+        from petsard.loader.loader_pandas import (LoaderPandasCsv,
+                                                  LoaderPandasExcel)
 
-        self._logger.info("Reading data using pandas loader classes")
+        self._logger.debug("Reading data using pandas loader classes")
 
         # Map file extension codes to loader classes
         loaders_map = {
@@ -490,7 +488,7 @@ class Loader:
             # Create loader instance and load data
             loader = loader_class(config)
             data = loader.load().fillna(pd.NA)
-            self._logger.info(f"Successfully loaded data with shape: {data.shape}")
+            self._logger.debug(f"Successfully loaded data with shape: {data.shape}")
             return data
 
         except Exception as e:
@@ -509,7 +507,7 @@ class Loader:
         Returns:
             Schema: Schema metadata
         """
-        self._logger.info("Processing with metadater")
+        self._logger.debug("Processing with metadater")
 
         # If no schema exists, create one from data
         if schema is None or not schema.attributes:

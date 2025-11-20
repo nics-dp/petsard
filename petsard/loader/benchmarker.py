@@ -9,11 +9,8 @@ from pathlib import Path
 import yaml
 
 from petsard.config_base import BaseConfig
-from petsard.exceptions import (
-    BenchmarkDatasetsError,
-    ConfigError,
-    UnsupportedMethodError,
-)
+from petsard.exceptions import (BenchmarkDatasetsError, ConfigError,
+                                UnsupportedMethodError)
 
 
 @dataclass
@@ -53,7 +50,7 @@ class BenchmarkerConfig(BaseConfig):
             raise ConfigError(error_msg)
 
         # Load and organize yaml: BENCHMARK_CONFIG
-        self._logger.info("Loading benchmark configuration")
+        self._logger.debug("Loading benchmark configuration")
         benchmark_config: dict = self._load_benchmark_config()
 
         # Check if benchmark name exists in BENCHMARK_CONFIG
@@ -183,7 +180,7 @@ class BaseBenchmarker(ABC):
         self._logger: logging.Logger = logging.getLogger(
             f"PETsARD.{self.__class__.__name__}"
         )
-        self._logger.info(
+        self._logger.debug(
             f"Initializing Benchmarker with benchmark_filename: {config['benchmark_filename']}"
         )
 

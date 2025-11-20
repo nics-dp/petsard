@@ -6,6 +6,7 @@ from typing import Any
 import pandas as pd
 import yaml
 
+from petsard.exceptions import MetadataError
 from petsard.metadater.metadata import Attribute, Metadata, Schema
 from petsard.metadater.stats import DatasetsStats, FieldStats, TableStats
 
@@ -323,10 +324,13 @@ class AttributeMetadater:
 
             except Exception as e:
                 if attribute.cast_errors == "raise":
-                    raise ValueError(
+                    raise MetadataError(
                         f"Type conversion failed: field '{attribute.name}' "
-                        f"cannot convert from {data.dtype} to {attribute.type}\n"
-                        f"Error: {str(e)}"
+                        f"cannot convert from {data.dtype} to {attribute.type}",
+                        field_name=attribute.name,
+                        source_type=str(data.dtype),
+                        target_type=attribute.type,
+                        error_details=str(e)
                     ) from e
                 # coerce: keep original data
 
@@ -891,12 +895,15 @@ class SchemaMetadater:
         with open(filepath) as f:
             try:
                 config = yaml.load(f, Loader=DuplicateKeysLoader)
-            except ValueError:
-                # Re-raise ValueError, keep original error message
+            except MetadataError:
+                # Re-raise MetadataError, keep original error message
                 raise
             except yaml.YAMLError as e:
                 # Other YAML parsing errors
-                raise ValueError(f"Failed to parse YAML file {filepath}: {e}")
+                raise MetadataError(
+                    f"Failed to parse YAML file {filepath}: {e}",
+                    filepath=filepath
+                ) from e
 
         # Use from_dict directly, it handles both fields and attributes formats
         return cls.from_dict(config)
@@ -905,7 +912,11 @@ class SchemaMetadater:
     def get(cls, schema: Schema, name: str) -> Attribute:
         """Get Attribute from Schema"""
         if name not in schema.attributes:
-            raise KeyError(f"Attribute '{name}' not found in schema '{schema.id}'")
+            raise MetadataError(
+                f"Attribute '{name}' not found in schema '{schema.id}'",
+                attribute_name=name,
+                schema_id=schema.id
+            )
         return schema.attributes[name]
 
     @classmethod
@@ -1146,7 +1157,11 @@ class Metadater:
     def get(cls, metadata: Metadata, name: str) -> Schema:
         """Get Schema from Metadata"""
         if name not in metadata.schemas:
-            raise KeyError(f"Schema '{name}' not found in metadata '{metadata.id}'")
+            raise MetadataError(
+                f"Schema '{name}' not found in metadata '{metadata.id}'",
+                schema_name=name,
+                metadata_id=metadata.id
+            )
         return metadata.schemas[name]
 
     @classmethod

@@ -5,6 +5,7 @@ from typing import Any
 
 import pandas as pd
 
+from petsard.exceptions import MetadataError
 from petsard.metadater.metadata import Attribute, Metadata, Schema
 
 
@@ -147,7 +148,11 @@ class Table:
     def get_field(self, name: str) -> Field:
         """Get specific field"""
         if name not in self.data.columns:
-            raise KeyError(f"Column '{name}' not found in table")
+            raise MetadataError(
+                f"Column '{name}' not found in table",
+                column_name=name,
+                available_columns=list(self.data.columns)
+            )
 
         attribute = self.schema.attributes.get(name)
         # Use Field.create() to create Field instance
@@ -253,7 +258,11 @@ class Datasets:
     def get_table(self, name: str) -> Table:
         """Get specific table"""
         if name not in self.data:
-            raise KeyError(f"Table '{name}' not found in datasets")
+            raise MetadataError(
+                f"Table '{name}' not found in datasets",
+                table_name=name,
+                available_tables=list(self.data.keys())
+            )
 
         schema = self.metadata.schemas.get(name)
         # Use Table.create() to create Table instance

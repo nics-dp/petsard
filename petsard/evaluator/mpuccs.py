@@ -108,7 +108,7 @@ class MPUCCs(BaseEvaluator):
                         decimal_places = len(str_value.split(".")[1])
                         min_precision = max(min_precision, decimal_places)
 
-                self._logger.info(
+                self._logger.debug(
                     f"Field {col} detected numeric precision: 10^-{min_precision}"
                 )
 
@@ -183,7 +183,7 @@ class MPUCCs(BaseEvaluator):
                         ):
                             min_precision = "H"
 
-                self._logger.info(
+                self._logger.debug(
                     f"Field {col} detected datetime precision: {min_precision}"
                 )
 
@@ -951,7 +951,7 @@ class MPUCCs(BaseEvaluator):
                 # Apply numeric precision
                 ori_data = self._apply_numeric_precision(ori_data, detected_precision)
                 syn_data = self._apply_numeric_precision(syn_data, detected_precision)
-                self._logger.info("Applied numeric precision rounding")
+                self._logger.debug("Applied numeric precision rounding")
         else:
             # Use specified numeric precision
             precision = self.config["numeric_precision"]
@@ -977,7 +977,7 @@ class MPUCCs(BaseEvaluator):
                 syn_data = self._apply_datetime_precision(
                     syn_data, detected_dt_precision
                 )
-                self._logger.info("Applied datetime precision rounding")
+                self._logger.debug("Applied datetime precision rounding")
         else:
             # Use specified datetime precision
             precision = self.config["datetime_precision"]
@@ -991,7 +991,7 @@ class MPUCCs(BaseEvaluator):
 
         # Get columns sorted by cardinality
         sorted_columns = self._get_sorted_columns_by_cardinality(syn_data)
-        self._logger.info(f"Field processing order (by cardinality): {sorted_columns}")
+        self._logger.debug(f"Field processing order (by cardinality): {sorted_columns}")
 
         # Progressive field search
         details_results, identified_indices, iteration_count, tree_results = (

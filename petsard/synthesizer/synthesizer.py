@@ -7,10 +7,12 @@ from typing import Any
 import pandas as pd
 
 from petsard.config_base import BaseConfig
-from petsard.exceptions import ConfigError, UncreatedError, UnsupportedMethodError
+from petsard.exceptions import (ConfigError, UncreatedError,
+                                UnsupportedMethodError)
 from petsard.metadater.metadata import Schema
 from petsard.synthesizer.custom_synthesizer import CustomSynthesizer
-from petsard.synthesizer.petsard_gaussian_copula import PetsardGaussianCopulaSynthesizer
+from petsard.synthesizer.petsard_gaussian_copula import \
+    PetsardGaussianCopulaSynthesizer
 from petsard.synthesizer.sdv import SDVSingleTableSynthesizer
 from petsard.synthesizer.synthesizer_base import BaseSynthesizer
 
@@ -87,7 +89,7 @@ class SynthesizerConfig(BaseConfig):
             if self.method_code == SynthesizerMap.DEFAULT
             else self.method
         )
-        self._logger.info(
+        self._logger.debug(
             f"SynthesizerConfig initialized with method: {self.method}, syn_method: {self.syn_method}"
         )
 
@@ -120,7 +122,7 @@ class Synthesizer:
         self._logger: logging.Logger = logging.getLogger(
             f"PETsARD.{self.__class__.__name__}"
         )
-        self._logger.info(
+        self._logger.debug(
             f"Initializing Synthesizer with method: {method}, sample_num_rows: {sample_num_rows}"
         )
 
@@ -212,7 +214,7 @@ class Synthesizer:
                 "Using source data as sample source (will be determined during fit)"
             )
 
-        self._logger.info(
+        self._logger.debug(
             f"Sample configuration determined: source={sample_from}, rows={sample_num_rows}"
         )
         return sample_from, sample_num_rows
@@ -224,7 +226,7 @@ class Synthesizer:
         Args.:
             metadata (Schema, optional): The schema metadata of the data.
         """
-        self._logger.info("Creating synthesizer instance")
+        self._logger.debug("Creating synthesizer instance")
         if metadata is not None:
             self._logger.debug("Metadata provided for synthesizer creation")
         else:
@@ -305,7 +307,7 @@ class Synthesizer:
 
         time_start: time = time.time()
 
-        self._logger.info(f"Starting fit process for {self.config.syn_method}")
+        self._logger.debug(f"Starting fit process for {self.config.syn_method}")
         try:
             self._impl.fit(data=data)
             time_spent = round(time.time() - time_start, 4)

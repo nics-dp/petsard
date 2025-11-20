@@ -6,11 +6,8 @@ from enum import Enum, auto
 from typing import Any
 
 import pandas as pd
-from anonymeter.evaluators import (
-    InferenceEvaluator,
-    LinkabilityEvaluator,
-    SinglingOutEvaluator,
-)
+from anonymeter.evaluators import (InferenceEvaluator, LinkabilityEvaluator,
+                                   SinglingOutEvaluator)
 
 from petsard.config_base import BaseConfig
 from petsard.evaluator.evaluator_base import BaseEvaluator
@@ -118,7 +115,7 @@ class AnonymeterConfig(BaseConfig):
             if self.n_attacks is None:
                 # Set default for SinglingOut
                 self.n_attacks = 2000
-                self._logger.info(
+                self._logger.debug(
                     "n_attacks not specified for SinglingOut, using default: 2000"
                 )
             elif self.n_attacks <= 0:
@@ -149,7 +146,7 @@ class AnonymeterConfig(BaseConfig):
                 self._logger.error(error_msg)
                 raise ConfigError(error_msg)
             elif self.mode == "univariate":
-                self._logger.info(
+                self._logger.debug(
                     f"n_cols setting {self.n_cols} will be ignored "
                     "due to SinglingOut mode set to 'univariate'"
                 )
@@ -654,6 +651,6 @@ class Anonymeter(BaseEvaluator):
                 scores[granularity] = self._get_global(anonymeter_scores)
             elif granularity == "details":
                 scores[granularity] = self._get_details(anonymeter_scores)
-        self._logger.info("Successfully extracting scores")
+        self._logger.debug("Successfully extracting scores")
 
         return scores
