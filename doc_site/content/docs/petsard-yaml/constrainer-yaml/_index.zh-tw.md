@@ -134,7 +134,7 @@ field_proportions:      # 欄位比例維護，預設為無
 **欄位值配對關係，預設為無**
 
 - **教育與收入的配對規則**
-  - 🌐 **English**: 
+  - 🌐 **English**:
     - Doctorate education can only have >50K income
     - Masters education can have >50K or <=50K income
   - 🇹🇼 **繁體中文**：

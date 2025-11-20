@@ -174,7 +174,7 @@ exec = Executor('long_running_config.yaml')
 
 # 在另一個線程中監控
 monitor_thread = threading.Thread(
-    target=monitor_execution, 
+    target=monitor_execution,
     args=(exec, 10)
 )
 monitor_thread.start()

@@ -110,7 +110,7 @@ field_proportions:
 
 **申請狀態與核准金額配對**
 ```yaml
-- 
+-
   - latest_apply_status: latest_apply_amount_approved
   - approved: [1000000, 5000000, 10000000, 20000000]
     rejected: ["pd.NA"]

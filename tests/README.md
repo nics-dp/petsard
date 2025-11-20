@@ -54,7 +54,7 @@ pytest -m "not stress"
 
 - **Trigger**: PRs to `dev` and `main` branches
 - **Python Versions**: 3.10, 3.11
-- **Checks**: 
+- **Checks**:
   - Ruff code quality / 程式碼品質檢查
   - Unit tests with coverage / 單元測試與覆蓋率
   - Functional tests / 功能測試

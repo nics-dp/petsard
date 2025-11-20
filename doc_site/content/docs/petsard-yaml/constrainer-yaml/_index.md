@@ -137,7 +137,7 @@ field_proportions:      # Field proportion maintenance, default none
 **Field value pairing relationships, default none**
 
 - **Education-Income Pairing Rules**
-  - 🌐 **English**: 
+  - 🌐 **English**:
     - Doctorate education can only have >50K income
     - Masters education can have >50K or <=50K income
   - 🇹🇼 **繁體中文**:

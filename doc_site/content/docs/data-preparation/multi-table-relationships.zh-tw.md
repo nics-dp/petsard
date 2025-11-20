@@ -238,7 +238,7 @@ latest_tracking AS (
            ROW_NUMBER() OVER (PARTITION BY application_id ORDER BY tracking_date DESC) as rn
     FROM tracking
 )
-SELECT 
+SELECT
     c.*,
     fa.* AS first_apply_,
     la.* AS latest_apply_,

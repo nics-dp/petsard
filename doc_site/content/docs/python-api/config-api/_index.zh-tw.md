@@ -112,7 +112,7 @@ config_dict = {
 Config 會自動按照正確順序安排模組：
 
 ```
-Loader → Preprocessor → Splitter → Synthesizer → 
+Loader → Preprocessor → Splitter → Synthesizer →
 Postprocessor → Constrainer → Evaluator → Reporter
 ```
 

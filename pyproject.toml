@@ -119,7 +119,6 @@ eval = [
 # 合成資料生成功能
 syn = [
     {include-group = "base-common"},
-    "sdv>=1.26.0,<2",    # Synthetic data generation / 合成資料生成
     "torch>=2.8.0,<3",   # PyTorch deep learning models / PyTorch 深度學習模型
     # Shared synthesis dependencies
     "scipy>=1.15.3,<2 ; python_full_version < '3.11'",
@@ -127,17 +126,6 @@ syn = [
     "joblib>=1.5.2,<2",
     "numba>=0.61.2,<1",
     "plotly>=6.3.0,<7",
-    # SDV specific dependencies
-    "boto3>=1.40.25,<2",
-    "botocore>=1.40.25,<2",
-    "faker>=37.6.0,<39",
-    "filelock>=3.19.1,<4",
-    "narwhals>=1.45.0,<3",
-    "platformdirs>=4.4.0,<5",
-    "s3transfer>=0.13.1,<1",
-    "threadpoolctl>=3.6.0,<4",
-    "typing-extensions>=4.15.0,<5",
-    "urllib3>=2.5.0,<3",
     # PyTorch specific dependencies
     "fsspec>=2025.9.0",
     "jinja2>=3.1.6,<4",
@@ -245,7 +233,7 @@ dev = [
 # Build system configuration
 # 建置系統設定
 [build-system]
-requires = ["uv_build>=0.8.15,<0.10.0"]
+requires = ["uv_build>=0.9.10,<0.11.0"]
 build-backend = "uv_build"
 
 # uv build backend configuration

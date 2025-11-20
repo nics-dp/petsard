@@ -49,7 +49,7 @@ Synthesizer:
 
 - **method** (`string`)
   - 合成方式
-  - 使用 `method: default` 時，會自動使用 SDV GaussianCopula 方法作為預設合成方法。
+  - 使用 `method: default` 時，會自動使用 PETsARD 內建的 Gaussian Copula 方法作為預設合成方法。
 
 ### 支援的合成方法
 
@@ -58,9 +58,9 @@ Synthesizer:
 1. **[PETsARD 內建方法](petsard-gaussian-copula)**
    - `petsard-gaussian-copula`：使用 Numba JIT 與 PyTorch 實現的高效高斯耦合合成器
 
-2. **[SDV 整合方法](sdv-methods)**
-   - **[內建整合](sdv-methods)**：直接使用 SDV 預設參數的快速方式（計劃下架）
-   - **[SDV Custom Methods](sdv-custom-methods)**：使用 `custom_method` 靈活控制 SDV 方法的所有參數
+2. **[SDV 整合方法](sdv-methods)**（可選功能）
+   - **[內建整合](sdv-methods)**：直接使用 SDV 預設參數的快速方式（需額外安裝，僅供參考）
+   - **[SDV Custom Methods](sdv-custom-methods)**：使用 `custom_method` 靈活控制 SDV 方法的所有參數（需額外安裝，僅供參考）
 
 3. **[自訂合成方法](custom-method)**
    - 使用 `custom_method` 整合自行開發的合成演算法

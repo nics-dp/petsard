@@ -1,3 +1,51 @@
+"""
+SDV Synthesizer Wrapper Module
+
+**IMPORTANT: Optional Dependency**
+
+This module provides wrappers for SDV (Synthetic Data Vault) synthesizers.
+SDV is an **optional dependency** and must be installed separately to use these methods.
+
+**Installation:**
+```bash
+pip install 'sdv>=1.26.0,<2'
+```
+
+**Usage:**
+- This module is lazy-loaded only when SDV methods are requested
+- PETsARD will function normally without SDV installed
+- Attempting to use SDV methods without installation will raise `MissingDependencyError`
+- Use `petsard-gaussian_copula` as an alternative that doesn't require SDV
+
+**Supported SDV Methods:**
+- `sdv-single_table-gaussiancopula`: Gaussian Copula synthesizer
+- `sdv-single_table-ctgan`: Conditional Tabular GAN
+- `sdv-single_table-copulagan`: Copula GAN
+- `sdv-single_table-tvae`: Tabular VAE
+
+**Migration Note:**
+Consider using `petsard-gaussian_copula` as a built-in alternative that doesn't
+require external dependencies and provides similar functionality.
+
+**Example:**
+```python
+from petsard.synthesizer import Synthesizer
+from petsard.exceptions import MissingDependencyError
+
+# This will check if SDV is installed
+try:
+    synthesizer = Synthesizer(method="sdv-single_table-gaussiancopula")
+    synthesizer.create(metadata=schema)
+    synthesizer.fit(data)
+    syn_data = synthesizer.sample()
+except MissingDependencyError as e:
+    print(f"SDV not installed: {e.get_suggestion()}")
+    # Use alternative method
+    synthesizer = Synthesizer(method="petsard-gaussian_copula")
+```
+"""
+
+
 import logging
 import re
 import warnings

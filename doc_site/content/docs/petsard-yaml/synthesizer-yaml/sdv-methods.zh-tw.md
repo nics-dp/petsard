@@ -9,7 +9,18 @@ next: docs/petsard-yaml/synthesizer-yaml
 PETsARD 整合 [SDV (Synthetic Data Vault)](https://sdv.dev/) 套件，提供多種先進的合成資料生成演算法。
 
 {{< callout type="warning" >}}
-**重要通知**：內建的 SDV 整合方法未來有計劃下架。建議使用 [SDV Custom Methods](../sdv-custom-methods) 以獲得更好的靈活性和長期支援。
+**可選功能說明**
+
+本頁面介紹的 SDV 方法為**可選功能**，僅供參考。
+
+**使用須知**：
+1. 需要單獨安裝：`pip install 'sdv>=1.26.0,<2'`
+2. 請確認 SDV 的授權條款符合您的使用情境
+3. **不鼓勵使用**：建議優先考慮內建的 `petsard-gaussian_copula`
+
+**替代方案**：
+- [PETsARD Gaussian Copula](../petsard-gaussian-copula) - 內建實作，無需額外依賴
+- [自訂方法](../custom-method) - 整合其他套件
 {{< /callout >}}
 
 {{< callout type="info" >}}
@@ -42,7 +53,7 @@ Synthesizer:
 
 | 方法 | method 設定值 | 特點 | GPU |
 |------|--------------|------|-----|
-| GaussianCopula | `default` 或 `sdv-single_table-gaussiancopula` | 快速、適合大型資料 | ✗ |
+| GaussianCopula (SDV) | `sdv-single_table-gaussiancopula` | 快速、適合大型資料 | ✗ |
 | CTGAN | `sdv-single_table-ctgan` | 高品質、複雜模式 | ✓ |
 | CopulaGAN | `sdv-single_table-copulagan` | 平衡統計與深度學習 | ✓ |
 | TVAE | `sdv-single_table-tvae` | 訓練穩定、收斂快 | ✓ |

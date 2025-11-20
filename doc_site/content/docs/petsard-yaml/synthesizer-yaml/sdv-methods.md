@@ -9,7 +9,18 @@ next: docs/petsard-yaml/synthesizer-yaml
 PETsARD integrates the [SDV (Synthetic Data Vault)](https://sdv.dev/) package, providing various advanced synthetic data generation algorithms.
 
 {{< callout type="warning" >}}
-**Important Notice**: The built-in SDV integration is planned for deprecation in the future. We recommend using [SDV Custom Methods](../sdv-custom-methods) for better flexibility and long-term support.
+**Optional Feature Notice**
+
+The SDV methods described on this page are **optional features**, provided for reference only.
+
+**Usage Requirements**:
+1. Requires separate installation: `pip install 'sdv>=1.26.0,<2'`
+2. Please verify that SDV's license terms suit your use case
+3. **Not recommended**: We suggest prioritizing the built-in `petsard-gaussian_copula`
+
+**Alternatives**:
+- [PETsARD Gaussian Copula](../petsard-gaussian-copula) - Built-in implementation, no external dependencies
+- [Custom Methods](../custom-method) - Integrate other packages
 {{< /callout >}}
 
 {{< callout type="info" >}}
@@ -42,7 +53,7 @@ Synthesizer:
 
 | Method | method Setting | Features | GPU |
 |--------|----------------|----------|-----|
-| GaussianCopula | `default` or `sdv-single_table-gaussiancopula` | Fast, suitable for large data | ✗ |
+| GaussianCopula (SDV) | `sdv-single_table-gaussiancopula` | Fast, suitable for large data | ✗ |
 | CTGAN | `sdv-single_table-ctgan` | High quality, complex patterns | ✓ |
 | CopulaGAN | `sdv-single_table-copulagan` | Balances statistics & deep learning | ✓ |
 | TVAE | `sdv-single_table-tvae` | Stable training, fast convergence | ✓ |

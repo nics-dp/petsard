@@ -105,7 +105,7 @@ config_dict = {
 Config automatically arranges modules in the correct order:
 
 ```
-Loader → Preprocessor → Splitter → Synthesizer → 
+Loader → Preprocessor → Splitter → Synthesizer →
 Postprocessor → Constrainer → Evaluator → Reporter
 ```
 

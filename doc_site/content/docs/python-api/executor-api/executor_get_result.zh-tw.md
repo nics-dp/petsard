@@ -108,8 +108,8 @@ results = exec.get_result()
 
 # 篩選包含特定模組的結果
 synthesizer_results = {
-    name: result 
-    for name, result in results.items() 
+    name: result
+    for name, result in results.items()
     if 'Synthesizer' in name
 }
 
@@ -117,8 +117,8 @@ print(f"Synthesizer 相關結果數量：{len(synthesizer_results)}")
 
 # 或使用 Reporter 的特定實驗結果
 reporter_results = {
-    name: result 
-    for name, result in results.items() 
+    name: result
+    for name, result in results.items()
     if 'Reporter[save_data]' in name
 }
 ```

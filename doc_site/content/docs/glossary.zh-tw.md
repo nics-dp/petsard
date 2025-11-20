@@ -106,7 +106,7 @@ PETsARD 文件中的專有名詞與術語說明（按注音符號排序）。
 
 - **Scikit-learn**：簡稱 sklearn. Python 的機器學習函式庫，提供分類、迴歸、聚類等演算法，PETsARD 用於機器學習效用評測。
 - **SDMetrics**：SDV 生態系的評測工具，用於評估合成資料的品質、保真度和診斷報告。
-- **SDV**：Synthetic Data Vault. 一套開源的合成資料生成框架，提供多種合成演算法。
+- **SDV**：Synthetic Data Vault. 第三方合成資料套件，PETsARD 可選支援（需額外安裝 `pip install 'sdv>=1.26.0,<2'`，僅供參考）。
 - **Sensitivity**：敏感度，即召回率，實際為正例中被正確預測的比例。
 - **SMOTE**：合成少數類別過採樣技術，用於處理不平衡資料。
 - **SMOTE-ENN**：結合 SMOTE 與 Edited Nearest Neighbors 的不平衡資料處理方法，先過採樣再清理邊界樣本。
@@ -189,7 +189,7 @@ PETsARD 文件中的專有名詞與術語說明（按注音符號排序）。
 
 ## ㄍ
 
-- **高斯耦合**：Gaussian Copula. PETsARD 預設使用的合成方法，利用高斯分布和 Copula 函數保留資料間的相關性結構。
+- **高斯耦合**：Gaussian Copula. PETsARD 內建的預設合成方法，利用高斯分布和 Copula 函數保留資料間的相關性結構。使用 Numba JIT 編譯技術加速運算。
 - **隔離森林**：Isolation Forest. 基於決策樹的異常檢測演算法，用於識別資料中的離群值，是 PETsARD 支援的離群值處理方法之一。
 
 ## ㄎ
@@ -272,7 +272,7 @@ PETsARD 文件中的專有名詞與術語說明（按注音符號排序）。
 - **約束器**：Constrainer. 在 PETsARD 中指執行約束條件檢查和強制的系統模組。
 - **約束條件**：Constraints. 在 PETsARD 中指確保合成資料符合業務規範的規則系統，包括欄位約束、欄位組合約束、遺失值群組約束等。
 - **原始資料**：Original Data. 在 PETsARD 中指用於訓練合成模型的資料集，可能是真實資料或經過處理的資料。
-- **預設合成**：Default Synthesis. PETsARD 系統提供的預設合成資料生成方法，使用 SDV 的 Gaussian Copula 模型。
+- **預設合成**：Default Synthesis. PETsARD 系統提供的預設合成資料生成方法，使用內建的 Gaussian Copula 實作（`petsard-gaussian_copula`）。
 - **預設評測**：Default Evaluation. PETsARD 系統提供的預設評估方法，包含隱私、保真度和實用性三個面向的基本指標。
 - **閾值**：Threshold. 決策邊界值，用於將連續預測值轉換為類別標籤。
 

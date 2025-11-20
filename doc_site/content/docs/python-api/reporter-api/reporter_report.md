@@ -71,7 +71,7 @@ Filename format depends on the `naming_strategy` parameter:
 
 **Granularity Abbreviations (Compact Mode):**
 - G = Global
-- C = Columnwise  
+- C = Columnwise
 - P = Pairwise
 - D = Details
 - T = Tree

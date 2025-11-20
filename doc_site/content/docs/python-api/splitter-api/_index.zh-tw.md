@@ -18,7 +18,7 @@ weight: 1070
 > - `*--`：組合關係
 > - `..>`：相依關係
 
-## 基本使用 
+## 基本使用
 
 ```python
 from petsard import Splitter

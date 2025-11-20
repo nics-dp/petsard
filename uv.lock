@@ -185,34 +185,6 @@ wheels = [
 ]
 
 [[package]]
-name = "boto3"
-version = "1.40.71"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "botocore" },
-    { name = "jmespath" },
-    { name = "s3transfer" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/2e/d8/c316637525560e01cbf048fd88f29be73214411ad26e743f3b1950df76f0/boto3-1.40.71.tar.gz", hash = "sha256:6d38e0250154552658be92a62cd48adf8ca8fd4abc181fb52d13371b53179503", size = 111638, upload-time = "2025-11-11T20:25:02.621Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/3e/5c/e1ef895ceaf42826b21c2a85b281cb31d3fc7056fb03d5d2d4beeb0ee574/boto3-1.40.71-py3-none-any.whl", hash = "sha256:4ac9ee8d1629e45d6b6adc727795d1fc9852e998cd1a73e4eda50f6120677bab", size = 139357, upload-time = "2025-11-11T20:24:59.376Z" },
-]
-
-[[package]]
-name = "botocore"
-version = "1.40.71"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "jmespath" },
-    { name = "python-dateutil" },
-    { name = "urllib3" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/5f/2f/7e5b9a0f9f9c958e1b70734be9b5cbcef64a1bfa9a570bcaafea0c997840/botocore-1.40.71.tar.gz", hash = "sha256:7ed28c2e092fc0d67fbfba818fbdccc92426b452cc936bf034db6de717e0d068", size = 14445036, upload-time = "2025-11-11T20:24:50.69Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/cf/a3/b44efd9db38d4426740f42c550c0c23502a91328e2cdcbe6f0795191002a/botocore-1.40.71-py3-none-any.whl", hash = "sha256:4c05907b2a56b1f6fd70403fbae0f09a4758b95758192db5ff93c0e9940a11bb", size = 14107773, upload-time = "2025-11-11T20:24:48.115Z" },
-]
-
-[[package]]
 name = "cachecontrol"
 version = "0.14.3"
 source = { registry = "https://pypi.org/simple" }
@@ -341,15 +313,6 @@ wheels = [
 ]
 
 [[package]]
-name = "cloudpickle"
-version = "3.1.2"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/27/fb/576f067976d320f5f0114a8d9fa1215425441bb35627b1993e5afd8111e5/cloudpickle-3.1.2.tar.gz", hash = "sha256:7fda9eb655c9c230dab534f1983763de5835249750e85fbcef43aaa30a9a2414", size = 22330, upload-time = "2025-11-03T09:25:26.604Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/88/39/799be3f2f0f38cc727ee3b4f1445fe6d5e4133064ec2e4115069418a5bb6/cloudpickle-3.1.2-py3-none-any.whl", hash = "sha256:9acb47f6afd73f60dc1df93bb801b472f05ff42fa6c84167d25cb206be1fbf4a", size = 22228, upload-time = "2025-11-03T09:25:25.534Z" },
-]
-
-[[package]]
 name = "colorama"
 version = "0.4.6"
 source = { registry = "https://pypi.org/simple" }
@@ -423,22 +386,6 @@ toml = [
 ]
 
 [[package]]
-name = "ctgan"
-version = "0.11.1"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "numpy" },
-    { name = "pandas" },
-    { name = "rdt" },
-    { name = "torch" },
-    { name = "tqdm" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/7a/52/9e92521d17ad99fd8224972d4e639d9fce1bd82af0cb84f34b40f97ddb60/ctgan-0.11.1.tar.gz", hash = "sha256:d6a5dee0f063db4d44d188865fb52ae4cc95c9ed42c679c4e9fcab39163f850e", size = 26820, upload-time = "2025-10-30T21:32:04.43Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/b7/a7/b2323fff20b408ac8aba3c8981509131aa14b3aa566fa577fca86b395e8e/ctgan-0.11.1-py3-none-any.whl", hash = "sha256:e52b25a3f83c678ec910358608c9ade694e15377438bcd69c44bea521c7f7942", size = 25281, upload-time = "2025-10-30T21:32:03.012Z" },
-]
-
-[[package]]
 name = "cyclonedx-python-lib"
 version = "9.1.0"
 source = { registry = "https://pypi.org/simple" }
@@ -477,21 +424,6 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/43/fa/6d96a0978d19e17b68d634497769987b16c8f4cd0a7a05048bec693caa6b/decorator-5.2.1.tar.gz", hash = "sha256:65f266143752f734b0a7cc83c46f4618af75b8c5911b00ccb61d0ac9b6da0360", size = 56711, upload-time = "2025-02-24T04:41:34.073Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/4e/8c/f3147f5c4b73e7550fe5f9352eaa956ae838d5c51eb58e7a25b9f3e2643b/decorator-5.2.1-py3-none-any.whl", hash = "sha256:d316bb415a2d9e2d2b3abcc4084c6502fc09240e292cd76a76afc106a1c8e04a", size = 9190, upload-time = "2025-02-24T04:41:32.565Z" },
-]
-
-[[package]]
-name = "deepecho"
-version = "0.7.0"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "numpy" },
-    { name = "pandas" },
-    { name = "torch" },
-    { name = "tqdm" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/c5/1e/9445e3be433e5db8f7a5bbcd54cd908cd43950b7eb250b5ee8d56d3c6ed4/deepecho-0.7.0.tar.gz", hash = "sha256:b2bc4b49f067ccc9c13fbfd95035e7babcf1c17800720ee7f45183bde4a663b4", size = 30616, upload-time = "2025-02-14T01:37:49.302Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/29/7a/32111a86dc72bb7b542008c30d7817ff1e6de1ffa1af0fe9760fa8b69c81/deepecho-0.7.0-py3-none-any.whl", hash = "sha256:9dbd745bda6f92cb49f63b66ce1e31d8420dcd879cae2839856c72ab650e7206", size = 27795, upload-time = "2025-02-14T01:37:48.032Z" },
 ]
 
 [[package]]
@@ -555,18 +487,6 @@ wheels = [
 ]
 
 [[package]]
-name = "faker"
-version = "37.12.0"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "tzdata" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/3d/84/e95acaa848b855e15c83331d0401ee5f84b2f60889255c2e055cb4fb6bdf/faker-37.12.0.tar.gz", hash = "sha256:7505e59a7e02fa9010f06c3e1e92f8250d4cfbb30632296140c2d6dbef09b0fa", size = 1935741, upload-time = "2025-10-24T15:19:58.764Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/8e/98/2c050dec90e295a524c9b65c4cb9e7c302386a296b2938710448cbd267d5/faker-37.12.0-py3-none-any.whl", hash = "sha256:afe7ccc038da92f2fbae30d8e16d19d91e92e242f8401ce9caf44de892bab4c4", size = 1975461, upload-time = "2025-10-24T15:19:55.739Z" },
-]
-
-[[package]]
 name = "fastjsonschema"
 version = "2.21.2"
 source = { registry = "https://pypi.org/simple" }
@@ -624,15 +544,6 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/9a/c8/dd58967d119baab745caec2f9d853297cec1989ec1d63f677d3880632b88/gitpython-3.1.45.tar.gz", hash = "sha256:85b0ee964ceddf211c41b9f27a49086010a190fd8132a24e21f362a4b36a791c", size = 215076, upload-time = "2025-07-24T03:45:54.871Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/01/61/d4b89fec821f72385526e1b9d9a3a0385dda4a72b206d28049e2c7cd39b8/gitpython-3.1.45-py3-none-any.whl", hash = "sha256:8908cb2e02fb3b93b7eb0f2827125cb699869470432cc885f019b8fd0fccff77", size = 208168, upload-time = "2025-07-24T03:45:52.517Z" },
-]
-
-[[package]]
-name = "graphviz"
-version = "0.21"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/f8/b3/3ac91e9be6b761a4b30d66ff165e54439dcd48b83f4e20d644867215f6ca/graphviz-0.21.tar.gz", hash = "sha256:20743e7183be82aaaa8ad6c93f8893c923bd6658a04c32ee115edb3c8a835f78", size = 200434, upload-time = "2025-06-15T09:35:05.824Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/91/4c/e0ce1ef95d4000ebc1c11801f9b944fa5910ecc15b5e351865763d8657f8/graphviz-0.21-py3-none-any.whl", hash = "sha256:54f33de9f4f911d7e84e4191749cac8cc5653f815b06738c54db9a15ab8b1e42", size = 47300, upload-time = "2025-06-15T09:35:04.433Z" },
 ]
 
 [[package]]
@@ -849,15 +760,6 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/df/bf/f7da0350254c0ed7c72f3e33cef02e048281fec7ecec5f032d4aac52226b/jinja2-3.1.6.tar.gz", hash = "sha256:0137fb05990d35f1275a587e9aee6d56da821fc83491a0fb838183be43f66d6d", size = 245115, upload-time = "2025-03-05T20:05:02.478Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/62/a1/3d680cbfd5f4b8f15abc1d571870c5fc3e594bb582bc3b64ea099db13e56/jinja2-3.1.6-py3-none-any.whl", hash = "sha256:85ece4451f492d0c13c5dd7c13a64681a86afae63a5f347908daf103ce6d2f67", size = 134899, upload-time = "2025-03-05T20:05:00.369Z" },
-]
-
-[[package]]
-name = "jmespath"
-version = "1.0.1"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/00/2a/e867e8531cf3e36b41201936b7fa7ba7b5702dbef42922193f05c8976cd6/jmespath-1.0.1.tar.gz", hash = "sha256:90261b206d6defd58fdd5e85f478bf633a2901798906be2ad389150c5c60edbe", size = 25843, upload-time = "2022-06-17T18:00:12.224Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/31/b4/b9b800c45527aadd64d5b442f9b932b00648617eb5d63d2c7a6587b7cafc/jmespath-1.0.1-py3-none-any.whl", hash = "sha256:02e2e4cc71b5bcab88332eebf907519190dd9e6e82107fa7f83b1003a6252980", size = 20256, upload-time = "2022-06-17T18:00:10.251Z" },
 ]
 
 [[package]]
@@ -1661,12 +1563,8 @@ jupyter = [
 [package.dev-dependencies]
 all = [
     { name = "anonymeter" },
-    { name = "boto3" },
-    { name = "botocore" },
     { name = "debugpy" },
     { name = "decorator" },
-    { name = "faker" },
-    { name = "filelock" },
     { name = "fsspec" },
     { name = "imblearn" },
     { name = "ipykernel" },
@@ -1676,7 +1574,6 @@ all = [
     { name = "jinja2" },
     { name = "joblib" },
     { name = "jupyterlab" },
-    { name = "narwhals" },
     { name = "networkx", version = "3.4.2", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
     { name = "networkx", version = "3.5", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
     { name = "notebook" },
@@ -1698,7 +1595,6 @@ all = [
     { name = "nvidia-nvtx-cu12", marker = "platform_machine == 'x86_64' and sys_platform == 'linux'" },
     { name = "openpyxl" },
     { name = "pandas" },
-    { name = "platformdirs" },
     { name = "plotly" },
     { name = "prompt-toolkit" },
     { name = "psutil" },
@@ -1707,19 +1603,14 @@ all = [
     { name = "pyyaml" },
     { name = "pyzmq" },
     { name = "requests" },
-    { name = "s3transfer" },
     { name = "scikit-learn" },
     { name = "scipy", version = "1.15.3", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
     { name = "scipy", version = "1.16.3", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
     { name = "sdmetrics" },
-    { name = "sdv" },
     { name = "sympy" },
-    { name = "threadpoolctl" },
     { name = "torch" },
     { name = "triton", marker = "platform_machine == 'x86_64' and sys_platform == 'linux'" },
-    { name = "typing-extensions" },
     { name = "tzdata" },
-    { name = "urllib3" },
     { name = "xgboost" },
 ]
 base-common = [
@@ -1729,15 +1620,10 @@ base-common = [
 ]
 default = [
     { name = "anonymeter" },
-    { name = "boto3" },
-    { name = "botocore" },
-    { name = "faker" },
-    { name = "filelock" },
     { name = "fsspec" },
     { name = "imblearn" },
     { name = "jinja2" },
     { name = "joblib" },
-    { name = "narwhals" },
     { name = "networkx", version = "3.4.2", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
     { name = "networkx", version = "3.5", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
     { name = "numba" },
@@ -1757,35 +1643,25 @@ default = [
     { name = "nvidia-nvjitlink-cu12", marker = "platform_machine == 'x86_64' and sys_platform == 'linux'" },
     { name = "nvidia-nvtx-cu12", marker = "platform_machine == 'x86_64' and sys_platform == 'linux'" },
     { name = "pandas" },
-    { name = "platformdirs" },
     { name = "plotly" },
     { name = "python-dateutil" },
     { name = "pytz" },
     { name = "pyyaml" },
     { name = "requests" },
-    { name = "s3transfer" },
     { name = "scikit-learn" },
     { name = "scipy", version = "1.15.3", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
     { name = "scipy", version = "1.16.3", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
     { name = "sdmetrics" },
-    { name = "sdv" },
     { name = "sympy" },
-    { name = "threadpoolctl" },
     { name = "torch" },
     { name = "triton", marker = "platform_machine == 'x86_64' and sys_platform == 'linux'" },
-    { name = "typing-extensions" },
     { name = "tzdata" },
-    { name = "urllib3" },
     { name = "xgboost" },
 ]
 dev = [
     { name = "anonymeter" },
-    { name = "boto3" },
-    { name = "botocore" },
     { name = "debugpy" },
     { name = "decorator" },
-    { name = "faker" },
-    { name = "filelock" },
     { name = "fsspec" },
     { name = "imblearn" },
     { name = "ipykernel" },
@@ -1795,7 +1671,6 @@ dev = [
     { name = "jinja2" },
     { name = "joblib" },
     { name = "jupyterlab" },
-    { name = "narwhals" },
     { name = "networkx", version = "3.4.2", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
     { name = "networkx", version = "3.5", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
     { name = "notebook" },
@@ -1818,7 +1693,6 @@ dev = [
     { name = "openpyxl" },
     { name = "pandas" },
     { name = "pip-audit" },
-    { name = "platformdirs" },
     { name = "plotly" },
     { name = "prompt-toolkit" },
     { name = "psutil" },
@@ -1831,20 +1705,15 @@ dev = [
     { name = "pyzmq" },
     { name = "requests" },
     { name = "ruff" },
-    { name = "s3transfer" },
     { name = "scikit-learn" },
     { name = "scipy", version = "1.15.3", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
     { name = "scipy", version = "1.16.3", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
     { name = "sdmetrics" },
-    { name = "sdv" },
     { name = "sympy" },
-    { name = "threadpoolctl" },
     { name = "torch" },
     { name = "triton", marker = "platform_machine == 'x86_64' and sys_platform == 'linux'" },
     { name = "trove-classifiers" },
-    { name = "typing-extensions" },
     { name = "tzdata" },
-    { name = "urllib3" },
     { name = "xgboost" },
 ]
 dev-tools = [
@@ -1857,12 +1726,8 @@ dev-tools = [
 ]
 ds = [
     { name = "anonymeter" },
-    { name = "boto3" },
-    { name = "botocore" },
     { name = "debugpy" },
     { name = "decorator" },
-    { name = "faker" },
-    { name = "filelock" },
     { name = "fsspec" },
     { name = "imblearn" },
     { name = "ipykernel" },
@@ -1872,7 +1737,6 @@ ds = [
     { name = "jinja2" },
     { name = "joblib" },
     { name = "jupyterlab" },
-    { name = "narwhals" },
     { name = "networkx", version = "3.4.2", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
     { name = "networkx", version = "3.5", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
     { name = "notebook" },
@@ -1893,7 +1757,6 @@ ds = [
     { name = "nvidia-nvjitlink-cu12", marker = "platform_machine == 'x86_64' and sys_platform == 'linux'" },
     { name = "nvidia-nvtx-cu12", marker = "platform_machine == 'x86_64' and sys_platform == 'linux'" },
     { name = "pandas" },
-    { name = "platformdirs" },
     { name = "plotly" },
     { name = "prompt-toolkit" },
     { name = "psutil" },
@@ -1902,19 +1765,14 @@ ds = [
     { name = "pyyaml" },
     { name = "pyzmq" },
     { name = "requests" },
-    { name = "s3transfer" },
     { name = "scikit-learn" },
     { name = "scipy", version = "1.15.3", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
     { name = "scipy", version = "1.16.3", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
     { name = "sdmetrics" },
-    { name = "sdv" },
     { name = "sympy" },
-    { name = "threadpoolctl" },
     { name = "torch" },
     { name = "triton", marker = "platform_machine == 'x86_64' and sys_platform == 'linux'" },
-    { name = "typing-extensions" },
     { name = "tzdata" },
-    { name = "urllib3" },
     { name = "xgboost" },
 ]
 eval = [
@@ -1960,14 +1818,9 @@ load-xlsx = [
     { name = "openpyxl" },
 ]
 syn = [
-    { name = "boto3" },
-    { name = "botocore" },
-    { name = "faker" },
-    { name = "filelock" },
     { name = "fsspec" },
     { name = "jinja2" },
     { name = "joblib" },
-    { name = "narwhals" },
     { name = "networkx", version = "3.4.2", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
     { name = "networkx", version = "3.5", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
     { name = "numba" },
@@ -1986,20 +1839,14 @@ syn = [
     { name = "nvidia-nccl-cu12", marker = "platform_machine == 'x86_64' and sys_platform == 'linux'" },
     { name = "nvidia-nvjitlink-cu12", marker = "platform_machine == 'x86_64' and sys_platform == 'linux'" },
     { name = "nvidia-nvtx-cu12", marker = "platform_machine == 'x86_64' and sys_platform == 'linux'" },
-    { name = "platformdirs" },
     { name = "plotly" },
     { name = "pytz" },
-    { name = "s3transfer" },
     { name = "scipy", version = "1.15.3", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
     { name = "scipy", version = "1.16.3", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
-    { name = "sdv" },
     { name = "sympy" },
-    { name = "threadpoolctl" },
     { name = "torch" },
     { name = "triton", marker = "platform_machine == 'x86_64' and sys_platform == 'linux'" },
-    { name = "typing-extensions" },
     { name = "tzdata" },
-    { name = "urllib3" },
 ]
 
 [package.metadata]
@@ -2030,12 +1877,8 @@ provides-extras = ["jupyter", "excel", "ds", "all", "dev"]
 [package.metadata.requires-dev]
 all = [
     { name = "anonymeter", specifier = ">=1.0.0,<2" },
-    { name = "boto3", specifier = ">=1.40.25,<2" },
-    { name = "botocore", specifier = ">=1.40.25,<2" },
     { name = "debugpy", specifier = ">=1.8.16,<2" },
     { name = "decorator", specifier = ">=5.2.1,<6" },
-    { name = "faker", specifier = ">=37.6.0,<39" },
-    { name = "filelock", specifier = ">=3.19.1,<4" },
     { name = "fsspec", specifier = ">=2025.9.0" },
     { name = "imblearn", specifier = ">=0.0" },
     { name = "ipykernel", specifier = ">=7.1.0,<8" },
@@ -2045,7 +1888,6 @@ all = [
     { name = "jinja2", specifier = ">=3.1.6,<4" },
     { name = "joblib", specifier = ">=1.5.2,<2" },
     { name = "jupyterlab", specifier = ">=4.4.7,<5" },
-    { name = "narwhals", specifier = ">=1.45.0,<3" },
     { name = "networkx", marker = "python_full_version < '3.11'", specifier = ">=3.4.2,<3.5" },
     { name = "networkx", marker = "python_full_version >= '3.11'", specifier = ">=3.5,<4" },
     { name = "notebook", specifier = ">=7.4.5,<8" },
@@ -2067,7 +1909,6 @@ all = [
     { name = "nvidia-nvtx-cu12", marker = "platform_machine == 'x86_64' and sys_platform == 'linux'", specifier = ">=12.6.77,<13" },
     { name = "openpyxl", specifier = ">=3.1.5,<4" },
     { name = "pandas", specifier = ">=2.3.2,<3" },
-    { name = "platformdirs", specifier = ">=4.4.0,<5" },
     { name = "plotly", specifier = ">=6.3.0,<7" },
     { name = "prompt-toolkit", specifier = ">=3.0.52,<4" },
     { name = "psutil", specifier = ">=7.0.0,<8" },
@@ -2076,19 +1917,14 @@ all = [
     { name = "pyyaml", specifier = ">=6.0.2,<7" },
     { name = "pyzmq", specifier = ">=27.0.2,<28" },
     { name = "requests", specifier = ">=2.32.5,<3" },
-    { name = "s3transfer", specifier = ">=0.13.1,<1" },
     { name = "scikit-learn", specifier = ">=1.7.1,<2" },
     { name = "scipy", marker = "python_full_version < '3.11'", specifier = ">=1.15.3,<2" },
     { name = "scipy", marker = "python_full_version >= '3.11'", specifier = ">=1.16.0,<2" },
     { name = "sdmetrics", specifier = ">=0.23.0,<1" },
-    { name = "sdv", specifier = ">=1.26.0,<2" },
     { name = "sympy", specifier = ">=1.14.0,<2" },
-    { name = "threadpoolctl", specifier = ">=3.6.0,<4" },
     { name = "torch", specifier = ">=2.8.0,<3" },
     { name = "triton", marker = "platform_machine == 'x86_64' and sys_platform == 'linux'", specifier = ">=3.4.0,<4" },
-    { name = "typing-extensions", specifier = ">=4.15.0,<5" },
     { name = "tzdata", specifier = ">=2025.2" },
-    { name = "urllib3", specifier = ">=2.5.0,<3" },
     { name = "xgboost", specifier = ">=3.0.5" },
 ]
 base-common = [
@@ -2098,15 +1934,10 @@ base-common = [
 ]
 default = [
     { name = "anonymeter", specifier = ">=1.0.0,<2" },
-    { name = "boto3", specifier = ">=1.40.25,<2" },
-    { name = "botocore", specifier = ">=1.40.25,<2" },
-    { name = "faker", specifier = ">=37.6.0,<39" },
-    { name = "filelock", specifier = ">=3.19.1,<4" },
     { name = "fsspec", specifier = ">=2025.9.0" },
     { name = "imblearn", specifier = ">=0.0" },
     { name = "jinja2", specifier = ">=3.1.6,<4" },
     { name = "joblib", specifier = ">=1.5.2,<2" },
-    { name = "narwhals", specifier = ">=1.45.0,<3" },
     { name = "networkx", marker = "python_full_version < '3.11'", specifier = ">=3.4.2,<3.5" },
     { name = "networkx", marker = "python_full_version >= '3.11'", specifier = ">=3.5,<4" },
     { name = "numba", specifier = ">=0.61.2,<1" },
@@ -2126,35 +1957,25 @@ default = [
     { name = "nvidia-nvjitlink-cu12", marker = "platform_machine == 'x86_64' and sys_platform == 'linux'", specifier = ">=12.6.85,<13" },
     { name = "nvidia-nvtx-cu12", marker = "platform_machine == 'x86_64' and sys_platform == 'linux'", specifier = ">=12.6.77,<13" },
     { name = "pandas", specifier = ">=2.3.2,<3" },
-    { name = "platformdirs", specifier = ">=4.4.0,<5" },
     { name = "plotly", specifier = ">=6.3.0,<7" },
     { name = "python-dateutil", specifier = ">=2.9.0.post0,<3" },
     { name = "pytz", specifier = ">=2025.2" },
     { name = "pyyaml", specifier = ">=6.0.2,<7" },
     { name = "requests", specifier = ">=2.32.5,<3" },
-    { name = "s3transfer", specifier = ">=0.13.1,<1" },
     { name = "scikit-learn", specifier = ">=1.7.1,<2" },
     { name = "scipy", marker = "python_full_version < '3.11'", specifier = ">=1.15.3,<2" },
     { name = "scipy", marker = "python_full_version >= '3.11'", specifier = ">=1.16.0,<2" },
     { name = "sdmetrics", specifier = ">=0.23.0,<1" },
-    { name = "sdv", specifier = ">=1.26.0,<2" },
     { name = "sympy", specifier = ">=1.14.0,<2" },
-    { name = "threadpoolctl", specifier = ">=3.6.0,<4" },
     { name = "torch", specifier = ">=2.8.0,<3" },
     { name = "triton", marker = "platform_machine == 'x86_64' and sys_platform == 'linux'", specifier = ">=3.4.0,<4" },
-    { name = "typing-extensions", specifier = ">=4.15.0,<5" },
     { name = "tzdata", specifier = ">=2025.2" },
-    { name = "urllib3", specifier = ">=2.5.0,<3" },
     { name = "xgboost", specifier = ">=3.0.5" },
 ]
 dev = [
     { name = "anonymeter", specifier = ">=1.0.0,<2" },
-    { name = "boto3", specifier = ">=1.40.25,<2" },
-    { name = "botocore", specifier = ">=1.40.25,<2" },
     { name = "debugpy", specifier = ">=1.8.16,<2" },
     { name = "decorator", specifier = ">=5.2.1,<6" },
-    { name = "faker", specifier = ">=37.6.0,<39" },
-    { name = "filelock", specifier = ">=3.19.1,<4" },
     { name = "fsspec", specifier = ">=2025.9.0" },
     { name = "imblearn", specifier = ">=0.0" },
     { name = "ipykernel", specifier = ">=7.1.0,<8" },
@@ -2164,7 +1985,6 @@ dev = [
     { name = "jinja2", specifier = ">=3.1.6,<4" },
     { name = "joblib", specifier = ">=1.5.2,<2" },
     { name = "jupyterlab", specifier = ">=4.4.7,<5" },
-    { name = "narwhals", specifier = ">=1.45.0,<3" },
     { name = "networkx", marker = "python_full_version < '3.11'", specifier = ">=3.4.2,<3.5" },
     { name = "networkx", marker = "python_full_version >= '3.11'", specifier = ">=3.5,<4" },
     { name = "notebook", specifier = ">=7.4.5,<8" },
@@ -2187,7 +2007,6 @@ dev = [
     { name = "openpyxl", specifier = ">=3.1.5,<4" },
     { name = "pandas", specifier = ">=2.3.2,<3" },
     { name = "pip-audit", specifier = ">=2.7.3" },
-    { name = "platformdirs", specifier = ">=4.4.0,<5" },
     { name = "plotly", specifier = ">=6.3.0,<7" },
     { name = "prompt-toolkit", specifier = ">=3.0.52,<4" },
     { name = "psutil", specifier = ">=7.0.0,<8" },
@@ -2200,20 +2019,15 @@ dev = [
     { name = "pyzmq", specifier = ">=27.0.2,<28" },
     { name = "requests", specifier = ">=2.32.5,<3" },
     { name = "ruff", specifier = ">=0.12.12" },
-    { name = "s3transfer", specifier = ">=0.13.1,<1" },
     { name = "scikit-learn", specifier = ">=1.7.1,<2" },
     { name = "scipy", marker = "python_full_version < '3.11'", specifier = ">=1.15.3,<2" },
     { name = "scipy", marker = "python_full_version >= '3.11'", specifier = ">=1.16.0,<2" },
     { name = "sdmetrics", specifier = ">=0.23.0,<1" },
-    { name = "sdv", specifier = ">=1.26.0,<2" },
     { name = "sympy", specifier = ">=1.14.0,<2" },
-    { name = "threadpoolctl", specifier = ">=3.6.0,<4" },
     { name = "torch", specifier = ">=2.8.0,<3" },
     { name = "triton", marker = "platform_machine == 'x86_64' and sys_platform == 'linux'", specifier = ">=3.4.0,<4" },
     { name = "trove-classifiers", specifier = ">=2025.8.26.11" },
-    { name = "typing-extensions", specifier = ">=4.15.0,<5" },
     { name = "tzdata", specifier = ">=2025.2" },
-    { name = "urllib3", specifier = ">=2.5.0,<3" },
     { name = "xgboost", specifier = ">=3.0.5" },
 ]
 dev-tools = [
@@ -2226,12 +2040,8 @@ dev-tools = [
 ]
 ds = [
     { name = "anonymeter", specifier = ">=1.0.0,<2" },
-    { name = "boto3", specifier = ">=1.40.25,<2" },
-    { name = "botocore", specifier = ">=1.40.25,<2" },
     { name = "debugpy", specifier = ">=1.8.16,<2" },
     { name = "decorator", specifier = ">=5.2.1,<6" },
-    { name = "faker", specifier = ">=37.6.0,<39" },
-    { name = "filelock", specifier = ">=3.19.1,<4" },
     { name = "fsspec", specifier = ">=2025.9.0" },
     { name = "imblearn", specifier = ">=0.0" },
     { name = "ipykernel", specifier = ">=7.1.0,<8" },
@@ -2241,7 +2051,6 @@ ds = [
     { name = "jinja2", specifier = ">=3.1.6,<4" },
     { name = "joblib", specifier = ">=1.5.2,<2" },
     { name = "jupyterlab", specifier = ">=4.4.7,<5" },
-    { name = "narwhals", specifier = ">=1.45.0,<3" },
     { name = "networkx", marker = "python_full_version < '3.11'", specifier = ">=3.4.2,<3.5" },
     { name = "networkx", marker = "python_full_version >= '3.11'", specifier = ">=3.5,<4" },
     { name = "notebook", specifier = ">=7.4.5,<8" },
@@ -2262,7 +2071,6 @@ ds = [
     { name = "nvidia-nvjitlink-cu12", marker = "platform_machine == 'x86_64' and sys_platform == 'linux'", specifier = ">=12.6.85,<13" },
     { name = "nvidia-nvtx-cu12", marker = "platform_machine == 'x86_64' and sys_platform == 'linux'", specifier = ">=12.6.77,<13" },
     { name = "pandas", specifier = ">=2.3.2,<3" },
-    { name = "platformdirs", specifier = ">=4.4.0,<5" },
     { name = "plotly", specifier = ">=6.3.0,<7" },
     { name = "prompt-toolkit", specifier = ">=3.0.52,<4" },
     { name = "psutil", specifier = ">=7.0.0,<8" },
@@ -2271,19 +2079,14 @@ ds = [
     { name = "pyyaml", specifier = ">=6.0.2,<7" },
     { name = "pyzmq", specifier = ">=27.0.2,<28" },
     { name = "requests", specifier = ">=2.32.5,<3" },
-    { name = "s3transfer", specifier = ">=0.13.1,<1" },
     { name = "scikit-learn", specifier = ">=1.7.1,<2" },
     { name = "scipy", marker = "python_full_version < '3.11'", specifier = ">=1.15.3,<2" },
     { name = "scipy", marker = "python_full_version >= '3.11'", specifier = ">=1.16.0,<2" },
     { name = "sdmetrics", specifier = ">=0.23.0,<1" },
-    { name = "sdv", specifier = ">=1.26.0,<2" },
     { name = "sympy", specifier = ">=1.14.0,<2" },
-    { name = "threadpoolctl", specifier = ">=3.6.0,<4" },
     { name = "torch", specifier = ">=2.8.0,<3" },
     { name = "triton", marker = "platform_machine == 'x86_64' and sys_platform == 'linux'", specifier = ">=3.4.0,<4" },
-    { name = "typing-extensions", specifier = ">=4.15.0,<5" },
     { name = "tzdata", specifier = ">=2025.2" },
-    { name = "urllib3", specifier = ">=2.5.0,<3" },
     { name = "xgboost", specifier = ">=3.0.5" },
 ]
 eval = [
@@ -2325,14 +2128,9 @@ jupyter = [
 load-benchmark = [{ name = "requests", specifier = ">=2.32.5,<3" }]
 load-xlsx = [{ name = "openpyxl", specifier = ">=3.1.5,<4" }]
 syn = [
-    { name = "boto3", specifier = ">=1.40.25,<2" },
-    { name = "botocore", specifier = ">=1.40.25,<2" },
-    { name = "faker", specifier = ">=37.6.0,<39" },
-    { name = "filelock", specifier = ">=3.19.1,<4" },
     { name = "fsspec", specifier = ">=2025.9.0" },
     { name = "jinja2", specifier = ">=3.1.6,<4" },
     { name = "joblib", specifier = ">=1.5.2,<2" },
-    { name = "narwhals", specifier = ">=1.45.0,<3" },
     { name = "networkx", marker = "python_full_version < '3.11'", specifier = ">=3.4.2,<3.5" },
     { name = "networkx", marker = "python_full_version >= '3.11'", specifier = ">=3.5,<4" },
     { name = "numba", specifier = ">=0.61.2,<1" },
@@ -2351,20 +2149,14 @@ syn = [
     { name = "nvidia-nccl-cu12", marker = "platform_machine == 'x86_64' and sys_platform == 'linux'", specifier = ">=2.26.2,<3" },
     { name = "nvidia-nvjitlink-cu12", marker = "platform_machine == 'x86_64' and sys_platform == 'linux'", specifier = ">=12.6.85,<13" },
     { name = "nvidia-nvtx-cu12", marker = "platform_machine == 'x86_64' and sys_platform == 'linux'", specifier = ">=12.6.77,<13" },
-    { name = "platformdirs", specifier = ">=4.4.0,<5" },
     { name = "plotly", specifier = ">=6.3.0,<7" },
     { name = "pytz", specifier = ">=2025.2" },
-    { name = "s3transfer", specifier = ">=0.13.1,<1" },
     { name = "scipy", marker = "python_full_version < '3.11'", specifier = ">=1.15.3,<2" },
     { name = "scipy", marker = "python_full_version >= '3.11'", specifier = ">=1.16.0,<2" },
-    { name = "sdv", specifier = ">=1.26.0,<2" },
     { name = "sympy", specifier = ">=1.14.0,<2" },
-    { name = "threadpoolctl", specifier = ">=3.6.0,<4" },
     { name = "torch", specifier = ">=2.8.0,<3" },
     { name = "triton", marker = "platform_machine == 'x86_64' and sys_platform == 'linux'", specifier = ">=3.4.0,<4" },
-    { name = "typing-extensions", specifier = ">=4.15.0,<5" },
     { name = "tzdata", specifier = ">=2025.2" },
-    { name = "urllib3", specifier = ">=2.5.0,<3" },
 ]
 
 [[package]]
@@ -2816,24 +2608,6 @@ wheels = [
 ]
 
 [[package]]
-name = "rdt"
-version = "1.18.2"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "faker" },
-    { name = "numpy" },
-    { name = "pandas" },
-    { name = "python-dateutil" },
-    { name = "scikit-learn" },
-    { name = "scipy", version = "1.15.3", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
-    { name = "scipy", version = "1.16.3", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/a0/aa/c51a6526732919adbcf50ce0f95fbc89acac5f70b5a26b8c351d80469a24/rdt-1.18.2.tar.gz", hash = "sha256:768e812a9e2171c7523bb7e82ace5e658f1b76e7538e699a20f17010c8f3d2cb", size = 65061, upload-time = "2025-10-15T20:34:53.255Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/b8/20/0424eb76471aedccf41c3cecc63015a64c689cf3d6431a4b861defcf1cc7/rdt-1.18.2-py3-none-any.whl", hash = "sha256:cbcf2d593321e16c9632508ab99bb5ff7f8e5e61d34df95a3a625157b3389412", size = 74286, upload-time = "2025-10-15T20:34:51.95Z" },
-]
-
-[[package]]
 name = "referencing"
 version = "0.37.0"
 source = { registry = "https://pypi.org/simple" }
@@ -2996,18 +2770,6 @@ wheels = [
 ]
 
 [[package]]
-name = "s3transfer"
-version = "0.14.0"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "botocore" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/62/74/8d69dcb7a9efe8baa2046891735e5dfe433ad558ae23d9e3c14c633d1d58/s3transfer-0.14.0.tar.gz", hash = "sha256:eff12264e7c8b4985074ccce27a3b38a485bb7f7422cc8046fee9be4983e4125", size = 151547, upload-time = "2025-09-09T19:23:31.089Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/48/f0/ae7ca09223a81a1d890b2557186ea015f6e0502e9b8cb8e1813f1d8cfa4e/s3transfer-0.14.0-py3-none-any.whl", hash = "sha256:ea3b790c7077558ed1f02a3072fb3cb992bbbd253392f4b6e9e8976941c7d456", size = 85712, upload-time = "2025-09-09T19:23:30.041Z" },
-]
-
-[[package]]
 name = "scikit-learn"
 version = "1.7.2"
 source = { registry = "https://pypi.org/simple" }
@@ -3105,31 +2867,6 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/2b/09/17616c1b3593361e1e583a97a79f1dfbbe55002fd235deed1b42224c9043/sdmetrics-0.24.0.tar.gz", hash = "sha256:ac39b4e17c126012150d30c398fb24e62fa68c8b702baf0ca9a7cc7365ad6ed9", size = 134412, upload-time = "2025-11-03T22:26:31.752Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/66/23/359375a2fb3a2471b7c1044234a4807334d8f6762204e7c065c7630b8911/sdmetrics-0.24.0-py3-none-any.whl", hash = "sha256:e9265937772d29c31ad300ebde0b2ebbfe5796129e77d7a7f54eab922a936184", size = 198345, upload-time = "2025-11-03T22:26:30.145Z" },
-]
-
-[[package]]
-name = "sdv"
-version = "1.28.0"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "boto3" },
-    { name = "botocore" },
-    { name = "cloudpickle" },
-    { name = "copulas" },
-    { name = "ctgan" },
-    { name = "deepecho" },
-    { name = "graphviz" },
-    { name = "numpy" },
-    { name = "pandas" },
-    { name = "platformdirs" },
-    { name = "pyyaml" },
-    { name = "rdt" },
-    { name = "sdmetrics" },
-    { name = "tqdm" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/ac/92/8db5394791a6f3507c36059ac1c97edfee88f15773c02e7e923ed95dd481/sdv-1.28.0.tar.gz", hash = "sha256:3015a27e91a5ac4f354f394b7a4c53e34d95d225145393ffcd6ee1f43df9855b", size = 166500, upload-time = "2025-10-17T22:10:59.471Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/40/59/b8baf6ba741a96a0abd21802cb85d9287774ce099f8deec608fc59b81193/sdv-1.28.0-py3-none-any.whl", hash = "sha256:a2e21f7e198e7abe2b92f691d58850d6060111d184ef2439aca24626b19e893c", size = 193256, upload-time = "2025-10-17T22:10:57.669Z" },
 ]
 
 [[package]]

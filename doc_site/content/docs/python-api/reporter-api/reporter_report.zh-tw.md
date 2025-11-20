@@ -71,7 +71,7 @@ def report(processed_data: dict | pd.DataFrame | None = None) -> dict | None
 
 **粒度縮寫（Compact 模式）：**
 - G = Global
-- C = Columnwise  
+- C = Columnwise
 - P = Pairwise
 - D = Details
 - T = Tree

@@ -189,7 +189,7 @@ Output files:
 
 ### Q: Will too many detailed violation records affect performance?
 
-**A:** 
+**A:**
 - The system automatically limits to 10 violation examples per rule
 - If detailed records aren't needed, set `include_details: false` to save space
 - Summary and statistics files are always generated, unaffected by this setting

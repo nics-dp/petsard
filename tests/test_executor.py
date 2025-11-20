@@ -69,7 +69,7 @@ class TestExecutor:
         """設定測試環境"""
         self.test_config = {
             "Loader": {"load_data": {"method": "csv", "path": "test_data.csv"}},
-            "Synthesizer": {"synthesize": {"method": "sdv", "model": "GaussianCopula"}},
+            "Synthesizer": {"synthesize": {"method": "petsard-gaussian_copula", "model": "GaussianCopula"}},
         }
 
     def create_temp_config_file(self, config_dict):

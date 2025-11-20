@@ -7,7 +7,7 @@ next: docs/getting-started/default-synthesis-default-evaluation
 ---
 
 產生隱私強化合成資料的最簡單方式。
-目前的預設合成方式採用 SDV 的 Gaussian Copula。
+預設使用 PETsARD 內建的 Gaussian Copula 實作。
 
 請點擊下方按鈕在 Colab 中執行範例：
 
@@ -73,8 +73,9 @@ Loader:
 - **`default`**: 實驗名稱，可自由命名
 - **`method`**: 合成方法
   - 值：`default`
-  - 說明：使用預設的合成方法，即 **SDV Gaussian Copula**
+  - 說明：使用預設的合成方法，即 **PETsARD Gaussian Copula**
   - Gaussian Copula 是一種基於統計的合成方法，能夠捕捉變數間的相關性
+  - 使用內建實作，無需額外安裝依賴套件
 
 ### Postprocessor（資料後處理模組）
 

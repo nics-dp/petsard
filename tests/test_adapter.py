@@ -1049,7 +1049,7 @@ class TestSynthesizerAdapter:
 
     def test_init(self):
         """測試初始化"""
-        config = {"method": "sdv", "model": "GaussianCopula"}
+        config = {"method": "petsard-gaussian_copula", "model": "GaussianCopula"}
 
         with patch("petsard.adapter.Synthesizer") as mock_synthesizer_class:
             operator = SynthesizerAdapter(config)
@@ -1059,7 +1059,7 @@ class TestSynthesizerAdapter:
 
     def test_run(self):
         """測試執行"""
-        config = {"method": "sdv", "model": "GaussianCopula"}
+        config = {"method": "petsard-gaussian_copula", "model": "GaussianCopula"}
         mock_metadata = Mock(spec=Schema)
         mock_metadata.id = "test_schema"
         mock_metadata.name = "test"
@@ -1087,7 +1087,7 @@ class TestSynthesizerAdapter:
 
     def test_set_input_with_metadata(self):
         """測試有元資料的輸入設定"""
-        config = {"method": "sdv"}
+        config = {"method": "petsard-gaussian_copula"}
         test_data = pd.DataFrame({"A": [1, 2, 3]})
         mock_metadata = Mock(spec=Schema)
 
@@ -1109,7 +1109,7 @@ class TestSynthesizerAdapter:
 
     def test_set_input_without_metadata(self):
         """測試無元資料的輸入設定"""
-        config = {"method": "sdv"}
+        config = {"method": "petsard-gaussian_copula"}
         test_data = pd.DataFrame({"A": [1, 2, 3]})
 
         operator = SynthesizerAdapter(config)
@@ -1128,7 +1128,7 @@ class TestSynthesizerAdapter:
 
     def test_get_result(self):
         """測試結果取得"""
-        config = {"method": "sdv"}
+        config = {"method": "petsard-gaussian_copula"}
         synthetic_data = pd.DataFrame({"A": [1, 2, 3]})
 
         operator = SynthesizerAdapter(config)

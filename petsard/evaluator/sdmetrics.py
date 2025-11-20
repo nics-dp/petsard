@@ -8,7 +8,6 @@ from typing import Any
 import pandas as pd
 from sdmetrics.reports.base_report import BaseReport
 from sdmetrics.reports.single_table import DiagnosticReport, QualityReport
-from sdv.metadata import Metadata as SDV_Metadata
 
 from petsard.config_base import BaseConfig
 from petsard.evaluator.evaluator_base import BaseEvaluator
@@ -67,13 +66,41 @@ class SDMetricsSingleTableConfig(BaseConfig):
 
     def create_metadata(self) -> None:
         """
-        Create metadata from the original data.
+        Create metadata from the original data using pandas dtype inference.
+        Generates metadata in the format required by sdmetrics:
+        {
+            'columns': {
+                'column_name': {'sdtype': 'numerical' | 'categorical' | 'datetime' | 'boolean'},
+                ...
+            }
+        }
         """
-        self._logger.debug("Creating SDV metadata")
-        sdv_metadata_result: SDV_Metadata = SDV_Metadata().detect_from_dataframe(
-            self.ori
-        )
-        self.metadata = sdv_metadata_result._convert_to_single_table().to_dict()
+        self._logger.debug("Creating metadata from DataFrame dtypes")
+
+        columns_metadata = {}
+        for column in self.ori.columns:
+            dtype = self.ori[column].dtype
+
+            # Infer sdtype based on pandas dtype
+            if pd.api.types.is_numeric_dtype(dtype):
+                # Check if it's boolean (often stored as int with only 0/1 values)
+                if self.ori[column].dropna().isin([0, 1]).all() and self.ori[column].nunique() <= 2:
+                    sdtype = "boolean"
+                else:
+                    sdtype = "numerical"
+            elif pd.api.types.is_datetime64_any_dtype(dtype):
+                sdtype = "datetime"
+            elif pd.api.types.is_bool_dtype(dtype):
+                sdtype = "boolean"
+            else:
+                # Default to categorical for object/string types
+                sdtype = "categorical"
+
+            columns_metadata[column] = {"sdtype": sdtype}
+            self._logger.debug(f"Column '{column}': dtype={dtype}, sdtype={sdtype}")
+
+        self.metadata = {"columns": columns_metadata}
+        self._logger.debug(f"Created metadata for {len(columns_metadata)} columns")
 
     def get_sdmetrics_params(self) -> dict:
         """

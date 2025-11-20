@@ -47,7 +47,7 @@ Technical terms and definitions used in PETsARD documentation (alphabetically or
 
 - **Datacebo**: Development company of SDV (Synthetic Data Vault), proposing innovative technologies such as Uniform Encoding.
 - **Default Evaluation**: Default evaluation methods provided by the PETsARD system, including basic metrics for privacy, fidelity, and utility dimensions.
-- **Default Synthesis**: Default synthetic data generation method provided by the PETsARD system, using SDV's Gaussian Copula model.
+- **Default Synthesis**: Default synthetic data generation method provided by the PETsARD system, using built-in Gaussian Copula implementation (`petsard-gaussian_copula`).
 - **Denormalization**: Database processing technique merging multiple related tables into a single wide table, used to simplify multi-table data synthesis.
 - **Describer**: In PETsARD, refers to the system module that analyzes and describes statistical properties of data, generating data overview reports.
 - **Differential Privacy**: Mathematically defined privacy protection method ensuring individual information is not leaked.
@@ -79,7 +79,7 @@ Technical terms and definitions used in PETsARD documentation (alphabetically or
 ## G
 
 - **GAN**: Generative Adversarial Network. A deep learning architecture composed of a generator and discriminator, used for generating high-quality synthetic data.
-- **Gaussian Copula**: Default synthesis method used by PETsARD, preserving correlation structure between data using Gaussian distribution and Copula functions.
+- **Gaussian Copula**: Built-in default synthesis method used by PETsARD, preserving correlation structure between data using Gaussian distribution and Copula functions. Accelerated using Numba JIT compilation technology.
 - **GHCR**: GitHub Container Registry. Container image storage service provided by GitHub, hosting PETsARD Docker images.
 - **Granularity**: In PETsARD reports, refers to levels of evaluation results, including global, columnwise, pairwise, details, tree, etc.
 
@@ -182,7 +182,7 @@ Technical terms and definitions used in PETsARD documentation (alphabetically or
 - **Schema**: Metadata defining data structure, including field names, data types, constraints, and relationships. In PETsARD, used to track structural changes of data throughout the processing pipeline.
 - **Scikit-learn**: Abbreviated as sklearn. Python machine learning library providing classification, regression, clustering algorithms, used by PETsARD for machine learning utility evaluation.
 - **SDMetrics**: Evaluation tool in the SDV ecosystem for assessing synthetic data quality, fidelity, and diagnostic reports.
-- **SDV**: Synthetic Data Vault. Open-source synthetic data generation framework providing various synthesis algorithms.
+- **SDV**: Synthetic Data Vault. Third-party synthetic data package, optionally supported by PETsARD (requires separate installation: `pip install 'sdv>=1.26.0,<2'`, for reference only).
 - **Sensitivity**: Also known as recall, proportion correctly predicted among actual positives.
 - **Silhouette Coefficient**: Metric evaluating clustering quality, ranging from -1 to 1.
 - **Singling Out Risk**: Degree of risk that individual records can be uniquely identified, assessing whether specific individuals can be identified from data.

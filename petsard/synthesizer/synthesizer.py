@@ -7,14 +7,20 @@ from typing import Any
 import pandas as pd
 
 from petsard.config_base import BaseConfig
-from petsard.exceptions import (ConfigError, UncreatedError,
-                                UnsupportedMethodError)
+from petsard.exceptions import (
+    ConfigError,
+    MissingDependencyError,
+    UncreatedError,
+    UnsupportedMethodError,
+)
 from petsard.metadater.metadata import Schema
 from petsard.synthesizer.custom_synthesizer import CustomSynthesizer
-from petsard.synthesizer.petsard_gaussian_copula import \
-    PetsardGaussianCopulaSynthesizer
-from petsard.synthesizer.sdv import SDVSingleTableSynthesizer
+from petsard.synthesizer.petsard_gaussian_copula import PetsardGaussianCopulaSynthesizer
 from petsard.synthesizer.synthesizer_base import BaseSynthesizer
+
+# Lazy import for SDV - will be imported only when needed
+# This allows PETsARD to function without SDV installed
+_SDVSingleTableSynthesizer = None
 
 
 class SynthesizerMap:
@@ -59,7 +65,7 @@ class SynthesizerConfig(BaseConfig):
         custom_params (dict): Any additional parameters to be stored in custom_params.
     """
 
-    DEFAULT_SYNTHESIS_METHOD: str = "sdv-single_table-gaussiancopula"
+    DEFAULT_SYNTHESIS_METHOD: str = "petsard-gaussian_copula"
 
     method: str = "default"
     method_code: int = None
@@ -83,6 +89,10 @@ class SynthesizerConfig(BaseConfig):
             self._logger.error(error_msg)
             raise UnsupportedMethodError(error_msg) from e
 
+        # Check if SDV is required and available
+        if self.method_code == SynthesizerMap.SDV:
+            self._check_sdv_availability()
+
         # Set the default
         self.syn_method: str = (
             self.DEFAULT_SYNTHESIS_METHOD
@@ -93,6 +103,30 @@ class SynthesizerConfig(BaseConfig):
             f"SynthesizerConfig initialized with method: {self.method}, syn_method: {self.syn_method}"
         )
 
+    def _check_sdv_availability(self) -> None:
+        """
+        Check if SDV package is available when required.
+
+        Raises:
+            MissingDependencyError: If SDV is not installed but required by the selected method.
+        """
+        try:
+            import sdv  # noqa: F401
+
+            self._logger.debug("SDV package is available")
+        except ImportError:
+            error_msg = (
+                f"The SDV package is required for method '{self.method}' but is not installed. "
+                "SDV is an optional dependency that must be installed separately."
+            )
+            self._logger.error(error_msg)
+            raise MissingDependencyError(
+                message=error_msg,
+                package_name="sdv",
+                install_command="pip install 'sdv>=1.26.0,<2'",
+                method=self.method,
+            )
+
 
 class Synthesizer:
     """
@@ -100,9 +134,11 @@ class Synthesizer:
     as well as generating synthetic data based on the fitted model.
     """
 
+    # Note: SDV synthesizer is loaded lazily in create() method
+    # to avoid ImportError when sdv is not installed
     SYNTHESIZER_MAP: dict[int, BaseSynthesizer] = {
-        SynthesizerMap.DEFAULT: SDVSingleTableSynthesizer,
-        SynthesizerMap.SDV: SDVSingleTableSynthesizer,
+        SynthesizerMap.DEFAULT: PetsardGaussianCopulaSynthesizer,  # Default to built-in synthesizer
+        SynthesizerMap.SDV: None,  # Lazy-loaded SDVSingleTableSynthesizer
         SynthesizerMap.CUSTOM_METHOD: CustomSynthesizer,
         SynthesizerMap.PETSARD: PetsardGaussianCopulaSynthesizer,
     }
@@ -245,7 +281,8 @@ class Synthesizer:
             }
         )
 
-        synthesizer_class = self.SYNTHESIZER_MAP[self.config.method_code]
+        # Lazy load SDV synthesizer if needed
+        synthesizer_class = self._get_synthesizer_class(self.config.method_code)
         self._logger.debug(f"Using synthesizer class: {synthesizer_class.__name__}")
 
         merged_config: dict = self.config.get_params(
@@ -313,7 +350,7 @@ class Synthesizer:
             time_spent = round(time.time() - time_start, 4)
             self._logger.info(f"Fitting completed successfully in {time_spent} seconds")
         except Exception as e:
-            self._logger.error(f"Error during fitting: {str(e)}")
+            self._logger.error(f"Error during fitting: {e!s}")
             raise
 
     def sample(self) -> pd.DataFrame:
@@ -352,8 +389,45 @@ class Synthesizer:
 
             return data.reset_index(drop=True)
         except Exception as e:
-            self._logger.error(f"Error during sampling: {str(e)}")
+            self._logger.error(f"Error during sampling: {e!s}")
             raise
+
+    def _get_synthesizer_class(self, method_code: int) -> BaseSynthesizer:
+        """
+        Get the synthesizer class for the given method code.
+        Lazy loads SDV synthesizer if needed.
+
+        Args:
+            method_code (int): The synthesizer method code.
+
+        Returns:
+            BaseSynthesizer: The synthesizer class.
+        """
+        global _SDVSingleTableSynthesizer
+
+        synthesizer_class = self.SYNTHESIZER_MAP.get(method_code)
+
+        # If it's None, it's SDV which needs lazy loading
+        if synthesizer_class is None and method_code == SynthesizerMap.SDV:
+            if _SDVSingleTableSynthesizer is None:
+                self._logger.debug("Lazy loading SDV synthesizer")
+                try:
+                    from petsard.synthesizer.sdv import SDVSingleTableSynthesizer
+
+                    _SDVSingleTableSynthesizer = SDVSingleTableSynthesizer
+                    self._logger.debug("SDV synthesizer loaded successfully")
+                except ImportError as e:
+                    # This should not happen as we check in __post_init__
+                    error_msg = f"Failed to import SDV synthesizer: {e}"
+                    self._logger.error(error_msg)
+                    raise MissingDependencyError(
+                        message=error_msg,
+                        package_name="sdv",
+                        install_command="pip install 'sdv>=1.26.0,<2'",
+                    )
+            synthesizer_class = _SDVSingleTableSynthesizer
+
+        return synthesizer_class
 
     def fit_sample(self, data: pd.DataFrame) -> pd.DataFrame:
         """
