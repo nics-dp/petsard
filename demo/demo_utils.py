@@ -356,23 +356,29 @@ class PETsARDSetup:
 
         if self.is_colab:
             # Colab: 從 GitHub 安裝
-            subprocess.run(
-                [
-                    sys.executable,
-                    "-m",
-                    "pip",
-                    "install",
-                    f"git+https://github.com/nics-tw/petsard.git@{branch}#egg=petsard[all]",
-                    "-q",
-                ],
-                check=True,
-                capture_output=True,
-                text=True,
+            print(
+                f"📦 Installing PETsARD from branch '{branch}' with [all] dependencies..."
             )
-            # 清除 Colab 的輸出
-            from IPython.display import clear_output
-
-            clear_output(wait=True)
+            try:
+                result = subprocess.run(
+                    [
+                        sys.executable,
+                        "-m",
+                        "pip",
+                        "install",
+                        f"git+https://github.com/nics-tw/petsard.git@{branch}#egg=petsard[all]",
+                    ],
+                    check=True,
+                    capture_output=True,
+                    text=True,
+                )
+                print("✅ PETsARD installed successfully")
+            except subprocess.CalledProcessError as e:
+                print("❌ Installation failed!")
+                print(f"Error: {e}")
+                print(f"stdout: {e.stdout}")
+                print(f"stderr: {e.stderr}")
+                raise
         else:
             # 本地: 可編輯安裝
             project_root = self.find_project_root()
