@@ -1,6 +1,7 @@
 ---
 title: "Synthesizer API"
-weight: 340
+type: docs
+weight: 1090
 ---
 
 Synthetic data generation module supporting multiple synthesis methods and providing data generation capabilities.
@@ -22,13 +23,13 @@ Synthetic data generation module supporting multiple synthesis methods and provi
 ```python
 from petsard import Synthesizer
 
-# Use default method (SDV GaussianCopula)
+# Use default method (PETsARD Gaussian Copula)
 synthesizer = Synthesizer(method='default')
 synthesizer.create(metadata=metadata)
 synthesizer.fit_sample(data=df)
 synthetic_data = synthesizer.data_syn
 
-# Use specific SDV method
+# Use specific SDV method (requires SDV installation)
 synthesizer = Synthesizer(method='sdv-single_table-ctgan')
 synthesizer.create(metadata=metadata)
 synthesizer.fit_sample(data=df, sample_num_rows=1000)
@@ -53,8 +54,8 @@ def __init__(
     - Synthesis method name
     - Required parameter
     - Supported methods:
-        - `'default'`: Use SDV-GaussianCopula
-        - `'sdv-single_table-{method}'`: Use SDV provided single table methods (built-in methods not listed due to potential SDV version changes)
+        - `'default'` or `'petsard-gaussian_copula'`: Use PETsARD built-in Gaussian Copula
+        - `'sdv-single_table-{method}'`: Use SDV provided single table methods (requires separate installation: `pip install 'sdv>=1.26.0,<2'`, for reference only)
         - `'custom_method'`: Custom synthesis method (requires additional parameters)
 
 - **kwargs** : dict, optional
@@ -76,10 +77,10 @@ from petsard import Synthesizer
 # Use default method
 synthesizer = Synthesizer(method='default')
 
-# Use SDV CTGAN
+# Use SDV CTGAN (requires SDV installation)
 synthesizer = Synthesizer(method='sdv-single_table-ctgan')
 
-# Use SDV GaussianCopula with parameters
+# Use SDV GaussianCopula with parameters (requires SDV installation)
 synthesizer = Synthesizer(
     method='sdv-single_table-gaussiancopula',
     default_distribution='truncnorm'
@@ -95,7 +96,7 @@ synthesizer = Synthesizer(
 
 ## Default Parameters
 
-All SDV synthesizers are initialized with the following default parameters to ensure numerical precision:
+SDV synthesizers (if used) are initialized with the following default parameters to ensure numerical precision:
 
 - **`enforce_rounding=True`**: Applied to all SDV synthesizer types to maintain integer precision for numerical columns
 - **`enforce_min_max_values=True`**: Applied only to TVAE and GaussianCopula synthesizers to enforce value bounds

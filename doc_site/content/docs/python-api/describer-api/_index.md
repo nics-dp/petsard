@@ -1,6 +1,7 @@
 ---
 title: "Describer API"
-weight: 350
+type: docs
+weight: 1110
 ---
 
 Data description module that provides statistical summaries and insights from datasets.

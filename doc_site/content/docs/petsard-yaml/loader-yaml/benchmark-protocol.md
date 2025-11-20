@@ -1,6 +1,9 @@
 ---
 title: "benchmark://"
-weight: 112
+type: docs
+weight: 621
+prev: docs/petsard-yaml/loader-yaml
+next: docs/petsard-yaml/loader-yaml
 ---
 
 Loader supports using the `benchmark://` protocol to automatically download and load benchmark datasets.
@@ -41,6 +44,18 @@ Either local or benchmark-provided filepath and schema can be used interchangeab
 | Adult Income (Original) | `benchmark://adult-income_ori` | Original training data (for demo) |
 | Adult Income (Control) | `benchmark://adult-income_control` | Control group data (for demo) |
 | Adult Income (Synthetic) | `benchmark://adult-income_syn` | SDV Gaussian Copula synthetic data (for demo) |
+| Taiwan Salary Statistics | `benchmark://taiwan-salary-statistics-300k` | Taiwan salary statistics dataset (300K records) |
+| Taiwan Salary Statistics (No DI) | `benchmark://taiwan-salary-statistics-300k-no-di` | Taiwan salary statistics dataset - No Direct Identification (300K records, with name and ID removed, birth date and address split) |
+
+#### Taiwan Salaries Statistics
+
+This is a simulated dataset created by the InnoServe team in 2024 for challenge questions, simulating the Ministry of Labor's occupational salary survey statistics.
+
+**Description**
+
+- This dataset references the compilation methodology of the "Survey of Employed Workers' Earnings" conducted monthly by the Directorate-General of Budget, Accounting and Statistics (DGBAS) ([link](https://earnings.dgbas.gov.tw/replies.aspx)), simulating a wide-table structure that links comprehensive income tax files with labor insurance files, labor pension monthly contribution wage files, and National Health Insurance files
+- The simulation process uses publicly available 2023 aggregate statistics and references multiple government open data sources for numerical simulation. The data content does not involve any real individuals or legal entities. Any similarity to names or company names is purely coincidental
+- This dataset simulates only Taiwanese workers but includes all 20 municipalities and counties nationwide, including Kinmen and Lienchiang
 
 ### Best Practices Sample Datasets
 

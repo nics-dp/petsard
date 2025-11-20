@@ -1,11 +1,13 @@
 ---
 title: Data Synthesis with Default Parameters
 type: docs
-weight: 7
+weight: 110
+prev: docs/getting-started
+next: docs/getting-started/default-synthesis-default-evaluation
 ---
 
 The simplest way to generate privacy-enhanced synthetic data.
-Current default synthesis uses Gaussian Copula from SDV.
+Current default synthesis uses built-in Gaussian Copula implementation.
 
 Click the below button to run this example in Colab:
 
@@ -71,8 +73,9 @@ For detailed information about Schema, please refer to the [Schema YAML Document
 - **`default`**: Experiment name, can be freely named
 - **`method`**: Synthesis method
   - Value: `default`
-  - Description: Uses the default synthesis method, which is **SDV Gaussian Copula**
+  - Description: Uses the default synthesis method, which is **PETsARD Gaussian Copula**
   - Gaussian Copula is a statistical-based synthesis method that captures correlations between variables
+  - This is a built-in implementation, no external dependencies required
 
 ### Postprocessor (Data Postprocessing Module)
 

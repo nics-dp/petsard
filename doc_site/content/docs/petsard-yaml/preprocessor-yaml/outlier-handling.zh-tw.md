@@ -1,6 +1,9 @@
 ---
 title: "離群值處理"
-weight: 2
+type: docs
+weight: 642
+prev: docs/petsard-yaml/preprocessor-yaml/missing-handling
+next: docs/petsard-yaml/preprocessor-yaml/encoding
 ---
 
 識別並處理資料中的離群值（Outliers）。
@@ -110,13 +113,6 @@ Reporter:
 - \|Z-Score\| > 3 視為離群值
 - Z-Score = (x - μ) / σ
 
-**範例**：
-```yaml
-config:
-  outlier:
-    age: 'outlier_zscore'
-```
-
 ### outlier_iqr
 
 使用四分位距（Interquartile Range）方法識別離群值。
@@ -125,13 +121,6 @@ config:
 - 低於 Q1 - 1.5 × IQR
 - 高於 Q3 + 1.5 × IQR
 - IQR = Q3 - Q1
-
-**範例**：
-```yaml
-config:
-  outlier:
-    income: 'outlier_iqr'
-```
 
 ### outlier_isolationforest
 
@@ -142,14 +131,6 @@ config:
 - 適合多維度離群值檢測
 - 自動學習離群值模式
 
-**範例**：
-```yaml
-config:
-  outlier:
-    age: 'outlier_isolationforest'
-    # ⚠️ 會自動套用到所有數值欄位
-```
-
 ### outlier_lof
 
 使用局部離群因子（Local Outlier Factor）演算法。
@@ -159,43 +140,23 @@ config:
 - 基於密度的離群值檢測
 - 考慮局部資料分布
 
-**範例**：
-```yaml
-config:
-  outlier:
-    income: 'outlier_lof'
-    # ⚠️ 會自動套用到所有數值欄位
-```
-
 ## 處理邏輯
 
 ### 一般離群值處理（Z-Score、IQR）
 
-```
-訓練階段（fit）：
-  計算統計參數（均值、標準差、四分位數）
-
-轉換階段（transform）：
+- **訓練階段（fit）**：計算統計參數（均值、標準差、四分位數）
+- **轉換階段（transform）**：
   1. 識別離群值
   2. 移除包含離群值的列
-
-還原階段（inverse_transform）：
-  ⚠️ 無法還原（離群值處理不可逆）
-```
+- **還原階段（inverse_transform）**：⚠️ 無法還原（離群值處理不可逆）
 
 ### 全域離群值處理（Isolation Forest、LOF）
 
-```
-訓練階段（fit）：
-  使用所有數值欄位訓練模型
-
-轉換階段（transform）：
+- **訓練階段（fit）**：使用所有數值欄位訓練模型
+- **轉換階段（transform）**：
   1. 使用模型預測離群值
   2. 移除被標記為離群值的列
-
-還原階段（inverse_transform）：
-  ⚠️ 無法還原（離群值處理不可逆）
-```
+- **還原階段（inverse_transform）**：⚠️ 無法還原（離群值處理不可逆）
 
 ## 預設行為
 

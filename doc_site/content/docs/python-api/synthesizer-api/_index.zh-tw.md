@@ -1,6 +1,7 @@
 ---
 title: "Synthesizer API"
-weight: 340
+type: docs
+weight: 1090
 ---
 
 合成資料產生模組，支援多種合成方法並提供資料生成功能。
@@ -22,13 +23,13 @@ weight: 340
 ```python
 from petsard import Synthesizer
 
-# 使用預設方法（SDV GaussianCopula）
+# 使用預設方法（PETsARD Gaussian Copula）
 synthesizer = Synthesizer(method='default')
 synthesizer.create(metadata=metadata)
 synthesizer.fit_sample(data=df)
 synthetic_data = synthesizer.data_syn
 
-# 使用特定 SDV 方法
+# 使用特定 SDV 方法（需額外安裝 SDV）
 synthesizer = Synthesizer(method='sdv-single_table-ctgan')
 synthesizer.create(metadata=metadata)
 synthesizer.fit_sample(data=df, sample_num_rows=1000)
@@ -53,8 +54,8 @@ def __init__(
     - 合成方法名稱
     - 必要參數
     - 支援的方法：
-        - `'default'`：使用 SDV-GaussianCopula
-        - `'sdv-single_table-{method}'`：使用 SDV 提供的單表方法（考量未來 SDV 版本可能變動，不詳列所有內建方法）
+        - `'default'` 或 `'petsard-gaussian_copula'`：使用 PETsARD 內建 Gaussian Copula
+        - `'sdv-single_table-{method}'`：使用 SDV 提供的單表方法（需額外安裝：`pip install 'sdv>=1.26.0,<2'`，僅供參考）
         - `'custom_method'`：自訂合成方法（需要額外參數）
 
 - **kwargs** : dict, optional
@@ -76,10 +77,10 @@ from petsard import Synthesizer
 # 使用預設方法
 synthesizer = Synthesizer(method='default')
 
-# 使用 SDV CTGAN
+# 使用 SDV CTGAN（需額外安裝 SDV）
 synthesizer = Synthesizer(method='sdv-single_table-ctgan')
 
-# 使用 SDV GaussianCopula 並設定參數
+# 使用 SDV GaussianCopula 並設定參數（需額外安裝 SDV）
 synthesizer = Synthesizer(
     method='sdv-single_table-gaussiancopula',
     default_distribution='truncnorm'
@@ -95,7 +96,7 @@ synthesizer = Synthesizer(
 
 ## 預設參數
 
-所有 SDV 合成器都會使用以下預設參數進行初始化，以確保數值精度：
+SDV 合成器（如使用）會使用以下預設參數進行初始化，以確保數值精度：
 
 - **`enforce_rounding=True`**：套用至所有 SDV 合成器類型，維持數值欄位的整數精度
 - **`enforce_min_max_values=True`**：僅套用於 TVAE 和 GaussianCopula 合成器，用於強制數值範圍限制

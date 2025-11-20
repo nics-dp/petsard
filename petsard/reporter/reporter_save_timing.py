@@ -1,6 +1,6 @@
 """
-純函式化的 ReporterSaveTiming
-完全無狀態設計，專注於業務邏輯
+Pure functional ReporterSaveTiming
+Completely stateless design, focused on business logic
 """
 
 import pandas as pd
@@ -10,8 +10,8 @@ from petsard.reporter.reporter_base import BaseReporter
 
 class ReporterSaveTiming(BaseReporter):
     """
-    純函式化的時間報告器
-    完全無狀態，專注於業務邏輯
+    Pure functional timing reporter
+    Completely stateless, focused on business logic
     """
 
     def __init__(self, config: dict):
@@ -44,14 +44,14 @@ class ReporterSaveTiming(BaseReporter):
 
     def create(self, data: dict = None) -> pd.DataFrame | None:
         """
-        純函式：處理時間資料並返回結果
+        Pure function: Process timing data and return result
 
         Args:
             data (dict): The data used for creating the timing report.
                 - timing_data (pd.DataFrame): The timing data DataFrame.
 
         Returns:
-            pd.DataFrame | None: 處理後的時間資料，如果沒有資料則返回 None
+            pd.DataFrame | None: Processed timing data, returns None if no data
         """
         if data is None:
             data = {}
@@ -68,30 +68,30 @@ class ReporterSaveTiming(BaseReporter):
 
     def report(self, processed_data: pd.DataFrame | None = None) -> pd.DataFrame | None:
         """
-        純函式：生成並保存報告
+        Pure function: Generate and save report
 
         Args:
-            processed_data (pd.DataFrame | None): 處理後的時間資料
+            processed_data (pd.DataFrame | None): Processed timing data
 
         Returns:
-            pd.DataFrame | None: 生成的報告資料
+            pd.DataFrame | None: Generated report data
         """
-        # 處理空資料情況
+        # Handle empty data situation
         if processed_data is None:
             import logging
 
-            logger = logging.getLogger(f"PETsARD.{__name__}")
+            logger = logging.getLogger(f"PETsARD.{__name__.split('.')[-1]}")
             logger.warning("No timing data found. No CSV file will be saved.")
             return None
 
         if processed_data.empty:
             import logging
 
-            logger = logging.getLogger(f"PETsARD.{__name__}")
+            logger = logging.getLogger(f"PETsARD.{__name__.split('.')[-1]}")
             logger.warning("No timing data found. No CSV file will be saved.")
             return None
 
-        # 保存報告
+        # Save report
         full_output: str = f"{self.config['output']}_[Timing]"
         self._save(data=processed_data, full_output=full_output)
 
@@ -99,15 +99,15 @@ class ReporterSaveTiming(BaseReporter):
 
     def _process_timing_data(self, timing_data: pd.DataFrame) -> pd.DataFrame:
         """
-        處理時間資料的核心邏輯
+        Core logic for processing timing data
 
         Args:
-            timing_data (pd.DataFrame): 原始時間資料
+            timing_data (pd.DataFrame): Raw timing data
 
         Returns:
-            pd.DataFrame: 處理後的時間資料
+            pd.DataFrame: Processed timing data
         """
-        # 複製資料以避免修改原始資料
+        # Copy data to avoid modifying original data
         timing_data = timing_data.copy()
 
         # Filter by modules if specified

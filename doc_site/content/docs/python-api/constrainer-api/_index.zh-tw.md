@@ -1,6 +1,7 @@
 ---
 title: "Constrainer API"
-weight: 350
+type: docs
+weight: 1100
 ---
 
 合成資料約束處理模組。

@@ -71,7 +71,7 @@ if preprocessed_schema:
     print("Schema 變化：")
     print(f"原始欄位數：{len(original_schema.attributes)}")
     print(f"處理後欄位數：{len(preprocessed_schema.attributes)}")
-    
+
     # 比較欄位類型變化
     for attr_name in original_schema.attributes:
         if attr_name in preprocessed_schema.attributes:
@@ -122,7 +122,7 @@ if inferred_schema:
         'education': 'categorical',
         'income': 'numerical'
     }
-    
+
     for field_name, expected_type in expected_types.items():
         if field_name in inferred_schema.attributes:
             actual_type = inferred_schema.attributes[field_name].type
@@ -146,14 +146,14 @@ inferred_schema = exec.get_inferred_schema('Preprocessor')
 if inferred_schema:
     # 存取推論歷史（透過 Status 的 SchemaInferencer）
     inference_history = exec.status.schema_inferencer.get_inference_history()
-    
+
     if inference_history:
         print("Schema 推論歷史：")
         for i, record in enumerate(inference_history, 1):
             print(f"\n推論 {i}:")
             print(f"  時間：{record.get('timestamp', 'N/A')}")
             print(f"  變更數：{len(record.get('changes', []))}")
-            
+
             # 顯示變更詳情
             for change in record.get('changes', []):
                 print(f"    {change.get('field')}: "

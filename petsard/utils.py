@@ -6,9 +6,9 @@ import sys
 from decimal import Decimal
 from typing import Any, TypeVar, overload
 
-from petsard.exceptions import ConfigError
+from petsard.exceptions import ConfigError, UnableToLoadError
 
-# Define generic type variable to maintain input/output type consistency / 定義泛型類型變數，保持輸入輸出類型一致
+# Define generic type variable to maintain input/output type consistency
 T = TypeVar("T", int, float, Decimal, None)
 
 
@@ -26,42 +26,41 @@ def safe_round(
     value: int | float | Decimal | None, decimals: int = 2
 ) -> int | float | Decimal | None:
     """
-    Safe rounding function that maintains input/output type consistency
-    安全的四捨五入函數，保持輸入輸出類型一致
+    Safe rounding function that maintains input/output type consistency.
 
     Args:
-        value: Value to round (int, float, Decimal or None) / 要四捨五入的值（int, float, Decimal 或 None）
-        decimals: Number of decimal places (default: 2) / 小數位數（預設為 2）
+        value: Value to round (int, float, Decimal or None)
+        decimals: Number of decimal places (default: 2)
 
     Returns:
-        Rounded value maintaining original type / 四捨五入後的值，保持原始類型
-        - int input returns original value (no rounding) / int 輸入直接返回原值（不進行四捨五入）
-        - float input returns float / float 輸入返回 float
-        - Decimal input returns Decimal / Decimal 輸入返回 Decimal
-        - None input returns None / None 輸入返回 None
+        Rounded value maintaining original type
+        - int input returns original value (no rounding)
+        - float input returns float
+        - Decimal input returns Decimal
+        - None input returns None
     """
     if value is None:
         return None
 
-    # int type returns directly without rounding / int 類型直接返回，不需要四捨五入
+    # int type returns directly without rounding
     if isinstance(value, int):
         return value
 
-    # float type / float 類型
+    # float type
     if isinstance(value, float):
         return round(value, decimals)
 
-    # Decimal type / Decimal 類型
+    # Decimal type
     if isinstance(value, Decimal):
-        # Decimal.quantize needs a Decimal as precision reference / Decimal 的 quantize 需要一個 Decimal 作為精度參考
+        # Decimal.quantize needs a Decimal as precision reference
         if decimals == 0:
-            return round(value, 0)  # Return Decimal integer / 返回 Decimal 整數
+            return round(value, 0)  # Return Decimal integer
         else:
-            # Create precision template, e.g., 0.01 for 2 decimal places / 建立精度模板，例如 0.01 代表保留 2 位小數
+            # Create precision template, e.g., 0.01 for 2 decimal places
             precision = Decimal(10) ** -decimals
             return value.quantize(precision)
 
-    # Should not reach here, but for type checker / 不應該到達這裡，但為了類型檢查器
+    # Should not reach here, but for type checker
     raise TypeError(f"Unsupported type for safe_round: {type(value)}")
 
 
@@ -128,7 +127,7 @@ def _resolve_module_path(
         f"{searched_locations}"
     )
     logger.error(error_msg)
-    raise FileNotFoundError(error_msg)
+    raise UnableToLoadError(error_msg, filepath=module_path)
 
 
 def load_external_module(
@@ -165,7 +164,7 @@ def load_external_module(
     if not os.path.isfile(resolved_path):
         error_msg = f"The module file '{resolved_path}' does not exist."
         logger.error(error_msg)
-        raise FileNotFoundError(error_msg)
+        raise UnableToLoadError(error_msg, filepath=resolved_path)
 
     # Get module name from file path
     module_name = os.path.splitext(os.path.basename(resolved_path))[0]

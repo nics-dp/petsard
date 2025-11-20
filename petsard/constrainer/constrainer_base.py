@@ -1,3 +1,4 @@
+import logging
 import warnings
 from abc import ABC, abstractmethod
 
@@ -10,6 +11,7 @@ class BaseConstrainer(ABC):
     def __init__(self, config: dict):
         """Initialize constraint with configuration"""
         self.config = config
+        self._logger = logging.getLogger(f"PETsARD.{self.__class__.__name__}")
 
     @abstractmethod
     def validate_config(self) -> bool:

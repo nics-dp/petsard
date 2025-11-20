@@ -1,6 +1,7 @@
 ---
 title: "Reporter API"
-weight: 360
+type: docs
+weight: 1130
 ---
 
 報告產生模組，支援多種報告格式的輸出與檔案儲存。

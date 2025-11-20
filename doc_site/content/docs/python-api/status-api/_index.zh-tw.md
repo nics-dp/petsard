@@ -1,9 +1,14 @@
 ---
-title: "Status API（更新中）"
-weight: 70
+title: "Status API"
+type: docs
+weight: 1030
 ---
 
-狀態追蹤與管理類別，提供完整的執行歷史、結果儲存和詮釋資料管理。
+Status 是 PETsARD 的內部狀態管理模組，負責追蹤工作流程執行、儲存結果、管理詮釋資料（Schema），並建立執行快照。
+
+{{< callout type="info" >}}
+**僅供內部使用**：Status 主要由 Executor 內部使用。使用者應透過 [`Executor`](../executor-api/) 方法存取 Status 功能。
+{{< /callout >}}
 
 ## 類別架構
 
@@ -24,54 +29,35 @@ from petsard import Executor
 exec = Executor('config.yaml')
 exec.run()
 
-# 透過 Executor 存取 Status 功能
+# 透過 Executor 方法存取 Status 功能
 results = exec.get_result()        # Status.get_result()
 timing = exec.get_timing()         # Status.get_timing_report_data()
 
-# 進階功能（直接存取 Status）
+# 進階：直接存取 Status
 summary = exec.status.get_status_summary()
 snapshots = exec.status.get_snapshots()
 ```
 
-## 建構函式 (__init__)
-
-初始化狀態追蹤實例。
+## 建構函式
 
 ### 語法
 
 ```python
-def __init__(
-    config: Config
-)
+Status(config: Config, max_snapshots: int = 1000, max_changes: int = 5000, max_timings: int = 10000)
 ```
 
 ### 參數
 
-- **config** : Config, required
-    - 配置物件
-    - 包含模組序列和執行配置
+| 參數 | 類型 | 必要性 | 預設值 | 說明 |
+|------|------|--------|--------|------|
+| `config` | `Config` | 必要 | - | 包含模組序列和執行配置的 Config 物件 |
+| `max_snapshots` | `int` | 選填 | `1000` | 保留的最大快照數量 |
+| `max_changes` | `int` | 選填 | `5000` | 最大變更記錄數量 |
+| `max_timings` | `int` | 選填 | `10000` | 最大時間記錄數量 |
 
 ### 返回值
 
-- **Status**
-    - 初始化後的狀態追蹤實例
-
-### 使用範例
-
-```python
-from petsard.config import Config
-from petsard.status import Status
-
-# Status 通常由 Executor 建立
-# 以下僅供說明內部運作
-config_dict = {
-    "Loader": {"load": {...}},
-    "Synthesizer": {"synth": {...}}
-}
-
-config = Config(config_dict)
-status = Status(config)
-```
+返回已初始化狀態管理的 Status 實例。
 
 ## 核心功能
 
@@ -110,19 +96,7 @@ for snapshot in snapshots:
     print(f"  時間：{snapshot.timestamp}")
 ```
 
-### 4. 變更追蹤
-
-記錄詮釋資料的變更歷史：
-
-```python
-# 取得變更歷史
-changes = exec.status.get_change_history()
-
-for change in changes:
-    print(f"{change.change_type}: {change.target_id}")
-```
-
-### 5. 時間記錄
+### 4. 時間記錄
 
 收集執行時間資訊：
 
@@ -136,25 +110,30 @@ print(timing_df)
 
 ### 狀態管理方法
 
-- **put(module, experiment, adapter)** - 記錄模組執行狀態
-- **get_result(module)** - 取得模組執行結果
-- **get_metadata(module)** - 取得模組 Schema
-- **get_full_expt()** - 取得實驗配置字典
+| 方法 | 說明 |
+|------|------|
+| `put(module, experiment, adapter)` | 記錄模組執行狀態 |
+| `get_result(module)` | 取得模組執行結果 |
+| `get_metadata(module)` | 取得模組 Schema |
+| `get_full_expt(module)` | 取得實驗配置字典 |
 
 ### 快照與追蹤方法
 
-- **get_snapshots(module)** - 取得執行快照
-- **get_snapshot_by_id(snapshot_id)** - 取得特定快照
-- **get_change_history(module)** - 取得變更歷史
-- **get_metadata_evolution(module)** - 追蹤 Schema 演進
-- **restore_from_snapshot(snapshot_id)** - 從快照恢復狀態
+| 方法 | 說明 |
+|------|------|
+| `get_snapshots(module)` | 取得執行快照 |
+| `get_snapshot_by_id(snapshot_id)` | 透過 ID 取得特定快照 |
+| `get_change_history(module)` | 取得變更歷史 |
+| `get_metadata_evolution(module)` | 追蹤 Schema 演進 |
 
 ### 報告方法
 
-- **get_timing_report_data()** - 取得時間報告
-- **get_status_summary()** - 取得狀態摘要
+| 方法 | 說明 |
+|------|------|
+| `get_timing_report_data()` | 取得時間報告為 DataFrame |
+| `get_status_summary()` | 取得狀態摘要 |
 
-## 資料類型
+## 資料類別
 
 ### ExecutionSnapshot
 
@@ -167,26 +146,26 @@ class ExecutionSnapshot:
     module_name: str
     experiment_name: str
     timestamp: datetime
-    metadata_before: Optional[Schema]
-    metadata_after: Optional[Schema]
-    execution_context: Dict[str, Any]
+    metadata_before: Schema | None = None
+    metadata_after: Schema | None = None
+    context: dict[str, Any] = field(default_factory=dict)
 ```
 
-### MetadataChange
+### TimingRecord
 
-詮釋資料變更的不可變記錄：
+時間資訊的不可變記錄：
 
 ```python
 @dataclass(frozen=True)
-class MetadataChange:
-    change_id: str
-    change_type: str  # 'create', 'update', 'delete'
-    target_type: str  # 'schema', 'field'
-    target_id: str
-    before_state: Optional[Any]
-    after_state: Optional[Any]
-    timestamp: datetime
-    module_context: str
+class TimingRecord:
+    record_id: str
+    module_name: str
+    experiment_name: str
+    step_name: str
+    start_time: datetime
+    end_time: datetime | None = None
+    duration_seconds: float | None = None
+    context: dict[str, Any] = field(default_factory=dict)
 ```
 
 ## 與 Executor 整合
@@ -203,7 +182,7 @@ exec.run()
 results = exec.get_result()          # → status.get_result()
 timing = exec.get_timing()           # → status.get_timing_report_data()
 
-# 直接存取 Status（進階用法）
+# 進階：直接存取 Status
 summary = exec.status.get_status_summary()
 snapshots = exec.status.get_snapshots()
 ```
@@ -221,7 +200,7 @@ exec.run()
 # 取得推論的 Schema
 inferred_schema = exec.get_inferred_schema('Preprocessor')
 if inferred_schema:
-    print(f"推論的 Schema: {inferred_schema.id}")
+    print(f"推論的 Schema：{inferred_schema.id}")
 ```
 
 ## 狀態摘要
@@ -239,17 +218,9 @@ print(f"總變更數：{summary['total_changes']}")
 
 ## 注意事項
 
-- **內部使用**：Status 主要由 Executor 內部使用和管理
+- **內部使用**：Status 主要由 Executor 內部使用
 - **建議作法**：透過 Executor 的方法存取 Status 功能
 - **自動追蹤**：執行過程中自動記錄快照和變更
 - **記憶體管理**：長時間執行會累積較多快照
 - **不可變性**：快照和變更記錄是不可變的
 - **進階功能**：直接存取 Status 需要了解內部機制
-- **向後相容**：保持與舊版 Status 的介面相容
-- **文件說明**：本段文件僅供開發團隊內部參考，不保證向後相容
-
-## 相關文檔
-
-- [Executor API](../executor-api/) - 使用 Status 的主要介面
-- [Config API](../config-api/) - 與 Status 配合的配置管理
-- [Executor YAML](../../petsard-yaml/executor-yaml/status/) - Status 在 YAML 中的說明

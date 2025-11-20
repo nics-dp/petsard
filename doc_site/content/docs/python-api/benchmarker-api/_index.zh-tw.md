@@ -1,6 +1,7 @@
 ---
 title: "Benchmarker API"
-weight: 315
+type: docs
+weight: 1050
 ---
 
 ## 概述

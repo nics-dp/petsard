@@ -1,32 +1,14 @@
 ---
 title: 開發者手冊
 type: docs
-weight: 1400
-prev: docs/api
-next: docs/experimental-new-format
-sidebar:
-  open: false
+weight: 1100
+prev: docs/python-api
+next: docs/
 ---
 
+PETsARD 開發者手冊提供專案開發相關的參考資訊。
 
-- [開發指引]({{< ref "docs/developer-guide/development-guidelines" >}})
-  - 分支保護與合併規範
-  - Issue 與 PR 工作流程
-  - 套件管理與版本控制
+## 相關主題
 
-## 資料讀取
-- [基準資料集維護]({{< ref "docs/developer-guide/benchmark-datasets" >}})
-  - 維護與擴充基準資料集
-
-## 資料生成
-
-## 設定與報告
-- [測試覆蓋範圍]({{< ref "docs/developer-guide/test-coverage" >}})
-  - 測試組織與架構
-  - 詳細測試案例文件
-
-## 開發環境
-- [Docker 開發]({{< ref "docs/developer-guide/docker-development" >}})
-  - Docker 容器開發與測試
-  - 多階段建置最佳化與安全性
-  - GitHub Container Registry 整合
+- [基準資料集](benchmark-datasets) - 說明可用的基準資料集及其載入方式
+- [測試覆蓋範圍](test-coverage) - 專案測試組織架構與詳細測試案例

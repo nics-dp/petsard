@@ -1,6 +1,9 @@
 ---
 title: "自訂評測方法"
-weight: 5
+type: docs
+weight: 695
+prev: docs/petsard-yaml/evaluator-yaml/utility
+next: docs/petsard-yaml/evaluator-yaml/privacy-mpuccs
 ---
 
 要建立自己的評測器，需要實作一個含有必要屬性和方法的 Python 類別，並設定 YAML 檔案來使用它。

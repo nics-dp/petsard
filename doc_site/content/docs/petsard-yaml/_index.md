@@ -1,6 +1,9 @@
 ---
 title: "PETsARD YAML"
-weight: 100
+type: docs
+weight: 600
+prev: docs/data-property-adjustment
+next: docs/schema-yaml
 ---
 
 ## Why Does PETsARD Use YAML?
@@ -56,11 +59,11 @@ Each module can have multiple experiment configurations. Experiment names are cu
 
 ```yaml
 Synthesizer:
-    gaussian-copula:   # Using Gaussian Copula method
-        method: 'sdv-single_table-gaussiancopula'
-    ctgan:             # Using CTGAN method
+    gaussian-copula:   # Using built-in Gaussian Copula method
+        method: 'petsard-gaussian_copula'
+    ctgan:             # Using CTGAN method (requires SDV installation)
         method: 'sdv-single_table-ctgan'
-    tvae:              # Using TVAE method
+    tvae:              # Using TVAE method (requires SDV installation)
         method: 'sdv-single_table-tvae'
 ```
 
@@ -87,7 +90,7 @@ Preprocessor:
 
 Synthesizer:
   gaussian-copula:
-    method: 'sdv-single_table-gaussiancopula'
+    method: 'petsard-gaussian_copula'
   ctgan:
     method: 'sdv-single_table-ctgan'
   tvae:

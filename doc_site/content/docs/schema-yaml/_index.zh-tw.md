@@ -1,187 +1,235 @@
 ---
-title: "表詮釋資料 YAML"
-weight: 200
+title: "Schema YAML"
+type: docs
+weight: 700
+prev: docs/petsard-yaml
+next: docs/error-handling
 ---
 
 資料結構定義的 YAML 設定格式（Schema YAML）。
 
-## 使用範例
-
-### 外部檔案引用
-
-```yaml
-Loader:
-  my_experiment:
-    filepath: data/users.csv
-    schema: schemas/user_schema.yaml  # 引用外部檔案
-```
-
-### 內嵌定義
-
-```yaml
-Loader:
-  my_experiment:
-    filepath: data/users.csv
-    schema:                   # 內嵌 schema 定義
-      id: user_data
-      attributes:             # 欄位定義（也可寫為 fields）
-        user_id:
-          type: int64
-          enable_null: false
-        username:
-          type: string
-          enable_null: true
-```
-
-### 自動推斷
-
-如果不提供 schema，系統會自動從資料推斷結構：
-
-```yaml
-Loader:
-  auto_infer:
-    filepath: data/auto.csv
-    # 不指定 schema，自動推斷
-```
-
-## 主要結構
-
-```yaml
-id: <schema_id>           # 必填：結構識別碼
-attributes:               # 必填：欄位屬性定義（也可寫為 fields）
-  <attribute_name>:       # 欄位名稱作為 key
-    type: <data_type>     # 必填：資料型別
-    enable_null: <bool>   # 選填：是否允許空值（預設 true）
-    logical_type: <type>  # 選填：邏輯型別提示
-```
-
 {{< callout type="info" >}}
-`attributes` 也可以寫作 `fields`。
+**使用方式**：Schema YAML 在 PETsARD 中透過 Loader 使用。關於如何在 Loader 中引用和使用 Schema，請參閱 Loader YAML 文檔。本章節專注於說明如何設定 Schema 的結構和參數。
 {{< /callout >}}
 
-## Attribute 參數列表
+## 基本結構
 
-### 必填參數
-
-| 參數 | 類型 | 說明 | 範例 |
-|------|------|------|------|
-| `name` | `string` | 欄位名稱（作為 key 時會自動設定） | `"user_id"`, `"age"` |
-
-### 選填參數
-
-| 參數 | 類型 | 預設值 | 說明 | 範例 |
-|------|------|--------|------|------|
-| `type` | `string` | `null` | 資料型別，未指定時自動推斷 | `"int64"`, `"string"`, `"float64"` |
-| `enable_null` | `boolean` | `true` | 是否允許空值 | `true`, `false` |
-| `category` | `boolean` | `null` | 是否為分類資料 | `true`, `false` |
-| `logical_type` | `string` | `null` | 邏輯型別標註，用於驗證 | `"email"`, `"url"`, `"phone"` |
-| `description` | `string` | `null` | 欄位說明文字 | `"使用者唯一識別碼"` |
-| `type_attr` | `dict` | `null` | 型別額外屬性（如精度、格式等） | `{"precision": 2}`, `{"format": "%Y-%m-%d"}` |
-| `na_values` | `list` | `null` | 自訂缺失值標記 | `["?", "N/A", "unknown"]` |
-| `default_value` | `any` | `null` | 預設填充值 | `0`, `"Unknown"`, `false` |
-| `constraints` | `dict` | `null` | 欄位約束條件 | `{"min": 0, "max": 100}` |
-| `enable_optimize_type` | `boolean` | `true` | 是否啟用型別優化 | `true`, `false` |
-| `enable_stats` | `boolean` | `true` | 是否計算統計資訊 | `true`, `false` |
-| `cast_errors` | `string` | `"coerce"` | 型別轉換錯誤處理 | `"raise"`, `"coerce"`, `"ignore"` |
-| `null_strategy` | `string` | `"keep"` | 空值處理策略 | `"keep"`, `"drop"`, `"fill"` |
-
-### 系統自動生成參數
-
-| 參數 | 類型 | 說明 |
-|------|------|------|
-| `stats` | `FieldStats` | 欄位統計資訊（使用 `enable_stats=True` 時自動計算） |
-| `created_at` | `datetime` | 建立時間（系統自動記錄） |
-| `updated_at` | `datetime` | 更新時間（系統自動記錄） |
-
-{{< callout type="info" >}}
-**自動推斷機制**：
-- 使用 `Metadater.from_data()` 時，`type`、`logical_type`、`enable_null` 等參數會自動從資料推斷
-- 手動建立 Schema 時，只有 `name` 是必填的，其他參數都是選填
-- 建議明確指定 `type` 以確保資料處理的準確性
-{{< /callout >}}
-
-## 進階用法
-
-### 多表格重用
+一個完整的 Schema YAML 檔案包含以下部分：
 
 ```yaml
-Loader:
-  train_data:
-    filepath: data/train.csv
-    schema: schemas/common_schema.yaml
-    
-  test_data:
-    filepath: data/test.csv
-    schema: schemas/common_schema.yaml
+# Schema 識別資訊
+id: <schema_id>              # 必填：Schema 識別碼
+name: <schema_name>          # 選填：Schema 名稱
+description: <description>   # 選填：Schema 描述
+
+# 欄位定義
+attributes:                  # 或使用 fields
+  <field_name>:             # 欄位名稱
+    type: <data_type>       # 資料型別
+    description: <text>     # 欄位說明
+    # ... 其他參數
 ```
 
-### 部分定義
+## 範例：Adult Income Dataset
 
-只定義關鍵欄位，其餘由系統推斷：
-
-```yaml
-schema:
-  id: partial_schema
-  attributes:
-    primary_key:
-      type: int64
-      enable_null: false
-    # 其他欄位會自動推斷
-```
-
-## 統計資料
-
-使用 `Metadater.from_data()` 時，若設定 `enable_stats=True`，系統會自動計算統計資料。
-
-### 欄位統計範例
+以下是 Adult Income（人口普查）資料集的 Schema 定義範例：
 
 ```yaml
+# Schema 識別資訊
+id: adult-income
+name: "Adult Income Dataset"
+description: "1994 Census database for income prediction (>50K or <=50K)"
+
+# 欄位定義
 attributes:
   age:
-    type: int64
-    enable_null: true
-    stats:
-      row_count: 1000
-      na_count: 50
-      unique_count: 65
-      mean: 35.5
-      median: 34.0
+    type: integer
+    description: "Age of the individual"
+
+  workclass:
+    type: string
+    category: true
+    description: "Employment type"
+    na_values: "?"
+
+  fnlwgt:
+    type: integer
+    description: "Final weight (number of people the census believes the entry represents)"
+
+  education:
+    type: string
+    category: true
+    description: "Highest level of education"
+    na_values: "?"
+
+  educational-num:
+    type: integer
+    description: "Number of education years"
+
+  marital-status:
+    type: string
+    category: true
+    description: "Marital status"
+
+  occupation:
+    type: string
+    category: true
+    description: "Occupation"
+    na_values: "?"
+
+  relationship:
+    type: string
+    category: true
+    description: "Relationship to household"
+
+  race:
+    type: string
+    category: true
+    description: "Race"
+
+  gender:
+    type: string
+    category: true
+    description: "Biological sex"
+
+  capital-gain:
+  type: integer
+  description: "Capital gains"
+
+  capital-loss:
+  type: integer
+  description: "Capital losses"
+
+  hours-per-week:
+    type: integer
+    description: "Hours worked per week"
+
+  native-country:
+    type: string
+    category: true
+    description: "Country of origin"
+
+  income:
+    type: string
+    category: true
+    description: "Income class (target variable)"
 ```
 
-### 程式化存取
+### 範例解說
 
-```python
-from petsard.metadater import Metadater
-import pandas as pd
+這個 Schema 定義展示了幾個重要的配置概念：
 
-# 建立並計算統計
-data = {'users': pd.DataFrame({...})}
-metadata = Metadater.from_data(
-    data=data,
-    enable_stats=True
-)
+#### 1. Schema 層級資訊
 
-# 存取統計
-schema = metadata.schemas["users"]
-age_attr = schema.attributes["age"]
-print(f"平均年齡：{age_attr.stats.mean}")
+```yaml
+id: adult-income
+name: "Adult Income Dataset"
+description: "1994 Census database for income prediction (>50K or <=50K)"
 ```
 
-## 相關說明
+- **`id`**：必填，用於識別這個 Schema
+- **`name`**：選填，提供易讀的名稱
+- **`description`**：選填，說明這個資料集的用途
 
-- **資料型別**：詳見 [資料型別](/docs/schema-yaml/data-types) 說明
-- **邏輯型別**：詳見 [邏輯型別](/docs/schema-yaml/logical-types) 說明
-- **架構理論**：表詮釋資料 (Schema) 採用三層架構設計，詳見 [表詮釋資料架構](/docs/schema-yaml/architecture) 說明
-- **資料對齊**：表詮釋資料可用於對齊和驗證資料，詳見 [Metadater API](/docs/python-api/metadater-api) 文檔
-- **Loader 整合**：表詮釋資料在資料載入時的使用方式，詳見 [Loader YAML](/docs/petsard-yaml/loader-yaml) 文檔
-- **Reporter 輸出**：可使用 Reporter 的 save_schema 方法輸出各模組的表詮釋資料，詳見 [Reporter - 儲存表詮釋資料](/docs/petsard-yaml/reporter-yaml/save-schema) 說明
+#### 2. 數值型欄位
+
+```yaml
+age:
+  type: integer
+  description: "Age of the individual"
+
+hours-per-week:
+  type: integer
+  description: "Hours worked per week"
+```
+
+- 使用 `type: integer` 定義整數欄位
+- `description` 說明欄位的業務意義
+
+#### 3. 類別型欄位
+
+```yaml
+workclass:
+  type: string
+  category: true
+  description: "Employment type"
+  na_values: "?"
+
+gender:
+  type: string
+  category: true
+  description: "Biological sex"
+```
+
+- **`category: true`**：標記為類別資料，系統會據此選擇適當的處理方法
+- **`na_values`**：定義自訂的缺失值標記（如 `"?"` 在此資料集中代表缺失值）
+
+#### 4. 特殊情況：數值但視為類別
+
+在某些情況下，數值型欄位可能更適合視為類別資料處理：
+
+```yaml
+# 範例：評分等級（雖是數值但選項有限）
+rating:
+  type: integer
+  category: true
+  description: "評分等級 (1-5)"
+
+# 範例：郵遞區號（雖是數值但代表區域分類）
+zip_code:
+  type: integer
+  category: true
+  description: "郵遞區號"
+```
+
+設定 `category: true` 會影響：
+- **Preprocessor**：選擇類別資料的處理方法（如 Label Encoding）
+- **Synthesizer**：使用適合類別資料的合成策略
+- **統計資訊**：計算類別分佈而非數值統計
+
+{{< callout type="info" >}}
+是否將數值欄位視為類別，需根據資料特性和業務需求判斷。一般來說，當數值欄位的唯一值數量有限且各值之間沒有明確的數學關係時，可考慮設為類別。
+{{< /callout >}}
+
+## 型別系統
+
+PETsARD 使用簡化的型別系統：
+
+| 型別 | 說明 | 範例 |
+|------|------|------|
+| `int` / `integer` | 整數 | `25`, `-10`, `1000` |
+| `float` | 浮點數 | `3.14`, `-0.5`, `1000.00` |
+| `str` / `string` | 字串 | `"text"`, `"A"`, `"123"` |
+| `date` | 日期 | `2024-01-01` |
+| `datetime` | 日期時間 | `2024-01-01 10:30:00` |
+
+{{< callout type="info" >}}
+**型別別名**：
+- `integer` 和 `int` 可互換使用
+- `string` 和 `str` 可互換使用
+- 系統內部統一使用簡化型別（`int`, `float`, `str`, `date`, `datetime`）
+{{< /callout >}}
+
+## 進階主題
+
+### 欄位屬性參數
+
+常用參數包括：
+- `type`：資料型別
+- `type_attr`：型別屬性（nullable, category, precision 等）
+- `description`：欄位說明
+- `logical_type`：邏輯型別（email, phone 等）
+- `na_values`：自訂缺失值標記
+- `constraints`：欄位約束條件
+
+### 統計資訊
+
+設定 `enable_stats: true` 可啟用統計資訊計算。
 
 ## 注意事項
 
-- 欄位順序不影響資料載入
-- 資料中缺少的欄位會填入預設值（enable_null=true）
-- 資料中的額外欄位會被保留
-- 系統會嘗試自動轉換相容的型別
-- `attributes` 也可以寫作 `fields`
-- 邏輯型別僅用於驗證，不改變儲存格式
-- 統計計算會增加處理時間，大型資料集需謹慎使用
+- **欄位名稱**：`attributes` 和 `fields` 都可以使用，系統會自動識別
+- **自動推斷**：如果不提供 Schema，系統會自動從資料推斷結構
+- **型別轉換**：系統會嘗試自動轉換相容的型別
+- **缺失值處理**：可透過 `na_values` 定義自訂的缺失值標記
+- **類別資料**：設定 `category: true` 會影響資料處理和合成策略

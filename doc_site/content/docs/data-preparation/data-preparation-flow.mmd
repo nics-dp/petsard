@@ -1,0 +1,19 @@
+flowchart
+    Start[Data Preparation] --> Describer[Data<br/>Profiling]
+    Describer --> MultiTable{Multi-table<br/>Data?}
+    MultiTable -->|Yes| Denormalize[Multi-table<br/>Denormalization]
+    MultiTable -->|No| ConstraintCheck{Need<br/>Constraints?}
+    Denormalize --> ConstraintCheck
+    
+    ConstraintCheck -->|Yes| Constraints[Business Logic<br/>Constraints]
+    ConstraintCheck -->|No| Complete[Preparation<br/>Complete]
+    Constraints --> Complete
+
+    %% Macaron color scheme
+    style Start fill:#B0E0E6,stroke:#87CEEB,stroke-width:2px,color:#333
+    style Describer fill:#B4E7CE,stroke:#98D8C8,stroke-width:2px,color:#333
+    style MultiTable fill:#E6E6FA,stroke:#DDA0DD,stroke-width:2px,color:#333
+    style Denormalize fill:#B4E7CE,stroke:#98D8C8,stroke-width:2px,color:#333
+    style ConstraintCheck fill:#E6E6FA,stroke:#DDA0DD,stroke-width:2px,color:#333
+    style Constraints fill:#B4E7CE,stroke:#98D8C8,stroke-width:2px,color:#333
+    style Complete fill:#D3D3D3,stroke:#A9A9A9,stroke-width:2px,color:#333

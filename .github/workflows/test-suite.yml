@@ -71,8 +71,8 @@ jobs:
             --tb=short \
             --junit-xml=junit.xml \
             -v 2>&1 | tee pytest.log || true
-          
-          # 儲存退出碼
+
+          # Save exit code
           echo "status=$?" >> $GITHUB_OUTPUT
 
       - name: 📊 Generate Report
@@ -82,78 +82,78 @@ jobs:
           import json
           import xml.etree.ElementTree as ET
           from pathlib import Path
-          
+
           report = []
-          report.append("## 🧪 測試報告 Test Report\n")
-          
-          # === Ruff 結果 ===
+          report.append("## 🧪 Test Report\n")
+
+          # === Ruff Results ===
           ruff_file = Path("ruff.json")
           if ruff_file.exists() and ruff_file.stat().st_size > 0:
               try:
                   with open("ruff.json") as f:
                       ruff_data = json.load(f)
-                  
+
                   if ruff_data:
-                      report.append(f"### ⚠️ 程式碼品質 ({len(ruff_data)} 個問題)\n")
-                      
-                      # 按檔案分組
+                      report.append(f"### ⚠️ Code Quality ({len(ruff_data)} issues)\n")
+
+                      # Group by file
                       by_file = {}
-                      for issue in ruff_data[:20]:  # 最多顯示 20 個
+                      for issue in ruff_data[:20]:  # Show max 20
                           filename = issue.get('filename', 'unknown')
                           if filename not in by_file:
                               by_file[filename] = []
                           by_file[filename].append(issue)
-                      
+
                       for filename, issues in by_file.items():
                           report.append(f"\n**{filename}**\n")
-                          for issue in issues[:5]:  # 每檔案最多 5 個
+                          for issue in issues[:5]:  # Max 5 per file
                               line = issue.get('location', {}).get('row', '?')
                               code = issue.get('code', '?')
                               msg = issue.get('message', 'No message')
                               report.append(f"- Line {line}: `{code}` {msg}\n")
-                      
+
                       if len(ruff_data) > 20:
-                          report.append(f"\n*...還有 {len(ruff_data) - 20} 個問題*\n")
+                          report.append(f"\n*...{len(ruff_data) - 20} more issues*\n")
                   else:
-                      report.append("### ✅ 程式碼品質通過\n")
+                      report.append("### ✅ Code Quality Passed\n")
               except Exception as e:
-                  report.append(f"### ⚠️ 無法解析 Ruff 結果: {e}\n")
+                  report.append(f"### ⚠️ Unable to parse Ruff results: {e}\n")
           else:
-              report.append("### ✅ 程式碼品質通過\n")
-          
+              report.append("### ✅ Code Quality Passed\n")
+
           report.append("\n---\n\n")
-          
-          # === Pytest 結果 ===
+
+          # === Pytest Results ===
           junit_file = Path("junit.xml")
           coverage_file = Path("coverage.json")
-          
+
           if junit_file.exists():
               try:
                   tree = ET.parse("junit.xml")
                   root = tree.getroot()
-                  
+
                   total = int(root.get('tests', 0))
                   failures = int(root.get('failures', 0))
                   errors = int(root.get('errors', 0))
                   skipped = int(root.get('skipped', 0))
                   passed = total - failures - errors - skipped
-                  
-                  # 標題
+
+                  # Title
                   if failures + errors == 0:
-                      report.append(f"### ✅ 測試通過 ({passed}/{total})\n\n")
+                      report.append(f"### ✅ Tests Passed ({passed}/{total})\n\n")
                   else:
-                      report.append(f"### ❌ 測試失敗 ({passed}/{total} 通過)\n\n")
-                  
-                  # 覆蓋率
+                      report.append(f"### ❌ Tests Failed ({passed}/{total} passed)\n\n")
+
+                  # Coverage
                   if coverage_file.exists():
                       with open("coverage.json") as f:
                           cov_data = json.load(f)
                       coverage = cov_data.get('totals', {}).get('percent_covered', 0)
-                      report.append(f"**覆蓋率**: {coverage:.1f}%\n\n")
-                  
-                  # 失敗的測試
+                      report.append(f"**Coverage**: {coverage:.1f}%\n\n")
+
+                  # Failed tests
                   if failures + errors > 0:
-                      report.append(f"**失敗的測試**:\n\n")
+                      report.append(f"**Failed Tests**:\n\n")
                       for testcase in root.iter('testcase'):
                           failure = testcase.find('failure')
                           error = testcase.find('error')
@@ -161,62 +161,62 @@ jobs:
                               classname = testcase.get('classname', '')
                               name = testcase.get('name', '')
                               report.append(f"- `{classname}::{name}`\n")
-                              
-                              # 錯誤訊息
+
+                              # Error message
                               msg = (failure or error).get('message', '')
                               if msg:
-                                  # 只取第一行
+                                  # Only take first line
                                   first_line = msg.split('\n')[0][:100]
                                   report.append(f"  *{first_line}*\n")
                       report.append("\n")
-                  
-                  # 跳過的測試
+
+                  # Skipped tests
                   if skipped > 0:
-                      report.append(f"**跳過**: {skipped} 個測試\n\n")
-                      
+                      report.append(f"**Skipped**: {skipped} tests\n\n")
+
               except Exception as e:
-                  report.append(f"### ⚠️ 無法解析測試結果: {e}\n\n")
+                  report.append(f"### ⚠️ Unable to parse test results: {e}\n\n")
           else:
-              report.append("### ❌ 找不到測試結果\n\n")
-          
-          # === 詳細輸出 ===
+              report.append("### ❌ Test results not found\n\n")
+
+          # === Detailed Output ===
           pytest_log = Path("pytest.log")
           if pytest_log.exists():
-              report.append("\n<details>\n<summary>📝 詳細測試輸出</summary>\n\n```\n")
+              report.append("\n<details>\n<summary>📝 Detailed Test Output</summary>\n\n```\n")
               with open("pytest.log") as f:
                   lines = f.readlines()
-                  # 只顯示最後 200 行
+                  # Show only last 200 lines
                   report.extend(lines[-200:])
               report.append("\n```\n</details>\n")
-          
-          # 寫入報告
+
+          # Write report
           with open("test_report.md", "w") as f:
               f.writelines(report)
-          
+
           print("".join(report))
           PYTHON_SCRIPT
 
       - name: 💬 Comment on PR
         if: github.event_name == 'pull_request' && always()
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           script: |
             const fs = require('fs');
             const report = fs.readFileSync('test_report.md', 'utf8');
-            
-            // 尋找現有留言
+
+            // Find existing comment
             const { data: comments } = await github.rest.issues.listComments({
               owner: context.repo.owner,
               repo: context.repo.repo,
               issue_number: context.issue.number,
             });
-            
+
             const botComment = comments.find(c =>
-              c.user.type === 'Bot' && c.body.includes('🧪 測試報告')
+              c.user.type === 'Bot' && c.body.includes('🧪 Test Report')
             );
-            
-            const body = `## 🧪 測試報告 (Python ${{ matrix.python-version }})\n\n${report}\n\n---\n*Updated at ${new Date().toISOString()}*`;
-            
+
+            const body = `## 🧪 Test Report (Python ${{ matrix.python-version }})\n\n${report}\n\n---\n*Updated at ${new Date().toISOString()}*`;
+
             if (botComment) {
               await github.rest.issues.updateComment({
                 owner: context.repo.owner,
@@ -235,7 +235,7 @@ jobs:
 
       - name: 📤 Upload Artifacts
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: test-results-py${{ matrix.python-version }}
           path: |
@@ -252,9 +252,9 @@ jobs:
         run: |
           RUFF_STATUS="${{ steps.ruff.outputs.status }}"
           TEST_STATUS="${{ steps.pytest.outputs.status }}"
-          
+
           if [[ "$RUFF_STATUS" == "success" && "$TEST_STATUS" == "0" ]]; then
-            echo "::notice::✅ Python ${{ matrix.python-version }}: 所有檢查通過"
+            echo "::notice::✅ Python ${{ matrix.python-version }}: All checks passed"
           else
-            echo "::warning::⚠️ Python ${{ matrix.python-version }}: 部分檢查失敗（不阻止合併）"
+            echo "::warning::⚠️ Python ${{ matrix.python-version }}: Some checks failed (does not block merge)"
           fi

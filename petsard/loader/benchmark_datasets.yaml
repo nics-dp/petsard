@@ -14,7 +14,7 @@ datasets:
   adult-income_schema:
     filename: adult-income_schema.yaml
     access: public
-    sha256: 5f35fe1cf69ec471c1d39db6c803b12e97c5bc0a55a41ed4a2f63f04c5d369aa
+    sha256: 778177e8062fa54fd4a515180374f7c0c3a3121a57dc5bc1a1e348076c68d57d
   # Adult income dataset split and syn (sdv-gaussian-copula) result for demo
   adult-income_ori:
     filename: adult-income_ori.csv
@@ -28,6 +28,26 @@ datasets:
     filename: adult-income_syn.csv
     access: public
     sha256: 87df8e267710d83874d5ea07fc8d9fb7873ae461b00d04be0308536c04c806c3
+  # Taiwan salary statistics dataset (300K records)
+  taiwan-salary-statistics-300k:
+    filename: taiwan_salary_statistics_300k.csv
+    access: public
+    sha256: acfa4d161c3cd74e66037ad09b6502b4ad8917f6bde74c2573ab73e24c795faa
+  # Taiwan salary statistics dataset (300K records) - Schema
+  taiwan-salary-statistics-300k_schema:
+    filename: taiwan_salary_statistics_300k_schema.yaml
+    access: public
+    sha256: c5f2cbc6525ed82f97fc47b9e919c1c5556fc2f245655b1d4049b5de5e85c083
+  # Taiwan salary statistics dataset (300K records) - No Direct Identification
+  taiwan-salary-statistics-300k-no-di:
+    filename: taiwan_salary_statistics_300k_no_di.csv
+    access: public
+    sha256: 5690d7aedf1bd9061806dafd1af38941a3d126070f2d4febb93b136c3f7b3ddd
+  # Taiwan salary statistics dataset (300K records, no DI) - Schema
+  taiwan-salary-statistics-300k-no-di_schema:
+    filename: taiwan_salary_statistics_300k_no_di_schema.yaml
+    access: public
+    sha256: eb1be898d81b3c41c0703a4f4243c55ded750073809c24d4d2b0c3ffce8bb8fd
 
 
 # Best practices

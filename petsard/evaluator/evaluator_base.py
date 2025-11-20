@@ -13,7 +13,6 @@ from petsard.exceptions import ConfigError
 class EvaluationScoreGranularityMap(Enum):
     """
     Mapping of the granularity of evaluation score.
-    評估分數粒度映射 Evaluation score granularity mapping
     """
 
     GLOBAL = auto()
@@ -260,7 +259,7 @@ class EvaluatorScoreConfig(BaseConfig):
                 _ = EvaluationScoreGranularityMap.map(granularity)
             except KeyError:
                 error_msg: str = f"Non-default granularity '{granularity}' is used."
-                self._logger.info(error_msg)
+                self._logger.debug(error_msg)
 
     def _verify_scores_granularity(self, scores: dict[str, Any]) -> None:
         """
@@ -386,8 +385,8 @@ class BaseEvaluator(ABC):
         self._logger.debug(f"Merged config keys: {list(merged_config.keys())}")
 
         # Evaluate the data
-        self._logger.info(f"Evaluating {self.__class__.__name__}")
+        self._logger.debug(f"Evaluating {self.__class__.__name__}")
         evaluated_report: dict[str, pd.DataFrame] = self._eval(merged_config)
-        self._logger.info(f"Successfully evaluating {self.__class__.__name__}")
+        self._logger.debug(f"Successfully evaluating {self.__class__.__name__}")
 
         return evaluated_report

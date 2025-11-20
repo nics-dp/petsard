@@ -83,7 +83,7 @@ results = exec.get_result()
 # 分析每組實驗結果
 for exp_name, result in results.items():
     print(f"\n處理實驗：{exp_name}")
-    
+
     # 根據結果類型處理
     if isinstance(result, dict):
         if 'data' in result:
@@ -108,8 +108,8 @@ results = exec.get_result()
 
 # 篩選包含特定模組的結果
 synthesizer_results = {
-    name: result 
-    for name, result in results.items() 
+    name: result
+    for name, result in results.items()
     if 'Synthesizer' in name
 }
 
@@ -117,8 +117,8 @@ print(f"Synthesizer 相關結果數量：{len(synthesizer_results)}")
 
 # 或使用 Reporter 的特定實驗結果
 reporter_results = {
-    name: result 
-    for name, result in results.items() 
+    name: result
+    for name, result in results.items()
     if 'Reporter[save_data]' in name
 }
 ```
@@ -143,7 +143,7 @@ for exp_name, result in results.items():
         print(f"  類型：{type(result)}")
         if isinstance(result, dict):
             print(f"  鍵：{result.keys()}")
-    
+
     # Evaluator 模組結果
     elif 'Evaluator' in exp_name:
         # 通常是 dict，包含評測報告

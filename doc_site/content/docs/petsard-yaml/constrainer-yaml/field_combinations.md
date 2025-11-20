@@ -1,6 +1,9 @@
 ---
 title: "Field Combinations"
-weight: 3
+type: docs
+weight: 673
+prev: docs/petsard-yaml/constrainer-yaml/field_constraints
+next: docs/petsard-yaml/constrainer-yaml/field_proportions
 ---
 
 Define value pairing relationships between different fields using **allowlist** approach (only affects explicitly specified value combinations).

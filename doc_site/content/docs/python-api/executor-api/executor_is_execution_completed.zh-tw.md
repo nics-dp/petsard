@@ -73,7 +73,7 @@ exec.run()
 if exec.is_execution_completed():
     results = exec.get_result()
     timing = exec.get_timing()
-    
+
     print("執行完成，結果已取得")
     print(f"結果數量：{len(results)}")
     print(f"執行時間：{timing['duration_seconds'].sum():.2f} 秒")
@@ -90,13 +90,13 @@ from petsard.exceptions import ConfigError
 try:
     exec = Executor('config.yaml')
     exec.run()
-    
+
     if exec.is_execution_completed():
         print("✓ 執行成功")
         results = exec.get_result()
     else:
         print("✗ 執行未完成")
-        
+
 except ConfigError as e:
     print(f"✗ 配置錯誤：{e}")
 except Exception as e:
@@ -115,13 +115,13 @@ exec.run()
 if exec.is_execution_completed():
     # 成功：處理結果
     results = exec.get_result()
-    
+
     # 儲存結果
     for exp_name, result in results.items():
         print(f"處理實驗：{exp_name}")
         if isinstance(result, dict) and 'data' in result:
             result['data'].to_csv(f"{exp_name}_output.csv", index=False)
-    
+
     print("所有結果已儲存")
 else:
     # 失敗：記錄錯誤
@@ -139,16 +139,16 @@ class TestExecutor(unittest.TestCase):
     def test_execution_completion(self):
         """測試執行完成狀態"""
         exec = Executor('test_config.yaml')
-        
+
         # 執行前應為 False
         self.assertFalse(exec.is_execution_completed())
-        
+
         # 執行工作流程
         exec.run()
-        
+
         # 執行後應為 True
         self.assertTrue(exec.is_execution_completed())
-        
+
         # 應該能取得結果
         results = exec.get_result()
         self.assertIsNotNone(results)
@@ -174,7 +174,7 @@ exec = Executor('long_running_config.yaml')
 
 # 在另一個線程中監控
 monitor_thread = threading.Thread(
-    target=monitor_execution, 
+    target=monitor_execution,
     args=(exec, 10)
 )
 monitor_thread.start()

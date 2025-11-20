@@ -1,6 +1,9 @@
 ---
 title: "Save Timing Information"
-weight: 5
+type: docs
+weight: 705
+prev: docs/petsard-yaml/reporter-yaml/save-validation
+next: docs/petsard-yaml/reporter-yaml
 ---
 
 Use the `save_timing` method to record the execution time of each module for performance analysis and optimization.

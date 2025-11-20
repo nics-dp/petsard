@@ -1,6 +1,9 @@
 ---
 title: "儲存表詮釋資料"
-weight: 3
+type: docs
+weight: 703
+prev: docs/petsard-yaml/reporter-yaml/save-report
+next: docs/petsard-yaml/reporter-yaml/save-validation
 ---
 
 使用 `save_schema` 方法將指定來源模組的表詮釋資料 (Schema) 資訊匯出為 CSV 檔案（預設）或 YAML 檔案。

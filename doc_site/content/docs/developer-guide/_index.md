@@ -1,25 +1,14 @@
 ---
 title: Developer Guide
 type: docs
-weight: 1400
-prev: docs/api
-next: docs/experimental-new-format
-sidebar:
-  open: false
+weight: 1100
+prev: docs/python-api
+next: docs/
 ---
 
+The PETsARD Developer Guide provides reference information for project development.
 
-- [Development Guidelines]({{< ref "docs/developer-guide/development-guidelines" >}})
-  - Branch protection and merge guidelines
-  - Issue and PR workflows
-  - Package management and version control
+## Related Topics
 
-## Data Loading
-- [Benchmark Dataset Maintenance]({{< ref "docs/developer-guide/benchmark-datasets" >}})
-  - Maintaining and extending benchmark datasets
-
-## Development Environment
-- [Docker Development]({{< ref "docs/developer-guide/docker-development" >}})
-  - Docker container development and testing
-  - Multi-stage build optimization and security
-  - GitHub Container Registry integration
+- [Benchmark Datasets](benchmark-datasets) - Available benchmark datasets and loading methods
+- [Test Coverage](test-coverage) - Test organization structure and detailed test cases

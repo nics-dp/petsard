@@ -132,12 +132,16 @@ def _map_attribute_to_sdv_type(attribute: Any, actual_dtype=None) -> str:
     """
     # Handle both dict and Attribute object 處理 dict 和 Attribute 物件兩種情況
     if isinstance(attribute, dict):
-        category = attribute.category
+        # CRITICAL FIX: category 存在 type_attr 裡，不是 Attribute 的直接屬性
+        category = attribute.get("type_attr", {}).get("category", False)
         logical_type = attribute.get("logical_type")
         attr_type = attribute.get("type")
         attr_name = attribute.get("name", "unknown")
     else:
-        category = attribute.category
+        # CRITICAL FIX: category 存在 type_attr 裡，不是 Attribute 的直接屬性
+        category = (
+            attribute.type_attr.get("category", False) if attribute.type_attr else False
+        )
         logical_type = attribute.logical_type
         attr_type = attribute.type
         attr_name = attribute.name
@@ -170,6 +174,14 @@ def _map_attribute_to_sdv_type(attribute: Any, actual_dtype=None) -> str:
             return "boolean"
         # If actual data is object/string, continue to other checks
         # 如果實際資料是 object/string，繼續其他檢查
+
+    # PRIORITY 0.5: Check category flag explicitly (before type checks)
+    # 優先級 0.5：明確檢查 category 標記（在類型檢查之前）
+    # This ensures category=True is respected even for numerical types
+    # 這確保即使是數值類型，category=True 也會被尊重
+    if category is True:
+        print(f"  ✓ '{attr_name}': category=True → sdtype='categorical'")
+        return "categorical"
 
     # PRIORITY 1: Check data type first for numerical types
     # 優先級 1：對於 numerical 類型，優先檢查資料類型
@@ -205,13 +217,9 @@ def _map_attribute_to_sdv_type(attribute: Any, actual_dtype=None) -> str:
         elif logical in ["address", "ip", "url"]:
             return "pii"
 
-    # PRIORITY 3: Check category field explicitly
-    # 優先級 3：明確檢查 category 欄位
-    if category is True:
-        # Explicitly marked as categorical
-        # 明確標記為 categorical
-        return "categorical"
-    elif category is False:
+    # PRIORITY 3: Check category field when False (already handled True at 0.5)
+    # 優先級 3：檢查 category=False 的情況（True 已在 0.5 處理）
+    if category is False:
         # Explicitly marked as NOT categorical
         # 明確標記為非 categorical
         # For string types with category=false, check actual dtype or default to numerical

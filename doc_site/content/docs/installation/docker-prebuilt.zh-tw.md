@@ -1,7 +1,7 @@
 ---
 title: Docker 預建
 type: docs
-weight: 2
+weight: 210
 prev: docs/installation
 next: docs/installation/pypi-install
 ---
@@ -25,12 +25,3 @@ docker run -it --rm ghcr.io/nics-dp/petsard:latest
 **可用標籤：**
 - `latest` - 最新穩定版本（來自 main 分支）
 - `dev` - 開發版本（來自 dev 分支）
-
-## 下一步
-
-安裝完成後，您可以：
-
-* 查看[快速入門](../getting-started)以獲取詳細範例
-* 查看 PETsARD YAML 文件了解設定方式
-* 探索基準資料集進行測試
-* 在 GitHub 儲存庫中檢視範例設定

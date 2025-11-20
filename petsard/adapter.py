@@ -22,7 +22,7 @@ class BaseAdapter:
     The interface of the objects used by Executor.run()
     """
 
-    def __init__(self, config: dict):
+    def __init__(self, config: dict) -> None:
         """
         Args:
             config (dict):
@@ -53,7 +53,7 @@ class BaseAdapter:
     ) -> None:
         """
         Apply precision rounding to numerical columns in-place based on schema.
-        根據 schema 對數值欄位進行原地精度四捨五入
+        Apply in-place precision rounding to numeric columns based on schema
 
         Args:
             data: DataFrame to apply precision rounding to (modified in-place)
@@ -81,7 +81,7 @@ class BaseAdapter:
                 if attr.type and any(t in attr.type for t in ["float", "int"]):
                     # Apply safe_round to entire column
                     data[col_name] = data[col_name].apply(
-                        lambda x: safe_round(x, precision)
+                        lambda x, p=precision: safe_round(x, p)
                     )
                     precision_applied_count += 1
                     self._logger.debug(
@@ -89,8 +89,8 @@ class BaseAdapter:
                     )
 
         if precision_applied_count > 0:
-            self._logger.info(
-                f"✓ Applied precision rounding to {precision_applied_count} columns in {context}"
+            self._logger.debug(
+                f"Applied precision rounding to {precision_applied_count} columns in {context}"
             )
 
     def _update_schema_stats(
@@ -98,7 +98,7 @@ class BaseAdapter:
     ) -> Schema:
         """
         Recalculate statistics and update schema based on current data.
-        重新計算統計資訊並更新 schema
+        Recalculate statistics and update schema
 
         Args:
             schema: Original schema (used to preserve type definitions and precision)
@@ -124,13 +124,214 @@ class BaseAdapter:
             description=schema.description,
         )
 
-        self._logger.info(
-            f"✓ Updated statistics for {len(updated_schema.attributes)} attributes in {context}"
+        self._logger.debug(
+            f"Updated statistics for {len(updated_schema.attributes)} attributes in {context}"
         )
 
         return updated_schema
 
-    def run(self, input: dict):
+    def _handle_benchmark_download(
+        self, protocol_value: str, value_type: str = "filepath"
+    ) -> tuple[bool, str, object]:
+        """
+        Unified handling of benchmark:// protocol download logic
+
+        Args:
+            protocol_value: Original protocol string (e.g., "benchmark://adult")
+            value_type: Value type, either "filepath" or "schema"
+
+        Returns:
+            tuple: (is_benchmark, local_path, benchmarker_config)
+        """
+        import re
+        from pathlib import Path
+
+        # Handle non-string values (e.g., dict, Schema objects)
+        if not isinstance(protocol_value, str):
+            return False, protocol_value, None
+
+        is_benchmark = protocol_value.lower().startswith("benchmark://")
+        if not is_benchmark:
+            return False, protocol_value, None
+
+        from petsard.exceptions import (BenchmarkDatasetsError,
+                                        UnsupportedMethodError)
+        from petsard.loader.benchmarker import (BenchmarkerConfig,
+                                                BenchmarkerRequests)
+
+        benchmark_name = re.sub(
+            r"^benchmark://", "", protocol_value, flags=re.IGNORECASE
+        ).lower()
+
+        self._logger.debug(
+            f"Detected benchmark protocol for {value_type}: {benchmark_name}"
+        )
+
+        # Create BenchmarkerConfig
+        try:
+            benchmarker_config = BenchmarkerConfig(
+                benchmark_name=benchmark_name, filepath_raw=protocol_value
+            )
+        except UnsupportedMethodError as e:
+            error_msg = (
+                f"Unsupported benchmark {value_type} '{benchmark_name}': {str(e)}"
+            )
+            self._logger.error(error_msg)
+            raise BenchmarkDatasetsError(error_msg) from e
+
+        # Update to local path
+        local_path = str(
+            Path("benchmark").joinpath(benchmarker_config.benchmark_filename)
+        )
+        self._logger.debug(f"Updated {value_type} to local path: {local_path}")
+
+        # Download benchmark file
+        self._logger.info(f"Downloading benchmark {value_type}: {benchmark_name}")
+        try:
+            benchmarker = BenchmarkerRequests(
+                benchmarker_config.get_benchmarker_config()
+            )
+            benchmarker.download()
+            self._logger.debug(f"Benchmark {value_type} downloaded successfully")
+        except BenchmarkDatasetsError as e:
+            error_msg = f"Failed to download benchmark {value_type} '{benchmark_name}': {str(e)}"
+            self._logger.error(error_msg)
+            raise BenchmarkDatasetsError(error_msg) from e
+        except ImportError as e:
+            error_msg = (
+                f"Cannot download benchmark {value_type} '{benchmark_name}': "
+                f"requests library is required. Install with: pip install petsard[load-benchmark]"
+            )
+            self._logger.error(error_msg)
+            raise BenchmarkDatasetsError(error_msg) from e
+        except Exception as e:
+            error_msg = f"Failed to download benchmark {value_type} '{benchmark_name}': {str(e)}"
+            self._logger.error(error_msg)
+            raise BenchmarkDatasetsError(error_msg) from e
+
+        return True, local_path, benchmarker_config
+
+    def _resolve_data_source(
+        self, status, source_spec: str, key_aliases: dict | None = None
+    ) -> pd.DataFrame:
+        """
+        Unified data source resolution logic, supports "Module.key" format
+
+        Args:
+            status: Status object
+            source_spec: Data source specification (e.g., "Loader" or "Splitter.train")
+            key_aliases: Alias mapping dictionary (e.g., {"ori": "train", "control": "validation"})
+
+        Returns:
+            pd.DataFrame: Resolved data
+
+        Raises:
+            ConfigError: When the specified data source cannot be found
+        """
+        if key_aliases is None:
+            key_aliases = {}
+
+        # Support "Module.key" format
+        if "." in source_spec:
+            module_name, data_key = source_spec.split(".", 1)
+
+            # Create reverse mapping for bidirectional lookup
+            reverse_aliases = {v: k for k, v in key_aliases.items()}
+
+            data = status.get_data_by_module(module_name)
+            if not data:
+                error_msg = f"No data found from module: {module_name}"
+                self._logger.error(error_msg)
+                raise ConfigError(error_msg)
+
+            # Search for specific key
+            search_keys = [data_key]
+            if data_key in key_aliases:
+                search_keys.append(key_aliases[data_key])
+            if data_key in reverse_aliases:
+                search_keys.append(reverse_aliases[data_key])
+
+            for available_key, df in data.items():
+                for search_key in search_keys:
+                    if (
+                        available_key == f"{module_name}_{search_key}"
+                        or available_key == search_key
+                    ):
+                        if search_key != data_key:
+                            self._logger.debug(
+                                f"Using data from module: {module_name}.{data_key} "
+                                f"(mapped to {search_key})"
+                            )
+                        else:
+                            self._logger.debug(
+                                f"Using data from module: {module_name}.{data_key}"
+                            )
+                        return df
+
+            error_msg = f"Key '{data_key}' not found in module '{module_name}'. Available keys: {list(data.keys())}"
+            self._logger.error(error_msg)
+            raise ConfigError(error_msg)
+        else:
+            # Simple module name
+            data = status.get_data_by_module(source_spec)
+            if data:
+                first_key = next(iter(data.keys()))
+                self._logger.debug(
+                    f"Using data from module: {source_spec} ({first_key})"
+                )
+                return data[first_key]
+            else:
+                error_msg = f"No data found from source: {source_spec}"
+                self._logger.error(error_msg)
+                raise ConfigError(error_msg)
+
+    def _get_metadata_with_priority(self, status, priority: list[str]) -> Schema | None:
+        """
+        Get metadata by priority order
+
+        Args:
+            status: Status object
+            priority: Priority list of module names (e.g., ["Loader", "Splitter", "Preprocessor"])
+
+        Returns:
+            Schema | None: Found metadata, or None if not found in any module
+        """
+        for module in priority:
+            if module in status.status:
+                try:
+                    metadata = status.get_metadata(module)
+                    if metadata:
+                        self._logger.debug(f"Using metadata from {module}")
+                        return metadata
+                except Exception as e:
+                    self._logger.debug(f"Cannot get metadata from {module}: {e}")
+
+        self._logger.warning(f"Could not retrieve metadata from any of: {priority}")
+        return None
+
+    def _safe_copy(self, data):
+        """
+        Unified copy strategy, determines copy method based on data type
+
+        Args:
+            data: Data to copy
+
+        Returns:
+            Copied data
+        """
+        if data is None:
+            return None
+        elif isinstance(data, pd.DataFrame):
+            # DataFrame's copy() is usually sufficient and faster
+            return data.copy()
+        elif isinstance(data, dict):
+            # dict may contain DataFrame, needs deep copy
+            return deepcopy(data)
+        else:
+            # Other complex structures use deep copy
+            return deepcopy(data)
+
+    def run(self, input: dict) -> None:
         """
         Execute the module's functionality.
 
@@ -139,7 +340,7 @@ class BaseAdapter:
                 See self.set_input() for more details.
         """
         start_time: time = time.time()
-        self._logger.info(f"TIMING_START|{self.module_name}|run|{start_time}")
+        self._logger.debug(f"TIMING_START|{self.module_name}|run|{start_time}")
         self._logger.info(f"Starting {self.module_name} execution")
 
         try:
@@ -148,7 +349,7 @@ class BaseAdapter:
             elapsed_time: time = time.time() - start_time
             formatted_elapsed_time: str = str(timedelta(seconds=round(elapsed_time)))
 
-            self._logger.info(
+            self._logger.debug(
                 f"TIMING_END|{self.module_name}|run|{time.time()}|{elapsed_time}"
             )
             self._logger.info(
@@ -157,7 +358,7 @@ class BaseAdapter:
             )
         except Exception as e:
             elapsed_time: time = time.time() - start_time
-            self._logger.error(
+            self._logger.debug(
                 f"TIMING_ERROR|{self.module_name}|run|{time.time()}|{elapsed_time}|{str(e)}"
             )
             raise
@@ -239,7 +440,7 @@ class LoaderAdapter(BaseAdapter):
     For benchmark:// protocol files, it handles downloading before loading.
     """
 
-    def __init__(self, config: dict):
+    def __init__(self, config: dict) -> None:
         """
         Args:
             config (dict): Configuration parameters for the Loader.
@@ -261,157 +462,21 @@ class LoaderAdapter(BaseAdapter):
         # Copy config once at the beginning to avoid modifying the original
         config = config.copy()
 
-        # Check if filepath uses benchmark:// protocol
+        # Handle filepath benchmark protocol
         filepath = config.get("filepath", "")
-        self.is_benchmark = filepath.lower().startswith("benchmark://")
-        self.benchmarker_config = None
-
+        self.is_benchmark, local_filepath, self.benchmarker_config = (
+            self._handle_benchmark_download(filepath, "filepath")
+        )
         if self.is_benchmark:
-            # If benchmark protocol detected, prepare benchmarker
-            import re
-            from pathlib import Path
+            config["filepath"] = local_filepath
 
-            from petsard.exceptions import UnsupportedMethodError
-            from petsard.loader.benchmarker import BenchmarkerConfig
-
-            benchmark_name = re.sub(
-                r"^benchmark://", "", filepath, flags=re.IGNORECASE
-            ).lower()
-
-            self._logger.info(
-                f"Detected benchmark protocol for filepath: {benchmark_name}"
-            )
-
-            # Create BenchmarkerConfig
-            try:
-                self.benchmarker_config = BenchmarkerConfig(
-                    benchmark_name=benchmark_name, filepath_raw=filepath
-                )
-            except UnsupportedMethodError as e:
-                # Convert UnsupportedMethodError to BenchmarkDatasetsError
-                from petsard.exceptions import BenchmarkDatasetsError
-
-                error_msg = (
-                    f"Unsupported benchmark dataset '{benchmark_name}': {str(e)}"
-                )
-                self._logger.error(error_msg)
-                raise BenchmarkDatasetsError(error_msg) from e
-
-            # Update filepath in config to local path
-            local_filepath = Path("benchmark").joinpath(
-                self.benchmarker_config.benchmark_filename
-            )
-            config["filepath"] = str(local_filepath)
-
-            self._logger.debug(f"Updated filepath to local path: {local_filepath}")
-
-            # Download benchmark data file BEFORE initializing Loader
-            self._logger.info(
-                f"Downloading benchmark dataset in __init__: {benchmark_name}"
-            )
-            try:
-                from petsard.exceptions import BenchmarkDatasetsError
-                from petsard.loader.benchmarker import BenchmarkerRequests
-
-                benchmarker = BenchmarkerRequests(
-                    self.benchmarker_config.get_benchmarker_config()
-                )
-                benchmarker.download()
-                self._logger.debug(
-                    "Benchmark dataset downloaded successfully in __init__"
-                )
-            except BenchmarkDatasetsError as e:
-                error_msg = f"Failed to download benchmark dataset '{benchmark_name}' during initialization: {str(e)}"
-                self._logger.error(error_msg)
-                raise BenchmarkDatasetsError(error_msg) from e
-            except ImportError as e:
-                error_msg = (
-                    f"Cannot download benchmark dataset '{benchmark_name}': "
-                    f"requests library is required. Install with: pip install petsard[load-benchmark]"
-                )
-                self._logger.error(error_msg)
-                raise BenchmarkDatasetsError(error_msg) from e
-            except Exception as e:
-                error_msg = f"Failed to download benchmark dataset '{benchmark_name}' during initialization: {str(e)}"
-                self._logger.error(error_msg)
-                raise BenchmarkDatasetsError(error_msg) from e
-
-        # Check if schema uses benchmark:// protocol
+        # Handle schema benchmark protocol
         schema = config.get("schema", "")
-        self.is_schema_benchmark = isinstance(
-            schema, str
-        ) and schema.lower().startswith("benchmark://")
-        self.schema_benchmarker_config = None
-
+        self.is_schema_benchmark, local_schema, self.schema_benchmarker_config = (
+            self._handle_benchmark_download(schema, "schema")
+        )
         if self.is_schema_benchmark:
-            # If benchmark protocol detected for schema, prepare benchmarker
-            import re
-            from pathlib import Path
-
-            from petsard.exceptions import UnsupportedMethodError
-            from petsard.loader.benchmarker import BenchmarkerConfig
-
-            schema_benchmark_name = re.sub(
-                r"^benchmark://", "", schema, flags=re.IGNORECASE
-            ).lower()
-
-            self._logger.info(
-                f"Detected benchmark protocol for schema: {schema_benchmark_name}"
-            )
-
-            # Create BenchmarkerConfig for schema
-            try:
-                self.schema_benchmarker_config = BenchmarkerConfig(
-                    benchmark_name=schema_benchmark_name, filepath_raw=schema
-                )
-            except UnsupportedMethodError as e:
-                # Convert UnsupportedMethodError to BenchmarkDatasetsError
-                from petsard.exceptions import BenchmarkDatasetsError
-
-                error_msg = (
-                    f"Unsupported benchmark schema '{schema_benchmark_name}': {str(e)}"
-                )
-                self._logger.error(error_msg)
-                raise BenchmarkDatasetsError(error_msg) from e
-
-            # Update schema in config to local path
-            local_schema_path = Path("benchmark").joinpath(
-                self.schema_benchmarker_config.benchmark_filename
-            )
-            config["schema"] = str(local_schema_path)
-
-            self._logger.debug(f"Updated schema to local path: {local_schema_path}")
-
-            # Download benchmark schema file BEFORE initializing Loader
-            self._logger.info(
-                f"Downloading benchmark schema in __init__: {schema_benchmark_name}"
-            )
-            try:
-                from petsard.exceptions import BenchmarkDatasetsError
-                from petsard.loader.benchmarker import BenchmarkerRequests
-
-                benchmarker = BenchmarkerRequests(
-                    self.schema_benchmarker_config.get_benchmarker_config()
-                )
-                benchmarker.download()
-                self._logger.debug(
-                    "Benchmark schema downloaded successfully in __init__"
-                )
-            except BenchmarkDatasetsError as e:
-                error_msg = f"Failed to download benchmark schema '{schema_benchmark_name}' during initialization: {str(e)}"
-                self._logger.error(error_msg)
-                raise BenchmarkDatasetsError(error_msg) from e
-            except ImportError as e:
-                error_msg = (
-                    f"Cannot download benchmark schema '{schema_benchmark_name}': "
-                    f"requests library is required. Install with: pip install petsard[load-benchmark]"
-                )
-                self._logger.error(error_msg)
-                raise BenchmarkDatasetsError(error_msg) from e
-            except Exception as e:
-                error_msg = f"Failed to download benchmark schema '{schema_benchmark_name}' during initialization: {str(e)}"
-                self._logger.error(error_msg)
-                raise BenchmarkDatasetsError(error_msg) from e
+            config["schema"] = local_schema
 
         # Remove method parameter if exists, as Loader no longer accepts it
         config.pop("method", None)
@@ -420,7 +485,7 @@ class LoaderAdapter(BaseAdapter):
         self.loader = Loader(**config)
         self._schema_metadata = None  # Store the Schema
 
-    def _run(self, input: dict):
+    def _run(self, input: dict) -> None:
         """
         Executes the data loading process using the Loader instance.
         For benchmark:// protocol, downloads dataset first.
@@ -486,11 +551,11 @@ class LoaderAdapter(BaseAdapter):
         self.metadata = self._schema_metadata
 
         # Apply precision rounding based on schema
-        # 根據 schema 應用精度四捨五入
+        # Apply precision rounding based on schema
         self._apply_precision_rounding(self.data, self.metadata, "Loader output")
 
         # Update schema statistics based on loaded data
-        # 根據載入的數據更新 schema 統計資訊
+        # Update schema statistics based on loaded data
         if self.metadata and self.metadata.enable_stats:
             self.metadata = self._update_schema_stats(
                 self.metadata, self.data, "Loader"
@@ -668,7 +733,7 @@ class SplitterAdapter(BaseAdapter):
             )
 
         # Update schema statistics for train data after splitting
-        # 分割後更新 train 資料的 schema 統計資訊
+        # Update schema statistics for train data after splitting
         if self.metadata and 1 in self.metadata:
             train_metadata = self.metadata[1].get("train")
             if train_metadata and train_metadata.enable_stats:
@@ -790,10 +855,10 @@ class PreprocessorAdapter(BaseAdapter):
             method = outlier_config.lower()
             # Only allow global methods in simplified format
             if method in ["outlier_isolationforest", "outlier_lof"]:
-                self._logger.info(
-                    f"✓ Detected simplified global outlier config: {method}"
+                self._logger.debug(
+                    f"Detected simplified global outlier config: {method}"
                 )
-                self._logger.info(f"  Will apply {method} to ALL numerical columns")
+                self._logger.debug(f"Will apply {method} to ALL numerical columns")
                 # Convert to dict format with special key
                 self._config["outlier"] = {"__global__": outlier_config}
             else:
@@ -830,14 +895,14 @@ class PreprocessorAdapter(BaseAdapter):
         # Check if it's the simplified format with __global__ key
         if isinstance(outlier_config, dict) and "__global__" in outlier_config:
             global_method = outlier_config["__global__"]
-            self._logger.info(
-                f"✓ Expanding global outlier config: {global_method} to all numerical columns"
+            self._logger.debug(
+                f"Expanding global outlier config: {global_method} to all numerical columns"
             )
 
             # Identify numerical columns
             numerical_cols = data.select_dtypes(include=["number"]).columns.tolist()
-            self._logger.info(
-                f"  Found {len(numerical_cols)} numerical columns: {numerical_cols}"
+            self._logger.debug(
+                f"Found {len(numerical_cols)} numerical columns: {numerical_cols}"
             )
 
             # Create expanded config
@@ -871,7 +936,11 @@ class PreprocessorAdapter(BaseAdapter):
             input["data"], self._config
         )
 
-        self.processor = Processor(metadata=input["metadata"], config=expanded_config)
+        # Schema tracking is always enabled in Processor
+        self.processor = Processor(
+            metadata=input["metadata"],
+            config=expanded_config,
+        )
 
         if self._sequence is None:
             self._logger.debug("Using default processing sequence")
@@ -884,15 +953,14 @@ class PreprocessorAdapter(BaseAdapter):
         self.data_preproc = self.processor.transform(data=input["data"])
 
         # Apply precision rounding based on output schema
-        # 根據輸出 schema 應用精度四捨五入
         self._apply_precision_rounding(
             self.data_preproc, self.processor._metadata, "Preprocessor output"
         )
 
         # Update schema statistics after preprocessing
-        # 預處理後更新 schema 統計資訊
+        # Update schema statistics after preprocessing
         # Check original input metadata's enable_stats setting, not processor's internal metadata
-        # 檢查原始輸入 metadata 的 enable_stats 設定，而不是 processor 內部的 metadata
+        # Check original input metadata's enable_stats setting, not processor's internal metadata
         if (
             input.get("metadata")
             and input["metadata"].enable_stats
@@ -941,7 +1009,6 @@ class PreprocessorAdapter(BaseAdapter):
             (Schema): The updated metadata.
         """
         # Return the metadata which should have been updated with stats in _run()
-        # 返回在 _run() 中已經更新過 stats 的 metadata
         metadata: Schema = deepcopy(self.processor._metadata)
 
         # Note: The metadata update logic for EncoderUniform and ScalerTimeAnchor
@@ -1011,7 +1078,7 @@ class SynthesizerAdapter(BaseAdapter):
         }
         return loader_config
 
-    def _run(self, input: dict):
+    def _run(self, input: dict) -> None:
         """
         Executes the data synthesizing using the Synthesizer instance.
 
@@ -1051,7 +1118,6 @@ class SynthesizerAdapter(BaseAdapter):
             self._logger.debug("Train and sampling Synthesizing model completed")
 
             # Update schema statistics for synthesized data
-            # 更新合成資料的 schema 統計資訊
             if input["metadata"] and input["metadata"].enable_stats:
                 # Create updated schema based on synthesized data
 
@@ -1150,28 +1216,24 @@ class PostprocessorAdapter(BaseAdapter):
 
         # CRITICAL FIX: Processor.inverse_transform() may corrupt nullable integer dtypes
         # (e.g., Int64 → string → float64). We must restore dtypes from original schema.
-        # 關鍵修復：Processor.inverse_transform() 可能破壞 nullable integer dtypes
-        # （例如 Int64 → string → float64）。我們必須從原始 schema 恢復 dtypes。
         if "original_schema" in input and input["original_schema"]:
             self._logger.debug("Restoring dtypes from original schema")
             try:
                 self.data_postproc = SchemaMetadater.align(
                     input["original_schema"], self.data_postproc
                 )
-                self._logger.info("✓ Successfully restored dtypes after postprocessing")
+                self._logger.debug("Successfully restored dtypes after postprocessing")
             except Exception as e:
                 self._logger.warning(
                     f"Failed to restore dtypes from original schema: {e}"
                 )
 
             # Apply precision rounding based on original schema (preprocessor input schema)
-            # 根據原始 schema（preprocessor 輸入 schema）應用精度四捨五入
             self._apply_precision_rounding(
                 self.data_postproc, input["original_schema"], "Postprocessor output"
             )
 
             # Update schema statistics after postprocessing
-            # 後處理後更新 schema 統計資訊
             if input.get("original_schema") and input["original_schema"].enable_stats:
                 # Store updated schema for potential downstream use
                 self._updated_schema = self._update_schema_stats(
@@ -1197,17 +1259,13 @@ class PostprocessorAdapter(BaseAdapter):
         # CRITICAL: Get Preprocessor input schema for dtype restoration after inverse_transform
         # This solves the many-to-one transformation reversibility problem:
         # e.g., int64 → scaler_standard → float64 → inverse → ??? (should be int64)
-        #
-        # 關鍵：取得 Preprocessor 輸入 schema 用於 inverse_transform 後恢復 dtype
-        # 這解決了多對一轉換的可逆性問題：
-        # 例如 int64 → scaler_standard → float64 → inverse → ??? （應該是 int64）
         try:
             # First try to get the remembered Preprocessor input schema
             preprocessor_input_schema = status.get_preprocessor_input_schema()
             if preprocessor_input_schema:
                 self.input["original_schema"] = preprocessor_input_schema
-                self._logger.info(
-                    "✓ 使用記憶的 Preprocessor 輸入 Schema 進行 dtype 還原"
+                self._logger.debug(
+                    "Using remembered Preprocessor input Schema for dtype restoration"
                 )
             # Fallback to Loader/Splitter schema if preprocessor input schema not available
             elif "Loader" in status.status:
@@ -1236,6 +1294,26 @@ class PostprocessorAdapter(BaseAdapter):
         result: pd.DataFrame = deepcopy(self.data_postproc)
         return result
 
+    def get_metadata(self) -> Schema:
+        """
+        Retrieve the metadata after postprocessing.
+
+        Returns:
+            (Schema): The updated metadata after postprocessing.
+        """
+        # Return the updated schema if available, otherwise return original schema
+        if hasattr(self, "_updated_schema") and self._updated_schema:
+            return deepcopy(self._updated_schema)
+        # Fallback to original schema from input
+        elif (
+            hasattr(self, "input")
+            and "original_schema" in self.input
+            and self.input["original_schema"]
+        ):
+            return deepcopy(self.input["original_schema"])
+        else:
+            return None
+
 
 class ConstrainerAdapter(BaseAdapter):
     """
@@ -1243,7 +1321,7 @@ class ConstrainerAdapter(BaseAdapter):
     using the configured Constrainer instance as a decorator.
     """
 
-    def __init__(self, config: dict):
+    def __init__(self, config: dict) -> None:
         """
         Initialize ConstrainerAdapter with given configuration.
 
@@ -1257,9 +1335,9 @@ class ConstrainerAdapter(BaseAdapter):
 
                 Additional parameters:
                 - method: 'auto' (default), 'resample', or 'validate'
-                    * 'auto': 自動判斷（有 synthesizer 且非 custom_data 用 resample，否則用 validate）
-                    * 'resample': 強制使用 resample 模式
-                    * 'validate': 強制使用 validate 模式
+                    * 'auto': Auto-detect (use resample if synthesizer exists and not custom_data, otherwise use validate)
+                    * 'resample': Force resample mode
+                    * 'validate': Force validate mode
                 - source: Optional data source specification (for validate mode)
                     * Single string: "Loader" or "Splitter.train"
                     * List: ["Loader"] or ["Splitter.train", "Synthesizer"]
@@ -1269,7 +1347,7 @@ class ConstrainerAdapter(BaseAdapter):
             constrainer (Constrainer): An instance of the Constrainer class
                 initialized with the provided configuration.
             validation_result (dict): Validation result when using validate mode.
-            method (str): Constrainter 運作模式 ('auto', 'resample', 'validate')
+            method (str): Constrainer operation mode ('auto', 'resample', 'validate')
             source: Optional data source specification
 
         Raises:
@@ -1277,25 +1355,25 @@ class ConstrainerAdapter(BaseAdapter):
                 or if the YAML file is invalid or not found.
         """
         super().__init__(config)
-        self.validation_result = None  # 初始化驗證結果
-        self.validation_results = {}  # 存儲多個 source 的驗證結果
+        self.validation_result = None  # Initialize validation result
+        self.validation_results = {}  # Store validation results for multiple sources
 
-        # 取得並驗證 method 參數
+        # Get and validate method parameter
         self.method = config.pop("method", "auto").lower()
         if self.method not in ["auto", "resample", "validate"]:
             raise ConfigError(
                 f"Invalid method '{self.method}'. Must be 'auto', 'resample', or 'validate'"
             )
 
-        # 取得 source 參數（可選）
+        # Get source parameter (optional)
         self.source = config.pop("source", None)
         if self.source is not None:
-            # 處理 source 參數格式
+            # Process source parameter format
             if isinstance(self.source, str):
-                # 單一字串轉為列表
+                # Convert single string to list
                 self.source = [self.source]
             elif isinstance(self.source, list):
-                # 列表格式保持不變
+                # Keep list format unchanged
                 pass
             else:
                 error_msg = f"source must be a string or list, got {type(self.source)}"
@@ -1336,31 +1414,32 @@ class ConstrainerAdapter(BaseAdapter):
 
             import yaml
 
-            self._logger.info(f"Loading constraints from YAML file: {constraints_yaml}")
+            self._logger.debug(f"Loading constraints from YAML file: {constraints_yaml}")
 
             # Try to find the file in multiple locations
-            # 嘗試在多個位置尋找檔案
             yaml_path = None
 
             # First try: relative to current working directory
-            # 首先嘗試：相對於當前工作目錄
             if Path(constraints_yaml).exists():
                 yaml_path = Path(constraints_yaml)
             else:
                 # Second try: search in sys.path directories (like Python import)
-                # 第二次嘗試：在 sys.path 目錄中搜尋（類似 Python import）
                 for search_dir in sys.path:
                     candidate = Path(search_dir) / constraints_yaml
                     if candidate.exists():
                         yaml_path = candidate
-                        self._logger.info(
+                        self._logger.debug(
                             f"Found constraints file in sys.path: {yaml_path}"
                         )
                         break
 
             if yaml_path is None:
-                raise FileNotFoundError(
-                    f"Could not find {constraints_yaml} in current directory or sys.path"
+                from petsard.exceptions import UnableToLoadError
+
+                self._logger.error(f"Could not find constraints file: {constraints_yaml}")
+                raise UnableToLoadError(
+                    f"Could not find {constraints_yaml} in current directory or sys.path",
+                    filepath=constraints_yaml
                 )
 
             try:
@@ -1391,12 +1470,12 @@ class ConstrainerAdapter(BaseAdapter):
         config = self._transform_field_combinations(config)
 
         # Store sampling configuration if provided
-        # 過濾掉 None 值和字串 "None"，讓它們在 _run 時自動偵測
+        # Filter out None values and string "None", let them auto-detect in _run
         self.sample_dict = {}
         for key in ["target_rows", "sampling_ratio", "max_trials", "verbose_step"]:
             if key in config:
                 value = config.pop(key)
-                # 只有當值不是 None 且不是字串 "None" 時才加入
+                # Only add if value is not None and not string "None"
                 if value is not None and value != "None":
                     self.sample_dict[key] = value
 
@@ -1411,27 +1490,27 @@ class ConstrainerAdapter(BaseAdapter):
         """
         Execute data constraining process using the Constrainer instance.
 
-        支援兩種模式：
-        1. resample 模式：有 synthesizer（且非 custom_data）時，反覆抽樣直到符合條件
-        2. validate 模式：沒有 synthesizer 或使用 custom_data 時，只做驗證檢查
+        Supports two modes:
+        1. resample mode: When synthesizer exists (and not custom_data), resample until constraints are met
+        2. validate mode: When no synthesizer or using custom_data, only perform validation check
 
-        支援多個 source：
-        - 如果 input["data"] 是字典（多個 source），會分別驗證每個 source
-        - 驗證結果存儲在 self.validation_results 中
+        Supports multiple sources:
+        - If input["data"] is a dict (multiple sources), validate each source separately
+        - Validation results stored in self.validation_results
 
-        模式選擇邏輯：
-        - method='auto': 自動判斷
-          * 有 synthesizer 且非 custom_data → resample
-          * 其他情況 → validate
-        - method='resample': 強制使用 resample（需要有 synthesizer）
-        - method='validate': 強制使用 validate
+        Mode selection logic:
+        - method='auto': Auto-detect
+          * Has synthesizer and not custom_data → resample
+          * Other cases → validate
+        - method='resample': Force resample mode (requires synthesizer)
+        - method='validate': Force validate mode
 
         Args:
             input (dict): Constrainer input should contain:
                 - data (pd.DataFrame or dict): Single data or multiple data sources
                 - synthesizer (optional): Synthesizer instance if resampling is needed
                 - postprocessor (optional): Postprocessor instance if needed
-                - is_custom_data (bool, optional): 標記是否為 custom_data
+                - is_custom_data (bool, optional): Flag indicating if it's custom_data
                 - source_names (dict, optional): Mapping of data to source names
 
         Attributes:
@@ -1441,68 +1520,70 @@ class ConstrainerAdapter(BaseAdapter):
         """
         self._logger.debug("Starting data constraining process")
 
-        # 檢查是否為多個 source
+        # Check if multiple sources
         is_multiple_sources = (
             isinstance(input["data"], dict) and "source_names" in input
         )
 
         if is_multiple_sources:
-            # 多個 source 的情況：分別驗證每個 source
+            # Multiple sources case: validate each source separately
             self._logger.info(f"Validating {len(input['data'])} sources separately")
 
             for source_name, source_data in input["data"].items():
                 self._logger.info(f"Validating source: {source_name}")
 
-                # 為每個 source 執行驗證
+                # Execute validation for each source
                 validation_result = self.constrainer.validate(
                     data=source_data, return_details=True
                 )
 
-                # 添加 source 資訊到驗證結果
+                # Add source info to validation result
                 validation_result["source_name"] = source_name
 
-                # 存儲驗證結果
+                # Store validation result
                 self.validation_results[source_name] = validation_result
 
-                # 記錄驗證結果
+                # Log validation result
                 self._logger.info(
-                    f"✓ Source '{source_name}' 驗證完成：總共 {validation_result['total_rows']} 筆資料，"
-                    f"通過 {validation_result['passed_rows']} 筆 "
-                    f"({validation_result['pass_rate']:.2%})，"
-                    f"未通過 {validation_result['failed_rows']} 筆"
+                    f"✓ Source '{source_name}' validation completed: total {validation_result['total_rows']} rows, "
+                    f"passed {validation_result['passed_rows']} rows "
+                    f"({validation_result['pass_rate']:.2%}), "
+                    f"failed {validation_result['failed_rows']} rows"
                 )
 
                 if validation_result["is_fully_compliant"]:
                     self._logger.info(
-                        f"✓ Source '{source_name}' 所有資料都符合條件限制（100% 通過）"
+                        f"✓ Source '{source_name}' all data meets constraints (100% pass)"
                     )
                 else:
                     self._logger.warning(
-                        f"⚠ Source '{source_name}' 部分資料不符合條件限制，通過率：{validation_result['pass_rate']:.2%}"
+                        f"⚠ Source '{source_name}' partial data does not meet constraints, pass rate: {validation_result['pass_rate']:.2%}"
                     )
 
-            # 對於多 source 的情況，constrained_data 保持原始資料結構
+            # For multiple sources, constrained_data keeps original data structure
             self.constrained_data = input["data"]
-            self.validation_result = None  # 多 source 時不使用單一驗證結果
+            self.validation_result = (
+                None  # Don't use single validation result for multiple sources
+            )
 
         else:
-            # 單一 source 的情況：使用原有邏輯
+            # Single source case: use original logic
             data = input["data"]
 
-            # 如果 target_rows 不存在或為 None，使用資料筆數
+            # If target_rows doesn't exist or is None, use data row count
             if (
                 "target_rows" not in self.sample_dict
                 or self.sample_dict.get("target_rows") is None
             ):
                 self.sample_dict["target_rows"] = len(data)
 
-            # 決定使用哪種模式
+            # Decide which mode to use
             use_resample_mode = self._should_use_resample_mode(input)
 
             if use_resample_mode:
-                # Mode 1: Resample mode - 反覆抽樣直到符合條件
+                # Mode 1: Resample mode - resample until constraints are met
                 self._logger.info(
-                    f"使用 resample 模式 (method={self.method})：將進行反覆抽樣直到符合條件"
+                    f"Using resample mode (method={self.method}): will resample until constraints are met"
                 )
 
                 if "synthesizer" not in input or input["synthesizer"] is None:
@@ -1519,77 +1600,75 @@ class ConstrainerAdapter(BaseAdapter):
                 )
                 self.validation_result = None
 
-                # 記錄抽樣次數
+                # Log resampling statistics
                 if self.constrainer.resample_trails is not None:
                     self._logger.info(
-                        f"✓ Resample 完成：經過 {self.constrainer.resample_trails} 次抽樣，"
-                        f"取得 {len(self.constrained_data)} 筆符合條件的資料"
+                        f"✓ Resample completed: after {self.constrainer.resample_trails} samplings, "
+                        f"obtained {len(self.constrained_data)} rows of compliant data"
                     )
             else:
-                # Mode 2: Validate mode - 只做驗證檢查
+                # Mode 2: Validate mode - validation check only
                 reason = (
-                    "custom_data" if input.get("is_custom_data") else "無 synthesizer"
+                    "custom_data" if input.get("is_custom_data") else "no synthesizer"
                 )
                 self._logger.info(
-                    f"使用 validate 模式 (method={self.method}, 原因={reason})：將只進行條件驗證檢查"
+                    f"Using validate mode (method={self.method}, reason={reason}): will only perform constraint validation check"
                 )
 
-                # 執行驗證
+                # Execute validation
                 self.validation_result = self.constrainer.validate(
                     data=data, return_details=True
                 )
 
-                # 記錄驗證結果
+                # Log validation results
                 self._logger.info(
-                    f"✓ Validate 完成：總共 {self.validation_result['total_rows']} 筆資料，"
-                    f"通過 {self.validation_result['passed_rows']} 筆 "
-                    f"({self.validation_result['pass_rate']:.2%})，"
-                    f"未通過 {self.validation_result['failed_rows']} 筆"
+                    f"✓ Validate completed: total {self.validation_result['total_rows']} rows, "
+                    f"passed {self.validation_result['passed_rows']} rows "
+                    f"({self.validation_result['pass_rate']:.2%}), "
+                    f"failed {self.validation_result['failed_rows']} rows"
                 )
 
                 if self.validation_result["is_fully_compliant"]:
-                    self._logger.info("✓ 所有資料都符合條件限制（100% 通過）")
+                    self._logger.info("✓ All data meets constraints (100% pass)")
                 else:
                     self._logger.warning(
-                        f"⚠ 部分資料不符合條件限制，通過率：{self.validation_result['pass_rate']:.2%}"
+                        f"⚠ Some data does not meet constraints, pass rate: {self.validation_result['pass_rate']:.2%}"
                     )
 
-                    # 記錄各條件的違規統計（新的巢狀結構）
+                    # Log violation statistics for each constraint (nested structure)
                     for constraint_type, type_violations in self.validation_result[
                         "constraint_violations"
                     ].items():
                         if isinstance(type_violations, dict):
-                            # 檢查是否有錯誤訊息
+                            # Check if error message exists
                             if (
                                 "error" in type_violations
                                 and "failed_count" in type_violations
                             ):
-                                # 舊格式或錯誤格式
+                                # Old format or error format
                                 self._logger.error(
-                                    f"  - {constraint_type}: 驗證錯誤 - {type_violations.get('error')}"
+                                    f"  - {constraint_type}: validation error - {type_violations.get('error')}"
                                 )
                             else:
-                                # 新格式：包含多條規則
+                                # New format: contains multiple rules
                                 for rule_name, rule_stats in type_violations.items():
                                     if (
                                         isinstance(rule_stats, dict)
                                         and rule_stats.get("failed_count", 0) > 0
                                     ):
                                         self._logger.warning(
-                                            f"  - {constraint_type} - {rule_name}: {rule_stats['failed_count']} 筆違規 "
+                                            f"  - {constraint_type} - {rule_name}: {rule_stats['failed_count']} violations "
                                             f"({rule_stats['fail_rate']:.2%})"
                                         )
 
-                # 對於 validate 模式，返回所有資料（包含違規的）
-                # 讓使用者可以自行決定如何處理
+                # For validate mode, return all data (including violations)
+                # Let users decide how to handle it
                 self.constrained_data = data.copy()
 
         # Update schema statistics after constraining
-        # 約束處理後更新 schema 統計資訊
         if self._metadata and self._metadata.enable_stats:
             if is_multiple_sources:
                 # For multiple sources, update each separately
-                # 多個 source 的情況，分別更新
                 for source_name, source_data in self.constrained_data.items():
                     if isinstance(source_data, pd.DataFrame):
                         self._logger.debug(
@@ -1597,7 +1676,6 @@ class ConstrainerAdapter(BaseAdapter):
                         )
             else:
                 # For single source, update stats
-                # 單一 source 的情況，更新統計
                 if isinstance(self.constrained_data, pd.DataFrame):
                     self._updated_metadata = self._update_schema_stats(
                         self._metadata, self.constrained_data, "Constrainer"
@@ -1607,22 +1685,22 @@ class ConstrainerAdapter(BaseAdapter):
 
     def _should_use_resample_mode(self, input: dict) -> bool:
         """
-        決定是否使用 resample 模式
+        Decide whether to use resample mode
 
         Args:
-            input: Constrainer 的輸入字典
+            input: Constrainer input dictionary
 
         Returns:
-            bool: True 表示使用 resample 模式，False 表示使用 validate 模式
+            bool: True means use resample mode, False means use validate mode
         """
-        # 如果手動指定模式
+        # If mode is manually specified
         if self.method == "resample":
             return True
         elif self.method == "validate":
             return False
 
-        # auto 模式：自動判斷
-        # 條件：有 synthesizer 且不是 custom_data
+        # auto mode: auto-detect
+        # Condition: has synthesizer and not custom_data
         has_synthesizer = "synthesizer" in input and input["synthesizer"] is not None
         is_custom_data = input.get("is_custom_data", False)
 
@@ -1642,30 +1720,14 @@ class ConstrainerAdapter(BaseAdapter):
                 - metadata (Schema, optional): Schema for field type checking
                 - synthesizer (optional)
                 - postprocessor (optional)
-                - is_custom_data (bool): 標記是否為 custom_data
+                - is_custom_data (bool): Flag indicating if it's custom_data
                 - source_names (dict, optional): Mapping of data to source names
         """
-        # Get metadata for field type checking
+        # Get metadata for field type checking using unified method
         # Priority: Loader > Splitter > Preprocessor
-        try:
-            if "Loader" in status.status:
-                self._metadata = status.get_metadata("Loader")
-                self._logger.debug("Using metadata from Loader for field type checking")
-            elif "Splitter" in status.status:
-                self._metadata = status.get_metadata("Splitter")
-                self._logger.debug(
-                    "Using metadata from Splitter for field type checking"
-                )
-            elif "Preprocessor" in status.status:
-                self._metadata = status.get_metadata("Preprocessor")
-                self._logger.debug(
-                    "Using metadata from Preprocessor for field type checking"
-                )
-        except Exception as e:
-            self._logger.warning(
-                f"Could not retrieve metadata for field type checking: {e}"
-            )
-            self._metadata = None
+        self._metadata = self._get_metadata_with_priority(
+            status, ["Loader", "Splitter", "Preprocessor"]
+        )
 
         # Initialize Constrainer with metadata now that we have it
         if self.constrainer is None:
@@ -1675,88 +1737,25 @@ class ConstrainerAdapter(BaseAdapter):
         # Store metadata in input for potential future use
         self.input["metadata"] = self._metadata
 
-        # 如果指定了 source，使用 source 指定的資料
+        # If source is specified, use data from specified source
         if self.source is not None:
-            self._logger.info(f"Using specified sources: {self.source}")
+            self._logger.debug(f"Using specified sources: {self.source}")
             self.input["data"] = {}
             self.input["source_names"] = {}
 
+            # Define key aliases for user-familiar names
+            key_aliases = {
+                "ori": "train",
+                "control": "validation",
+            }
+
             for source_spec in self.source:
-                # 支援 "Module.key" 格式
-                if "." in source_spec:
-                    module_name, data_key = source_spec.split(".", 1)
-
-                    # 別名映射：支援使用者熟悉的名稱
-                    # ori -> train, control -> validation
-                    key_aliases = {
-                        "ori": "train",
-                        "control": "validation",
-                    }
-                    # 創建反向映射以支援雙向查找
-                    reverse_aliases = {v: k for k, v in key_aliases.items()}
-
-                    data = status.get_data_by_module(module_name)
-                    if data:
-                        # 查找特定的鍵
-                        found = False
-                        # 首先嘗試原始鍵名
-                        search_keys = [data_key]
-                        # 如果有別名，也嘗試別名
-                        if data_key in key_aliases:
-                            search_keys.append(key_aliases[data_key])
-                        if data_key in reverse_aliases:
-                            search_keys.append(reverse_aliases[data_key])
-
-                        for available_key, df in data.items():
-                            # 檢查所有可能的鍵名格式
-                            for search_key in search_keys:
-                                if (
-                                    available_key == f"{module_name}_{search_key}"
-                                    or available_key == search_key
-                                ):
-                                    self.input["data"][source_spec] = df
-                                    self.input["source_names"][source_spec] = (
-                                        source_spec
-                                    )
-                                    if search_key != data_key:
-                                        self._logger.debug(
-                                            f"Using data from module: {module_name}.{data_key} "
-                                            f"(mapped to {search_key})"
-                                        )
-                                    else:
-                                        self._logger.debug(
-                                            f"Using data from module: {module_name}.{data_key}"
-                                        )
-                                    found = True
-                                    break
-                            if found:
-                                break
-
-                        if not found:
-                            error_msg = f"Key '{data_key}' not found in module '{module_name}'. Available keys: {list(data.keys())}"
-                            self._logger.error(error_msg)
-                            raise ConfigError(error_msg)
-                    else:
-                        error_msg = f"No data found from module: {module_name}"
-                        self._logger.error(error_msg)
-                        raise ConfigError(error_msg)
-                else:
-                    # 簡單的模組名稱
-                    data = status.get_data_by_module(source_spec)
-                    if data:
-                        # 取第一個可用的資料
-                        first_key = next(iter(data.keys()))
-                        self.input["data"][source_spec] = data[first_key]
-                        self.input["source_names"][source_spec] = source_spec
-                        self._logger.debug(
-                            f"Using data from module: {source_spec} ({first_key})"
-                        )
-                    else:
-                        error_msg = f"No data found from source: {source_spec}"
-                        self._logger.error(error_msg)
-                        raise ConfigError(error_msg)
+                # Use unified data source resolution logic
+                df = self._resolve_data_source(status, source_spec, key_aliases)
+                self.input["data"][source_spec] = df
+                self.input["source_names"][source_spec] = source_spec
         else:
-            # 沒有指定 source，使用預設行為（前一個模組的資料）
+            # No source specified, use default behavior (data from previous module)
             pre_module = status.get_pre_module("Constrainer")
 
             # Get data from previous module
@@ -1771,8 +1770,8 @@ class ConstrainerAdapter(BaseAdapter):
             synthesizer = status.get_synthesizer()
             self.input["synthesizer"] = synthesizer
 
-            # 檢查是否為 custom_data
-            # SynthesizerAdapter 的 is_custom_data 屬性會標記這個資訊
+            # Check if it's custom_data
+            # SynthesizerAdapter's is_custom_data attribute marks this information
             synthesizer_adapter = status.status.get("Synthesizer")
             if synthesizer_adapter and hasattr(synthesizer_adapter, "is_custom_data"):
                 self.input["is_custom_data"] = synthesizer_adapter.is_custom_data
@@ -1785,47 +1784,49 @@ class ConstrainerAdapter(BaseAdapter):
 
         return self.input
 
-    def get_result(self):
+    def get_result(self) -> pd.DataFrame | dict:
         """
         Retrieve the constraining result.
 
         Returns:
-            pd.DataFrame or dict:
+            pd.DataFrame | dict:
                 - If validate mode: returns validation_result dict
                 - If resample mode: returns constrained data DataFrame
         """
         # If validation result exists (validate mode), return it
         # This allows Reporter to access validation results
         if self.validation_result is not None:
-            return deepcopy(self.validation_result)
+            return self._safe_copy(self.validation_result)
         # Otherwise return constrained data (resample mode)
-        return deepcopy(self.constrained_data)
+        return self._safe_copy(self.constrained_data)
 
-    def get_validation_result(self) -> dict:
+    def get_validation_result(self) -> dict | None:
         """
         Retrieve the validation result (only available in validate mode).
 
         Returns:
-            dict: Validation result containing:
+            dict | None: Validation result containing:
                 For single source:
-                - total_rows (int): 總資料筆數
-                - passed_rows (int): 通過所有條件的資料筆數
-                - failed_rows (int): 未通過條件的資料筆數
-                - pass_rate (float): 通過率 (0.0 到 1.0)
-                - is_fully_compliant (bool): 是否百分百符合
-                - constraint_violations (dict): 各條件的違規統計
-                - violation_details (pd.DataFrame, optional): 違規記錄的詳細資訊
+                - total_rows (int): Total number of data rows
+                - passed_rows (int): Number of rows passing all constraints
+                - failed_rows (int): Number of rows failing constraints
+                - pass_rate (float): Pass rate (0.0 to 1.0)
+                - is_fully_compliant (bool): Whether 100% compliant
+                - constraint_violations (dict): Violation statistics for each constraint
+                - violation_details (pd.DataFrame, optional): Detailed violation records
 
                 For multiple sources:
-                - dict[source_name, validation_result]: 每個 source 的驗證結果
+                - dict[source_name, validation_result]: Validation result for each source
 
             Returns None if resample mode was used (when synthesizer is available).
         """
-        # 如果有多 source 的驗證結果，返回多 source 結果
+        # If multiple source validation results exist, return them
         if self.validation_results:
-            return deepcopy(self.validation_results)
-        # 否則返回單一驗證結果
-        return deepcopy(self.validation_result) if self.validation_result else None
+            return self._safe_copy(self.validation_results)
+        # Otherwise return single validation result
+        return (
+            self._safe_copy(self.validation_result) if self.validation_result else None
+        )
 
     def _transform_field_combinations(self, config: dict) -> dict:
         """Transform field combinations from YAML list format to tuple format
@@ -1852,7 +1853,7 @@ class EvaluatorAdapter(BaseAdapter):
         using the configured Evaluator instance as a decorator.
     """
 
-    def __init__(self, config: dict):
+    def __init__(self, config: dict) -> None:
         """
         Attributes:
             evaluator (Evaluator):
@@ -1863,7 +1864,7 @@ class EvaluatorAdapter(BaseAdapter):
         self.evaluations: dict[str, pd.DataFrame] = None
         self._schema: Schema = None  # Store schema for data alignment
 
-    def _run(self, input: dict):
+    def _run(self, input: dict) -> None:
         """
         Executes the data evaluating using the Evaluator instance.
 
@@ -1876,7 +1877,6 @@ class EvaluatorAdapter(BaseAdapter):
         self._logger.debug("Starting data evaluating process")
 
         # CRITICAL FIX: Auto-align data types BEFORE evaluator.eval() to prevent dtype validation errors
-        # 關鍵修復：在 evaluator.eval() 之前對齊資料型別，以防止 dtype 驗證錯誤
         if "schema" in input and input["schema"]:
             self._logger.debug("Schema found, aligning data types before evaluation")
             aligned_data = {}
@@ -1885,8 +1885,8 @@ class EvaluatorAdapter(BaseAdapter):
                     self._logger.debug(f"Aligning data type for '{key}' data")
                     try:
                         aligned_data[key] = SchemaMetadater.align(input["schema"], df)
-                        self._logger.info(
-                            f"✓ Successfully aligned '{key}' data to schema"
+                        self._logger.debug(
+                            f"Successfully aligned '{key}' data to schema"
                         )
                     except Exception as e:
                         self._logger.warning(
@@ -1901,11 +1901,50 @@ class EvaluatorAdapter(BaseAdapter):
             # Remove schema from input as Evaluator.eval() doesn't accept it
             del input["schema"]
 
+        # Additional dtype harmonization: ensure all datasets have consistent dtypes
+        # This handles cases where SchemaMetadater.align() doesn't convert between integer precisions
+        if "data" in input and len(input["data"]) > 1:
+            # Use 'ori' as reference if available, otherwise use first dataset
+            reference_key = (
+                "ori" if "ori" in input["data"] else list(input["data"].keys())[0]
+            )
+            reference_df = input["data"][reference_key]
+
+            if reference_df is not None and not reference_df.empty:
+                reference_dtypes = dict(
+                    zip(reference_df.columns, reference_df.dtypes, strict=False)
+                )
+
+                for key, df in input["data"].items():
+                    if key == reference_key or df is None or df.empty:
+                        continue
+
+                    # Check and fix dtype mismatches
+                    for col in df.columns:
+                        if col in reference_dtypes:
+                            ref_dtype = reference_dtypes[col]
+                            current_dtype = df[col].dtype
+
+                            if ref_dtype != current_dtype:
+                                try:
+                                    # Attempt to convert to reference dtype
+                                    input["data"][key][col] = df[col].astype(ref_dtype)
+                                    self._logger.debug(
+                                        f"Converted '{key}' column '{col}' from {current_dtype} to {ref_dtype}"
+                                    )
+                                except Exception as e:
+                                    self._logger.warning(
+                                        f"Could not convert '{key}' column '{col}' from {current_dtype} to {ref_dtype}: {e}"
+                                    )
+
+                self._logger.debug(
+                    "Harmonized dtypes across all datasets for evaluation"
+                )
+
         self.evaluator.create()
         self._logger.debug("Evaluation model initialization completed")
 
         # Now call eval() with aligned data - verification will pass
-        # 現在使用對齊後的資料呼叫 eval() - 驗證將會通過
         self.evaluations = self.evaluator.eval(**input)
         self._logger.debug("Data evaluating completed")
 
@@ -1913,7 +1952,7 @@ class EvaluatorAdapter(BaseAdapter):
     def set_input(self, status) -> dict:
         """
         Sets the input for the EvaluatorAdapter.
-        Evaluator 使用固定的資料源邏輯：ori, syn, control
+        Evaluator uses fixed data source logic: ori, syn, control
 
         Args:
             status (Status): The current status object.
@@ -1922,39 +1961,29 @@ class EvaluatorAdapter(BaseAdapter):
             dict:
                 Evaluator input should contains data (dict) and optional schema.
         """
-        # Evaluator 總是使用固定的資料源邏輯
-        # ori 資料源
+        # Evaluator always uses fixed data source logic
+        # ori data source
         if "Splitter" in status.status:
             self.input["data"] = {"ori": status.get_result("Splitter")["train"]}
         else:
             self.input["data"] = {"ori": status.get_result("Loader")}
 
-        # syn 資料源
+        # syn data source
         self.input["data"]["syn"] = status.get_result(
             status.get_pre_module("Evaluator")
         )
 
-        # control 資料源（如果有 Splitter）
+        # control data source (if Splitter exists)
         if "Splitter" in status.status:
             splitter_result = status.get_result("Splitter")
             if "validation" in splitter_result:
                 self.input["data"]["control"] = splitter_result["validation"]
 
-        # Try to get schema for data alignment
+        # Try to get schema for data alignment using unified method
         # Priority: Loader > Splitter > Preprocessor
-        schema = None
-        try:
-            if "Loader" in status.status:
-                schema = status.get_metadata("Loader")
-                self._logger.debug("Using schema from Loader for data alignment")
-            elif "Splitter" in status.status:
-                schema = status.get_metadata("Splitter")
-                self._logger.debug("Using schema from Splitter for data alignment")
-            elif "Preprocessor" in status.status:
-                schema = status.get_metadata("Preprocessor")
-                self._logger.debug("Using schema from Preprocessor for data alignment")
-        except Exception as e:
-            self._logger.warning(f"Could not retrieve schema for data alignment: {e}")
+        schema = self._get_metadata_with_priority(
+            status, ["Loader", "Splitter", "Preprocessor"]
+        )
 
         if schema:
             self.input["schema"] = schema
@@ -1966,12 +1995,12 @@ class EvaluatorAdapter(BaseAdapter):
 
     def get_result(self) -> dict[str, pd.DataFrame]:
         """
-        Retrieve the pre-processing result.
+        Retrieve the evaluation results.
 
         Returns:
-            (dict[str, pd.DataFrame]): The evaluation results.
+            dict[str, pd.DataFrame]: The evaluation results.
         """
-        return deepcopy(self.evaluations)
+        return self._safe_copy(self.evaluations)
 
 
 class DescriberAdapter(BaseAdapter):
@@ -1980,7 +2009,7 @@ class DescriberAdapter(BaseAdapter):
         using the configured Describer instance as a decorator.
     """
 
-    def __init__(self, config: dict):
+    def __init__(self, config: dict) -> None:
         """
         Attributes:
             describer (Describer):
@@ -1989,30 +2018,30 @@ class DescriberAdapter(BaseAdapter):
         """
         super().__init__(config)
 
-        # 取得 source 參數（必要參數）
+        # Get source parameter (required)
         self.source = config.pop("source", None)
         if self.source is None:
             error_msg = "source parameter is required for Describer"
             self._logger.error(error_msg)
             raise ConfigError(error_msg)
 
-        # 處理 source 參數格式
+        # Process source parameter format
         if isinstance(self.source, str):
-            # 單一字串轉為列表
+            # Convert single string to list
             self.source = [self.source]
         elif isinstance(self.source, dict):
-            # 字典格式（用於明確指定比較對象）
-            # 例如：{"base": "Splitter.train", "target": "Synthesizer"}
-            # 或向後相容：{"ori": "Splitter.train", "syn": "Synthesizer"}
-            self._logger.info(f"Using explicit source mapping: {self.source}")
+            # Dict format (for explicitly specifying comparison targets)
+            # Example: {"base": "Splitter.train", "target": "Synthesizer"}
+            # Or backward compatible: {"ori": "Splitter.train", "syn": "Synthesizer"}
+            self._logger.debug(f"Using explicit source mapping: {self.source}")
         elif isinstance(self.source, list):
-            # 列表格式轉換為字典格式
+            # Convert list format to dict format
             if len(self.source) == 2:
-                # 對於 compare 模式，將列表轉換為字典
+                # For compare mode, convert list to dict
                 self.source = {"base": self.source[0], "target": self.source[1]}
-                self._logger.info(f"Converted list format to dict: {self.source}")
+                self._logger.debug(f"Converted list format to dict: {self.source}")
             elif len(self.source) == 1:
-                # 對於 describe 模式，保持為單一元素列表
+                # For describe mode, keep as single-element list
                 pass
             else:
                 error_msg = (
@@ -2027,12 +2056,12 @@ class DescriberAdapter(BaseAdapter):
             self._logger.error(error_msg)
             raise ConfigError(error_msg)
 
-        # 處理 method 參數 (default, describe, compare)
+        # Process method parameter (default, describe, compare)
         method = config.get("method", "default")
 
-        # 根據 method 決定 mode
+        # Determine mode based on method
         if method == "default":
-            # default: 根據 source 數量自動決定
+            # default: automatically decide based on source count
             source_count = (
                 len(self.source)
                 if isinstance(self.source, list)
@@ -2043,14 +2072,16 @@ class DescriberAdapter(BaseAdapter):
 
             if source_count == 1:
                 config["mode"] = "describe"
-                config["method"] = "describe"  # 設定實際的 method
-                self._logger.info(
+                config["method"] = "describe"  # Set actual method
+                self._logger.debug(
                     f"Default method resolved to: describe (1 source: {self.source})"
                 )
             elif source_count == 2:
                 config["mode"] = "compare"
-                config["method"] = "describe"  # Describer 內部仍使用 describe
-                self._logger.info(
+                config["method"] = (
+                    "describe"  # Describer internally still uses describe
+                )
+                self._logger.debug(
                     f"Default method resolved to: compare (2 sources: {self.source})"
                 )
             else:
@@ -2058,7 +2089,7 @@ class DescriberAdapter(BaseAdapter):
                 self._logger.error(error_msg)
                 raise ConfigError(error_msg)
         elif method == "describe":
-            # describe: 單一資料集描述
+            # describe: single dataset description
             config["mode"] = "describe"
             source_count = (
                 len(self.source)
@@ -2078,9 +2109,9 @@ class DescriberAdapter(BaseAdapter):
                     first_key = next(iter(self.source.keys()))
                     self.source = {first_key: self.source[first_key]}
         elif method == "compare":
-            # compare: 資料集比較
+            # compare: dataset comparison
             config["mode"] = "compare"
-            config["method"] = "describe"  # Describer 內部使用 describe
+            config["method"] = "describe"  # Describer internally uses describe
             source_count = (
                 len(self.source)
                 if isinstance(self.source, list)
@@ -2096,8 +2127,8 @@ class DescriberAdapter(BaseAdapter):
                 self._logger.error(error_msg)
                 raise ConfigError(error_msg)
         else:
-            # 其他 method 值保持原樣傳遞
-            # 根據 source 數量決定 mode
+            # Other method values are passed through as-is
+            # Determine mode based on source count
             source_count = (
                 len(self.source)
                 if isinstance(self.source, list)
@@ -2118,7 +2149,7 @@ class DescriberAdapter(BaseAdapter):
         self.describer = Describer(**config)
         self.description: dict[str, pd.DataFrame] = None
 
-    def _run(self, input: dict):
+    def _run(self, input: dict) -> None:
         """
         Executes the data describing using the Describer instance.
 
@@ -2130,13 +2161,13 @@ class DescriberAdapter(BaseAdapter):
         """
         self._logger.debug("Starting data describing process")
 
-        # 如果有 metadata，使用它來對齊資料類型
+        # If metadata exists, use it to align data types
         metadata = None
         if "metadata" in input and input["metadata"]:
             self._logger.debug("Metadata found, aligning data types")
             metadata = input["metadata"]
 
-            # 對每個資料集進行類型對齊
+            # Align data types for each dataset
             aligned_data = {}
             for key, df in input["data"].items():
                 if df is not None and not df.empty:
@@ -2147,19 +2178,19 @@ class DescriberAdapter(BaseAdapter):
             input["data"] = aligned_data
             self._logger.debug("Data type alignment completed")
 
-            # 移除 metadata，因為 BaseEvaluator 不接受它
+            # Remove metadata as BaseEvaluator doesn't accept it
             del input["metadata"]
 
         self.describer.create()
         self._logger.debug("Describing model initialization completed")
 
-        # 如果是 compare 模式且有 metadata，將它儲存在 describer 實例中
+        # If compare mode and metadata exists, store it in describer instance
         if self.describer.config.mode == "compare" and metadata:
             if hasattr(self.describer._impl, "metadata"):
                 self.describer._impl.metadata = metadata
                 self._logger.debug("Metadata set on DescriberCompare instance")
             else:
-                # 如果 _impl 還沒有 metadata 屬性，動態添加
+                # If _impl doesn't have metadata attribute yet, add dynamically
                 self.describer._impl.metadata = metadata
                 self._logger.debug(
                     "Metadata dynamically added to DescriberCompare instance"
@@ -2172,7 +2203,7 @@ class DescriberAdapter(BaseAdapter):
     def set_input(self, status) -> dict:
         """
         Sets the input for the DescriberAdapter.
-        根據 mode 準備不同的資料格式
+        Prepare different data formats based on mode
 
         Args:
             status (Status): The current status object.
@@ -2184,9 +2215,9 @@ class DescriberAdapter(BaseAdapter):
                 - For compare mode: {"ori": DataFrame, "syn": DataFrame}
         """
 
-        # 根據 Describer 的 mode 決定資料格式
+        # Decide data format based on Describer's mode
         if self.describer.config.mode == "describe":
-            # describe 模式：單一資料源
+            # describe mode: single data source
             if len(self.source) != 1:
                 error_msg = (
                     f"describe mode requires exactly 1 source, got {len(self.source)}"
@@ -2197,14 +2228,14 @@ class DescriberAdapter(BaseAdapter):
             module_name = self.source[0]
             data = status.get_data_by_module(module_name)
             if data:
-                # 取第一個可用的資料
+                # Get first available data
                 first_key = next(iter(data.keys()))
                 self.input["data"] = {"data": data[first_key]}
                 self._logger.debug(
                     f"Using data from module: {module_name} ({first_key}) for describe mode"
                 )
 
-                # 取得 metadata
+                # Get metadata
                 try:
                     metadata = status.get_metadata(module_name)
                     if metadata:
@@ -2220,7 +2251,7 @@ class DescriberAdapter(BaseAdapter):
                 raise ConfigError(error_msg)
 
         elif self.describer.config.mode == "compare":
-            # compare 模式：兩個資料源
+            # compare mode: two data sources
             if len(self.source) != 2:
                 error_msg = (
                     f"compare mode requires exactly 2 sources, got {len(self.source)}"
@@ -2228,11 +2259,11 @@ class DescriberAdapter(BaseAdapter):
                 self._logger.error(error_msg)
                 raise ConfigError(error_msg)
 
-            # 取得兩個資料源
+            # Get two data sources
             self.input["data"] = {}
 
-            # 只支援字典格式：{"base": "Splitter.train", "target": "Synthesizer"}
-            # 向後相容：也支援 {"ori": "Splitter.train", "syn": "Synthesizer"}
+            # Only support dict format: {"base": "Splitter.train", "target": "Synthesizer"}
+            # Backward compatible: also support {"ori": "Splitter.train", "syn": "Synthesizer"}
 
             if not isinstance(self.source, dict):
                 error_msg = (
@@ -2242,17 +2273,17 @@ class DescriberAdapter(BaseAdapter):
                 self._logger.error(error_msg)
                 raise ConfigError(error_msg)
 
-            # 明確指定格式
+            # Explicitly specify format
             source_mapping = self.source.copy()
-            # 支援向後相容：如果使用 ori/syn，映射到 base/target
+            # Support backward compatibility: if using ori/syn, map to base/target
             if "ori" in source_mapping and "base" not in source_mapping:
                 source_mapping["base"] = source_mapping.pop("ori")
-                self._logger.info("Mapped 'ori' to 'base' for backward compatibility")
+                self._logger.debug("Mapped 'ori' to 'base' for backward compatibility")
             if "syn" in source_mapping and "target" not in source_mapping:
                 source_mapping["target"] = source_mapping.pop("syn")
-                self._logger.info("Mapped 'syn' to 'target' for backward compatibility")
+                self._logger.debug("Mapped 'syn' to 'target' for backward compatibility")
 
-            # 驗證必要的鍵
+            # Validate required keys
             if "base" not in source_mapping or "target" not in source_mapping:
                 error_msg = (
                     f"compare mode requires 'base' and 'target' keys in source dict, "
@@ -2262,51 +2293,14 @@ class DescriberAdapter(BaseAdapter):
                 raise ConfigError(error_msg)
 
             for key, source_spec in source_mapping.items():
-                # 支援 "Module.key" 格式
-                if "." in source_spec:
-                    module_name, data_key = source_spec.split(".", 1)
-                    data = status.get_data_by_module(module_name)
-                    if data:
-                        # 查找特定的鍵
-                        found = False
-                        for available_key, df in data.items():
-                            if (
-                                available_key == f"{module_name}_{data_key}"
-                                or available_key == data_key
-                            ):
-                                self.input["data"][key] = df
-                                self._logger.debug(
-                                    f"Using data from module: {module_name}.{data_key} as '{key}' for compare mode"
-                                )
-                                found = True
-                                break
+                # Use unified data source resolution logic
+                df = self._resolve_data_source(status, source_spec)
+                self.input["data"][key] = df
+                self._logger.debug(
+                    f"Using data from '{source_spec}' as '{key}' for compare mode"
+                )
 
-                        if not found:
-                            error_msg = f"Key '{data_key}' not found in module '{module_name}'. Available keys: {list(data.keys())}"
-                            self._logger.error(error_msg)
-                            raise ConfigError(error_msg)
-                    else:
-                        error_msg = f"No data found from module: {module_name}"
-                        self._logger.error(error_msg)
-                        raise ConfigError(error_msg)
-                else:
-                    # 簡單的模組名稱
-                    data = status.get_data_by_module(source_spec)
-                    if data:
-                        # 取第一個可用的資料
-                        first_key = next(iter(data.keys()))
-                        self.input["data"][key] = data[first_key]
-                        self._logger.debug(
-                            f"Using data from module: {source_spec} ({first_key}) as '{key}' for compare mode"
-                        )
-                    else:
-                        error_msg = (
-                            f"No data found from source: {source_spec} for '{key}'"
-                        )
-                        self._logger.error(error_msg)
-                        raise ConfigError(error_msg)
-
-            # 取得 metadata (優先使用第一個資料源的 metadata)
+            # Get metadata (prefer first data source's metadata)
             for module_name in self.source:
                 try:
                     metadata = status.get_metadata(module_name)
@@ -2321,11 +2315,14 @@ class DescriberAdapter(BaseAdapter):
 
         return self.input
 
-    def get_result(self):
+    def get_result(self) -> dict[str, pd.DataFrame]:
         """
-        Retrieve the pre-processing result.
+        Retrieve the description results.
+
+        Returns:
+            dict[str, pd.DataFrame]: The description results.
         """
-        return deepcopy(self.description)
+        return self._safe_copy(self.description)
 
 
 class ReporterAdapter(BaseAdapter):
@@ -2347,16 +2344,16 @@ class ReporterAdapter(BaseAdapter):
 
     """
 
-    def __init__(self, config: dict):
+    def __init__(self, config: dict) -> None:
         super().__init__(config)
 
-        # 如果 Reporter 有 source 參數，提取出來
-        # 注意：這個 source 是用於 ReporterSaveData 的，不是用於選擇輸入資料
-        # 所以我們保留原有的 Reporter 初始化邏輯
+        # If Reporter has source parameter, extract it
+        # Note: This source is for ReporterSaveData, not for selecting input data
+        # So we keep original Reporter initialization logic
         self.reporter = Reporter(**config)
         self.report: dict = {}
 
-    def _run(self, input: dict):
+    def _run(self, input: dict) -> None:
         """
         Runs the Reporter to create and generate reports.
         Adapts to the new functional Reporter architecture
@@ -2423,7 +2420,7 @@ class ReporterAdapter(BaseAdapter):
     def set_input(self, status) -> dict:
         """
         Sets the input data for the Reporter.
-        使用原有邏輯，因為 Reporter 需要完整的模組資訊
+        Use original logic as Reporter needs complete module information
 
         Args:
             status: The status object.
@@ -2431,24 +2428,62 @@ class ReporterAdapter(BaseAdapter):
         Returns:
             dict: The input data for the Reporter.
         """
-        # Reporter 的資料源選擇邏輯是在 ReporterSaveData 內部處理的
-        # 這裡保持原有邏輯，因為需要保留完整的 index_tuple 結構
+        # Reporter's data source selection logic is handled inside ReporterSaveData
+        # Keep original logic here as we need to preserve complete index_tuple structure
         full_expt = status.get_full_expt()
 
         data = {}
-        metadata_dict = {}  # 收集 metadata
+        metadata_dict = {}  # Collect metadata
+
         for module in full_expt.keys():
             index_dict = status.get_full_expt(module=module)
             result = status.get_result(module=module)
 
-            # 嘗試獲取該模組的 metadata
+            # Try to get metadata for this module
             try:
                 module_metadata = status.get_metadata(module)
                 if module_metadata:
-                    # 為每個 index_tuple 記錄對應的 metadata
+                    # Record corresponding metadata for each index_tuple
                     metadata_dict[module] = module_metadata
             except Exception:
-                pass  # 如果無法獲取 metadata，繼續處理
+                pass  # If unable to get metadata, continue processing
+
+            # Special handling: If Preprocessor/Postprocessor, expand schema history
+            # CRITICAL FIX: Schema history should only affect metadata, not data
+            # Otherwise save_data will output duplicate CSVs (each stage has the same data)
+            if module in ["Preprocessor", "Postprocessor"]:
+                try:
+                    processor = status.get_processor()
+                    if processor and hasattr(processor, "get_schema_history"):
+                        schema_history = processor.get_schema_history()
+                        if schema_history:
+                            self._logger.debug(
+                                f"Expanding {len(schema_history)} schema snapshots from {module}"
+                            )
+
+                            # Only create independent entry for metadata, not affecting data
+                            for snapshot in schema_history:
+                                step_name = snapshot["step"]
+                                schema = snapshot["schema"]
+
+                                # Add step info to Schema's description
+                                step_schema = deepcopy(schema)
+                                original_desc = step_schema.description or ""
+                                step_info = f"Processing step: {step_name}"
+                                step_schema.description = (
+                                    f"{original_desc} | {step_info}".strip(" |")
+                                )
+
+                                # Store corresponding metadata (with step suffix)
+                                # This way ReporterSaveSchema can get schema history
+                                metadata_key = f"{module}_{step_name}"
+                                metadata_dict[metadata_key] = step_schema
+
+                                self._logger.debug(f"  - Added snapshot: {step_name}")
+                except Exception as e:
+                    self._logger.debug(
+                        f"Could not expand schema history from {module}: {e}"
+                    )
 
             # if module.get_result is a dict,
             #   add key into expt_name: expt_name[key]
@@ -2467,7 +2502,9 @@ class ReporterAdapter(BaseAdapter):
                 data[index_tuple] = deepcopy(result)
         self.input["data"] = data
         self.input["data"]["exist_report"] = status.get_report()
-        self.input["metadata"] = metadata_dict  # 傳遞 metadata
+        self.input["metadata"] = (
+            metadata_dict  # Pass metadata (including expanded schema history)
+        )
 
         # Add timing data support
         if hasattr(status, "get_timing_report_data"):
@@ -2475,30 +2512,30 @@ class ReporterAdapter(BaseAdapter):
             if not timing_data.empty:
                 self.input["data"]["timing_data"] = timing_data
 
-        # Add validation results support - 傳遞 Constrainer 驗證結果給 Reporter
+        # Add validation results support - Pass Constrainer validation results to Reporter
         if hasattr(status, "get_validation_result"):
             validation_results = status.get_validation_result()
             if validation_results:
-                # 將驗證結果加入 data 字典，讓 ReporterSaveValidation 能夠使用
+                # Add validation results to data dict for ReporterSaveValidation to use
                 for module_name, validation_result in validation_results.items():
-                    # 檢查是否為多 source 的驗證結果（字典中的字典）
+                    # Check if it's multiple source validation results (dict of dicts)
                     if isinstance(validation_result, dict) and all(
                         isinstance(v, dict) and "source_name" in v
                         for v in validation_result.values()
                     ):
-                        # 多 source 的情況：為每個 source 創建獨立的 index_tuple
+                        # Multiple sources: create independent index_tuple for each source
                         for source_name, source_validation in validation_result.items():
-                            # 為驗證結果創建特殊的 index_tuple
-                            # 格式: (Module, experiment_name, source_name)
+                            # Create special index_tuple for validation result
+                            # Format: (Module, experiment_name, source_name)
                             module_expt = status.get_full_expt().get(module_name)
                             if module_expt:
-                                # 將 source_name 添加到 index_tuple 中
+                                # Add source_name to index_tuple
                                 index_tuple = (module_name, module_expt, source_name)
                                 self.input["data"][index_tuple] = source_validation
                     else:
-                        # 單一 source 的情況：使用原有邏輯
-                        # 為驗證結果創建特殊的 index_tuple
-                        # 格式: (Module, experiment_name)
+                        # Single source: use original logic
+                        # Create special index_tuple for validation result
+                        # Format: (Module, experiment_name)
                         module_expt = status.get_full_expt().get(module_name)
                         if module_expt:
                             index_tuple = (module_name, module_expt)
@@ -2506,12 +2543,12 @@ class ReporterAdapter(BaseAdapter):
 
         return self.input
 
-    def get_result(self):
+    def get_result(self) -> dict:
         """
-        Placeholder method for getting the result.
+        Get the report result.
 
         Returns:
-            (dict) key as module name,
-            value as raw/processed data (others) or report data (Reporter)
+            dict: key as module name,
+                value as raw/processed data (others) or report data (Reporter)
         """
-        return deepcopy(self.report)
+        return self._safe_copy(self.report)

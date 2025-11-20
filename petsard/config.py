@@ -2,18 +2,7 @@ import queue
 import re
 from copy import deepcopy
 
-from petsard.adapter import (  # noqa: F401 - Dynamic Imports
-    BaseAdapter,
-    ConstrainerAdapter,
-    DescriberAdapter,
-    EvaluatorAdapter,
-    LoaderAdapter,
-    PostprocessorAdapter,
-    PreprocessorAdapter,
-    ReporterAdapter,
-    SplitterAdapter,
-    SynthesizerAdapter,
-)
+from petsard import adapter
 from petsard.exceptions import ConfigError
 
 
@@ -29,6 +18,9 @@ class Config:
     ...
     task name is assigned by user.
     """
+
+    # Pre-compiled regex pattern for experiment name validation
+    _EXPT_NAME_PATTERN = re.compile(r"_(\[[^\]]*\])$")
 
     def __init__(self, config: dict):
         """
@@ -48,11 +40,10 @@ class Config:
         self.sequence = list(self.yaml.keys())
 
         # Config check
-        pattern = re.compile(r"_(\[[^\]]*\])$")
         for _module, expt_config in self.yaml.items():
             for expt_name in expt_config:
                 # any expt_name should not be postfix with "_[xxx]"
-                if pattern.search(expt_name):
+                if self._EXPT_NAME_PATTERN.search(expt_name):
                     raise ConfigError
 
         if "Splitter" in self.yaml:
@@ -91,8 +82,11 @@ class Config:
             remaining_modules = modules[1:]
 
             if module in self.yaml:
-                for expt_name, expt_config in self.yaml[module].items():  # noqa: B007
-                    flow.put(eval(f"{module}Adapter(expt_config)"))
+                for expt_name, expt_config in self.yaml[module].items():
+                    # Get adapter class from petsard.adapter module
+                    adapter_class_name = f"{module}Adapter"
+                    adapter_class = getattr(adapter, adapter_class_name)
+                    flow.put(adapter_class(expt_config))
                     module_flow.put(module)
                     expt_flow.put(expt_name)
                     _set_flow_dfs(remaining_modules)

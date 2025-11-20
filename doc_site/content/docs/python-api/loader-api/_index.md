@@ -1,6 +1,7 @@
 ---
 title: "Loader API"
-weight: 310
+type: docs
+weight: 1040
 ---
 
 Data loading module that supports various file formats.
@@ -43,6 +44,7 @@ def __init__(
     column_types: dict = None,
     header_names: list = None,
     na_values: str | list | dict = None,
+    nrows: int = None,
     schema: Schema | dict | str = None
 )
 ```
@@ -66,6 +68,12 @@ def __init__(
 - **na_values** : str | list | dict, optional
     - **Deprecated** - will be removed in v2.0.0
     - Use `schema` parameter instead
+
+- **nrows** : int, optional
+    - Number of rows to read from the file
+    - Useful for quickly testing with a subset of data to reduce memory usage
+    - Similar to pandas.read_csv's nrows parameter
+    - Default: `None` (reads all rows)
 
 - **schema** : Schema | dict | str, optional
     - Data structure definition configuration

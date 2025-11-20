@@ -1,593 +1,220 @@
 ---
-title: "Status API (WIP)"
-weight: 33
+title: "Status API"
+type: docs
+weight: 1030
 ---
 
-Status is the state management module of PETsARD, responsible for tracking workflow execution status, storing results, managing metadata (Schema), and creating execution snapshots.
+Status is PETsARD's internal state management module, responsible for tracking workflow execution, storing results, managing metadata (Schema), and creating execution snapshots.
+
+{{< callout type="info" >}}
+**Internal Use Only**: Status is primarily used internally by Executor. Users should access Status functionality through [`Executor`](../executor-api/) methods.
+{{< /callout >}}
 
 ## Class Architecture
 
 {{< mermaid-file="status-class-diagram.mmd" >}}
 
-## Design Philosophy
-
-Status follows comprehensive state management principles:
-
-### 1. Execution Tracking
-- Record execution status of each module
-- Track experiment execution sequence
-- Maintain execution timeline
-
-### 2. Result Storage
-- Store execution results for each experiment
-- Manage data and Schema associations
-- Provide result query interface
-
-### 3. Metadata Management
-- Track Schema changes throughout workflow
-- Create metadata snapshots before and after execution
-- Record transformation history
-
-### 4. Snapshot System
-- Create execution snapshots at key points
-- Enable state recovery and auditing
-- Support execution history review
-
 ## Basic Usage
-
-### Access Through Executor
-
-Status is typically accessed through Executor (not directly instantiated):
 
 ```python
 from petsard import Executor
 
-executor = Executor(config='config.yaml')
-executor.run()
+# Status is created and managed internally by Executor
+exec = Executor('config.yaml')
+exec.run()
 
-# Access Status through Executor
-status = executor.status
+# Access Status functionality through Executor methods
+results = exec.get_result()        # Status.get_result()
+timing = exec.get_timing()         # Status.get_timing_report_data()
 
-# Get execution status
-is_completed = status.is_completed()
-print(f"Execution completed: {is_completed}")
+# Advanced: Direct Status access
+summary = exec.status.get_status_summary()
+snapshots = exec.status.get_snapshots()
 ```
 
-### Get Results
-
-```python
-# Get results through Executor (recommended)
-results = executor.get_result()
-
-# Or access directly through Status (advanced)
-results = executor.status.get_result()
-```
-
-### Get Timing Information
-
-```python
-# Get timing through Executor (recommended)
-timing = executor.get_timing()
-
-# Or access directly through Status (advanced)
-timing = executor.status.get_timing()
-```
-
-## Constructor (`__init__`)
-
-Creates a Status instance and initializes state management.
+## Constructor
 
 ### Syntax
 
 ```python
-Status()
+Status(config: Config, max_snapshots: int = 1000, max_changes: int = 5000, max_timings: int = 10000)
 ```
 
 ### Parameters
 
-No parameters required.
+| Parameter | Type | Required | Default | Description |
+|-----------|------|----------|---------|-------------|
+| `config` | `Config` | Yes | - | Config object containing module sequence and execution configuration |
+| `max_snapshots` | `int` | No | `1000` | Maximum number of snapshots to retain |
+| `max_changes` | `int` | No | `5000` | Maximum number of change records |
+| `max_timings` | `int` | No | `10000` | Maximum number of timing records |
 
 ### Return Value
 
-Returns a Status instance with initialized state.
+Returns a Status instance with initialized state management.
 
-### Usage Example
+## Core Functionality
 
-```python
-# Note: Typically not instantiated directly
-# Status is created internally by Executor
+### 1. Execution Result Tracking
 
-from petsard.core.status import Status
-
-# Direct instantiation (advanced usage)
-status = Status()
-```
-
-### Notes
-
-- **Internal Use**: Primarily used internally by Executor
-- **Automatic Initialization**: Executor automatically creates Status instance
-- **No Configuration**: Does not require configuration parameters
-- **Empty State**: Starts with empty state (no snapshots or results)
-
-## State Management
-
-### Execution State
-
-Status tracks three main execution states:
-
-1. **Not Started**: Before `run()` is called
-2. **In Progress**: During execution (each module)
-3. **Completed**: After all modules finish successfully
-
-### State Transitions
-
-```
-Not Started → In Progress → Completed
-              ↓
-            Failed
-```
-
-## Result Storage
-
-### Result Structure
-
-Status stores results in the following structure:
+Status records execution results for each module:
 
 ```python
-{
-    'experiment_key': {
-        'data': pd.DataFrame,    # Result data
-        'schema': Schema         # Schema object
-    },
-    ...
-}
+# Automatically called by Executor
+# status.put(module, experiment, adapter)
+
+# Get results through Executor
+results = exec.get_result()
 ```
 
-### Result Recording
+### 2. Metadata Management
 
-Results are automatically recorded during execution:
+Tracks Schema changes across modules:
 
 ```python
-# During Executor.run()
-# 1. Module executes
-# 2. Result generated
-# 3. Status records result
-# 4. Snapshot created
+# Get Schema for specific module
+loader_schema = exec.status.get_metadata('Loader')
+print(f"Number of fields: {len(loader_schema.attributes)}")
 ```
 
-### Result Retrieval
+### 3. Execution Snapshots
+
+Creates snapshots before and after each module execution:
 
 ```python
-from petsard import Executor
-
-executor = Executor(config='config.yaml')
-executor.run()
-
-# Get all results
-results = executor.status.get_result()
-
-# Access specific experiment
-exp_key = list(results.keys())[0]
-exp_result = results[exp_key]
-
-data = exp_result['data']
-schema = exp_result['schema']
-
-print(f"Data shape: {data.shape}")
-print(f"Schema columns: {len(schema.columns)}")
-```
-
-## Snapshot System
-
-### Snapshot Creation
-
-Snapshots are created at key execution points:
-
-1. **Before Module Execution**: Initial state snapshot
-2. **After Module Execution**: Result state snapshot
-3. **At Key Transitions**: State change snapshots
-
-### Snapshot Contents
-
-Each snapshot contains:
-
-```python
-{
-    'snapshot_id': 'unique_id',
-    'timestamp': datetime,
-    'module_name': 'module_name',
-    'experiment_name': 'experiment_name',
-    'metadata': {
-        'schema_before': Schema,
-        'schema_after': Schema
-    },
-    'context': {...}
-}
-```
-
-### Snapshot Access
-
-```python
-# Access snapshots (advanced usage)
-snapshots = executor.status.snapshots
-
-print(f"Total snapshots: {len(snapshots)}")
+# Get all snapshots
+snapshots = exec.status.get_snapshots()
 
 for snapshot in snapshots:
-    print(f"Snapshot: {snapshot['snapshot_id']}")
-    print(f"  Module: {snapshot['module_name']}")
-    print(f"  Experiment: {snapshot['experiment_name']}")
-    print(f"  Time: {snapshot['timestamp']}")
+    print(f"{snapshot.module_name}[{snapshot.experiment_name}]")
+    print(f"  Time: {snapshot.timestamp}")
 ```
 
-## Change Tracking
+### 4. Timing Records
 
-### Change Recording
-
-Status tracks all metadata changes:
+Collects execution time information:
 
 ```python
-# Changes are automatically recorded
-# 1. Schema field added
-# 2. Schema field modified
-# 3. Schema field removed
-# 4. Data transformation applied
+# Get timing report
+timing_df = exec.get_timing()
+print(timing_df)
 ```
 
-### Change Types
+## Main Methods
 
-| Change Type | Description | Example |
-|-------------|-------------|---------|
-| `CREATE` | New field added | Adding onehot encoded columns |
-| `UPDATE` | Field modified | Scaling numeric values |
-| `DELETE` | Field removed | Dropping columns |
-| `TRANSFORM` | Data transformation | Type conversion |
+### State Management Methods
 
-### Change Access
+| Method | Description |
+|--------|-------------|
+| `put(module, experiment, adapter)` | Record module execution state |
+| `get_result(module)` | Get module execution result |
+| `get_metadata(module)` | Get module Schema |
+| `get_full_expt(module)` | Get experiment configuration dictionary |
+
+### Snapshot and Tracking Methods
+
+| Method | Description |
+|--------|-------------|
+| `get_snapshots(module)` | Get execution snapshots |
+| `get_snapshot_by_id(snapshot_id)` | Get specific snapshot by ID |
+| `get_change_history(module)` | Get change history |
+| `get_metadata_evolution(module)` | Track Schema evolution |
+
+### Reporting Methods
+
+| Method | Description |
+|--------|-------------|
+| `get_timing_report_data()` | Get timing report as DataFrame |
+| `get_status_summary()` | Get status summary |
+
+## Data Classes
+
+### ExecutionSnapshot
+
+Immutable record of execution snapshot:
 
 ```python
-# Access change history (advanced usage)
-changes = executor.status.changes
-
-print(f"Total changes: {len(changes)}")
-
-for change in changes:
-    print(f"Change: {change['change_id']}")
-    print(f"  Type: {change['type']}")
-    print(f"  Target: {change['target']}")
-    print(f"  Time: {change['timestamp']}")
+@dataclass(frozen=True)
+class ExecutionSnapshot:
+    snapshot_id: str
+    module_name: str
+    experiment_name: str
+    timestamp: datetime
+    metadata_before: Schema | None = None
+    metadata_after: Schema | None = None
+    context: dict[str, Any] = field(default_factory=dict)
 ```
 
-## Timing Information
+### TimingRecord
 
-### Time Recording
-
-Status records execution time for:
-
-- Each module
-- Each experiment
-- Each execution step
-
-### Timing Structure
+Immutable record of timing information:
 
 ```python
-{
-    'record_id': 'unique_id',
-    'module_name': 'module_name',
-    'experiment_name': 'experiment_name',
-    'step_name': 'step_name',
-    'start_time': datetime,
-    'end_time': datetime,
-    'duration_seconds': float
-}
+@dataclass(frozen=True)
+class TimingRecord:
+    record_id: str
+    module_name: str
+    experiment_name: str
+    step_name: str
+    start_time: datetime
+    end_time: datetime | None = None
+    duration_seconds: float | None = None
+    context: dict[str, Any] = field(default_factory=dict)
 ```
 
-### Timing Retrieval
+## Integration with Executor
+
+Status is primarily used through Executor:
 
 ```python
 from petsard import Executor
 
-executor = Executor(config='config.yaml')
-executor.run()
+exec = Executor('config.yaml')
+exec.run()
 
-# Get timing DataFrame
-timing = executor.status.get_timing()
+# Access Status functionality through Executor
+results = exec.get_result()          # → status.get_result()
+timing = exec.get_timing()           # → status.get_timing_report_data()
 
-# Analyze timing
-total_time = timing['duration_seconds'].sum()
-print(f"Total execution time: {total_time:.2f}s")
+# Advanced: Direct Status access
+summary = exec.status.get_status_summary()
+snapshots = exec.status.get_snapshots()
+```
 
-# Time by module
-module_times = timing.groupby('module_name')['duration_seconds'].sum()
-print("\nTime by module:")
-print(module_times)
+## Schema Inference
+
+Status supports Schema inference functionality:
+
+```python
+from petsard import Executor
+
+exec = Executor('config.yaml')  # Includes Preprocessor
+exec.run()
+
+# Get inferred Schema
+inferred_schema = exec.get_inferred_schema('Preprocessor')
+if inferred_schema:
+    print(f"Inferred Schema: {inferred_schema.id}")
 ```
 
 ## Status Summary
 
-### Get Summary Information
+Get complete execution status summary:
 
 ```python
-from petsard import Executor
-
-executor = Executor(config='config.yaml')
-executor.run()
-
-# Get status summary (advanced usage)
-summary = executor.status.get_status_summary()
-
-print("Status Summary:")
-print(f"  Execution sequence: {summary['sequence']}")
-print(f"  Active modules: {summary['active_modules']}")
-print(f"  Total snapshots: {summary['total_snapshots']}")
-print(f"  Total changes: {summary['total_changes']}")
-print(f"  Last snapshot: {summary['last_snapshot']}")
-```
-
-### Summary Contents
-
-| Field | Description |
-|-------|-------------|
-| `sequence` | Module execution order |
-| `active_modules` | List of executed modules |
-| `metadata_modules` | Modules with metadata |
-| `total_snapshots` | Total snapshot count |
-| `total_changes` | Total change record count |
-| `last_snapshot` | Latest snapshot ID |
-| `last_change` | Latest change ID |
-
-## Integration with Executor
-
-### Automatic Status Management
-
-```python
-from petsard import Executor
-
-# Executor creates and manages Status
-executor = Executor(config='config.yaml')
-
-# Status is initialized
-assert executor.status is not None
-
-# Execute workflow
-executor.run()
-
-# Status is updated automatically
-assert executor.status.is_completed()
-```
-
-### Status Lifecycle
-
-```
-1. Executor.__init__()
-   └─> Status created and initialized
-
-2. Executor.run()
-   ├─> Status starts tracking
-   ├─> Modules execute
-   ├─> Results recorded
-   ├─> Snapshots created
-   └─> Status marks as completed
-
-3. Executor.get_result()
-   └─> Retrieves results from Status
-
-4. Executor.get_timing()
-   └─> Retrieves timing from Status
-```
-
-## Advanced Usage
-
-### Direct Status Access
-
-```python
-from petsard import Executor
-
-executor = Executor(config='config.yaml')
-executor.run()
-
-# Access Status directly (advanced)
-status = executor.status
-
-# Check completion
-if status.is_completed():
-    print("Execution completed")
-
-# Get result count
-results = status.get_result()
-print(f"Total results: {len(results)}")
-
-# Get snapshot count
-print(f"Total snapshots: {len(status.snapshots)}")
-
-# Get change count
-print(f"Total changes: {len(status.changes)}")
-```
-
-### Status Inspection
-
-```python
-from petsard import Executor
-
-executor = Executor(config='config.yaml')
-executor.run()
-
-status = executor.status
-
-# Inspect execution sequence
-print("Execution Sequence:")
-for i, snapshot in enumerate(status.snapshots, 1):
-    print(f"{i}. {snapshot['module_name']}[{snapshot['experiment_name']}]")
-    print(f"   Time: {snapshot['timestamp']}")
-```
-
-### Custom Status Analysis
-
-```python
-from petsard import Executor
-import pandas as pd
-
-executor = Executor(config='config.yaml')
-executor.run()
-
-status = executor.status
-
-# Analyze Schema changes
-print("Schema Evolution:")
-for change in status.changes:
-    if change['type'] == 'UPDATE':
-        print(f"  {change['target']}: {change['before']} → {change['after']}")
-
-# Timing analysis
-timing = status.get_timing()
-avg_time_per_module = timing.groupby('module_name')['duration_seconds'].mean()
-print("\nAverage time per module:")
-print(avg_time_per_module)
-```
-
-## State Persistence
-
-### Current Limitations
-
-Status state is not automatically persisted:
-
-- State exists only in memory
-- Lost when Executor instance is destroyed
-- Not saved to disk automatically
-
-### Manual Persistence
-
-```python
-from petsard import Executor
-import pickle
-
-executor = Executor(config='config.yaml')
-executor.run()
-
-# Save Status state (advanced)
-with open('status_state.pkl', 'wb') as f:
-    pickle.dump(executor.status, f)
-
-# Load Status state (advanced)
-with open('status_state.pkl', 'rb') as f:
-    loaded_status = pickle.load(f)
-```
-
-## Memory Management
-
-### Memory Considerations
-
-Status stores all execution information in memory:
-
-- All results (DataFrames)
-- All snapshots
-- All change records
-- All timing information
-
-### Memory Optimization
-
-```python
-from petsard import Executor
-
-executor = Executor(config='config.yaml')
-executor.run()
-
-# Get results and clear Status (if needed)
-results = executor.get_result()
-
-# Process results
-for exp_key, exp_result in results.items():
-    data = exp_result['data']
-    # Process data...
-
-# Delete executor to free memory
-del executor
-```
-
-## Error Handling
-
-### Status During Errors
-
-```python
-from petsard import Executor
-
-executor = Executor(config='config.yaml')
-
-try:
-    executor.run()
-except Exception as e:
-    print(f"Execution error: {e}")
-    
-    # Check Status even after error
-    if hasattr(executor, 'status'):
-        status = executor.status
-        
-        # Get partial results (if any)
-        try:
-            partial_results = status.get_result()
-            print(f"Partial results: {len(partial_results)}")
-        except:
-            print("No partial results available")
-        
-        # Check last snapshot
-        if status.snapshots:
-            last_snapshot = status.snapshots[-1]
-            print(f"Last successful module: {last_snapshot['module_name']}")
-```
-
-## Best Practices
-
-### 1. Access Through Executor
-
-```python
-# Recommended: Use Executor methods
-results = executor.get_result()
-timing = executor.get_timing()
-
-# Advanced: Direct Status access only when needed
-status = executor.status
-snapshots = status.snapshots
-```
-
-### 2. Check Completion Before Access
-
-```python
-executor = Executor(config='config.yaml')
-executor.run()
-
-# Always check completion
-if executor.is_execution_completed():
-    results = executor.get_result()
-else:
-    print("Execution incomplete")
-```
-
-### 3. Memory Management
-
-```python
-# Process results in batches for large workflows
-executor = Executor(config='config.yaml')
-executor.run()
-
-results = executor.get_result()
-
-# Process and save results
-for exp_key, exp_result in results.items():
-    data = exp_result['data']
-    data.to_csv(f'output/{exp_key}.csv')
-
-# Free memory
-del executor
-del results
+summary = exec.status.get_status_summary()
+
+print(f"Module sequence: {summary['sequence']}")
+print(f"Active modules: {summary['active_modules']}")
+print(f"Total snapshots: {summary['total_snapshots']}")
+print(f"Total changes: {summary['total_changes']}")
 ```
 
 ## Notes
 
-- **Internal Module**: Primarily used internally by Executor
-- **Automatic Management**: Status is automatically managed; no manual intervention needed
-- **Memory Storage**: All state stored in memory; not persisted to disk
-- **Thread Safety**: Not thread-safe; use separate instances in multi-threaded environments
-- **Single Instance**: Each Executor has one Status instance
-- **No Modification**: Status state should not be modified directly
-- **Read-Only Access**: Access Status for reading only; modifications handled by Executor
+- **Internal Use**: Status is primarily used internally by Executor
+- **Recommended Practice**: Access Status functionality through Executor methods
+- **Automatic Tracking**: Snapshots and changes are automatically recorded during execution
+- **Memory Management**: Long-running executions accumulate more snapshots
+- **Immutability**: Snapshot and change records are immutable
+- **Advanced Features**: Direct Status access requires understanding of internal mechanisms

@@ -1,187 +1,235 @@
 ---
 title: "Schema YAML"
-weight: 200
+type: docs
+weight: 700
+prev: docs/petsard-yaml
+next: docs/error-handling
 ---
 
 YAML configuration format for data structure definition.
 
-## Usage Examples
-
-### External File Reference
-
-```yaml
-Loader:
-  my_experiment:
-    filepath: data/users.csv
-    schema: schemas/user_schema.yaml  # Reference external file
-```
-
-### Inline Definition
-
-```yaml
-Loader:
-  my_experiment:
-    filepath: data/users.csv
-    schema:                   # Inline schema definition
-      id: user_data
-      attributes:             # Field definitions (also can be written as fields)
-        user_id:
-          type: int64
-          enable_null: false
-        username:
-          type: string
-          enable_null: true
-```
-
-### Automatic Inference
-
-If no schema is provided, the system will automatically infer structure from data:
-
-```yaml
-Loader:
-  auto_infer:
-    filepath: data/auto.csv
-    # No schema specified, will be inferred
-```
-
-## Main Structure
-
-```yaml
-id: <schema_id>           # Required: Schema identifier
-attributes:               # Required: Attribute definitions (also can be written as fields)
-  <attribute_name>:       # Field name as key
-    type: <data_type>     # Required: Data type
-    enable_null: <bool>   # Optional: Allow null values (default: true)
-    logical_type: <type>  # Optional: Logical type hint
-```
-
 {{< callout type="info" >}}
-`attributes` can also be written as `fields`.
+**Usage**: Schema YAML in PETsARD is used through Loader. For how to reference and use Schema in Loader, please refer to Loader YAML documentation. This section focuses on how to configure Schema structure and parameters.
 {{< /callout >}}
 
-## Attribute Parameter List
+## Basic Structure
 
-### Required Parameters
-
-| Parameter | Type | Description | Example |
-|-----------|------|-------------|---------|
-| `name` | `string` | Field name (automatically set when used as key) | `"user_id"`, `"age"` |
-
-### Optional Parameters
-
-| Parameter | Type | Default | Description | Example |
-|-----------|------|---------|-------------|---------|
-| `type` | `string` | `null` | Data type, auto-inferred if not specified | `"int64"`, `"string"`, `"float64"` |
-| `enable_null` | `boolean` | `true` | Allow null values | `true`, `false` |
-| `category` | `boolean` | `null` | Whether it's categorical data | `true`, `false` |
-| `logical_type` | `string` | `null` | Logical type annotation for validation | `"email"`, `"url"`, `"phone"` |
-| `description` | `string` | `null` | Field description text | `"User unique identifier"` |
-| `type_attr` | `dict` | `null` | Additional type attributes (precision, format, etc.) | `{"precision": 2}`, `{"format": "%Y-%m-%d"}` |
-| `na_values` | `list` | `null` | Custom missing value markers | `["?", "N/A", "unknown"]` |
-| `default_value` | `any` | `null` | Default fill value | `0`, `"Unknown"`, `false` |
-| `constraints` | `dict` | `null` | Field constraint conditions | `{"min": 0, "max": 100}` |
-| `enable_optimize_type` | `boolean` | `true` | Enable type optimization | `true`, `false` |
-| `enable_stats` | `boolean` | `true` | Calculate statistics | `true`, `false` |
-| `cast_errors` | `string` | `"coerce"` | Type conversion error handling | `"raise"`, `"coerce"`, `"ignore"` |
-| `null_strategy` | `string` | `"keep"` | Null value handling strategy | `"keep"`, `"drop"`, `"fill"` |
-
-### System Auto-Generated Parameters
-
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `stats` | `FieldStats` | Field statistics (auto-calculated when `enable_stats=True`) |
-| `created_at` | `datetime` | Creation timestamp (auto-recorded by system) |
-| `updated_at` | `datetime` | Update timestamp (auto-recorded by system) |
-
-{{< callout type="info" >}}
-**Auto-Inference Mechanism**:
-- When using `Metadater.from_data()`, parameters like `type`, `logical_type`, `enable_null` are automatically inferred from data
-- When manually creating Schema, only `name` is required, all other parameters are optional
-- Explicitly specifying `type` is recommended to ensure data processing accuracy
-{{< /callout >}}
-
-## Advanced Usage
-
-### Reusing Schema Across Tables
+A complete Schema YAML file contains the following parts:
 
 ```yaml
-Loader:
-  train_data:
-    filepath: data/train.csv
-    schema: schemas/common_schema.yaml
-    
-  test_data:
-    filepath: data/test.csv
-    schema: schemas/common_schema.yaml
+# Schema identification
+id: <schema_id>              # Required: Schema identifier
+name: <schema_name>          # Optional: Schema name
+description: <description>   # Optional: Schema description
+
+# Field definitions
+attributes:                  # Or use fields
+  <field_name>:             # Field name
+    type: <data_type>       # Data type
+    description: <text>     # Field description
+    # ... other parameters
 ```
 
-### Partial Definition
+## Example: Adult Income Dataset
 
-Define only key fields, others will be inferred:
-
-```yaml
-schema:
-  id: partial_schema
-  attributes:
-    primary_key:
-      type: int64
-      enable_null: false
-    # Other fields will be inferred
-```
-
-## Statistics
-
-When using `Metadater.from_data()` with `enable_stats=True`, the system automatically calculates statistics.
-
-### Field Statistics Example
+The following is a Schema definition example for the Adult Income (Census) dataset:
 
 ```yaml
+# Schema identification
+id: adult-income
+name: "Adult Income Dataset"
+description: "1994 Census database for income prediction (>50K or <=50K)"
+
+# Field definitions
 attributes:
   age:
-    type: int64
-    enable_null: true
-    stats:
-      row_count: 1000
-      na_count: 50
-      unique_count: 65
-      mean: 35.5
-      median: 34.0
+    type: integer
+    description: "Age of the individual"
+
+  workclass:
+    type: string
+    category: true
+    description: "Employment type"
+    na_values: "?"
+
+  fnlwgt:
+    type: integer
+    description: "Final weight (number of people the census believes the entry represents)"
+
+  education:
+    type: string
+    category: true
+    description: "Highest level of education"
+    na_values: "?"
+
+  educational-num:
+    type: integer
+    description: "Number of education years"
+
+  marital-status:
+    type: string
+    category: true
+    description: "Marital status"
+
+  occupation:
+    type: string
+    category: true
+    description: "Occupation"
+    na_values: "?"
+
+  relationship:
+    type: string
+    category: true
+    description: "Relationship to household"
+
+  race:
+    type: string
+    category: true
+    description: "Race"
+
+  gender:
+    type: string
+    category: true
+    description: "Biological sex"
+
+  capital-gain:
+  type: integer
+  description: "Capital gains"
+
+  capital-loss:
+  type: integer
+  description: "Capital losses"
+
+  hours-per-week:
+    type: integer
+    description: "Hours worked per week"
+
+  native-country:
+    type: string
+    category: true
+    description: "Country of origin"
+
+  income:
+    type: string
+    category: true
+    description: "Income class (target variable)"
 ```
 
-### Programmatic Access
+### Example Explanation
 
-```python
-from petsard.metadater import Metadater
-import pandas as pd
+This Schema definition demonstrates several important configuration concepts:
 
-# Create with statistics
-data = {'users': pd.DataFrame({...})}
-metadata = Metadater.from_data(
-    data=data,
-    enable_stats=True
-)
+#### 1. Schema-Level Information
 
-# Access statistics
-schema = metadata.schemas["users"]
-age_attr = schema.attributes["age"]
-print(f"Average age: {age_attr.stats.mean}")
+```yaml
+id: adult-income
+name: "Adult Income Dataset"
+description: "1994 Census database for income prediction (>50K or <=50K)"
 ```
 
-## Related Documentation
+- **`id`**: Required, used to identify this Schema
+- **`name`**: Optional, provides a readable name
+- **`description`**: Optional, explains the purpose of this dataset
 
-- **Data Types**: See [Data Types](/docs/schema-yaml/data-types) for details
-- **Logical Types**: See [Logical Types](/docs/schema-yaml/logical-types) for details
-- **Architecture**: Schema uses a three-layer architecture design, see [Schema Architecture](/docs/schema-yaml/architecture) for details
-- **Data Alignment**: Schema can be used for data alignment and validation, see [Metadater API](/docs/python-api/metadater-api) documentation
-- **Loader Integration**: How Schema is used during data loading, see [Loader YAML](/docs/petsard-yaml/loader-yaml) documentation
-- **Reporter Output**: Use Reporter's save_schema method to export schema from each module, see [Reporter - Save Schema](/docs/petsard-yaml/reporter-yaml/save-schema) for details
+#### 2. Numeric Fields
+
+```yaml
+age:
+  type: integer
+  description: "Age of the individual"
+
+hours-per-week:
+  type: integer
+  description: "Hours worked per week"
+```
+
+- Use `type: integer` to define integer fields
+- `description` explains the business meaning of the field
+
+#### 3. Categorical Fields
+
+```yaml
+workclass:
+  type: string
+  category: true
+  description: "Employment type"
+  na_values: "?"
+
+gender:
+  type: string
+  category: true
+  description: "Biological sex"
+```
+
+- **`category: true`**: Marks as categorical data, system will select appropriate processing methods
+- **`na_values`**: Defines custom missing value markers (e.g., `"?"` represents missing values in this dataset)
+
+#### 4. Special Case: Numeric but Treated as Categorical
+
+In some cases, numeric fields may be more suitable for categorical data processing:
+
+```yaml
+# Example: Rating levels (numeric but limited options)
+rating:
+  type: integer
+  category: true
+  description: "Rating level (1-5)"
+
+# Example: Zip codes (numeric but represents area classification)
+zip_code:
+  type: integer
+  category: true
+  description: "Zip code"
+```
+
+Setting `category: true` affects:
+- **Preprocessor**: Selects categorical data processing methods (e.g., Label Encoding)
+- **Synthesizer**: Uses synthesis strategies appropriate for categorical data
+- **Statistics**: Calculates category distribution instead of numeric statistics
+
+{{< callout type="info" >}}
+Whether to treat numeric fields as categorical depends on data characteristics and business requirements. Generally, when a numeric field has limited unique values and no clear mathematical relationship between values, it can be considered as categorical.
+{{< /callout >}}
+
+## Type System
+
+PETsARD uses a simplified type system:
+
+| Type | Description | Examples |
+|------|-------------|----------|
+| `int` / `integer` | Integer | `25`, `-10`, `1000` |
+| `float` | Float | `3.14`, `-0.5`, `1000.00` |
+| `str` / `string` | String | `"text"`, `"A"`, `"123"` |
+| `date` | Date | `2024-01-01` |
+| `datetime` | Datetime | `2024-01-01 10:30:00` |
+
+{{< callout type="info" >}}
+**Type Aliases**:
+- `integer` and `int` are interchangeable
+- `string` and `str` are interchangeable
+- System internally uses simplified types (`int`, `float`, `str`, `date`, `datetime`)
+{{< /callout >}}
+
+## Advanced Topics
+
+### Attribute Parameters
+
+Common parameters include:
+- `type`: Data type
+- `type_attr`: Type attributes (nullable, category, precision, etc.)
+- `description`: Field description
+- `logical_type`: Logical type (email, phone, etc.)
+- `na_values`: Custom missing value markers
+- `constraints`: Field constraint conditions
+
+### Statistics
+
+Setting `enable_stats: true` enables statistics calculation.
 
 ## Important Notes
 
-- Field order does not affect data loading
-- Missing fields in data will be filled with default values (enable_null=true)
-- Extra fields in data will be retained
-- The system will attempt automatic type conversion for compatible types
-- `attributes` can also be written as `fields`
-- Logical types are only for validation, do not change storage format
-- Statistics calculation increases processing time, use carefully with large datasets
+- **Field Names**: Both `attributes` and `fields` can be used, system will auto-recognize
+- **Auto-Inference**: If no Schema is provided, system will automatically infer structure from data
+- **Type Conversion**: System will attempt automatic type conversion for compatible types
+- **Missing Values**: Custom missing value markers can be defined via `na_values`
+- **Categorical Data**: Setting `category: true` affects data processing and synthesis strategies

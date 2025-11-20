@@ -1,6 +1,9 @@
 ---
 title: "儲存資料"
-weight: 1
+type: docs
+weight: 701
+prev: docs/petsard-yaml/reporter-yaml
+next: docs/petsard-yaml/reporter-yaml/save-report
 ---
 
 使用 `save_data` 方法將合成資料或其他模組的輸出儲存為 CSV 檔案。

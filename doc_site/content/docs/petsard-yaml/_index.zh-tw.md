@@ -1,6 +1,9 @@
 ---
 title: "PETsARD YAML"
-weight: 100
+type: docs
+weight: 600
+prev: docs/data-property-adjustment
+next: docs/schema-yaml
 ---
 
 ## PETsARD 為什麼使用 YAML？
@@ -56,11 +59,11 @@ PETsARD 的 YAML 設定採用三層架構：
 
 ```yaml
 Synthesizer:
-    gaussian-copula:   # 使用高斯 Copula 方法
-        method: 'sdv-single_table-gaussiancopula'
-    ctgan:             # 使用 CTGAN 方法
+    gaussian-copula:   # 使用內建高斯 Copula 方法
+        method: 'petsard-gaussian_copula'
+    ctgan:             # 使用 CTGAN 方法（需安裝 SDV）
         method: 'sdv-single_table-ctgan'
-    tvae:              # 使用 TVAE 方法
+    tvae:              # 使用 TVAE 方法（需安裝 SDV）
         method: 'sdv-single_table-tvae'
 ```
 
@@ -85,7 +88,7 @@ Preprocessor:
     method: 'default'
 Synthesizer:
   gaussian-copula:
-    method: 'sdv-single_table-gaussiancopula'
+    method: 'petsard-gaussian_copula'
   ctgan:
     method: 'sdv-single_table-ctgan'
   tvae:

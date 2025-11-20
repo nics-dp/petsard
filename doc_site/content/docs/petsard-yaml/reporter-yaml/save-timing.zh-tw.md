@@ -1,6 +1,9 @@
 ---
 title: "儲存時間資訊"
-weight: 5
+type: docs
+weight: 705
+prev: docs/petsard-yaml/reporter-yaml/save-validation
+next: docs/petsard-yaml/reporter-yaml
 ---
 
 使用 `save_timing` 方法記錄各模組的執行時間，用於效能分析和優化。

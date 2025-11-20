@@ -1,6 +1,7 @@
 ---
 title: "Evaluator API"
-weight: 360
+type: docs
+weight: 1120
 ---
 
 Synthetic data quality evaluation module, providing privacy risk measurement, data quality assessment, and machine learning utility analysis.

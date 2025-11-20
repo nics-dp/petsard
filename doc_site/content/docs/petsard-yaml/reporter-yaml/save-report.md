@@ -1,6 +1,9 @@
 ---
 title: "Save Evaluation Reports"
-weight: 2
+type: docs
+weight: 702
+prev: docs/petsard-yaml/reporter-yaml/save-data
+next: docs/petsard-yaml/reporter-yaml/save-validation
 ---
 
 Use the `save_report` method to generate evaluation result reports with multiple granularity levels.

@@ -256,29 +256,29 @@ schemas:
   - `schemas` is a dictionary with table names as keys
   - Each schema must include `id` and `attributes`
   - Each attribute must include `name`, `type`, `nullable`
-  
+
 - **Type Support**:
   - Basic types: `'int'`, `'float'`, `'str'`, `'bool'`, `'datetime'`
   - Ensure type strings are correct, otherwise validation may fail
-  
+
 - **Field Names**:
   - The `name` field defines the actual field name
   - Dictionary keys can differ from `name`, but consistency is recommended
-  
+
 - **Optional Fields**:
   - `name`, `description`: Optional fields at Metadata/Schema level
   - `logical_type`: Optional field at Attribute level
   - `na_values`: Custom null representations (optional)
-  
+
 - **YAML Relationship**:
   - This method is commonly used to process configurations read from YAML files
   - Loader internally uses this method to handle the `schema` parameter
   - Direct use of YAML configuration is recommended over manual dictionary creation
-  
+
 - **Validation Recommendations**:
   - Verify metadata structure meets expectations after creation
   - Large configurations should be split into multiple YAML files for management
-  
+
 - **Error Handling**:
   - Configuration format errors will raise exceptions
   - Use try-except to handle configuration loading errors

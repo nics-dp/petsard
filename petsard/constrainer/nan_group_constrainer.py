@@ -73,7 +73,7 @@ class NaNGroupConstrainer(BaseConstrainer):
                         f"Related field cannot be None for field '{main_field}'"
                     )
 
-                # 特殊處理 nan_if_condition 動作
+                # Special handling for nan_if_condition action
                 if action == "nan_if_condition":
                     if not isinstance(related, dict):
                         raise ConfigError(
@@ -128,7 +128,7 @@ class NaNGroupConstrainer(BaseConstrainer):
 
             # Check related fields
             for action, related in actions.items():
-                # 特殊處理 nan_if_condition 動作
+                # Special handling for nan_if_condition action
                 if action == "nan_if_condition":
                     for target_col in related.keys():
                         if target_col not in df.columns:
@@ -136,7 +136,7 @@ class NaNGroupConstrainer(BaseConstrainer):
                                 f"Target field '{target_col}' does not exist in the DataFrame"
                             )
                 else:
-                    # 處理其他動作類型
+                    # Handle other action types
                     related_cols = [related] if isinstance(related, str) else related
                     for col in related_cols:
                         if col not in df.columns:

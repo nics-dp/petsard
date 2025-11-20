@@ -1,6 +1,9 @@
 ---
 title: "欄位組合"
-weight: 3
+type: docs
+weight: 673
+prev: docs/petsard-yaml/constrainer-yaml/field_constraints
+next: docs/petsard-yaml/constrainer-yaml/field_proportions
 ---
 
 定義不同欄位間的值配對關係，採用**正面表列**方式（只影響明確指定的值組合）。

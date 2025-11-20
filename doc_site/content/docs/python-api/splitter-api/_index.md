@@ -1,6 +1,7 @@
 ---
 title: "Splitter API"
-weight: 330
+type: docs
+weight: 1070
 ---
 
 Data splitting module for creating training and validation sets with overlap control.

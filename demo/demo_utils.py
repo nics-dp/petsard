@@ -6,21 +6,25 @@ Copy the following code to the beginning of your notebook:
 複製以下程式碼到你的 notebook 開頭：
 
 === Copy this to notebook / 複製這段到 notebook ===
-import os, sys
+import os  # noqa: I001
+import sys
 from pathlib import Path
 
-# Load demo_utils and import quick_setup / 自動載入 demo_utils 並導入 quick_setup
+# Handle utils.py for Colab
 if "COLAB_GPU" in os.environ:
     import urllib.request
-    demo_utils_url = "https://raw.githubusercontent.com/nics-tw/petsard/main/demo/demo_utils.py"
-    exec(urllib.request.urlopen(demo_utils_url).read().decode('utf-8'))
+
+    demo_utils_url = (
+        "https://raw.githubusercontent.com/nics-tw/petsard/main/demo/demo_utils.py"
+    )
+    exec(urllib.request.urlopen(demo_utils_url).read().decode("utf-8"))
+
 else:
-    # Local: search upward for demo_utils.py / 本地：向上搜尋 demo_utils.py
+    # demo_utils.py search for local
     for p in [Path.cwd()] + list(Path.cwd().parents)[:10]:
         utils_path = p / "demo_utils.py"
         if utils_path.exists() and "demo" in str(utils_path):
             sys.path.insert(0, str(p))
-            exec(open(utils_path).read())
             break
 === End of copy / 複製結束 ===
 """
@@ -894,7 +898,7 @@ def quick_setup(
     example_files: list[str] | None = None,
     notebook_path: str | None = None,
     show_yaml_content: bool = False,  # New parameter / 新參數
-) -> tuple[bool, str, Path | list[Path] | None]:
+) -> tuple[bool, str, str | list[str] | None, type]:
     """
     Quick setup for PETsARD environment / 快速設定 PETsARD 環境
 
@@ -913,7 +917,8 @@ def quick_setup(
         Tuple containing / Tuple 包含:
         - is_colab: Whether in Colab environment / 是否為 Colab 環境
         - petsard_branch: PETsARD branch name used / 使用的 PETsARD 分支名稱
-        - yaml_path: YAML file path(s) (single or multiple) / YAML 檔案路徑 (單個或多個)
+        - yaml_path: YAML file path(s) as string (single or multiple) / YAML 檔案路徑字串 (單個或多個)
+        - Executor: PETsARD Executor class / PETsARD Executor 類別
 
     Examples:
         >>> # Single configuration file / 單個設定檔
@@ -988,7 +993,17 @@ def quick_setup(
                 if show_yaml_content:
                     _display_yaml_info(single_path, single_config, i, len(config_file))
 
-    return setup.is_colab, petsard_branch, yaml_path
+    # Convert Path to string for Executor compatibility / 轉換 Path 為字串以相容 Executor
+    if yaml_path:
+        if isinstance(yaml_path, Path):
+            yaml_path = str(yaml_path)
+        elif isinstance(yaml_path, list):
+            yaml_path = [str(p) for p in yaml_path]
+
+    # Import Executor after petsard is installed / 在 petsard 安裝後導入 Executor
+    from petsard import Executor
+
+    return setup.is_colab, petsard_branch, yaml_path, Executor
 
 
 # ============================================================================

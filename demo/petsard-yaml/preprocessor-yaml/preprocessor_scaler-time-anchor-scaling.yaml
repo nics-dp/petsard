@@ -1,0 +1,31 @@
+---
+Loader:
+  load_benchmark_with_schema:
+    filepath: benchmark://best-practices_multi-table
+
+Preprocessor:
+  time_scaling:
+    sequence:
+      - scaler
+    config:
+      scaler:
+        established_date:
+          method: 'scaler_timeanchor'
+          reference:                   # Reference time field
+            - 'first_apply_apply_date'
+            - 'first_apply_approval_date'
+            - 'latest_apply_apply_date'
+            - 'latest_apply_approval_date'
+          unit: 'D'                    # Unit: days
+
+Reporter:
+  save_data:
+    method: save_data
+    source:
+      - Preprocessor
+  save_schema:
+    method: save_schema
+    source:
+      - Loader
+      - Preprocessor
+...

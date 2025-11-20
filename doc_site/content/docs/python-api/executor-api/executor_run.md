@@ -192,14 +192,14 @@ logging.basicConfig(level=logging.INFO)
 try:
     executor = Executor(config='config.yaml')
     executor.run()
-    
+
     # Check execution status
     if not executor.is_execution_completed():
         raise RuntimeError("Execution incomplete")
-        
+
     results = executor.get_result()
     print("Execution successful")
-    
+
 except FileNotFoundError as e:
     print(f"Configuration file not found: {e}")
 except ValueError as e:
@@ -254,7 +254,7 @@ results_dir.mkdir(exist_ok=True)
 
 for data_file in data_dir.glob('*.csv'):
     print(f"\nProcessing: {data_file.name}")
-    
+
     config = {
         'Loader': {
             'load': {'filepath': str(data_file)}
@@ -268,10 +268,10 @@ for data_file in data_dir.glob('*.csv'):
             }
         }
     }
-    
+
     executor = Executor(config=config, verbose=False)
     executor.run()
-    
+
     if executor.is_execution_completed():
         print(f"  ✓ Completed successfully")
     else:
@@ -325,7 +325,7 @@ Loading module: Loader
 Executing: Loader[load_data]
   ✓ Completed in 0.5s
 
-Loading module: Synthesizer  
+Loading module: Synthesizer
 Executing: Synthesizer[generate]
   ✓ Completed in 15.3s
 

@@ -2,10 +2,10 @@ name: 🐳 Image Building and Publishing
 
 on:
   push:
-    tags: ["v*.*.*"] # 只在標籤推送時觸發，確保版本已更新
+    tags: ["v*.*.*"] # Only trigger on tag push, ensure version is updated
   workflow_dispatch:
   workflow_run:
-    workflows: ["📦 Semantic Release and PyPI Publish"]  # 在 semantic release 完成後觸發
+    workflows: ["📦 Semantic Release and PyPI Publish"]  # Trigger after semantic release completes
     types:
       - completed
     branches:
@@ -94,7 +94,7 @@ jobs:
           outputs: type=oci,dest=${{ runner.temp }}/${{ github.event.repository.name }}-oci.tar
 
       - name: Upload artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: petsard-oci
           path: ${{ runner.temp }}/${{ github.event.repository.name }}-oci.tar

@@ -1,0 +1,27 @@
+---
+Loader:
+  load_benchmark_with_schema:
+    filepath: benchmark://best-practices_multi-table
+
+Preprocessor:
+  date_diff:
+    sequence:
+      - encoder
+    config:
+      encoder:
+        first_apply_apply_date:
+          method: 'encoder_datediff'
+          baseline_date: 'established_date' # Baseline date field
+          diff_unit: 'days'                 # Unit: days/weeks/months/years
+
+Reporter:
+  save_data:
+    method: save_data
+    source:
+      - Preprocessor
+  save_schema:
+    method: save_schema
+    source:
+      - Loader
+      - Preprocessor
+...

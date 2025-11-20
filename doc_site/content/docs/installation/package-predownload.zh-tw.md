@@ -1,9 +1,9 @@
 ---
 title: 套件預下載
 type: docs
-weight: 5
+weight: 240
 prev: docs/installation/docker-offline-deployment
-next: docs/installation
+next: docs/installation/dl-support-check
 ---
 
 適用於**無網路連線**且**不支援 Docker** 的環境。
@@ -181,12 +181,3 @@ for os in linux windows macos macos-arm; do
         --groups ds
 done
 ```
-
-## 下一步
-
-安裝完成後，您可以：
-
-* 查看[快速入門](../getting-started)以獲取詳細範例
-* 查看 PETsARD YAML 文件了解設定方式
-* 探索基準資料集進行測試
-* 在 GitHub 儲存庫中檢視範例設定

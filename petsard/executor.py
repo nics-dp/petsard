@@ -61,7 +61,9 @@ class Executor:
     def __init__(self, config: str):
         """
         Args:
-            config (str): The configuration filename for the executor.
+            config (str): Configuration for the executor.
+                - If a valid file path: Load from YAML file
+                - Otherwise: Try to parse as YAML string
 
         Attributes:
             executor_config (ExecutorConfig): The configuration for the executor.
@@ -78,20 +80,95 @@ class Executor:
         self._setup_logger()
 
         # 3. load the configuration
-        self._logger.info(f"Loading configuration from {config}")
-        yaml_config: dict = self._get_config(yaml_file=config)
+        if not isinstance(config, str):
+            raise ConfigError(
+                f"Invalid config type: {type(config).__name__}. "
+                f"Expected str (file path or YAML string)."
+            )
+
+        self._logger.debug(f"Processing configuration: {config[:100]}...")
+        yaml_config: dict = self._get_config(config_input=config)
 
         self.config = Config(config=yaml_config)
         self.sequence = self.config.sequence
         self.status = Status(config=self.config)
         self.result: dict = {}
 
-        # 4. 推論 Schema（如果配置中包含 Preprocessor）
+        # 4. Infer Schema (if Preprocessor is included in config)
         self._infer_pipeline_schemas(yaml_config)
 
         # Execution state tracking
         # NOTE: This attribute will be removed in v2.0.0 and replaced with run() return value
         self._execution_completed: bool = False
+
+    def _create_formatter(self) -> logging.Formatter:
+        """
+        Create log formatter with standardized format.
+
+        Returns:
+            logging.Formatter: Configured log formatter with custom name handling
+        """
+
+        class PETsARDFormatter(logging.Formatter):
+            """Custom formatter that removes 'PETsARD.' prefix from logger names."""
+
+            def format(self, record):
+                # Remove 'PETsARD.' prefix from logger name for cleaner output
+                if record.name.startswith("PETsARD."):
+                    record.name = record.name[8:]  # Remove 'PETsARD.' (8 chars)
+                return super().format(record)
+
+        return PETsARDFormatter(
+            "%(asctime)s - "  # timestamp
+            "%(name)-24s - "  # module name (left align, 24 chars: 'PostprocessorAdapter')
+            "%(funcName)-30s - "  # function name (left align, 30 chars: '_log_missing_report_warning')
+            "%(levelname)-8s - "  # log level (left align, 8 chars: 'CRITICAL')
+            "%(message)s"  # message
+        )
+
+    def _create_file_handler(self, formatter: logging.Formatter) -> logging.FileHandler:
+        """
+        Create file handler for logging.
+
+        Args:
+            formatter: Log formatter to use
+
+        Returns:
+            logging.FileHandler: Configured file handler
+        """
+        log_dir = self.executor_config.log_dir
+
+        # Create log directory if it doesn't exist
+        if log_dir and not os.path.exists(log_dir):
+            os.makedirs(log_dir)
+
+        # Create log file
+        timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+        log_filename = self.executor_config.log_filename.replace(
+            "{timestamp}", timestamp
+        )
+        log_path = os.path.join(log_dir, log_filename)
+
+        # Create and configure file handler
+        file_handler = logging.FileHandler(log_path)
+        file_handler.setFormatter(formatter)
+        return file_handler
+
+    def _create_console_handler(
+        self, formatter: logging.Formatter
+    ) -> logging.StreamHandler:
+        """
+        Create console handler for logging.
+
+        Args:
+            formatter: Log formatter to use
+
+        Returns:
+            logging.StreamHandler: Configured console handler
+        """
+        console_handler = logging.StreamHandler()
+        console_handler.setFormatter(formatter)
+        return console_handler
 
     def _setup_logger(self, reconfigure=False):
         """
@@ -110,64 +187,82 @@ class Executor:
             logging.getLogger().handlers = []
             root_logger = logging.getLogger("PETsARD")
 
-        # setup logging level
+        # Setup logging level
         root_logger.setLevel(getattr(logging, self.executor_config.log_level.upper()))
 
-        # setup formatter
-        formatter = logging.Formatter(
-            "%(asctime)s - "  # timestamp
-            "%(name)-21s - "  # logger name (left align w/ 21 digits: 'PETsARD.Postprocessor')
-            "%(funcName)-17s - "  # function name (left align w/ 17 digits: 'inverse_transform')
-            "%(levelname)-8s - "  # logger level (left align w/ 8 digits: 'CRITICAL')
-            "%(message)s"  # message
-        )
+        # Create formatter
+        formatter = self._create_formatter()
 
-        # Handle file output
+        # Add appropriate handlers based on configuration
         if self.executor_config.log_output_type in ["file", "both"]:
-            log_dir = self.executor_config.log_dir
-
-            # Create log directory if it doesn't exist
-            if log_dir and not os.path.exists(log_dir):
-                os.makedirs(log_dir)
-
-            # Create log file
-            timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-            log_filename = self.executor_config.log_filename.replace(
-                "{timestamp}", timestamp
-            )
-            log_path = os.path.join(log_dir, log_filename)
-
-            # Create file handler
-            file_handler = logging.FileHandler(log_path)
-            file_handler.setFormatter(formatter)
+            file_handler = self._create_file_handler(formatter)
             root_logger.addHandler(file_handler)
 
-        # Handle stdout output
         if self.executor_config.log_output_type in ["stdout", "both"]:
-            console_handler = logging.StreamHandler()
-            console_handler.setFormatter(formatter)
+            console_handler = self._create_console_handler(formatter)
             root_logger.addHandler(console_handler)
 
-        # setup this logger as a child of root logger
+        # Setup this logger as a child of root logger
         self._logger = logging.getLogger(f"PETsARD.{self.__class__.__name__}")
 
-    def _get_config(self, yaml_file: str) -> dict:
+    def _get_config(self, config_input: str) -> dict:
         """
-        Load the configuration from a YAML file.
-        """
-        if not os.path.isfile(yaml_file):
-            raise ConfigError(f"YAML file {yaml_file} does not exist")
+        Load configuration from a file path or YAML string.
 
+        Args:
+            config_input: Either a file path or YAML string
+
+        Returns:
+            dict: Parsed YAML configuration
+
+        Raises:
+            ConfigError: If neither file path nor YAML string is valid
+        """
         yaml_config: dict = {}
-        with open(yaml_file) as yaml_file:
-            yaml_config = yaml.safe_load(yaml_file)
 
+        # First, try as file path
+        if os.path.isfile(config_input):
+            self._logger.debug(f"Loading configuration from file: {config_input}")
+            try:
+                with open(config_input) as yaml_file:
+                    yaml_config = yaml.safe_load(yaml_file)
+                self._logger.debug("Successfully loaded configuration from file")
+            except Exception as e:
+                raise ConfigError(
+                    f"Failed to load YAML file '{config_input}': {str(e)}"
+                ) from e
+        else:
+            # If not a file, try to parse as YAML string
+            self._logger.debug(
+                "Input is not a file path, attempting to parse as YAML string"
+            )
+            try:
+                yaml_config = yaml.safe_load(config_input)
+                if not isinstance(yaml_config, dict):
+                    raise ConfigError(
+                        f"YAML string parsed to {type(yaml_config).__name__}, expected dict. "
+                        f"Parsed value: {yaml_config}"
+                    )
+                self._logger.debug(
+                    "Successfully parsed configuration from YAML string"
+                )
+            except yaml.YAMLError as e:
+                raise ConfigError(
+                    f"Failed to parse input as YAML string. "
+                    f"Input (first 200 chars): {config_input[:200]}...\n"
+                    f"Error: {str(e)}\n"
+                    f"Note: Input was treated as YAML string because it's not a valid file path."
+                ) from e
+            except Exception as e:
+                raise ConfigError(
+                    f"Unexpected error while parsing YAML string: {str(e)}"
+                ) from e
+
+        # Process Executor config if present
         if "Executor" in yaml_config:
             self.executor_config.update(yaml_config["Executor"])
-
             self._setup_logger(reconfigure=True)
-            self._logger.info("Logger reconfigured with settings from YAML")
-
+            self._logger.debug("Logger reconfigured with settings from YAML")
             yaml_config.pop("Executor")
 
         return yaml_config
@@ -182,7 +277,7 @@ class Executor:
         """
         # Reset execution state
         self._execution_completed = False
-        start_time: time = time.time()
+        start_time: float = time.time()
         self._logger.info("Starting PETsARD execution workflow")
         while self.config.config.qsize() > 0:
             ops = self.config.config.get()
@@ -194,19 +289,21 @@ class Executor:
 
             self.status.put(module, expt, ops)
 
-            # CRITICAL: 在 Loader/Splitter 執行後立即推論 Preprocessor Schema
-            # 這確保 Synthesizer 等後續模組能獲得正確的 Schema
+            # CRITICAL: Infer Preprocessor Schema immediately after Loader/Splitter execution
+            # This ensures that Synthesizer and other downstream modules get the correct Schema
             if (
                 module in ["Loader", "Splitter"]
                 and "_preprocessor_config" in self.status.inferred_schemas
             ):
-                self._logger.info(f"{module} 執行完成，開始推論 Preprocessor Schema")
+                self._logger.info(
+                    f"{module} execution completed, starting Preprocessor Schema inference"
+                )
                 self.infer_preprocessor_schema()
 
             # collect result
             self._set_result(module)
 
-        elapsed_time: time = time.time() - start_time
+        elapsed_time: float = time.time() - start_time
         formatted_elapsed_time: str = str(timedelta(seconds=round(elapsed_time)))
         self._logger.info(
             f"Completed PETsARD execution workflow (elapsed: {formatted_elapsed_time})"
@@ -244,10 +341,10 @@ class Executor:
 
     def get_timing(self):
         """
-        取得執行時間記錄資料
+        Get execution timing records.
 
         Returns:
-            pd.DataFrame: 包含所有模組執行時間的 DataFrame
+            pd.DataFrame: DataFrame containing execution times for all modules
         """
         return self.status.get_timing_report_data()
 
@@ -265,92 +362,96 @@ class Executor:
 
     def _infer_pipeline_schemas(self, yaml_config: dict) -> None:
         """
-        推論 pipeline 各階段的 Schema
+        Infer Schema for each stage of the pipeline.
 
-        此方法在 Executor 初始化時被調用，用於預測整個 pipeline 中
-        每個模組的 input 和 output SchemaMetadata
+        This method is called during Executor initialization to predict
+        input and output SchemaMetadata for each module in the pipeline.
 
         Args:
-            yaml_config: YAML 配置字典
+            yaml_config: YAML configuration dictionary
         """
-        # 只有當配置中包含 Preprocessor 時才進行推論
+        # Only infer if Preprocessor is present in config
         if "Preprocessor" not in yaml_config:
-            self._logger.debug("配置中沒有 Preprocessor，跳過 Schema 推論")
+            self._logger.debug("No Preprocessor in config, skipping Schema inference")
             return
 
-        self._logger.info("開始推論 pipeline 各階段的 Schema")
+        self._logger.debug("Starting Schema inference for pipeline stages")
 
         try:
-            # 從 Loader 配置推論初始 Schema（如果可用）
-            # 注意：實際的 Loader Schema 會在運行時由 Loader 提供
-            # 這裡只是設置推論器準備好接收它
+            # Infer initial Schema from Loader config (if available)
+            # Note: The actual Loader Schema will be provided at runtime by Loader
+            # This just prepares the inferencer to receive it
 
-            # 提取 Preprocessor 配置
+            # Extract Preprocessor configuration
             preprocessor_config = yaml_config.get("Preprocessor", {})
 
-            # 將配置儲存到 status，以便後續使用
+            # Store config in status for later use
             self.status.inferred_schemas["_preprocessor_config"] = preprocessor_config
 
-            self._logger.info(
-                f"Schema 推論配置已準備：將在 Loader 執行後推論 {len(preprocessor_config)} 種處理類型"
+            self._logger.debug(
+                f"Schema inference config prepared: will infer {len(preprocessor_config)} processing types after Loader execution"
             )
 
         except Exception as e:
-            self._logger.warning(f"Schema 推論過程中發生錯誤: {e}")
-            self._logger.debug("詳細錯誤", exc_info=True)
+            self._logger.warning(f"Error during Schema inference: {e}")
+            self._logger.debug("Detailed error", exc_info=True)
 
     def infer_preprocessor_schema(self) -> None:
         """
-        在 Loader 執行後，推論 Preprocessor 的輸出 Schema
+        Infer Preprocessor output Schema after Loader execution.
 
-        此方法應該在 Loader 完成後被調用，以便基於實際的資料 Schema
-        來推論 Preprocessor 會如何改變 Schema
+        This method should be called after Loader completes to infer
+        how Preprocessor will transform the Schema based on actual data Schema.
         """
         if "Loader" not in self.status.metadata:
-            self._logger.warning("Loader Schema 尚未可用，無法推論 Preprocessor Schema")
+            self._logger.warning(
+                "Loader Schema not yet available, cannot infer Preprocessor Schema"
+            )
             return
 
         if "_preprocessor_config" not in self.status.inferred_schemas:
-            self._logger.debug("沒有 Preprocessor 配置，跳過 Schema 推論")
+            self._logger.debug("No Preprocessor config, skipping Schema inference")
             return
 
         try:
             loader_schema = self.status.get_metadata("Loader")
             preprocessor_config = self.status.inferred_schemas["_preprocessor_config"]
 
-            self._logger.info("開始推論 Preprocessor 輸出 Schema")
+            self._logger.debug("Starting Preprocessor output Schema inference")
 
-            # 使用 SchemaInferencer 推論
+            # Use SchemaInferencer to infer
             inferred_schema = self.status.schema_inferencer.infer_preprocessor_output(
                 input_schema=loader_schema, processor_config=preprocessor_config
             )
 
-            # 儲存推論結果
+            # Store inference result
             self.status.inferred_schemas["Preprocessor"] = inferred_schema
 
-            self._logger.info(
-                f"Preprocessor Schema 推論完成：{len(inferred_schema.attributes)} 個欄位"
+            self._logger.debug(
+                f"Preprocessor Schema inference completed: {len(inferred_schema.attributes)} fields"
             )
 
-            # 記錄推論的詳細資訊
+            # Log detailed inference information
             inference_history = self.status.schema_inferencer.get_inference_history()
             if inference_history:
                 last_inference = inference_history[-1]
                 changes_count = len(last_inference.get("changes", []))
-                self._logger.info(f"檢測到 {changes_count} 個欄位的類型轉換")
+                self._logger.debug(
+                    f"Detected {changes_count} field type transformations"
+                )
 
         except Exception as e:
-            self._logger.error(f"推論 Preprocessor Schema 時發生錯誤: {e}")
-            self._logger.debug("詳細錯誤", exc_info=True)
+            self._logger.error(f"Error inferring Preprocessor Schema: {e}")
+            self._logger.debug("Detailed error", exc_info=True)
 
     def get_inferred_schema(self, module: str) -> "Schema | None":
         """
-        獲取指定模組的推論 Schema
+        Get inferred Schema for specified module.
 
         Args:
-            module: 模組名稱（如 'Preprocessor'）
+            module: Module name (e.g., 'Preprocessor')
 
         Returns:
-            推論的 Schema，如果不存在則返回 None
+            Inferred Schema, or None if not exists
         """
         return self.status.inferred_schemas.get(module)

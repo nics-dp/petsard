@@ -1,6 +1,9 @@
 ---
 title: "資料保真度評測"
-weight: 3
+type: docs
+weight: 693
+prev: docs/petsard-yaml/evaluator-yaml/privacy
+next: docs/petsard-yaml/evaluator-yaml/utility
 ---
 
 衡量合成資料與原始資料的相似程度，評估資料分佈和變量關係的保持程度。

@@ -1,23 +1,14 @@
 ---
 title: "Discretizing"
-weight: 5
+type: docs
+weight: 645
+prev: docs/petsard-yaml/preprocessor-yaml/scaling
+next: docs/petsard-yaml/preprocessor-yaml
 ---
 
 Converts continuous numerical data into discrete categories or intervals, mutually exclusive with encoding (encoder).
 
 ## Usage Examples
-
-### Basic Usage
-
-```yaml
-Preprocessor:
-  demo:
-    method: 'default'
-    sequence:
-      - missing
-      - outlier
-      - discretizing  # Use discretizing, not encoder
-```
 
 ### Custom K-bins Parameters
 
@@ -65,15 +56,6 @@ Preprocessor:
 - Outputs integer labels (0, 1, 2, ...)
 - Reduces data dimensionality and complexity
 
-**Example**:
-```yaml
-config:
-  discretizing:
-    age:
-      method: 'discretizing_kbins'
-      n_bins: 5
-```
-
 **Discretization Example**:
 ```
 Original values: [18, 25, 35, 45, 55, 65]
@@ -93,29 +75,15 @@ Discretized result: [0, 0, 1, 2, 3, 4]
 
 ### Numerical Data (discretizing_kbins)
 
-```
-Training phase (fit):
-  Calculate and store bin boundaries
-
-Transform phase (transform):
-  Map values to integer labels based on bin boundaries
-
-Inverse transform phase (inverse_transform):
-  Restore integer labels to bin midpoint values
-```
+- **Training phase (fit)**: Calculate and store bin boundaries
+- **Transform phase (transform)**: Map values to integer labels based on bin boundaries
+- **Inverse transform phase (inverse_transform)**: Restore integer labels to bin midpoint values
 
 ### Categorical Data (encoder_label)
 
-```
-Training phase (fit):
-  Create mapping from categories to integers
-
-Transform phase (transform):
-  Convert categories to integers based on mapping
-
-Inverse transform phase (inverse_transform):
-  Restore integers to categories based on mapping
-```
+- **Training phase (fit)**: Create mapping from categories to integers
+- **Transform phase (transform)**: Convert categories to integers based on mapping
+- **Inverse transform phase (inverse_transform)**: Restore integers to categories based on mapping
 
 ## Default Behavior
 
@@ -187,98 +155,6 @@ Preprocessor:
       - discretizing  # Correct: last step
 ```
 
-## Complete Example
-
-```yaml
-Loader:
-  load_data:
-    filepath: 'data.csv'
-    schema: 'schema.yaml'
-
-Preprocessor:
-  discretize_data:
-    method: 'default'
-    sequence:
-      - missing
-      - outlier
-      - discretizing  # Note: No encoder and scaler
-    config:
-      # Missing value handling
-      missing:
-        age: 'missing_median'
-        income: 'missing_mean'
-      
-      # Outlier handling
-      outlier:
-        age: 'outlier_iqr'
-        income: 'outlier_iqr'
-      
-      # Discretizing configuration
-      discretizing:
-        # Numerical fields
-        age:
-          method: 'discretizing_kbins'
-          n_bins: 10                    # Divide age into 10 bins
-        income:
-          method: 'discretizing_kbins'
-          n_bins: 5                     # Divide income into 5 bins
-        hours_per_week:
-          method: 'discretizing_kbins'
-          n_bins: 8                     # Divide hours into 8 bins
-        
-        # Categorical fields (automatically uses encoder_label)
-        gender: 'encoder_label'
-        education: 'encoder_label'
-
-Synthesizer:
-  synthesize:
-    method: 'default'
-
-Postprocessor:
-  postprocess:
-    method: 'default'
-```
-
-## Use Cases
-
-### 1. Simplify Data Distribution
-
-```yaml
-# Simplify continuous distribution into discrete intervals
-Preprocessor:
-  simplify:
-    method: 'default'
-    sequence:
-      - missing
-      - discretizing
-    config:
-      discretizing:
-        salary:
-          method: 'discretizing_kbins'
-          n_bins: 3  # Low/Medium/High three levels
-```
-
-### 2. Reduce Data Dimensionality
-
-```yaml
-# Reduce numerical precision, decrease synthesis difficulty
-Preprocessor:
-  reduce_dimension:
-    method: 'default'
-    sequence:
-      - missing
-      - outlier
-      - discretizing
-    config:
-      discretizing:
-        age:
-          method: 'discretizing_kbins'
-          n_bins: 5
-        score:
-          method: 'discretizing_kbins'
-          n_bins: 10
-```
-
 ## Notes
 
 - **Mutual Exclusivity**: Cannot be used with encoder simultaneously
@@ -288,11 +164,3 @@ Preprocessor:
 - **Synthesizer Impact**: Some synthesizers (like PAC-Synth, DPCTGAN) may produce floating-point numbers, which the system will automatically round
 - **Use Case**: Suitable for situations requiring discretized output, such as certain privacy protection algorithms
 - **NA Handling**: During post-processing, NA values will be removed before restoration
-
-## Related Documentation
-
-- [Processor API - fit()]({{< ref "/docs/python-api/processor-api/processor_fit" >}})
-- [Processor API - transform()]({{< ref "/docs/python-api/processor-api/processor_transform" >}})
-- [Processor API - inverse_transform()]({{< ref "/docs/python-api/processor-api/processor_inverse_transform" >}})
-- [Encoding]({{< ref "encoding" >}})
-- [Scaling]({{< ref "scaling" >}})

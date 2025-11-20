@@ -238,6 +238,10 @@ class TestLoaderAdapter:
         config = {"filepath": "test.csv"}
         test_data = pd.DataFrame({"A": [1, 2, 3], "B": [4, 5, 6]})
         mock_metadata = Mock(spec=Schema)
+        mock_metadata.id = "test_schema"
+        mock_metadata.name = "test"
+        mock_metadata.description = "test schema"
+        mock_metadata.enable_stats = False
 
         with patch("petsard.adapter.Loader") as mock_loader_class:
             mock_loader = Mock()
@@ -258,6 +262,10 @@ class TestLoaderAdapter:
         config = {"filepath": "benchmark://adult-income"}
         test_data = pd.DataFrame({"A": [1, 2, 3], "B": [4, 5, 6]})
         mock_metadata = Mock(spec=Schema)
+        mock_metadata.id = "test_schema"
+        mock_metadata.name = "test"
+        mock_metadata.description = "test schema"
+        mock_metadata.enable_stats = False
 
         with patch("petsard.adapter.Loader") as mock_loader_class:
             with patch(
@@ -338,7 +346,7 @@ class TestLoaderAdapter:
 
                     with pytest.raises(
                         BenchmarkDatasetsError,
-                        match="Failed to download benchmark dataset",
+                        match="Failed to download benchmark filepath 'adult-income'",
                     ):
                         LoaderAdapter(config)
 
@@ -583,6 +591,10 @@ class TestLoaderAdapter:
         config = {"filepath": "test.csv", "schema": "benchmark://adult-income-schema"}
         test_data = pd.DataFrame({"A": [1, 2, 3], "B": [4, 5, 6]})
         mock_metadata = Mock(spec=Schema)
+        mock_metadata.id = "test_schema"
+        mock_metadata.name = "test"
+        mock_metadata.description = "test schema"
+        mock_metadata.enable_stats = False
 
         with patch("petsard.adapter.Loader") as mock_loader_class:
             with patch(
@@ -636,6 +648,10 @@ class TestLoaderAdapter:
         }
         test_data = pd.DataFrame({"A": [1, 2, 3], "B": [4, 5, 6]})
         mock_metadata = Mock(spec=Schema)
+        mock_metadata.id = "test_schema"
+        mock_metadata.name = "test"
+        mock_metadata.description = "test schema"
+        mock_metadata.enable_stats = False
 
         with patch("petsard.adapter.Loader") as mock_loader_class:
             with patch(
@@ -756,9 +772,11 @@ class TestSplitterAdapter:
     def test_run(self):
         """測試執行"""
         config = {"method": "random", "test_size": 0.2}
+        mock_metadata = Mock(spec=Schema)
+        mock_metadata.enable_stats = False
         input_data = {
             "data": pd.DataFrame({"A": [1, 2, 3]}),
-            "metadata": Mock(spec=Schema),
+            "metadata": mock_metadata,
             "exist_train_indices": [],
         }
 
@@ -770,11 +788,16 @@ class TestSplitterAdapter:
                     "validation": pd.DataFrame({"A": [3]}),
                 }
             }
-            mock_metadata = Mock(spec=Schema)
+            mock_result_metadata = Mock(spec=Schema)
+            mock_result_metadata.enable_stats = False
+            # 讓 metadata 是一個可以 in 檢查的字典
+            mock_metadata_dict = {
+                1: {"train": mock_result_metadata, "validation": mock_result_metadata}
+            }
             mock_train_indices = {1: [0, 1]}
             mock_splitter.split.return_value = (
                 mock_data,
-                mock_metadata,
+                mock_metadata_dict,
                 mock_train_indices,
             )
             mock_splitter_class.return_value = mock_splitter
@@ -792,7 +815,7 @@ class TestSplitterAdapter:
 
             # Check that results are stored correctly
             assert operator.data == mock_data
-            assert operator.metadata == mock_metadata
+            assert operator.metadata == mock_metadata_dict
             assert operator.train_indices == mock_train_indices
 
     def test_set_input_with_data(self):
@@ -906,14 +929,18 @@ class TestPreprocessorAdapter:
     def test_run_default_sequence(self):
         """測試預設序列執行"""
         config = {"method": "default"}
+        mock_metadata = Mock(spec=Schema)
+        mock_metadata.enable_stats = False
+        mock_metadata.attributes = {}  # 空字典，可以迭代
         input_data = {
             "data": pd.DataFrame({"A": [1, 2, 3]}),
-            "metadata": Mock(spec=Schema),
+            "metadata": mock_metadata,
         }
 
         with patch("petsard.adapter.Processor") as mock_processor_class:
             mock_processor = Mock()
             mock_processor.transform.return_value = pd.DataFrame({"A": [1, 2, 3]})
+            mock_processor._metadata = mock_metadata
             mock_processor_class.return_value = mock_processor
 
             operator = PreprocessorAdapter(config)
@@ -925,14 +952,18 @@ class TestPreprocessorAdapter:
     def test_run_custom_sequence(self):
         """測試自定義序列執行"""
         config = {"method": "custom", "sequence": ["encoder", "scaler"]}
+        mock_metadata = Mock(spec=Schema)
+        mock_metadata.enable_stats = False
+        mock_metadata.attributes = {}  # 空字典，可以迭代
         input_data = {
             "data": pd.DataFrame({"A": [1, 2, 3]}),
-            "metadata": Mock(spec=Schema),
+            "metadata": mock_metadata,
         }
 
         with patch("petsard.adapter.Processor") as mock_processor_class:
             mock_processor = Mock()
             mock_processor.transform.return_value = pd.DataFrame({"A": [1, 2, 3]})
+            mock_processor._metadata = mock_metadata
             mock_processor_class.return_value = mock_processor
 
             operator = PreprocessorAdapter(config)
@@ -1018,7 +1049,7 @@ class TestSynthesizerAdapter:
 
     def test_init(self):
         """測試初始化"""
-        config = {"method": "sdv", "model": "GaussianCopula"}
+        config = {"method": "petsard-gaussian_copula", "model": "GaussianCopula"}
 
         with patch("petsard.adapter.Synthesizer") as mock_synthesizer_class:
             operator = SynthesizerAdapter(config)
@@ -1028,10 +1059,15 @@ class TestSynthesizerAdapter:
 
     def test_run(self):
         """測試執行"""
-        config = {"method": "sdv", "model": "GaussianCopula"}
+        config = {"method": "petsard-gaussian_copula", "model": "GaussianCopula"}
+        mock_metadata = Mock(spec=Schema)
+        mock_metadata.id = "test_schema"
+        mock_metadata.name = "test"
+        mock_metadata.description = "test schema"
+        mock_metadata.enable_stats = False
         input_data = {
             "data": pd.DataFrame({"A": [1, 2, 3]}),
-            "metadata": Mock(spec=Schema),
+            "metadata": mock_metadata,
         }
         synthetic_data = pd.DataFrame({"A": [4, 5, 6]})
 
@@ -1051,7 +1087,7 @@ class TestSynthesizerAdapter:
 
     def test_set_input_with_metadata(self):
         """測試有元資料的輸入設定"""
-        config = {"method": "sdv"}
+        config = {"method": "petsard-gaussian_copula"}
         test_data = pd.DataFrame({"A": [1, 2, 3]})
         mock_metadata = Mock(spec=Schema)
 
@@ -1073,7 +1109,7 @@ class TestSynthesizerAdapter:
 
     def test_set_input_without_metadata(self):
         """測試無元資料的輸入設定"""
-        config = {"method": "sdv"}
+        config = {"method": "petsard-gaussian_copula"}
         test_data = pd.DataFrame({"A": [1, 2, 3]})
 
         operator = SynthesizerAdapter(config)
@@ -1092,7 +1128,7 @@ class TestSynthesizerAdapter:
 
     def test_get_result(self):
         """測試結果取得"""
-        config = {"method": "sdv"}
+        config = {"method": "petsard-gaussian_copula"}
         synthetic_data = pd.DataFrame({"A": [1, 2, 3]})
 
         operator = SynthesizerAdapter(config)
@@ -1537,13 +1573,13 @@ class TestPrecisionRoundingInAdapters:
                 "price": Attribute(
                     name="price",
                     type="float64",
-                    enable_null=False,
+                    nullable=False,
                     type_attr={"precision": 2},
                 ),
                 "amount": Attribute(
                     name="amount",
                     type="float64",
-                    enable_null=False,
+                    nullable=False,
                     type_attr={"precision": 3},
                 ),
             },
@@ -1579,7 +1615,7 @@ class TestPrecisionRoundingInAdapters:
                 "value": Attribute(
                     name="value",
                     type="float64",
-                    enable_null=False,
+                    nullable=False,
                     type_attr={"precision": 2},
                 )
             },
@@ -1606,69 +1642,6 @@ class TestPrecisionRoundingInAdapters:
             # 驗證精度已應用
             assert operator.data_preproc["value"].tolist() == [1.12, 2.68, 3.11]
 
-    @pytest.mark.skip(reason="Mock setup needs refinement")
-    def test_postprocessor_precision_rounding_disabled(self):
-        """測試 Postprocessor 應用精度四捨五入"""
-        from petsard.adapter import PostprocessorAdapter
-        from petsard.metadater.metadata import Attribute, Schema
-
-        config = {"method": "default"}
-
-        # 建立原始 schema（Preprocessor input）
-        original_schema = Schema(
-            id="original_schema",
-            attributes={
-                "price": Attribute(
-                    name="price",
-                    type="float64",
-                    enable_null=False,
-                    type_attr={"precision": 2},
-                )
-            },
-        )
-
-        # 建立轉換後的 schema（Preprocessor output）
-        transformed_schema = Schema(
-            id="transformed_schema",
-            attributes={
-                "price": Attribute(
-                    name="price",
-                    type="float64",
-                    enable_null=False,
-                    type_attr={"precision": None},  # 轉換後可能失去精度資訊
-                )
-            },
-        )
-
-        input_data = {
-            "data": pd.DataFrame({"price": [10.123456, 20.678901]}),
-            "metadata": transformed_schema,
-        }
-
-        # 建立 mock status 來提供 preprocessor_input_schema
-        mock_status = Mock()
-        mock_status.get_pre_module.return_value = "Synthesizer"
-        mock_status.get_result.return_value = input_data["data"]
-        mock_status.get_metadata.return_value = transformed_schema
-        mock_status.get_preprocessor_input_schema.return_value = original_schema
-
-        with patch("petsard.adapter.Processor") as mock_processor_class:
-            mock_processor = Mock()
-            # Postprocessor transform 返回帶有多餘小數位數的資料
-            mock_processor.transform.return_value = pd.DataFrame(
-                {"price": [10.123456, 20.678901]}
-            )
-            mock_processor._metadata = original_schema
-            mock_processor._sequence = []
-            mock_processor_class.return_value = mock_processor
-
-            operator = PostprocessorAdapter(config)
-            operator.set_input(mock_status)
-            operator._run(operator.input)
-
-            # 驗證精度已應用（使用 preprocessor_input_schema 的精度）
-            assert operator.data_postproc["price"].tolist() == [10.12, 20.68]
-
     def test_precision_preservation_through_pipeline(self):
         """測試精度在整個 pipeline 中的保留"""
         from petsard.metadater.metadata import Attribute, Schema
@@ -1680,7 +1653,7 @@ class TestPrecisionRoundingInAdapters:
                 "amount": Attribute(
                     name="amount",
                     type="float64",
-                    enable_null=False,
+                    nullable=False,
                     type_attr={"precision": 3},
                 )
             },

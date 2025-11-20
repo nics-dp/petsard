@@ -79,9 +79,9 @@ class BaseSynthesizer(ABC):
         Args:
             data (pd.DataFrame, optional): same as _fit method.
         """
-        self._logger.info(f"Fitting {self.__class__.__name__}")
+        self._logger.debug(f"Fitting {self.__class__.__name__}")
         self._fit(data)
-        self._logger.info(f"Successfully fitting {self.__class__.__name__}")
+        self._logger.debug(f"Successfully fitting {self.__class__.__name__}")
 
     @abstractmethod
     def _sample(self) -> pd.DataFrame:
@@ -119,14 +119,14 @@ class BaseSynthesizer(ABC):
             self._logger.error(error_msg)
             raise UnfittedError(error_msg)
 
-        self._logger.info(f"Sampling {self.__class__.__name__}")
+        self._logger.debug(f"Sampling {self.__class__.__name__}")
         sampled_data: pd.DataFrame = self._sample()
 
         # Apply precision rounding if metadata is available
         if self.metadata is not None:
             sampled_data = self._apply_precision(sampled_data)
 
-        self._logger.info(f"Successfully sampling {self.__class__.__name__}")
+        self._logger.debug(f"Successfully sampling {self.__class__.__name__}")
         return sampled_data
 
     def _apply_precision(self, data: pd.DataFrame) -> pd.DataFrame:
@@ -166,7 +166,7 @@ class BaseSynthesizer(ABC):
                 if attr_type and ("float" in attr_type or "int" in attr_type):
                     # Use safe_round from utils for consistent rounding behavior
                     data_copy[attr_name] = data_copy[attr_name].apply(
-                        lambda x: safe_round(x, precision)
+                        lambda x, p=precision: safe_round(x, p)
                     )
 
                     self._logger.debug(

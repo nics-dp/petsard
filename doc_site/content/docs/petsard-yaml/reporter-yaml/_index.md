@@ -1,6 +1,9 @@
 ---
 title: "Reporter YAML"
-weight: 190
+type: docs
+weight: 700
+prev: docs/petsard-yaml/evaluator-yaml
+next: docs/petsard-yaml
 ---
 
 The Reporter module is responsible for outputting experiment results and supports multiple report formats including data storage, evaluation reports, and timing records.

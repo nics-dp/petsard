@@ -1,6 +1,9 @@
 ---
 title: "資料有效性診斷"
-weight: 1
+type: docs
+weight: 691
+prev: docs/petsard-yaml/evaluator-yaml
+next: docs/petsard-yaml/evaluator-yaml/privacy
 ---
 
 檢查合成資料是否準確反映原始資料的基本特性和結構。

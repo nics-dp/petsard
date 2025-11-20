@@ -1,0 +1,29 @@
+---
+Loader:
+  load_benchmark_with_schema:
+    filepath: benchmark://adult-income
+    schema: benchmark://adult-income_schema
+
+Preprocessor:
+  discretizing:
+    sequence:
+      - discretizing
+    config:
+      discretizing:
+        age:
+          method: 'discretizing_kbins'
+          n_bins: 10                    # Divide into 10 bins
+        educational-num:
+          method: 'discretizing_kbins'  # Default: n_bins=5 (預設值：n_bins=5)
+
+Reporter:
+  save_data:
+    method: save_data
+    source:
+      - Preprocessor
+  save_schema:
+    method: save_schema
+    source:
+      - Loader
+      - Preprocessor
+...

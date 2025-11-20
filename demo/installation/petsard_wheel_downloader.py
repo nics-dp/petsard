@@ -124,8 +124,18 @@ def check_output_directory(output_dir):
         print(f"📁 Created new directory: {output_dir}")
 
 
-def download_wheels(python_version, os_type, output_dir, dependency_groups=None):
-    """Download PETsARD and all its dependencies."""
+def download_wheels(
+    python_version, os_type, output_dir, dependency_groups=None, show_progress=True
+):
+    """Download PETsARD and all its dependencies.
+
+    Args:
+        python_version: Python version string
+        os_type: Target operating system
+        output_dir: Output directory for wheels
+        dependency_groups: Optional dependency groups
+        show_progress: If True, show real-time pip output (default: True)
+    """
     groups_info = (
         f" with groups: {', '.join(dependency_groups)}" if dependency_groups else ""
     )
@@ -169,21 +179,54 @@ def download_wheels(python_version, os_type, output_dir, dependency_groups=None)
             cmd.extend(["--extra", group])
 
     print(f"🔄 Running: {' '.join(cmd)}")
+    print("⏳ Downloading... (this may take a few minutes)")
+    print()
 
-    # Execute download
-    result = subprocess.run(cmd, capture_output=True, text=True)
+    # Execute download with optional real-time output
+    try:
+        if show_progress:
+            # Show real-time output for better user experience
+            result = subprocess.run(
+                cmd,
+                text=True,
+                timeout=600,  # 10 minutes timeout
+            )
+            # Since we didn't capture output, we need to check return code only
+            stdout = ""
+            stderr = ""
+        else:
+            # Capture output for programmatic use
+            result = subprocess.run(
+                cmd,
+                capture_output=True,
+                text=True,
+                timeout=600,  # 10 minutes timeout
+            )
+            stdout = result.stdout
+            stderr = result.stderr
+    except subprocess.TimeoutExpired:
+        print("❌ Download timed out after 10 minutes")
+        return [], {
+            "success": False,
+            "returncode": -1,
+            "stdout": "",
+            "stderr": "Download timed out after 10 minutes",
+            "command": " ".join(cmd),
+        }
 
     # Count downloaded files
     wheel_files = list(Path(output_dir).glob("*.whl"))
 
     if result.returncode != 0:
         print(f"❌ Download failed with return code: {result.returncode}")
+        if not show_progress and stderr:
+            print(f"Error: {stderr}")
         # Return both wheel files and error info for logging
         return wheel_files, {
             "success": False,
             "returncode": result.returncode,
-            "stdout": result.stdout,
-            "stderr": result.stderr,
+            "stdout": stdout,
+            "stderr": stderr,
             "command": " ".join(cmd),
         }
 
@@ -193,8 +236,8 @@ def download_wheels(python_version, os_type, output_dir, dependency_groups=None)
     return wheel_files, {
         "success": True,
         "returncode": result.returncode,
-        "stdout": result.stdout,
-        "stderr": result.stderr,
+        "stdout": stdout,
+        "stderr": stderr,
         "command": " ".join(cmd),
     }
 
@@ -271,7 +314,12 @@ def write_log(
 
 
 def download_petsard_wheels(
-    branch, python_version, os_type, output_dir="./wheels", dependency_groups=None
+    branch,
+    python_version,
+    os_type,
+    output_dir="./wheels",
+    dependency_groups=None,
+    show_progress=True,
 ):
     """
     Main function to download PETsARD wheels.
@@ -283,6 +331,7 @@ def download_petsard_wheels(
         output_dir (str): Output directory for wheels (default: "./wheels")
         dependency_groups (list): Optional dependency groups to include (e.g., ["pytorch", "jupyter"])
                                 Available groups: pytorch, jupyter, dev
+        show_progress (bool): If True, show real-time pip output (default: True)
 
     Returns:
         dict: Download results with paths and metadata
@@ -330,7 +379,7 @@ def download_petsard_wheels(
 
         # Download wheels
         wheel_files, download_result = download_wheels(
-            python_version, os_type, output_dir, dependency_groups
+            python_version, os_type, output_dir, dependency_groups, show_progress
         )
 
         # Write log (always write log, even if download failed)
@@ -411,6 +460,11 @@ def parse_arguments():
         choices=["pytorch", "jupyter", "dev"],
         help="Optional dependency groups to include (e.g., --groups pytorch jupyter)",
     )
+    parser.add_argument(
+        "--no-progress",
+        action="store_true",
+        help="Disable real-time progress output (useful for automation)",
+    )
 
     return parser.parse_args()
 
@@ -424,6 +478,7 @@ def main():
         os_type=args.os,
         output_dir=args.output_dir,
         dependency_groups=args.groups,
+        show_progress=not args.no_progress,
     )
 
     if not result["success"]:

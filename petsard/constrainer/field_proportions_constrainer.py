@@ -9,25 +9,25 @@ from petsard.constrainer.constrainer_base import BaseConstrainer
 @dataclass
 class FieldProportionsConfig:
     """
-    用於定義欄位比例保留的配置類別。
+    Configuration class for defining field proportion preservation.
 
     Attributes:
-        field_proportions (list[dict]): 包含欄位比例保留規則的列表。每個規則是一個字典，包含：
-            - fields: 欄位名稱（str）或欄位列表（list[str]）
-            - mode: 可以是 'all'（所有值分布）或 'missing'（僅缺失值）
-            - tolerance: (可選) 允許的原始比例與過濾後比例的最大差異，預設為 0.1（10%）
+        field_proportions (list[dict]): List containing field proportion preservation rules. Each rule is a dictionary containing:
+            - fields: Field name (str) or field list (list[str])
+            - mode: Can be 'all' (all value distribution) or 'missing' (missing values only)
+            - tolerance: (Optional) Maximum difference allowed between original and filtered proportions, default 0.1 (10%)
 
-        original_proportions (dict): 存儲原始資料中各欄位的比例分布。
-            在 verify_data 階段計算並存儲，避免在檢查階段重複計算。
+        original_proportions (dict): Stores proportion distribution of each field in original data.
+            Calculated and stored during verify_data phase to avoid repeated calculations during checking.
 
         metadata: Optional Schema object for field type checking
 
     Methods:
         verify_data(data: pd.DataFrame, target_n_rows: int) -> None:
-            驗證資料中是否有所有需要的欄位，檢查設定是否有效，並計算原始資料的比例分布。
+            Verify if all required fields exist in data, check if configuration is valid, and calculate proportion distribution of original data.
 
         check_proportions(filtered_data: pd.DataFrame) -> tuple[bool, list[dict]]:
-            檢查過濾後的資料是否維持了指定欄位的比例要求，並返回違反規則的詳細信息。
+            Check if filtered data maintains proportion requirements for specified fields, and return detailed violation information.
     """
 
     field_proportions: list[dict] = field(default_factory=list)
@@ -36,74 +36,72 @@ class FieldProportionsConfig:
     metadata: object = field(default=None)  # Schema object for type checking
 
     def __post_init__(self):
-        """驗證配置的有效性"""
+        """Validate configuration validity"""
         valid_modes: list[str] = ["all", "missing"]
         msgs: list[str] = []
         seen_fields: set = set()
 
         for i, proportion_rule in enumerate(self.field_proportions):
-            # 檢查規則是否為字典
+            # Check if rule is a dictionary
             if not isinstance(proportion_rule, dict):
-                msg = f"錯誤: 第 {i + 1} 項比例規則應該是字典: {proportion_rule}"
+                msg = f"Error: Rule {i + 1} should be a dictionary: {proportion_rule}"
                 msgs.append(msg)
                 continue
 
-            # 檢查必要的鍵
+            # Check required keys
             required_keys = {"fields", "mode"}
             if not required_keys.issubset(proportion_rule.keys()):
                 missing_keys = required_keys - set(proportion_rule.keys())
-                msg = f"錯誤: 第 {i + 1} 項比例規則缺少必要的鍵: {missing_keys}"
+                msg = f"Error: Rule {i + 1} missing required keys: {missing_keys}"
                 msgs.append(msg)
                 continue
 
             fields = proportion_rule["fields"]
             mode = proportion_rule["mode"]
-            tolerance = proportion_rule.get("tolerance", 0.1)  # 預設值為 0.1 (10%)
+            tolerance = proportion_rule.get("tolerance", 0.1)  # Default 0.1 (10%)
 
-            # 檢查欄位格式
+            # Check field format
             if isinstance(fields, str):
-                # 單一欄位
+                # Single field
                 field_key = fields
             elif isinstance(fields, list):
-                # 欄位列表
+                # Field list
                 if not fields:
-                    msg = f"錯誤: 第 {i + 1} 項比例規則的欄位列表不能為空"
+                    msg = f"Error: Rule {i + 1} field list cannot be empty"
                     msgs.append(msg)
                     continue
 
-                # 檢查列表中每個元素是否為字串
+                # Check if each element in list is a string
                 for field in fields:
                     if not isinstance(field, str):
-                        msg = f"錯誤: 第 {i + 1} 項比例規則的欄位列表中的元素應該都是字串: {field}"
+                        msg = f"Error: Elements in rule {i + 1} field list should all be strings: {field}"
                         msgs.append(msg)
 
                 field_key = tuple(fields)
             else:
-                msg = f"錯誤: 第 {i + 1} 項比例規則的欄位應該是字串或字串列表: {fields}"
+                msg = f"Error: Fields in rule {i + 1} should be string or string list: {fields}"
                 msgs.append(msg)
                 continue
 
-            # 檢查欄位重複
+            # Check field duplication
             if field_key in seen_fields:
-                msg = f"錯誤: 第 {i + 1} 項比例規則的欄位 {field_key} 重複定義"
+                msg = f"Error: Field {field_key} in rule {i + 1} is duplicated"
                 msgs.append(msg)
             else:
                 seen_fields.add(field_key)
 
-            # 檢查模式是否有效
+            # Check if mode is valid
             if mode not in valid_modes:
-                msg = (
-                    f"錯誤: 第 {i + 1} 項比例規則的模式 '{mode}' 不在 {valid_modes} 中"
-                )
+                msg = f"Error: Mode '{mode}' in rule {i + 1} not in {valid_modes}"
                 msgs.append(msg)
 
-            # 檢查容忍度是否為有效的數值（如果提供的話）
+            # Check if tolerance is a valid number (if provided)
             if (
                 not isinstance(tolerance, (int, float))
                 or tolerance < 0
                 or tolerance > 1
             ):
-                msg = f"錯誤: 第 {i + 1} 項比例規則的容忍度應該是 0 到 1 之間的數值: {tolerance}"
+                msg = f"Error: Tolerance in rule {i + 1} should be a number between 0 and 1: {tolerance}"
                 msgs.append(msg)
 
         if any(msgs):
@@ -111,21 +109,21 @@ class FieldProportionsConfig:
 
     def verify_data(self, data: pd.DataFrame, target_n_rows: int) -> None:
         """
-        驗證資料中是否有所有需要的欄位，檢查設定是否有效，並計算原始資料的比例分布。
+        Verify if all required fields exist in data, check if configuration is valid, and calculate proportion distribution of original data.
 
         Args:
-            data (pd.DataFrame): 要驗證的資料框。
-            target_n_rows (int): 預期的過濾後資料行數。
+            data (pd.DataFrame): DataFrame to verify.
+            target_n_rows (int): Expected number of rows after filtering.
 
         Raises:
-            ValueError: 當資料中缺少必要欄位、欄位類型不支援或設定無效時。
+            ValueError: When required fields are missing, field types are unsupported, or configuration is invalid.
         """
-        # 設定 target_n_rows
+        # Set target_n_rows
         if target_n_rows is None or target_n_rows <= 0:
-            raise ValueError("target_n_rows 必須是正整數")
+            raise ValueError("target_n_rows must be a positive integer")
         self.target_n_rows = target_n_rows
 
-        # 收集所有需要的欄位名稱
+        # Collect all required field names
         required_fields = set()
         for rule in self.field_proportions:
             fields = rule["fields"]
@@ -134,23 +132,23 @@ class FieldProportionsConfig:
             elif isinstance(fields, list):
                 required_fields.update(fields)
 
-        # 檢查資料中是否有所有需要的欄位
+        # Check if all required fields exist in data
         missing_fields = required_fields - set(data.columns)
         if missing_fields:
-            raise ValueError(f"資料中缺少以下欄位: {missing_fields}")
+            raise ValueError(f"Missing fields in data: {missing_fields}")
 
-        # 檢查欄位類型是否為類別變數
-        # field_proportions 僅支援類別變數，不支援連續數值型或日期型欄位
+        # Check if field types are categorical variables
+        # field_proportions only supports categorical variables, not continuous numerical or datetime fields
         unsupported_fields = []
-        for field in required_fields:
+        for field_name in required_fields:
             # Use metadata for type checking if available
             if self.metadata is not None:
                 # Find the attribute in metadata by accessing dict values
-                attribute = self.metadata.attributes.get(field)
+                attribute = self.metadata.attributes.get(field_name)
 
                 if attribute is None:
                     # Field not in metadata, fall back to dtype check
-                    dtype = data[field].dtype
+                    dtype = data[field_name].dtype
                     field_type = self._infer_type_from_dtype(dtype)
                 else:
                     # Infer type from attribute properties
@@ -159,35 +157,39 @@ class FieldProportionsConfig:
                 # Reject numeric and datetime types
                 if field_type in ["numerical", "datetime"]:
                     unsupported_fields.append(
-                        f"{field} (類型: {field_type} [來自 metadata], 不支援)"
+                        f"{field_name} (type: {field_type} [from metadata], unsupported)"
                     )
             else:
                 # Fall back to DataFrame dtype checking
-                dtype = data[field].dtype
-                # 拒絕純數值型（int, float）和日期型（datetime）
+                dtype = data[field_name].dtype
+                # Reject pure numerical (int, float) and datetime types
                 if pd.api.types.is_numeric_dtype(dtype):
-                    unsupported_fields.append(f"{field} (類型: {dtype}, 數值型不支援)")
+                    unsupported_fields.append(
+                        f"{field_name} (type: {dtype}, numerical unsupported)"
+                    )
                 elif pd.api.types.is_datetime64_any_dtype(dtype):
-                    unsupported_fields.append(f"{field} (類型: {dtype}, 日期型不支援)")
+                    unsupported_fields.append(
+                        f"{field_name} (type: {dtype}, datetime unsupported)"
+                    )
 
         if unsupported_fields:
             raise ValueError(
-                "field_proportions 僅支援類別變數（categorical）欄位。"
-                "以下欄位類型不支援:\n  "
+                "field_proportions only supports categorical fields. "
+                "The following field types are unsupported:\n  "
                 + "\n  ".join(unsupported_fields)
-                + "\n\n請確保在 schema 中將這些欄位的 type 設定為 'category' 或其他類別性質的邏輯型態。"
+                + "\n\nPlease ensure these fields have their type set to 'category' or other categorical logical types in the schema."
             )
 
-        # 計算原始資料的比例分布
+        # Calculate proportion distribution of original data
         self.original_proportions = {}
-        self.min_max_counts = {}  # 存儲每個條件的最小和最大樣本數
+        self.min_max_counts = {}  # Store min and max sample counts for each condition
 
         for rule in self.field_proportions:
             fields = rule["fields"]
             mode = rule["mode"]
-            tolerance = rule.get("tolerance", 0.1)  # 預設值為 0.1 (10%)
+            tolerance = rule.get("tolerance", 0.1)  # Default 0.1 (10%)
 
-            # 處理單一欄位
+            # Handle single field
             if isinstance(fields, str):
                 field = fields
                 if field not in data.columns:
@@ -195,21 +197,21 @@ class FieldProportionsConfig:
 
                 key = (field, mode)
 
-                # 計算 'all' 模式 - 所有值的分布
+                # Calculate 'all' mode - distribution of all values
                 if mode == "all" and key not in self.original_proportions:
-                    # 計算原始比例
+                    # Calculate original proportions
                     value_counts = (
                         data[field].value_counts(dropna=False, normalize=True).to_dict()
                     )
                     self.original_proportions[key] = value_counts
 
-                    # 計算每個值的最小和最大樣本數
+                    # Calculate min and max sample counts for each value
                     count_bounds = {}
                     for value, prop in value_counts.items():
                         target_count = int(prop * self.target_n_rows)
-                        # 最小樣本數：原始比例減去容忍度，乘以目標行數
+                        # Min sample count: original proportion minus tolerance, times target rows
                         min_count = int((prop - tolerance) * self.target_n_rows)
-                        # 最大樣本數：原始比例加上容忍度，乘以目標行數
+                        # Max sample count: original proportion plus tolerance, times target rows
                         max_count = int((prop + tolerance) * self.target_n_rows)
                         count_bounds[value] = {
                             "min": min_count,
@@ -218,45 +220,45 @@ class FieldProportionsConfig:
                         }
                     self.min_max_counts[key] = count_bounds
 
-                # 計算 'missing' 模式 - 僅缺失值的比例
+                # Calculate 'missing' mode - proportion of missing values only
                 elif mode == "missing" and key not in self.original_proportions:
                     missing_prop = data[field].isna().mean()
                     self.original_proportions[key] = missing_prop
 
-                    # 計算缺失值的最小和最大樣本數
+                    # Calculate min and max sample counts for missing values
                     target_count = int(missing_prop * self.target_n_rows)
                     min_count = int((missing_prop - tolerance) * self.target_n_rows)
                     max_count = int((missing_prop + tolerance) * self.target_n_rows)
                     self.min_max_counts[key] = {
-                        "缺失值": {
+                        "Missing": {
                             "min": min_count,
                             "max": max_count,
                             "target": target_count,
                         }
                     }
 
-            # 處理欄位組合（列表格式）
+            # Handle field combinations (list format)
             elif isinstance(fields, list):
                 fields_tuple = tuple(fields)
-                # 檢查所有欄位是否都存在
+                # Check if all fields exist
                 all_fields_exist = all(field in data.columns for field in fields)
                 if not all_fields_exist:
                     continue
 
                 key = (fields_tuple, mode)
 
-                # 處理 'missing' 模式
+                # Handle 'missing' mode
                 if mode == "missing" and key not in self.original_proportions:
-                    # 創建包含每個欄位是否為空的組合
+                    # Create combinations indicating whether each field is null
                     missing_patterns = {}
                     count_bounds = {}
 
-                    # 為每個欄位建立 isna() 標記
+                    # Create isna() markers for each field
                     isna_df = pd.DataFrame()
                     for field in fields:
                         isna_df[f"{field}_isna"] = data[field].isna()
 
-                    # 計算每種缺失模式的比例
+                    # Calculate proportion of each missing pattern
                     patterns = list(
                         itertools.product([True, False], repeat=len(fields))
                     )
@@ -273,14 +275,14 @@ class FieldProportionsConfig:
                         missing_patterns[pattern_key] = pattern_prop
 
                         target_count = int(pattern_prop * self.target_n_rows)
-                        # 計算每個模式的最小和最大樣本數
+                        # Calculate min and max sample counts for each pattern
                         min_count = int((pattern_prop - tolerance) * self.target_n_rows)
                         max_count = int((pattern_prop + tolerance) * self.target_n_rows)
 
-                        # 建立模式的可讀描述
+                        # Create readable description of pattern
                         pattern_desc = ", ".join(
                             [
-                                f"{fields[i]}:{'缺失' if p else '非缺失'}"
+                                f"{fields[i]}:{'Missing' if p else 'Not Missing'}"
                                 for i, p in enumerate(pattern)
                             ]
                         )
@@ -295,18 +297,18 @@ class FieldProportionsConfig:
                     self.original_proportions[key] = missing_patterns
                     self.min_max_counts[key] = count_bounds
 
-                # 處理 'all' 模式
+                # Handle 'all' mode
                 elif mode == "all" and key not in self.original_proportions:
-                    # 為欄位組合創建一個連接值
+                    # Create combined value for field combinations
                     combined = data[fields].apply(lambda row: tuple(row), axis=1)
 
-                    # 計算每個組合值的比例
+                    # Calculate proportion of each combined value
                     value_counts = combined.value_counts(
                         dropna=False, normalize=True
                     ).to_dict()
                     self.original_proportions[key] = value_counts
 
-                    # 計算每個組合值的最小和最大樣本數
+                    # Calculate min and max sample counts for each combined value
                     count_bounds = {}
                     for value, prop in value_counts.items():
                         target_count = int(prop * self.target_n_rows)
@@ -319,7 +321,7 @@ class FieldProportionsConfig:
                         }
                     self.min_max_counts[key] = count_bounds
 
-        # 最後修正 min_max：避免浮點運算問題
+        # Final adjustment of min_max: avoid floating point arithmetic issues
         for idx, props in self.min_max_counts.items():
             for value, counts in props.items():
                 curr_min: int = counts["min"]
@@ -342,19 +344,21 @@ class FieldProportionsConfig:
 
     def check_proportions(self, filtered_data: pd.DataFrame) -> tuple[bool, list[dict]]:
         """
-        檢查過濾後的資料是否維持了指定欄位的比例要求
+        Check if filtered data maintains proportion requirements for specified fields
 
         Args:
-            filtered_data (pd.DataFrame): 過濾後的資料
+            filtered_data (pd.DataFrame): Filtered data
 
         Returns:
             tuple[bool, list[dict]]:
-                - bool: 是否所有比例規則都符合要求
-                - list[dict]: 違反規則的詳細信息列表
+                - bool: Whether all proportion rules are satisfied
+                - list[dict]: List of detailed violation information
         """
-        # 確保已經計算了原始比例和樣本數限制
+        # Ensure original proportions and sample count limits have been calculated
         if not self.original_proportions or not hasattr(self, "min_max_counts"):
-            raise ValueError("尚未計算原始資料的比例分布，請先呼叫 verify_data 方法")
+            raise ValueError(
+                "Original data proportion distribution not yet calculated, please call verify_data method first"
+            )
 
         all_rules_satisfied = True
         violations = []
@@ -363,9 +367,9 @@ class FieldProportionsConfig:
         for rule in self.field_proportions:
             fields = rule["fields"]
             mode = rule["mode"]
-            tolerance = rule.get("tolerance", 0.1)  # 預設值為 0.1 (10%)
+            tolerance = rule.get("tolerance", 0.1)  # Default 0.1 (10%)
 
-            # 處理單一欄位
+            # Handle single field
             if isinstance(fields, str):
                 field = fields
                 if field not in filtered_data.columns:
@@ -373,22 +377,22 @@ class FieldProportionsConfig:
 
                 key = (field, mode)
 
-                # 檢查 'all' 模式 - 所有值的分布
+                # Check 'all' mode - distribution of all values
                 if (
                     mode == "all"
                     and key in self.original_proportions
                     and key in self.min_max_counts
                 ):
-                    # 獲取原始資料的比例和樣本數限制
+                    # Get original data proportions and sample count limits
                     original_counts = self.original_proportions[key]
                     count_bounds = self.min_max_counts[key]
 
-                    # 計算過濾後資料的實際計數
+                    # Calculate actual counts in filtered data
                     value_counts = (
                         filtered_data[field].value_counts(dropna=False).to_dict()
                     )
 
-                    # 檢查每個值的實際計數是否在允許範圍內
+                    # Check if actual count for each value is within allowed range
                     for value in set(original_counts.keys()):
                         if value not in count_bounds:
                             continue
@@ -399,44 +403,45 @@ class FieldProportionsConfig:
                         target_count = bounds["target"]
                         actual_count = value_counts.get(value, 0)
 
-                        # 檢查是否違反限制
+                        # Check if constraint is violated
                         if actual_count < min_count or actual_count > max_count:
                             all_rules_satisfied = False
                             violations.append(
                                 {
-                                    "欄位": field,
-                                    "值": value,
-                                    "原始比例": original_counts[value],
-                                    "過濾後比例": actual_count / filtered_n_rows
+                                    "Field": field,
+                                    "Value": value,
+                                    "Original Proportion": original_counts[value],
+                                    "Filtered Proportion": actual_count
+                                    / filtered_n_rows
                                     if filtered_n_rows > 0
                                     else 0,
-                                    "實際計數": actual_count,
-                                    "最小計數": min_count,
-                                    "最大計數": max_count,
-                                    "目標計數": target_count,
-                                    "容忍度": tolerance,
-                                    "模式": mode,
+                                    "Actual Count": actual_count,
+                                    "Min Count": min_count,
+                                    "Max Count": max_count,
+                                    "Target Count": target_count,
+                                    "Tolerance": tolerance,
+                                    "Mode": mode,
                                 }
                             )
 
-                # 檢查 'missing' 模式 - 僅缺失值的比例
+                # Check 'missing' mode - proportion of missing values only
                 elif (
                     mode == "missing"
                     and key in self.original_proportions
                     and key in self.min_max_counts
                 ):
-                    # 獲取原始資料的缺失比例和樣本數限制
+                    # Get original data missing proportion and sample count limits
                     orig_missing_prop = self.original_proportions[key]
-                    count_bounds = self.min_max_counts[key]["缺失值"]
+                    count_bounds = self.min_max_counts[key]["Missing"]
 
-                    # 計算過濾後資料的實際缺失計數
+                    # Calculate actual missing count in filtered data
                     actual_missing_count = filtered_data[field].isna().sum()
 
                     min_count = count_bounds["min"]
                     max_count = count_bounds["max"]
                     target_count = count_bounds["target"]
 
-                    # 檢查是否違反限制
+                    # Check if constraint is violated
                     if (
                         actual_missing_count < min_count
                         or actual_missing_count > max_count
@@ -444,25 +449,26 @@ class FieldProportionsConfig:
                         all_rules_satisfied = False
                         violations.append(
                             {
-                                "欄位": field,
-                                "值": "缺失值",
-                                "原始比例": orig_missing_prop,
-                                "過濾後比例": actual_missing_count / filtered_n_rows
+                                "Field": field,
+                                "Value": "Missing",
+                                "Original Proportion": orig_missing_prop,
+                                "Filtered Proportion": actual_missing_count
+                                / filtered_n_rows
                                 if filtered_n_rows > 0
                                 else 0,
-                                "實際計數": actual_missing_count,
-                                "最小計數": min_count,
-                                "最大計數": max_count,
-                                "目標計數": target_count,
-                                "容忍度": tolerance,
-                                "模式": mode,
+                                "Actual Count": actual_missing_count,
+                                "Min Count": min_count,
+                                "Max Count": max_count,
+                                "Target Count": target_count,
+                                "Tolerance": tolerance,
+                                "Mode": mode,
                             }
                         )
 
-            # 處理欄位組合（列表格式）
+            # Handle field combinations (list format)
             elif isinstance(fields, list):
                 fields_tuple = tuple(fields)
-                # 檢查所有欄位是否都存在
+                # Check if all fields exist
                 all_fields_exist = all(
                     field in filtered_data.columns for field in fields
                 )
@@ -471,17 +477,17 @@ class FieldProportionsConfig:
 
                 key = (fields_tuple, mode)
 
-                # 處理 'missing' 模式
+                # Handle 'missing' mode
                 if (
                     mode == "missing"
                     and key in self.original_proportions
                     and key in self.min_max_counts
                 ):
-                    # 獲取原始資料的缺失模式比例和樣本數限制
+                    # Get original data missing pattern proportions and sample count limits
                     original_missing_patterns = self.original_proportions[key]
                     count_bounds = self.min_max_counts[key]
 
-                    # 計算過濾後資料中每種缺失模式的實際計數
+                    # Calculate actual count for each missing pattern in filtered data
                     isna_df = pd.DataFrame()
                     for field in fields:
                         isna_df[f"{field}_isna"] = filtered_data[field].isna()
@@ -497,7 +503,7 @@ class FieldProportionsConfig:
                         max_count = bounds["max"]
                         target_count = bounds["target"]
 
-                        # 計算實際計數
+                        # Calculate actual count
                         mask = pd.Series(True, index=filtered_data.index)
                         for i, field in enumerate(fields):
                             if pattern[i]:
@@ -507,43 +513,46 @@ class FieldProportionsConfig:
 
                         actual_count = mask.sum()
 
-                        # 檢查是否違反限制
+                        # Check if constraint is violated
                         if actual_count < min_count or actual_count > max_count:
                             all_rules_satisfied = False
                             violations.append(
                                 {
-                                    "欄位": fields_tuple,
-                                    "值": pattern_desc,
-                                    "原始比例": original_missing_patterns[pattern],
-                                    "過濾後比例": actual_count / filtered_n_rows
+                                    "Field": fields_tuple,
+                                    "Value": pattern_desc,
+                                    "Original Proportion": original_missing_patterns[
+                                        pattern
+                                    ],
+                                    "Filtered Proportion": actual_count
+                                    / filtered_n_rows
                                     if filtered_n_rows > 0
                                     else 0,
-                                    "實際計數": actual_count,
-                                    "最小計數": min_count,
-                                    "最大計數": max_count,
-                                    "目標計數": target_count,
-                                    "容忍度": tolerance,
-                                    "模式": mode,
+                                    "Actual Count": actual_count,
+                                    "Min Count": min_count,
+                                    "Max Count": max_count,
+                                    "Target Count": target_count,
+                                    "Tolerance": tolerance,
+                                    "Mode": mode,
                                 }
                             )
 
-                # 處理 'all' 模式
+                # Handle 'all' mode
                 elif (
                     mode == "all"
                     and key in self.original_proportions
                     and key in self.min_max_counts
                 ):
-                    # 獲取原始資料的比例和樣本數限制
+                    # Get original data proportions and sample count limits
                     original_counts = self.original_proportions[key]
                     count_bounds = self.min_max_counts[key]
 
-                    # 計算過濾後資料的實際計數
+                    # Calculate actual counts in filtered data
                     combined = filtered_data[fields].apply(
                         lambda row: tuple(row), axis=1
                     )
                     value_counts = combined.value_counts(dropna=False).to_dict()
 
-                    # 檢查每個組合值的實際計數是否在允許範圍內
+                    # Check if actual count for each combined value is within allowed range
                     for value in set(original_counts.keys()):
                         if value not in count_bounds:
                             continue
@@ -554,23 +563,24 @@ class FieldProportionsConfig:
                         target_count = bounds["target"]
                         actual_count = value_counts.get(value, 0)
 
-                        # 檢查是否違反限制
+                        # Check if constraint is violated
                         if actual_count < min_count or actual_count > max_count:
                             all_rules_satisfied = False
                             violations.append(
                                 {
-                                    "欄位": fields_tuple,
-                                    "值": str(value),
-                                    "原始比例": original_counts[value],
-                                    "過濾後比例": actual_count / filtered_n_rows
+                                    "Field": fields_tuple,
+                                    "Value": str(value),
+                                    "Original Proportion": original_counts[value],
+                                    "Filtered Proportion": actual_count
+                                    / filtered_n_rows
                                     if filtered_n_rows > 0
                                     else 0,
-                                    "實際計數": actual_count,
-                                    "最小計數": min_count,
-                                    "最大計數": max_count,
-                                    "目標計數": target_count,
-                                    "容忍度": tolerance,
-                                    "模式": mode,
+                                    "Actual Count": actual_count,
+                                    "Min Count": min_count,
+                                    "Max Count": max_count,
+                                    "Target Count": target_count,
+                                    "Tolerance": tolerance,
+                                    "Mode": mode,
                                 }
                             )
 
@@ -713,16 +723,16 @@ class FieldProportionsConstrainer(BaseConstrainer):
         config: FieldProportionsConfig = None,
     ) -> tuple[pd.DataFrame, pd.DataFrame]:
         """
-        根據給定的欄位比例保留條件過濾 DataFrame，確保欄位的值分布計數維持在可接受範圍內。
+        Filter DataFrame based on given field proportion preservation conditions, ensuring field value distribution counts remain within acceptable range.
 
         Args:
-            data (pd.DataFrame)：要過濾的資料
-            config (FieldProportionsConfig)：包含欄位比例保留的設定類別
+            data (pd.DataFrame): Data to filter
+            config (FieldProportionsConfig): Configuration class containing field proportion preservation settings
 
         Returns:
-            tuple[pd.DataFrame, pd.DataFrame]：
-                - 過濾後的資料，索引已重置
-                - 操作記錄資料框，包含過濾動作、條件、影響行數等資訊
+            tuple[pd.DataFrame, pd.DataFrame]:
+                - Filtered data with reset index
+                - Operation log DataFrame containing filter actions, conditions, affected row counts, etc.
         """
         if (
             config is None
@@ -733,88 +743,88 @@ class FieldProportionsConstrainer(BaseConstrainer):
         ):
             return data, pd.DataFrame()
 
-        # 複製資料以避免修改原始資料
+        # Copy data to avoid modifying original
         data_result = data.copy()
         # initial_rows = len(data_result)  # Currently unused, commented for future use
 
-        # 創建操作記錄的列表
+        # Create operation log list
         ops_records = []
 
-        # 設定最大迭代次數，避免無限循環
+        # Set max iterations to avoid infinite loop
         max_iterations = 50
         iteration = 0
 
         while iteration < max_iterations:
             iteration += 1
 
-            # 檢查是否符合所有條件
+            # Check if all conditions are satisfied
             proportions_satisfied, violations = config.check_proportions(data_result)
 
-            # 如果沒有違反比例要求，直接返回
+            # If no proportion requirements violated, return directly
             if proportions_satisfied:
                 break
 
-            # 將違規條件按類型分類
-            overflow_violations = []  # 計數過多的違規
-            underflow_violations = []  # 計數過少的違規
+            # Classify violations by type
+            overflow_violations = []  # Violations with excessive counts
+            underflow_violations = []  # Violations with insufficient counts
 
             for violation in violations:
-                actual_count = violation["實際計數"]
-                min_count = violation["最小計數"]
-                max_count = violation["最大計數"]
+                actual_count = violation["Actual Count"]
+                min_count = violation["Min Count"]
+                max_count = violation["Max Count"]
 
                 if actual_count > max_count:
                     overflow_violations.append(violation)
                 elif actual_count < min_count:
                     underflow_violations.append(violation)
 
-            # 如果沒有計數過多的違規，而只有計數過少的違規，那麼我們可能無法進一步調整
+            # If no overflow violations and only underflow violations, we may not be able to adjust further
             if not overflow_violations:
                 break
 
-            # 1. 先標記所有需要保護的資料（計數過少的條件）
+            # 1. First mark all data that needs protection (conditions with insufficient counts)
             # protect_mask = pd.Series(False, index=data_result.index)  # Currently unused
 
-            # 2. 找出第一個計數過多的違規條件，進行處理
+            # 2. Find first overflow violation condition and handle it
             found_overflow = False
 
             for violation in overflow_violations:
-                field_name = violation["欄位"]
-                value = violation["值"]
-                actual_count = violation["實際計數"]
-                max_count = violation["最大計數"]
-                mode = violation["模式"]
+                field_name = violation["Field"]
+                value = violation["Value"]
+                actual_count = violation["Actual Count"]
+                max_count = violation["Max Count"]
+                mode = violation["Mode"]
 
-                # 計算需要移除的數量
+                # Calculate number of rows to remove
                 remove_needed = actual_count - max_count
 
-                # 建立過濾條件遮罩
+                # Build filter condition mask
                 if isinstance(field_name, str):
-                    # 單一欄位
+                    # Single field
                     if mode == "all":
-                        # 找出特定值的資料
+                        # Find data with specific value
                         if pd.isna(value):
                             value_mask = data_result[field_name].isna()
                         else:
                             value_mask = data_result[field_name] == value
-                        condition_desc = f"欄位 {field_name} 的值 {value}"
+                        condition_desc = f"Field {field_name} with value {value}"
                     else:  # mode == 'missing'
-                        # 找出缺失值的資料
+                        # Find data with missing values
                         value_mask = data_result[field_name].isna()
-                        condition_desc = f"欄位 {field_name} 的缺失值"
+                        condition_desc = f"Field {field_name} with missing values"
                 else:
-                    # 欄位組合
+                    # Field combination
                     fields = (
                         field_name if isinstance(field_name, tuple) else [field_name]
                     )
                     if mode == "all":
-                        # 處理欄位組合的特定值
+                        # Handle specific values in field combinations
                         if (
                             isinstance(value, str)
                             and value.startswith("(")
                             and value.endswith(")")
                         ):
-                            # 解析字符串形式的元組
+                            # Parse string form of tuple
                             import ast
 
                             try:
@@ -856,50 +866,52 @@ class FieldProportionsConstrainer(BaseConstrainer):
                             value_mask = data_result[list(fields)].apply(
                                 check_value_str, axis=1
                             )
-                        condition_desc = f"欄位組合 {field_name} 的值 {value}"
+                        condition_desc = (
+                            f"Field combination {field_name} with value {value}"
+                        )
                     else:  # mode == 'missing'
-                        # 處理欄位組合的缺失模式 - 簡化處理
+                        # Handle missing patterns in field combinations - simplified handling
                         value_mask = pd.Series(False, index=data_result.index)
-                        condition_desc = f"欄位組合 {field_name} 的 {value}"
+                        condition_desc = f"Field combination {field_name} with {value}"
 
-                # 如果有可用的資料可以移除
+                # If there is available data to remove
                 available_count = value_mask.sum()
                 if available_count > 0:
-                    # 決定要移除多少筆資料
+                    # Decide how many rows to remove
                     remove_count = min(remove_needed, available_count)
 
-                    # 隨機選擇要移除的索引
+                    # Randomly select indices to remove
                     indices_to_remove = (
                         data_result[value_mask]
                         .sample(n=remove_count, random_state=42)
                         .index
                     )
 
-                    # 記錄操作
+                    # Log operation
                     detailed_record = {
-                        "迭代次數": iteration,
-                        "移除條件": condition_desc,
-                        "移除原因": "計數過多",
-                        "當前計數": actual_count,
-                        "最大計數": max_count,
-                        "需移除計數": remove_needed,
-                        "實際移除筆數": remove_count,
-                        "剩餘行數": len(data_result) - remove_count,
+                        "Iteration": iteration,
+                        "Remove Condition": condition_desc,
+                        "Remove Reason": "Excessive count",
+                        "Current Count": actual_count,
+                        "Max Count": max_count,
+                        "Needed Removal": remove_needed,
+                        "Actual Removal": remove_count,
+                        "Remaining Rows": len(data_result) - remove_count,
                     }
 
                     ops_records.append(detailed_record)
 
-                    # 過濾資料
+                    # Filter data
                     data_result = data_result.drop(indices_to_remove)
 
                     found_overflow = True
-                    break  # 找到一個條件處理後就跳出，重新評估所有條件
+                    break  # After handling one condition, break and re-evaluate all conditions
 
-            # 如果所有計數過多的條件都無法處理，則退出循環
+            # If all overflow conditions cannot be handled, exit loop
             if not found_overflow:
                 break
 
-        # 最終檢查
+        # Final check
         final_proportions_satisfied, final_violations = config.check_proportions(
             data_result
         )
@@ -908,33 +920,35 @@ class FieldProportionsConstrainer(BaseConstrainer):
 
             logger = logging.getLogger("PETsARD.FieldProportionsConstrainer")
             logger.warning(
-                f"⚠ field_proportions 約束：經過 {iteration} 次迭代後，仍有 {len(final_violations)} 個條件未完全滿足。"
-                f"這可能是因為資料量不足、容忍度設定過嚴，或條件之間存在衝突。"
+                f"⚠ field_proportions constraint: After {iteration} iterations, {len(final_violations)} conditions still not fully satisfied. "
+                f"This may be due to insufficient data, overly strict tolerance settings, or conflicts between conditions."
             )
-            # 記錄詳細的違規資訊
-            for i, violation in enumerate(final_violations[:3], 1):  # 只顯示前3個
+            # Log detailed violation information
+            for i, violation in enumerate(final_violations[:3], 1):  # Show only first 3
                 logger.debug(
-                    f"  違規 {i}: 欄位={violation['欄位']}, 值={violation['值']}, "
-                    f"實際計數={violation['實際計數']}, "
-                    f"預期範圍=[{violation['最小計數']}, {violation['最大計數']}]"
+                    f"  Violation {i}: Field={violation['Field']}, Value={violation['Value']}, "
+                    f"Actual Count={violation['Actual Count']}, "
+                    f"Expected Range=[{violation['Min Count']}, {violation['Max Count']}]"
                 )
             if len(final_violations) > 3:
-                logger.debug(f"  ... 還有 {len(final_violations) - 3} 個違規未顯示")
+                logger.debug(
+                    f"  ... {len(final_violations) - 3} more violations not shown"
+                )
 
-        # 創建操作記錄的 DataFrame
+        # Create operation log DataFrame
         ops_df = (
             pd.DataFrame(ops_records)
             if ops_records
             else pd.DataFrame(
                 columns=[
-                    "迭代次數",
-                    "移除條件",
-                    "移除原因",
-                    "當前計數",
-                    "最大計數",
-                    "需移除計數",
-                    "實際移除筆數",
-                    "剩餘行數",
+                    "Iteration",
+                    "Remove Condition",
+                    "Remove Reason",
+                    "Current Count",
+                    "Max Count",
+                    "Needed Removal",
+                    "Actual Removal",
+                    "Remaining Rows",
                 ]
             )
         )

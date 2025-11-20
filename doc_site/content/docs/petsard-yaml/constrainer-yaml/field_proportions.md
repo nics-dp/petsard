@@ -1,6 +1,9 @@
 ---
 title: "Field Proportions"
-weight: 4
+type: docs
+weight: 674
+prev: docs/petsard-yaml/constrainer-yaml/field_combinations
+next: docs/petsard-yaml/constrainer-yaml
 ---
 
 Maintain the distribution proportions of the original data during constraint filtering.

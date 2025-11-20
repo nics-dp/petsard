@@ -113,10 +113,10 @@ EvaluatorAdapter 使用固定的資料源命名：
 - **ori（原始資料）**：
   - 有 Splitter 時：取 Splitter 的 train
   - 無 Splitter 時：取 Loader 的結果
-  
+
 - **syn（合成資料）**：
   - 取前一個模組的結果（通常是 Synthesizer 或 Postprocessor）
-  
+
 - **control（控制資料）**：
   - 僅在有 Splitter 時存在
   - 取 Splitter 的 validation

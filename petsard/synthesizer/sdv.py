@@ -1,3 +1,51 @@
+"""
+SDV Synthesizer Wrapper Module
+
+**IMPORTANT: Optional Dependency**
+
+This module provides wrappers for SDV (Synthetic Data Vault) synthesizers.
+SDV is an **optional dependency** and must be installed separately to use these methods.
+
+**Installation:**
+```bash
+pip install 'sdv>=1.26.0,<2'
+```
+
+**Usage:**
+- This module is lazy-loaded only when SDV methods are requested
+- PETsARD will function normally without SDV installed
+- Attempting to use SDV methods without installation will raise `MissingDependencyError`
+- Use `petsard-gaussian_copula` as an alternative that doesn't require SDV
+
+**Supported SDV Methods:**
+- `sdv-single_table-gaussiancopula`: Gaussian Copula synthesizer
+- `sdv-single_table-ctgan`: Conditional Tabular GAN
+- `sdv-single_table-copulagan`: Copula GAN
+- `sdv-single_table-tvae`: Tabular VAE
+
+**Migration Note:**
+Consider using `petsard-gaussian_copula` as a built-in alternative that doesn't
+require external dependencies and provides similar functionality.
+
+**Example:**
+```python
+from petsard.synthesizer import Synthesizer
+from petsard.exceptions import MissingDependencyError
+
+# This will check if SDV is installed
+try:
+    synthesizer = Synthesizer(method="sdv-single_table-gaussiancopula")
+    synthesizer.create(metadata=schema)
+    synthesizer.fit(data)
+    syn_data = synthesizer.sample()
+except MissingDependencyError as e:
+    print(f"SDV not installed: {e.get_suggestion()}")
+    # Use alternative method
+    synthesizer = Synthesizer(method="petsard-gaussian_copula")
+```
+"""
+
+
 import logging
 import re
 import warnings
@@ -21,13 +69,13 @@ from petsard.synthesizer.synthesizer_base import BaseSynthesizer
 
 
 def schema_to_sdv(schema: Schema) -> dict[str, Any]:
-    """轉換 PETsARD Schema 為 SDV (Synthetic Data Vault) 格式
+    """Convert PETsARD Schema to SDV (Synthetic Data Vault) format
 
     Args:
-        schema: PETsARD Schema 物件
+        schema: PETsARD Schema object
 
     Returns:
-        dict: SDV metadata 格式的字典
+        dict: Dictionary in SDV metadata format
     """
     sdv_metadata = {"columns": {}, "METADATA_SPEC_VERSION": "SINGLE_TABLE_V1"}
 
@@ -39,23 +87,32 @@ def schema_to_sdv(schema: Schema) -> dict[str, Any]:
 
 
 def _map_attribute_to_sdv_type(attribute: Any) -> str:
-    """將 PETsARD Attribute 對應到 SDV sdtype
+    """Map PETsARD Attribute to SDV sdtype
 
     Args:
-        attribute: PETsARD Attribute 物件或 dict
+        attribute: PETsARD Attribute object or dict
 
     Returns:
         str: SDV sdtype
     """
-    # 處理 dict 和 Attribute 物件兩種情況
+    # Handle both dict and Attribute object cases
     if isinstance(attribute, dict):
         logical_type = attribute.get("logical_type")
         attr_type = attribute.get("type")
+        category = attribute.get("category", False)
     else:
         logical_type = attribute.logical_type
         attr_type = attribute.type
+        # CRITICAL FIX: category is stored in type_attr, not as a direct Attribute property
+        category = (
+            attribute.type_attr.get("category", False) if attribute.type_attr else False
+        )
 
-    # 根據邏輯類型優先判斷
+    # Prioritize category flag check
+    if category is True:
+        return "categorical"
+
+    # Determine by logical type
     if logical_type:
         logical = logical_type.lower()
         if logical in ["email", "phone"]:
@@ -65,16 +122,17 @@ def _map_attribute_to_sdv_type(attribute: Any) -> str:
         elif logical in ["datetime", "date", "time"]:
             return "datetime"
 
-    # 根據資料類型判斷
+    # Determine by data type
     if attr_type:
-        if "int" in attr_type or "float" in attr_type:
+        attr_type_str = str(attr_type).lower()
+        if "int" in attr_type_str or "float" in attr_type_str:
             return "numerical"
-        elif "bool" in attr_type:
+        elif "bool" in attr_type_str:
             return "boolean"
-        elif "datetime" in attr_type:
+        elif "datetime" in attr_type_str:
             return "datetime"
 
-    # 預設為分類
+    # Default to categorical
     return "categorical"
 
 
@@ -130,7 +188,7 @@ class SDVSingleTableSynthesizer(BaseSynthesizer):
         self._logger: logging.Logger = logging.getLogger(
             f"PETsARD.{self.__class__.__name__}"
         )
-        self._logger.info(
+        self._logger.debug(
             f"Initializing {self.__class__.__name__} with config: {config}"
         )
 
@@ -141,6 +199,30 @@ class SDVSingleTableSynthesizer(BaseSynthesizer):
             )
             # Convert Schema to SDV format using local function
             sdv_metadata_dict = schema_to_sdv(metadata)
+
+            # DIAGNOSTIC: Log the actual metadata being sent to SDV
+            self._logger.debug("=" * 80)
+            self._logger.debug("[DIAGNOSTIC] Schema -> SDV Metadata Conversion")
+            self._logger.debug("=" * 80)
+            for col_name, col_info in sdv_metadata_dict["columns"].items():
+                # Get original attribute for comparison
+                orig_attr = metadata.attributes.get(col_name)
+                if orig_attr:
+                    category_flag = (
+                        orig_attr.type_attr.get("category", False)
+                        if orig_attr.type_attr
+                        else False
+                    )
+                    self._logger.debug(
+                        f"  {col_name}: "
+                        f"type={orig_attr.type}, "
+                        f"category={category_flag} "
+                        f"→ sdtype='{col_info['sdtype']}'"
+                    )
+                else:
+                    self._logger.debug(f"  {col_name}: sdtype='{col_info['sdtype']}'")
+            self._logger.debug("=" * 80)
+
             # Create SDV Metadata object from the dictionary
             # Suppress the "No table name was provided" warning and log it instead
             with warnings.catch_warnings(record=True) as w:
@@ -154,7 +236,7 @@ class SDVSingleTableSynthesizer(BaseSynthesizer):
             self._impl: BaseSingleTableSynthesizer = self._initialize_impl(
                 metadata=sdv_metadata
             )
-            self._logger.info("Synthesizer initialized with provided metadata")
+            self._logger.debug("Synthesizer initialized with provided metadata")
         else:
             self._logger.debug(
                 "No metadata provided, synthesizer will be initialized during fit"
@@ -230,7 +312,7 @@ class SDVSingleTableSynthesizer(BaseSynthesizer):
         Raises:
             UnableToSynthesizeError: If the synthesizer couldn't fit the data. See Issue 454.
         """
-        self._logger.info(f"Fitting synthesizer with data shape: {data.shape}")
+        self._logger.debug(f"Fitting synthesizer with data shape: {data.shape}")
 
         # If metadata is not provided, initialize the synthesizer in the fit method.
         if not hasattr(self, "_impl") or self._impl is None:
@@ -238,6 +320,32 @@ class SDVSingleTableSynthesizer(BaseSynthesizer):
             # Create Schema from data and convert to SDV metadata
             schema = SchemaMetadater.from_data(data)
             sdv_metadata_dict = schema_to_sdv(schema)
+
+            # DIAGNOSTIC: Log the inferred metadata
+            self._logger.debug("=" * 80)
+            self._logger.debug(
+                "[DIAGNOSTIC] Inferred Schema -> SDV Metadata (fit method)"
+            )
+            self._logger.debug("=" * 80)
+            for col_name, col_info in sdv_metadata_dict["columns"].items():
+                # Get inferred attribute
+                attr = schema.attributes.get(col_name)
+                if attr:
+                    category_flag = (
+                        attr.type_attr.get("category", False)
+                        if attr.type_attr
+                        else False
+                    )
+                    actual_dtype = str(data[col_name].dtype)
+                    self._logger.debug(
+                        f"  {col_name}: "
+                        f"dtype={actual_dtype}, "
+                        f"type={attr.type}, "
+                        f"category={category_flag} "
+                        f"→ sdtype='{col_info['sdtype']}'"
+                    )
+            self._logger.debug("=" * 80)
+
             # Create SDV Metadata object from the dictionary
             # Suppress the "No table name was provided" warning and log it instead
             with warnings.catch_warnings(record=True) as w:
@@ -251,7 +359,7 @@ class SDVSingleTableSynthesizer(BaseSynthesizer):
             self._impl: BaseSingleTableSynthesizer = self._initialize_impl(
                 metadata=sdv_metadata
             )
-            self._logger.info("Synthesizer initialized from data")
+            self._logger.debug("Synthesizer initialized from data")
 
         try:
             self._logger.debug("Fitting synthesizer with data")
@@ -273,7 +381,7 @@ class SDVSingleTableSynthesizer(BaseSynthesizer):
             UnableToSynthesizeError: If the synthesizer couldn't synthesize the data.
         """
         num_rows = self.config["sample_num_rows"]
-        self._logger.info(f"Sampling {num_rows} rows from synthesizer")
+        self._logger.debug(f"Sampling {num_rows} rows from synthesizer")
 
         batch_size: int = None
         if "batch_size" in self.config:

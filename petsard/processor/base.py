@@ -9,42 +9,20 @@ from pandas.api.types import is_datetime64_any_dtype
 
 from petsard.exceptions import ConfigError, UnfittedError
 from petsard.metadater.metadata import Schema
+from petsard.processor.constant import ConstantProcessor
 from petsard.processor.discretizing import DiscretizingKBins
-from petsard.processor.encoder import (
-    EncoderDateDiff,
-    EncoderLabel,
-    EncoderMinguoDate,
-    EncoderOneHot,
-    EncoderUniform,
-)
-from petsard.processor.mediator import (
-    Mediator,
-    MediatorEncoder,
-    MediatorMissing,
-    MediatorOutlier,
-    MediatorScaler,
-)
-from petsard.processor.missing import (
-    MissingDrop,
-    MissingMean,
-    MissingMedian,
-    MissingMode,
-    MissingSimple,
-)
-from petsard.processor.outlier import (
-    OutlierIQR,
-    OutlierIsolationForest,
-    OutlierLOF,
-    OutlierZScore,
-)
-from petsard.processor.scaler import (
-    ScalerLog,
-    ScalerLog1p,
-    ScalerMinMax,
-    ScalerStandard,
-    ScalerTimeAnchor,
-    ScalerZeroCenter,
-)
+from petsard.processor.encoder import (EncoderDateDiff, EncoderLabel,
+                                       EncoderOneHot, EncoderUniform)
+from petsard.processor.mediator import (Mediator, MediatorEncoder,
+                                        MediatorMissing, MediatorOutlier,
+                                        MediatorScaler)
+from petsard.processor.missing import (MissingDrop, MissingMean, MissingMedian,
+                                       MissingMode, MissingSimple)
+from petsard.processor.outlier import (OutlierIQR, OutlierIsolationForest,
+                                       OutlierLOF, OutlierZScore)
+from petsard.processor.scaler import (ScalerLog, ScalerLog1p, ScalerMinMax,
+                                      ScalerStandard, ScalerTimeAnchor,
+                                      ScalerZeroCenter)
 
 
 class DefaultProcessorMap:
@@ -106,7 +84,6 @@ class ProcessorClassMap:
         "encoder_label": EncoderLabel,
         "encoder_onehot": EncoderOneHot,
         "encoder_uniform": EncoderUniform,
-        "encoder_minguodate": EncoderMinguoDate,
         "encoder_datediff": EncoderDateDiff,
         # missing
         "missing_drop": MissingDrop,
@@ -154,9 +131,22 @@ class MediatorMap:  # pragma: no cover
 
     @classmethod
     def get_class_info(cls, processor_type: str):
+        """
+        Get mediator class information for a processor type.
+
+        Args:
+            processor_type: Type of processor (e.g., 'missing', 'outlier', 'encoder', 'scaler')
+
+        Returns:
+            dict: Mediator class info if available, None if processor doesn't need a mediator
+
+        Note:
+            Some processor types (e.g., 'discretizing') don't require a mediator.
+            This is by design and should not raise an error.
+        """
         mediator_class = cls.MEDIATOR_MAP.get(processor_type)
-        if mediator_class is None:
-            raise ConfigError(f"Invalid processor type of mediator: {processor_type}")
+        # Return None if processor type doesn't have a mediator (e.g., discretizing)
+        # The calling code should check for None before using the result
         return mediator_class
 
 
@@ -170,7 +160,11 @@ class Processor:
     MAX_SEQUENCE_LENGTH: int = 4  # Maximum number of procedures allowed in sequence
     DEFAULT_SEQUENCE: list[str] = ["missing", "outlier", "encoder", "scaler"]
 
-    def __init__(self, metadata: Schema, config: dict = None) -> None:
+    def __init__(
+        self,
+        metadata: Schema,
+        config: dict = None,
+    ) -> None:
         """
         Args:
             metadata (Schema):
@@ -207,6 +201,7 @@ class Processor:
             _inverse_sequence (list): The sequence for inverse transformation.
             _na_percentage_global (float): The global NA percentage.
             _rng (np.random.Generator): The random number generator for NA imputation.
+            _schema_history (list): History of schema states at each processing step.
         """
 
         # Setup logging
@@ -216,12 +211,25 @@ class Processor:
             f"Loaded metadata contains {len(metadata.attributes)} attributes"
         )
 
-        self.logger.debug("config is provided:")
-        self.logger.debug(f"config is provided: {config}")
+        self.logger.debug(f"Config provided: {config}")
 
-        # Initialize metadata
-        self._metadata: Schema = metadata
-        self.logger.debug("Schema metadata loaded.")
+        # CRITICAL FIX: Create a deep copy of metadata to avoid modifying the original
+        # Processor should not modify the passed-in metadata, but create its own copy
+        # This ensures that transformations don't corrupt the original schema
+        self._metadata: Schema = deepcopy(metadata)
+        self.logger.debug(
+            "Schema metadata loaded (deep copy created to preserve original)"
+        )
+
+        # Initialize ConstantProcessor (always enabled, runs before all other processors)
+        self._constant_processor = ConstantProcessor()
+        self.logger.debug("ConstantProcessor initialized")
+
+        # Initialize schema tracking (always enabled)
+        self._schema_history = []
+        self.logger.debug("Schema tracking enabled - will record schema at each step")
+        # Record initial schema
+        self._record_schema_snapshot("initial", metadata)
 
         # Initialize processing state
         self._is_fitted: bool = False
@@ -341,15 +349,15 @@ class Processor:
 
         for col in field_names:
             infer_dtype = self._get_field_infer_dtype(col)
-            self.logger.debug(f"Processing column '{col}': inferred type {infer_dtype}")
+            self.logger.debug(f"Column '{col}': inferred type {infer_dtype}")
             for processor, obj in DefaultProcessorMap.PROCESSOR_MAP.items():
                 processor_class = obj[infer_dtype]
                 self.logger.debug(
-                    f"  > Setting {processor} processor: {processor_class.__name__}"
+                    f"  {processor}: {processor_class.__name__}"
                 )
                 self._config[processor][col] = processor_class()
 
-        self.logger.debug("Config generation completed")
+        self.logger.debug(f"Config generation completed for {len(field_names)} columns")
 
     def get_config(self, col: list = None) -> dict:
         """
@@ -444,15 +452,49 @@ class Processor:
                     self._fitting_sequence.insert(
                         self._fitting_sequence.index(proc_name) + 1, mediator
                     )
-                self.logger.info(f"{mediator_info['class'].__name__} is created.")
+                self.logger.debug(f"{mediator_info['class'].__name__} created")
 
         self._detect_edit_global_transformation()
 
         self.logger.debug("Fitting sequence generation completed.")
 
+        # Fit ConstantProcessor first (before all other processors)
+        self.logger.debug("Fitting ConstantProcessor")
+        self._constant_processor.fit(data, self._metadata)
+        if self._constant_processor.constant_columns:
+            self.logger.info(
+                f"Detected {len(self._constant_processor.constant_columns)} constant columns"
+            )
+            self.logger.debug(
+                f"Constant columns: {list(self._constant_processor.constant_columns.keys())}"
+            )
+        else:
+            self.logger.debug("No constant columns detected")
+
+        # Transform data using ConstantProcessor (remove constant columns)
+        data = self._constant_processor.transform(data)
+        self.logger.debug(f"Data shape after ConstantProcessor: {data.shape}")
+
+        # Remove constant columns from config to avoid processing them
+        if self._constant_processor.constant_columns:
+            for processor_type in self._config.keys():
+                for col_name in list(self._constant_processor.constant_columns.keys()):
+                    if col_name in self._config[processor_type]:
+                        del self._config[processor_type][col_name]
+                        self.logger.debug(
+                            f"Removed constant column '{col_name}' from {processor_type} config"
+                        )
+
         for processor in self._fitting_sequence:
             if isinstance(processor, str):
                 for col, obj in self._config[processor].items():
+                    # Skip constant columns (removed by ConstantProcessor)
+                    if col not in data.columns:
+                        self.logger.debug(
+                            f"Skipping {processor} for constant column '{col}'"
+                        )
+                        continue
+
                     self.logger.debug(
                         f"{processor}: {type(obj).__name__} from {col} start processing."
                     )
@@ -463,9 +505,13 @@ class Processor:
                     if processor not in obj.PROC_TYPE:
                         raise ValueError(f"Invalid processor from {col} in {processor}")
 
-                    obj.fit(data[col])
+                    # Special handling for EncoderDateDiff which needs the full DataFrame
+                    if isinstance(obj, EncoderDateDiff):
+                        obj.fit(data)
+                    else:
+                        obj.fit(data[col])
 
-                self.logger.info(f"{processor} fitting done.")
+                self.logger.info(f"Completed {processor} fitting")
             else:
                 # if the processor is not a string,
                 # it should be a mediator, which could be fitted directly.
@@ -476,7 +522,7 @@ class Processor:
                         f"mediator: {type(processor).__name__} start processing."
                     )
                     processor.fit(data)
-                    self.logger.info(f"{type(processor).__name__} fitting done.")
+                    self.logger.info(f"Completed {type(processor).__name__} fitting")
 
         # it is a shallow copy
         self._working_config = self._config.copy()
@@ -577,8 +623,7 @@ class Processor:
                 is_global_transformation = True
                 replaced_class = obj.__class__
                 self.logger.info(
-                    "Global transformation detected."
-                    + f" All processors will be replaced to {replaced_class}."
+                    f"Global transformation detected: using {replaced_class.__name__} for all columns"
                 )
                 break
 
@@ -603,11 +648,27 @@ class Processor:
 
         self.transformed: pd.DataFrame = data.copy()
 
+        # Apply ConstantProcessor first (remove constant columns)
+        self.transformed = self._constant_processor.transform(self.transformed)
+        self.logger.debug(
+            f"Data shape after ConstantProcessor.transform: {self.transformed.shape}"
+        )
+
+        # Record schema before transformation
+        self._record_schema_snapshot(
+            "before_transform", self._metadata, self.transformed
+        )
+
         for processor in self._fitting_sequence:
             if isinstance(processor, str):
                 self.logger.debug(f"Executing {processor} processing")
 
                 for col, obj in self._config[processor].items():
+                    # Skip constant columns (removed by ConstantProcessor)
+                    if col not in self.transformed.columns:
+                        self.logger.debug(f"  > Skipping constant column '{col}'")
+                        continue
+
                     self.logger.debug(
                         f"{processor}: {type(obj).__name__} from {col} start transforming."
                     )
@@ -627,7 +688,11 @@ class Processor:
                             f"na_cnt={self.transformed[col].isna().sum()}"
                         )
 
-                    self.transformed[col] = obj.transform(self.transformed[col])
+                    # Special handling for EncoderDateDiff which needs the full DataFrame
+                    if isinstance(obj, EncoderDateDiff):
+                        self.transformed = obj.transform(self.transformed)
+                    else:
+                        self.transformed[col] = obj.transform(self.transformed[col])
 
                     # Update metadata based on processor's SCHEMA_TRANSFORM
                     self._update_metadata_after_transform(col, obj, processor)
@@ -643,7 +708,6 @@ class Processor:
                                 EncoderLabel,
                                 EncoderOneHot,
                                 EncoderUniform,
-                                EncoderMinguoDate,
                                 EncoderDateDiff,
                                 ScalerLog,
                                 ScalerLog1p,
@@ -663,7 +727,12 @@ class Processor:
                             f"na_cnt={self.transformed[col].isna().sum()}"
                         )
 
-                self.logger.info(f"{processor} transformation done.")
+                self.logger.info(f"Completed {processor} transformation")
+
+                # Record schema after each processor step
+                self._record_schema_snapshot(
+                    f"after_{processor}", self._metadata, self.transformed
+                )
             else:
                 # if the processor is not a string,
                 # it should be a mediator, which transforms the data directly.
@@ -697,7 +766,13 @@ class Processor:
                 self.logger.debug(
                     f"after transformation: data shape: {self.transformed.shape}"
                 )
-                self.logger.info(f"{type(processor).__name__} transformation done.")
+                self.logger.info(f"Completed {type(processor).__name__} transformation")
+
+                # Record schema after mediator
+                mediator_name = type(processor).__name__
+                self._record_schema_snapshot(
+                    f"after_{mediator_name}", self._metadata, self.transformed
+                )
 
         # Update global row count after preprocessing
         # Note: SchemaMetadata doesn't have mutable global stats like old Metadata
@@ -768,7 +843,7 @@ class Processor:
             self._inverse_sequence.insert(
                 self._inverse_sequence.index("encoder"), self._mediator["encoder"]
             )
-            self.logger.info("MediatorEncoder is created.")
+            self.logger.debug("MediatorEncoder created for inverse transform")
 
         if "discretizing" in self._inverse_sequence:
             # if discretizing is in the procedure,
@@ -783,7 +858,7 @@ class Processor:
             self._inverse_sequence.insert(
                 self._inverse_sequence.index("scaler"), self._mediator["scaler"]
             )
-            self.logger.info("MediatorScaler is created.")
+            self.logger.debug("MediatorScaler created for inverse transform")
 
         self.logger.debug("Inverse sequence generation completed.")
 
@@ -818,7 +893,11 @@ class Processor:
                     ):
                         transformed[col] = transformed[col].round().astype(int)
 
-                    transformed[col] = obj.inverse_transform(transformed[col])
+                    # Special handling for EncoderDateDiff which needs the full DataFrame
+                    if isinstance(obj, EncoderDateDiff):
+                        transformed = obj.inverse_transform(transformed)
+                    else:
+                        transformed[col] = obj.inverse_transform(transformed[col])
 
                     # For Datetime after Scaler but not the target of ScalerAnchor (even reference will be affect)
                     if (
@@ -830,7 +909,7 @@ class Processor:
                         transformed[col] = pd.to_datetime(transformed[col]).dt.date
 
                 self.logger.info(
-                    f"{type(processor).__name__} inverse transformation done."
+                    f"Completed {type(processor).__name__} inverse transformation"
                 )
             else:
                 # if the processor is not a string,
@@ -845,7 +924,13 @@ class Processor:
                 self.logger.debug(
                     f"after transformation: data shape: {transformed.shape}"
                 )
-                self.logger.info(f"{type(processor).__name__} transformation done.")
+                self.logger.info(f"Completed {type(processor).__name__} transformation")
+
+        # Apply ConstantProcessor last (restore constant columns)
+        transformed = self._constant_processor.inverse_transform(transformed)
+        self.logger.debug(
+            f"Data shape after ConstantProcessor.inverse_transform: {transformed.shape}"
+        )
 
         return self._align_dtypes(transformed)  # transformed
 
@@ -923,15 +1008,15 @@ class Processor:
         self, col: str, obj: object, processor_type: str
     ) -> None:
         """
-        Update metadata based on processor's SCHEMA_TRANSFORM rules
+                Update metadata based on processor's SCHEMA_TRANSFORM rules
+        Update metadata according to processor's SCHEMA_TRANSFORM rules
+        For example: encoder_uniform converts string to float64
 
-        根據 processor 的 SCHEMA_TRANSFORM 規則更新 metadata
-        例如：encoder_uniform 將 string 轉換為 float64
 
-        Args:
-            col: Column name being processed
-            obj: Processor object
-            processor_type: Type of processor (e.g., 'encoder', 'scaler')
+                Args:
+                    col: Column name being processed
+                    obj: Processor object
+                    processor_type: Type of processor (e.g., 'encoder', 'scaler')
         """
         # Check if processor has SCHEMA_TRANSFORM info
         if not hasattr(obj, "get_schema_transform_info"):
@@ -960,10 +1045,13 @@ class Processor:
                 )
 
             # Update category if specified in SCHEMA_TRANSFORM
+            # CRITICAL FIX: category is in type_attr, not a direct property of Attribute
             if transform_info.get("output_category") is not None:
-                old_category = attribute.category
+                if not attribute.type_attr:
+                    attribute.type_attr = {}
+                old_category = attribute.type_attr.get("category")
                 new_category = transform_info["output_category"]
-                attribute.category = new_category
+                attribute.type_attr["category"] = new_category
                 self.logger.debug(
                     f"Updated schema for '{col}': category {old_category} → {new_category} "
                     f"(processor: {type(obj).__name__})"
@@ -990,3 +1078,128 @@ class Processor:
         aligned_data = SchemaMetadater.align(self._metadata, data)
 
         return aligned_data
+
+    def _record_schema_snapshot(
+        self, step_name: str, schema: Schema, data: pd.DataFrame = None
+    ) -> None:
+        """
+        Record a snapshot of the schema at a specific step.
+
+        Args:
+            step_name: Name of the processing step
+            schema: Current schema
+            data: Current data (optional, for dtype verification)
+        """
+        from copy import deepcopy
+
+        snapshot = {
+            "step": step_name,
+            "schema": deepcopy(schema),
+            "attributes_summary": {},
+        }
+
+        # Track changes from previous snapshot
+        changes = []
+        if self._schema_history:
+            prev_snapshot = self._schema_history[-1]
+            prev_attrs = prev_snapshot["attributes_summary"]
+        else:
+            prev_attrs = {}
+
+        # Record summary of each attribute
+        for attr_name, attr in schema.attributes.items():
+            attr_summary = {
+                "type": attr.type,
+                "category": attr.category,
+                "logical_type": attr.logical_type,
+            }
+
+            # If data is provided, record actual dtype
+            if data is not None and attr_name in data.columns:
+                attr_summary["actual_dtype"] = str(data[attr_name].dtype)
+                attr_summary["unique_count"] = data[attr_name].nunique()
+
+            snapshot["attributes_summary"][attr_name] = attr_summary
+
+            # Detect changes
+            if attr_name in prev_attrs:
+                prev = prev_attrs[attr_name]
+                if (
+                    prev.get("type") != attr.type
+                    or prev.get("category") != attr.category
+                ):
+                    changes.append(
+                        f"{attr_name}: type={prev.get('type')}→{attr.type}, "
+                        f"category={prev.get('category')}→{attr.category}"
+                    )
+
+        self._schema_history.append(snapshot)
+
+        # Log snapshot (DEBUG level - minimal log output, use save_schema for diagnostics)
+        if changes:
+            self.logger.debug(f"[SNAPSHOT] [{step_name}]: {len(changes)} attr changed")
+        else:
+            self.logger.debug(f"[SNAPSHOT] [{step_name}]: no changes")
+
+    def get_schema_history(self) -> list[dict]:
+        """
+        Get the history of schema changes during processing.
+
+        Returns:
+            list[dict]: List of schema snapshots at each step
+        """
+        return deepcopy(self._schema_history)
+
+    def print_schema_history(self, columns: list[str] = None) -> None:
+        """
+        Print a formatted view of schema history for debugging.
+
+        Args:
+            columns: List of column names to focus on (None = all columns)
+        """
+        if not self._schema_history:
+            print("❌ No schema history available")
+            return
+
+        print("\n" + "=" * 80)
+        print("[SCHEMA HISTORY] Processor Transformation Steps")
+        print("=" * 80)
+
+        for i, snapshot in enumerate(self._schema_history):
+            step_name = snapshot["step"]
+            attrs = snapshot["attributes_summary"]
+
+            print(f"\n[{i}] Step: {step_name}")
+            print("-" * 80)
+
+            # Filter columns if specified
+            display_attrs = {
+                k: v for k, v in attrs.items() if columns is None or k in columns
+            }
+
+            if not display_attrs:
+                print("  (No matching columns)")
+                continue
+
+            # Print in table format
+            print(
+                f"{'Column':<20} {'Type':<15} {'Category':<10} {'Actual dtype':<15} {'Unique':<10}"
+            )
+            print("-" * 80)
+
+            for attr_name, attr_info in list(display_attrs.items())[
+                :10
+            ]:  # Show first 10
+                type_str = str(attr_info.get("type", "N/A"))[:14]
+                category_str = str(attr_info.get("category", "N/A"))
+                actual_dtype = attr_info.get("actual_dtype", "N/A")[:14]
+                unique_count = attr_info.get("unique_count", "N/A")
+
+                print(
+                    f"{attr_name:<20} {type_str:<15} {category_str:<10} {actual_dtype:<15} {unique_count:<10}"
+                )
+
+            if len(display_attrs) > 10:
+                print(f"... and {len(display_attrs) - 10} more columns")
+
+        print("\n" + "=" * 80)

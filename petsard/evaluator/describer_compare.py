@@ -120,23 +120,23 @@ class DescriberCompare(BaseEvaluator):
         self.compare_config = CompareConfig(**self.config)
         self._logger.debug("CompareConfig successfully initialized")
 
-        # 準備 DescriberDescribe 的設定
-        # 過濾掉 jsdivergence，因為它需要特殊處理
+        # Prepare DescriberDescribe configuration
+        # Filter out jsdivergence as it requires special handling
         describe_methods = [
             m for m in self.compare_config.stats_method if m != "jsdivergence"
         ]
 
-        # 從原始 config 中複製必要的參數並添加 eval_method
+        # Copy necessary parameters from original config and add eval_method
         describe_config = {
-            "eval_method": "describe",  # 必需的參數
+            "eval_method": "describe",  # Required parameter
             "describe_method": describe_methods,
         }
 
-        # 如果原始 config 中有其他需要的參數，也複製過去
+        # Copy other needed parameters from original config if present
         if "percentile" in self.config:
             describe_config["percentile"] = self.config["percentile"]
 
-        # 創建兩個 DescriberDescribe 實例來處理 ori 和 syn
+        # Create two DescriberDescribe instances to handle ori and syn
         self.ori_describer = DescriberDescribe(config=describe_config.copy())
         self.syn_describer = DescriberDescribe(config=describe_config.copy())
 
@@ -163,7 +163,7 @@ class DescriberCompare(BaseEvaluator):
         self, base_data: pd.DataFrame, target_data: pd.DataFrame
     ) -> dict[str, float]:
         """
-        計算 JS Divergence（需要同時處理兩個數據集）
+        Calculate JS Divergence (requires processing both datasets simultaneously)
 
         Args:
             base_data: Base dataset
@@ -182,7 +182,7 @@ class DescriberCompare(BaseEvaluator):
                     {
                         "col_ori": base_data[
                             col
-                        ],  # StatsJSDivergence 內部仍使用 ori/syn
+                        ],  # StatsJSDivergence internally still uses ori/syn
                         "col_syn": target_data[col],
                     }
                 )
@@ -217,7 +217,6 @@ class DescriberCompare(BaseEvaluator):
             raise UnsupportedMethodError(error_msg)
 
         # Ensure both DataFrames have the same index and columns
-        # 確保兩個 DataFrame 有相同的索引和欄位
         common_cols = list(set(base_df.columns) & set(target_df.columns))
         common_index = list(set(base_df.index) & set(target_df.index))
 
@@ -225,24 +224,19 @@ class DescriberCompare(BaseEvaluator):
         target_df = target_df.loc[common_index, common_cols]
 
         # Create result DataFrame containing base and target values
-        # 建立結果 DataFrame，包含基準值和目標值
         result = pd.DataFrame(index=common_index)
 
         for col in common_cols:
             # Add base and target values
-            # 添加基準值和目標值
             result[f"{col}_base"] = base_df[col]
             result[f"{col}_target"] = target_df[col]
 
             # Calculate comparison values
-            # 計算比較值
             func = method_info["func"]
             handle_zero = method_info["handle_zero"]
 
             # Handle NA values - fill with NaN for numerical operations
             # To avoid FutureWarning, use pandas' future behavior
-            # 處理 NA 值 - 先填充為 NaN 以便進行數值運算
-            # 為了避免 FutureWarning，使用 pandas 的未來行為
             with pd.option_context("future.no_silent_downcasting", True):
                 base_col_filled = base_df[col].fillna(np.nan).infer_objects(copy=False)
                 target_col_filled = (
@@ -267,8 +261,6 @@ class DescriberCompare(BaseEvaluator):
 
             # Handle zero values and NA values
             # Only check for zero on non-NA base values
-            # 處理零值和 NA 值
-            # 只對非 NA 的基準值檢查是否為零
             is_zero = pd.Series(
                 [float(v) == 0.0 if pd.notna(v) else False for v in base_df[col]],
                 index=base_df[col].index,
@@ -293,12 +285,12 @@ class DescriberCompare(BaseEvaluator):
         Return:
             (dict[str, pd.DataFrame]): The evaluation result
         """
-        self._logger.info(
+        self._logger.debug(
             f"Starting comparison evaluation with {len(self.compare_config.stats_method)} methods"
         )
 
-        # 使用 DescriberDescribe 分別描述 base 和 target
-        # 支援向後相容：如果輸入是 ori/syn，映射到 base/target
+        # Use DescriberDescribe to describe base and target separately
+        # Backward compatibility: if input is ori/syn, map to base/target
         if "ori" in data and "base" not in data:
             data["base"] = data["ori"]
         if "syn" in data and "target" not in data:
@@ -310,20 +302,20 @@ class DescriberCompare(BaseEvaluator):
         self._logger.debug("Describing target data")
         target_description = self.syn_describer.eval({"data": data["target"]})
 
-        # 初始化結果字典
+        # Initialize result dictionary
         compare_result: dict[str, pd.DataFrame] = {}
 
-        # 處理 columnwise 統計的比較
+        # Process columnwise statistics comparison
         if "columnwise" in base_description and "columnwise" in target_description:
             base_columnwise = base_description["columnwise"]
             target_columnwise = target_description["columnwise"]
 
-            # 應用比較方法
+            # Apply comparison method
             compare_result["columnwise"] = self._apply_comparison(
                 base_columnwise, target_columnwise, self.compare_config.compare_method
             )
 
-            # 如果需要計算 JS Divergence，添加到結果中
+            # If JS Divergence calculation is needed, add to results
             if "jsdivergence" in self.compare_config.stats_method:
                 js_div_results = self._calculate_jsdivergence(
                     data["base"], data["target"]
@@ -332,12 +324,12 @@ class DescriberCompare(BaseEvaluator):
                     if col in compare_result["columnwise"].index:
                         compare_result["columnwise"].loc[col, "jsdivergence"] = value
 
-        # 處理 global 統計的比較（如果有）
+        # Process global statistics comparison (if available)
         if "global" in base_description and "global" in target_description:
             base_global = base_description["global"]
             target_global = target_description["global"]
 
-            # 合併 global 結果
+            # Merge global results
             global_result = pd.DataFrame()
             for col in base_global.columns:
                 if col in target_global.columns:
@@ -347,7 +339,7 @@ class DescriberCompare(BaseEvaluator):
             if not global_result.empty:
                 compare_result["global_stats"] = global_result
 
-        # 計算聚合的全局分數
+        # Calculate aggregated global score
         if "columnwise" in compare_result:
             compare_cols = [
                 col
@@ -355,17 +347,17 @@ class DescriberCompare(BaseEvaluator):
                 if col.endswith(f"_{self.compare_config.compare_method}")
             ]
 
-            # 添加 jsdivergence 到比較欄位（如果存在）
+            # Add jsdivergence to comparison columns (if exists)
             if "jsdivergence" in compare_result["columnwise"].columns:
                 compare_cols.append("jsdivergence")
 
             if compare_cols:
-                # 應用聚合方法
+                # Apply aggregation method
                 global_result = self.AGGREGATED_METHOD_MAP[
                     self.compare_config.aggregated_method
                 ](compare_result["columnwise"][compare_cols])
 
-                # 應用總結方法計算最終分數
+                # Apply summary method to calculate final score
                 score = self.SUMMARY_METHOD_MAP[self.compare_config.summary_method](
                     global_result.values()
                 )
@@ -375,5 +367,5 @@ class DescriberCompare(BaseEvaluator):
                     global_result, orient="index"
                 ).T
 
-        self._logger.info("Comparison evaluation completed")
+        self._logger.debug("Comparison evaluation completed")
         return compare_result

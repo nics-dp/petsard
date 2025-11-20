@@ -1,6 +1,9 @@
 ---
 title: "資料實用性評測"
-weight: 4
+type: docs
+weight: 694
+prev: docs/petsard-yaml/evaluator-yaml/fidelity
+next: docs/petsard-yaml/evaluator-yaml/custom_method
 ---
 
 衡量合成資料在機器學習任務中的表現，以判斷其是否能有效取代原始資料。

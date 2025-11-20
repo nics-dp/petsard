@@ -1,6 +1,7 @@
 ---
-title: "Processor API（更新中）"
-weight: 330
+title: "Processor API"
+type: docs
+weight: 1080
 ---
 
 資料處理模組，支援前處理（preprocessing）和後處理（postprocessing）功能。
@@ -131,6 +132,7 @@ processor = Processor(metadata=schema, config=custom_config)
 
 Processor 支援以下處理步驟：
 
+0. **constant**：Constant columns 處理（自動執行，無需設定）
 1. **missing**：缺失值處理
 2. **outlier**：離群值處理
 3. **encoder**：類別變數編碼
@@ -138,6 +140,8 @@ Processor 支援以下處理步驟：
 5. **discretizing**：離散化（與 encoder 互斥）
 
 預設序列：`['missing', 'outlier', 'encoder', 'scaler']`
+
+**Constant Columns 自動處理**：Processor 會自動偵測並處理所有值都相同的欄位（constant columns）。這類欄位在合成資料生成時可能導致某些演算法（如 Copula）出現錯誤，因此會在前處理時自動移除，並在後處理時自動還原。此功能預設啟用且無需額外設定。
 
 ## 預設處理方式
 
@@ -180,8 +184,8 @@ Processor 支援以下處理步驟：
 
 - `encoder_uniform`：均勻編碼（依頻率分配範圍）
 - `encoder_label`：標籤編碼（整數映射）
-- `encoder_onehot`：One-Hot 編碼
-- `encoder_date`：日期格式轉換
+- `encoder_onehot`：獨熱編碼
+- `encoder_datediff`：日期差異編碼
 
 ### 縮放器
 
@@ -191,10 +195,24 @@ Processor 支援以下處理步驟：
 - `scaler_log`：對數轉換
 - `scaler_log1p`：log(1+x) 轉換
 - `scaler_timeanchor`：時間錨點縮放
+  - **單一參考模式** (`reference: str`)：將錨點欄位轉換為與參考欄位的時間差
+  - **多參考模式** (`reference: list[str]`)：錨點欄位保持為日期時間，將多個參考欄位轉換為與錨點的時間差
+  - 支援的時間單位：`'D'` (天) 或 `'S'` (秒)
 
 ### 離散化
 
 - `discretizing_kbins`：K-bins 離散化
+
+## 進階功能
+
+### Schema 追蹤（除錯用）
+
+Processor 提供 schema 追蹤功能，用於除錯和診斷處理過程中的型別變化：
+
+- `get_schema_history()`：取得所有處理步驟的 schema 快照列表
+- `print_schema_history(columns=None)`：以表格格式列印 schema 變化歷史
+
+這些方法主要用於開發和除錯，不建議在正式環境使用。
 
 ## 注意事項
 

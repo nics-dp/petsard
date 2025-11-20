@@ -1,6 +1,9 @@
 ---
 title: "Custom Synthesis Method"
-weight: 3
+type: docs
+weight: 653
+prev: docs/petsard-yaml/synthesizer-yaml/custom-data
+next: docs/petsard-yaml/synthesizer-yaml/custom-method
 ---
 
 To create your own synthesizer, you need to implement a Python class with three required methods and configure the YAML file to use it.

@@ -1,25 +1,48 @@
 ---
-title: "Metadater API（更新中）"
-weight: 320
+title: "Metadater API"
+type: docs
+weight: 1060
 ---
 
-資料結構描述管理器，提供資料集的詮釋資料（Metadata）定義、比較與對齊功能。
+資料結構描述管理器，提供資料集的詮釋資料（Metadata）定義、推斷、比較與對齊功能。
 
-## 類別架構
+## 模組概覽
 
-{{< mermaid-file file="content/docs/python-api/metadater-api/metadater-class-diagram.zh-tw.mmd" >}}
+Metadater 採用三層架構：
 
-> **圖例說明：**
-> - 藍色框：主要操作類別
-> - 橘色框：操作子類別
-> - 淺藍框：資料設定類別
-> - `..>`：建立/操作關係
-> - `*--`：組合關係
-> - `-->`：呼叫關係
+### 配置類別（Configuration）
+
+定義資料結構的靜態配置：
+
+- **`Metadata`**：資料集層級配置
+- **`Schema`**：表格層級配置
+- **`Attribute`**：欄位層級配置
+
+### 操作類別（Operations）
+
+提供類別方法來操作配置：
+
+- **`Metadater`**：多表格操作
+- **`SchemaMetadater`**：單表格操作
+- **`AttributeMetadater`**：單欄位操作
+
+### 資料抽象類別（Data Abstraction）
+
+結合資料與配置的高階抽象：
+
+- **`Datasets`**：多表格資料集（資料 + Metadata）
+- **`Table`**：單一表格（資料 + Schema）
+- **`Field`**：單一欄位（資料 + Attribute）
+
+### Schema 推斷工具
+
+- **`SchemaInferencer`**：推斷 Processor 轉換後的 Schema
+- **`ProcessorTransformRules`**：定義轉換規則
+- **`TransformRule`**：單一轉換規則的資料類別
 
 ## 基本使用
 
-Metadater 主要作為內部元件使用，通常透過 Loader 的 schema 參數間接使用：
+### 透過 Loader 使用（推薦）
 
 ```python
 # 在 YAML 中定義
@@ -29,112 +52,310 @@ Loader:
     schema: schemas/user_schema.yaml
 ```
 
-若需直接使用 Metadater 類別方法：
+### 直接使用 Metadater
 
 ```python
 from petsard.metadater import Metadater
 import pandas as pd
 
-# 從資料自動推斷結構
+# 從資料推斷
 data = {'users': pd.DataFrame(...)}
 metadata = Metadater.from_data(data)
 
-# 從字典建立詮釋資料
-config = {'tables': {...}}
+# 從字典建立
+config = {'schemas': {'users': {...}}}
 metadata = Metadater.from_dict(config)
 
-# 比較資料差異
+# 比較差異
 diff = Metadater.diff(metadata, new_data)
 
-# 對齊資料結構
+# 對齊資料
 aligned = Metadater.align(metadata, new_data)
 ```
 
-## 類別方法說明
-
-Metadater 提供靜態類別方法（`@classmethod` 或 `@staticmethod`），不需要實例化即可使用：
-
-### 建立詮釋資料
-
-- `from_data()`：從資料自動推斷並建立 Metadata
-- `from_dict()`：從配置字典建立 Metadata
-
-### 比較與對齊
-
-- `diff()`：比較 Metadata 與實際資料的差異
-- `align()`：根據 Metadata 對齊資料結構
-
-## 資料結構
+## 配置類別
 
 ### Metadata
-最上層，管理整個資料集：
+
+資料集層級配置：
+
+```python
+from petsard.metadater import Metadata, Schema
+
+metadata = Metadata(
+    id="my_dataset",
+    schemas={'users': Schema(...)}
+)
+```
+
+**主要屬性**：
 - `id`: 資料集識別碼
-- `name`: 資料集名稱（選填）
-- `description`: 資料集描述（選填）
 - `schemas`: 表格結構字典 `{table_name: Schema}`
+- `enable_stats`: 是否啟用統計資訊
+- `stats`: 資料集統計（DatasetsStats）
 
 ### Schema
-中間層，描述單一表格：
+
+表格層級配置：
+
+```python
+from petsard.metadater import Schema, Attribute
+
+schema = Schema(
+    id="users",
+    attributes={
+        'user_id': Attribute(name='user_id', type='int'),
+        'email': Attribute(name='email', type='str'),
+    }
+)
+```
+
+**主要屬性**：
 - `id`: 表格識別碼
-- `name`: 表格名稱（選填）
-- `description`: 表格描述（選填）
 - `attributes`: 欄位屬性字典 `{field_name: Attribute}`
+- `primary_key`: 主鍵欄位列表
+- `enable_stats`: 是否啟用統計
+- `stats`: 表格統計（TableStats）
 
 ### Attribute
-最底層，定義單一欄位：
+
+欄位層級配置：
+
+```python
+from petsard.metadater import Attribute
+
+attribute = Attribute(
+    name="age",
+    type="int",
+    type_attr={
+        "nullable": True,
+        "category": False,
+    }
+)
+```
+
+**主要屬性**：
 - `name`: 欄位名稱
-- `type`: 資料型別（`int`, `float`, `str`, `bool`, `datetime` 等）
-- `nullable`: 是否允許空值（`True`/`False`）
-- `logical_type`: 邏輯型別（選填，如 `email`, `phone`, `url` 等）
-- `na_values`: 自訂空值表示（選填）
+- `type`: 資料型別（`int`, `float`, `str`, `date`, `datetime`）
+- `type_attr`: 型別屬性字典
+  - `nullable`: 是否允許空值
+  - `category`: 是否為類別資料
+  - `precision`: 數值精度
+  - `format`: 日期時間格式
+  - `width`: 字串寬度
+- `logical_type`: 邏輯型別（`email`, `phone`, `url` 等）
+- `enable_stats`: 是否啟用統計
+- `is_constant`: 所有值都相同的欄位
 
-## 使用情境
+## 操作類別
 
-### 1. 資料載入時的 Schema 管理
+### Metadater
 
-Loader 內部使用 Metadater 處理 schema：
+多表格操作的類別方法：
+
+#### 建立方法
+
+- **`from_data(data, enable_stats=False)`**：從資料推斷並建立 Metadata
+- **`from_dict(config)`**：從配置字典建立 Metadata
+- **`from_metadata(metadata)`**：複製 Metadata
+
+#### 操作方法
+
+- **`diff(metadata, data)`**：比較差異
+- **`align(metadata, data, strategy=None)`**：對齊資料
+- **`get(metadata, name)`**：取得指定 Schema
+- **`add(metadata, schema)`**：新增 Schema
+- **`update(metadata, schema)`**：更新 Schema
+- **`remove(metadata, name)`**：移除 Schema
+
+### SchemaMetadater
+
+單表格操作的類別方法：
+
+#### 建立方法
+
+- **`from_data(data, enable_stats=False, base_schema=None)`**：從 DataFrame 建立 Schema
+- **`from_dict(config)`**：從配置字典建立 Schema
+- **`from_yaml(filepath)`**：從 YAML 載入 Schema
+- **`from_metadata(schema)`**：複製 Schema
+
+#### 操作方法
+
+- **`diff(schema, data)`**：比較差異
+- **`align(schema, data, strategy=None)`**：對齊資料
+- **`get(schema, name)`**：取得欄位屬性
+- **`add(schema, attribute)`**：新增欄位
+- **`update(schema, attribute)`**：更新欄位
+- **`remove(schema, name)`**：移除欄位
+
+### AttributeMetadater
+
+單欄位操作的類別方法：
+
+#### 建立方法
+
+- **`from_data(data, enable_stats=True, base_attribute=None)`**：從 Series 建立欄位屬性
+- **`from_dict(config)`**：從配置字典建立欄位屬性
+- **`from_metadata(attribute)`**：複製欄位屬性
+
+#### 操作方法
+
+- **`diff(attribute, data)`**：比較差異
+- **`align(attribute, data, strategy=None)`**：對齊資料
+- **`validate(attribute, data)`**：驗證資料
+- **`cast(attribute, data)`**：轉換資料型別
+
+## 資料抽象類別
+
+### Datasets
+
+多表格資料集抽象：
 
 ```python
-# Loader 內部流程（簡化）
-schema = Metadater.from_dict(schema_config)  # 從 YAML 載入
-data = pd.read_csv(filepath)                  # 讀取資料
-aligned_data = Metadater.align(schema, data)  # 對齊資料結構
+from petsard.metadater import Datasets
+
+datasets = Datasets.create(
+    data={'users': df},
+    metadata=metadata
+)
+
+# 基本操作
+table = datasets.get_table('users')
+is_valid, errors = datasets.validate()
+aligned_data = datasets.align()
 ```
 
-### 2. 資料結構驗證
+**主要屬性**：
+- `table_count`: 表格數量
+- `table_names`: 表格名稱列表
 
-比較期望結構與實際資料：
+**主要方法**：
+- `get_table(name)`: 取得表格
+- `get_tables()`: 取得所有表格
+- `validate()`: 驗證資料
+- `align()`: 對齊資料
+- `diff()`: 比較差異
+
+### Table
+
+單一表格抽象：
 
 ```python
-# 定義期望的 schema
-expected_schema = Metadater.from_dict(config)
+from petsard.metadater import Table
 
-# 比較實際資料
-diff = Metadater.diff(expected_schema, {'users': actual_data})
+table = Table.create(data=df, schema=schema)
 
-if diff:
-    print("發現結構差異：", diff)
+# 基本操作
+field = table.get_field('age')
+is_valid, errors = table.validate()
 ```
 
-### 3. 多資料集結構統一
+**主要屬性**：
+- `row_count`: 列數
+- `column_count`: 欄數
+- `columns`: 欄位名稱
 
-確保多個資料集具有相同結構：
+**主要方法**：
+- `get_field(name)`: 取得欄位
+- `get_fields()`: 取得所有欄位
+- `validate()`: 驗證資料
+- `align()`: 對齊資料
+
+### Field
+
+單一欄位抽象：
 
 ```python
-# 定義標準結構
-standard_schema = Metadater.from_data({'users': reference_data})
+from petsard.metadater import Field
 
-# 對齊其他資料集
-aligned_data1 = Metadater.align(standard_schema, {'users': data1})
-aligned_data2 = Metadater.align(standard_schema, {'users': data2})
+field = Field.create(data=series, attribute=attribute)
+
+# 基本資訊
+print(field.dtype, field.null_count, field.unique_count)
 ```
+
+**主要屬性**：
+- `name`: 欄位名稱
+- `dtype`: 資料型別
+- `expected_type`: 期望型別
+- `null_count`: 空值數量
+- `unique_count`: 唯一值數量
+
+**主要方法**：
+- `is_valid`: 驗證狀態
+- `get_validation_errors()`: 取得錯誤
+- `align()`: 對齊資料
+
+## Schema 推斷工具
+
+### SchemaInferencer
+
+推斷 Processor 轉換後的 Schema：
+
+```python
+from petsard.metadater import SchemaInferencer
+
+inferencer = SchemaInferencer()
+
+# 推斷 Preprocessor 輸出
+output_schema = inferencer.infer_preprocessor_output(
+    input_schema=loader_schema,
+    processor_config=preprocessor_config
+)
+
+# 推斷管線 Schema 變化
+pipeline_schemas = inferencer.infer_pipeline_schemas(
+    loader_schema=loader_schema,
+    pipeline_config=pipeline_config
+)
+```
+
+### ProcessorTransformRules
+
+定義 Processor 的轉換規則：
+
+```python
+from petsard.metadater import ProcessorTransformRules
+
+# 取得轉換規則
+rule = ProcessorTransformRules.get_rule('encoder_label')
+
+# 應用規則
+transformed_attr = ProcessorTransformRules.apply_rule(attribute, rule)
+```
+
+## 型別系統
+
+### 基本型別
+
+- **`int`**：整數
+- **`float`**：浮點數
+- **`str`**：字串
+- **`date`**：日期
+- **`datetime`**：日期時間
+
+### 邏輯型別
+
+選填的語義型別：
+
+- `email`, `phone`, `url`
+- `encoded_categorical`, `onehot_encoded`
+- `standardized`, `normalized`
+
+### 型別屬性
+
+`type_attr` 包含額外的型別資訊：
+
+- `nullable`: 是否允許空值
+- `category`: 是否為類別資料
+- `precision`: 數值精度（小數位數）
+- `format`: 日期時間格式
+- `width`: 字串寬度（前導零）
 
 ## 注意事項
 
-- **內部使用為主**：Metadater 主要供 PETsARD 內部模組使用，一般使用者透過 Loader 的 `schema` 參數即可
-- **類別方法設計**：所有方法都是類別方法，不需要實例化 Metadater
-- **自動推斷**：`from_data()` 會自動推斷欄位類型和是否可為空值
-- **對齊行為**：`align()` 會根據 schema 調整欄位順序、補充缺失欄位、轉換資料類型
-- **差異檢測**：`diff()` 檢測欄位名稱、類型、空值處理等差異
-- **YAML 配置**：詳細的 Schema YAML 配置請參閱 [Schema YAML 文檔](../../schema-yaml/)
-- **文件說明**：本段文件僅供開發團隊內部參考，不保證向後相容
+- **內部使用為主**：主要供 PETsARD 內部模組使用，一般使用者透過 Loader 即可
+- **類別方法設計**：所有方法都是類別方法，無需實例化
+- **不可變設計**：配置物件修改時返回新物件
+- **自動推斷**：`from_data()` 會自動推斷型別、空值和統計資訊
+- **統計啟用**：設定 `enable_stats=True` 啟用詳細統計

@@ -1,6 +1,9 @@
 ---
 title: "遺失值處理"
-weight: 1
+type: docs
+weight: 641
+prev: docs/petsard-yaml/preprocessor-yaml
+next: docs/petsard-yaml/preprocessor-yaml/outlier-handling
 ---
 
 處理資料中的遺失值（NA/NaN）。
@@ -116,42 +119,21 @@ Reporter:
 
 ### 1. 統計值填補（平均值/中位數/眾數）
 
-```
-訓練階段（fit）：
-  計算並儲存統計值（平均值/中位數/眾數）
-
-轉換階段（transform）：
-  使用儲存的統計值填補 NA
-
-逆轉換階段（inverse_transform）：
-  根據原始資料的遺失比例隨機插入 NA
-```
+- **訓練階段（fit）**：計算並儲存統計值（平均值/中位數/眾數）
+- **轉換階段（transform）**：使用儲存的統計值填補 NA
+- **逆轉換階段（inverse_transform）**：根據原始資料的遺失比例隨機插入 NA
 
 ### 2. 自訂值填補（Simple）
 
-```
-訓練階段（fit）：
-  記錄填補值
-
-轉換階段（transform）：
-  使用指定值填補 NA
-
-逆轉換階段（inverse_transform）：
-  根據原始資料的遺失比例隨機插入 NA
-```
+- **訓練階段（fit）**：記錄填補值
+- **轉換階段（transform）**：使用指定值填補 NA
+- **逆轉換階段（inverse_transform）**：根據原始資料的遺失比例隨機插入 NA
 
 ### 3. 刪除（Drop）
 
-```
-訓練階段（fit）：
-  不需要訓練
-
-轉換階段（transform）：
-  刪除包含 NA 的資料列
-
-逆轉換階段（inverse_transform）：
-  根據原始資料的遺失比例隨機插入 NA
-```
+- **訓練階段（fit）**：不需要訓練
+- **轉換階段（transform）**：刪除包含 NA 的資料列
+- **逆轉換階段（inverse_transform）**：根據原始資料的遺失比例隨機插入 NA
 
 ## 預設行為
 
@@ -167,14 +149,14 @@ Reporter:
 
 schema 中的 `nullable` 屬性反映了實際遺失值的存在狀況：
 
-### Loader 階段
-- 自動從資料偵測：`nullable = data.isnull().any()`
-- 若欄位有遺失值 → `nullable: true`
-- 若欄位無遺失值 → `nullable: false`
+- **Loader 階段**
+  - 自動從資料偵測：`nullable = data.isnull().any()`
+  - 若欄位有遺失值 → `nullable: true`
+  - 若欄位無遺失值 → `nullable: false`
 
-### Preprocessor 階段（有執行遺失值處理）
-- 原本 `nullable: true` 的欄位 → 處理後 → `nullable: false`
-- 原本 `nullable: false` 的欄位 → 維持 `nullable: false`
+- **Preprocessor 階段（有執行遺失值處理）**
+  - 原本 `nullable: true` 的欄位 → 處理後 → `nullable: false`
+  - 原本 `nullable: false` 的欄位 → 維持 `nullable: false`
 
 **Schema 演進範例**：
 

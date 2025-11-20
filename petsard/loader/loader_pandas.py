@@ -1,5 +1,6 @@
 import pandas as pd
 
+from petsard.exceptions import UnableToLoadError
 from petsard.loader.loader_base import LoaderBase
 
 
@@ -48,7 +49,10 @@ class LoaderPandasCsv(LoaderBase):
         try:
             return pd.read_csv(filepath, **pandas_config)
         except Exception as e:
-            raise FileNotFoundError from e
+            raise UnableToLoadError(
+                f"Failed to load CSV file: {filepath}",
+                filepath=filepath
+            ) from e
 
 
 class LoaderPandasExcel(LoaderBase):
@@ -75,7 +79,7 @@ class LoaderPandasExcel(LoaderBase):
             (pd.DataFrame)
                 Data in excel by pd.DataFrame format.
         """
-        # 檢查 openpyxl 是否已安裝
+        # Check if openpyxl is installed
         try:
             import openpyxl  # noqa: F401
         except ImportError as e:
@@ -107,4 +111,7 @@ class LoaderPandasExcel(LoaderBase):
         try:
             return pd.read_excel(filepath, **pandas_config)
         except Exception as e:
-            raise FileNotFoundError from e
+            raise UnableToLoadError(
+                f"Failed to load Excel file: {filepath}",
+                filepath=filepath
+            ) from e

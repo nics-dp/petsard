@@ -38,7 +38,7 @@ class TestConfig:
         """測試基本配置初始化"""
         config_dict = {
             "Loader": {"load_data": {"filepath": "test.csv"}},
-            "Synthesizer": {"synth_data": {"method": "sdv", "model": "GaussianCopula"}},
+            "Synthesizer": {"synth_data": {"method": "petsard-gaussian_copula", "model": "GaussianCopula"}},
         }
 
         config = Config(config_dict)
@@ -80,7 +80,7 @@ class TestConfig:
         Test flow setup"""
         config_dict = {
             "Loader": {"load_data": {"filepath": "test.csv"}},
-            "Synthesizer": {"synth_data": {"method": "sdv"}},
+            "Synthesizer": {"synth_data": {"method": "petsard-gaussian_copula"}},
         }
 
         config = Config(config_dict)
@@ -240,7 +240,7 @@ class TestConfigIntegration:
         config_dict = {
             "Loader": {"load_csv": {"filepath": "data.csv"}},
             "Preprocessor": {"preprocess": {"method": "default"}},
-            "Synthesizer": {"synthesize": {"method": "sdv", "model": "GaussianCopula"}},
+            "Synthesizer": {"synthesize": {"method": "petsard-gaussian_copula", "model": "GaussianCopula"}},
             "Evaluator": {"evaluate": {"method": "sdmetrics"}},
             "Reporter": {"report": {"method": "save_report", "granularity": "global"}},
         }

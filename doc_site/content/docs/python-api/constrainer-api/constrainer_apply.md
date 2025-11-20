@@ -19,7 +19,7 @@ def apply(
 - **df** : pd.DataFrame, required
     - Input dataframe to apply constraints to
     - Required parameter
-    
+
 - **target_rows** : int, optional
     - Target number of rows
     - Used internally by `\1`
