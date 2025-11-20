@@ -2,6 +2,20 @@
 
 <!-- version list -->
 
+## v1.10.0-rc.4 (2025-11-20)
+
+### Bug Fixes
+
+- Correct repository check in image-publish workflow
+  ([`5a97897`](https://github.com/nics-dp/petsard/commit/5a97897a045f5746d5a0c6fc49b3fc43261d9042))
+
+- Correct repository URLs in pyproject.toml
+  ([`d4a0a33`](https://github.com/nics-dp/petsard/commit/d4a0a33c414ef1557ed94421171e1c67db1fe7d7))
+
+- **ci**: Always build and publish packages on branch push
+  ([`a2dfe50`](https://github.com/nics-dp/petsard/commit/a2dfe5023c37395b7943190d3affda2532a005e5))
+
+
 ## v1.10.0-rc.3 (2025-11-20)
 
 ### Bug Fixes
