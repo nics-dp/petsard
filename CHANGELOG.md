@@ -2,6 +2,14 @@
 
 <!-- version list -->
 
+## v1.10.0-rc.5 (2025-11-20)
+
+### Bug Fixes
+
+- **ci**: Allow cleanup step to fail if package doesn't exist
+  ([`012f4f5`](https://github.com/nics-dp/petsard/commit/012f4f57d37e00942eedf06c7ff25d10b6694851))
+
+
 ## v1.10.0-rc.4 (2025-11-20)
 
 ### Bug Fixes
