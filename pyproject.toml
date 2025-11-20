@@ -1,6 +1,6 @@
 [project]
 name = "petsard"
-version = "1.9.0"  # Version managed by semantic-release
+version = "1.10.1"  # Version managed by semantic-release
 description = "Facilitates data generation algorithm and their evaluation processes"
 authors = [{ name = "matheme-justyn", email = "matheme.justyn@gmail.com" }]
 keywords = [
