@@ -13,6 +13,7 @@ The Synthesizer module generates synthetic data and supports various synthesis m
 Click the below button to run this example in Colab:
 
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/nics-tw/petsard/blob/main/demo/petsard-yaml/synthesizer-yaml/synthesizer-yaml.ipynb)
+> **Note**: If using Colab, please see the [runtime setup guide](/petsard/docs/#colab-execution-guide).
 
 ### Using Default Method
 

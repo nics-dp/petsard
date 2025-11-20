@@ -42,7 +42,7 @@ All utility evaluations share these base parameters:
 
 The `experiment_design` parameter determines how models are trained and evaluated to assess synthetic data utility.
 
-![Four Evaluation Methods](/images/four_evaluation_methods.svg)
+![Four Evaluation Methods](/images/four_evaluation_methods.png)
 
 ### Domain Transfer (Default)
 

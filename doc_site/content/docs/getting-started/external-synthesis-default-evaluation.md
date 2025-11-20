@@ -12,6 +12,7 @@ Enabling users to evaluate synthetic data from external solutions.
 Click the below button to run this example in Colab:
 
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/nics-dp/petsard/blob/main/demo/getting-started/external-synthesis-default-evaluation.ipynb)
+> **Note**: If using Colab, please see the [runtime setup guide](/petsard/docs/#colab-execution-guide).
 
 ```yaml
 Splitter:

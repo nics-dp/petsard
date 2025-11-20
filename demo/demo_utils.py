@@ -17,7 +17,11 @@ if "COLAB_GPU" in os.environ:
     demo_utils_url = (
         "https://raw.githubusercontent.com/nics-tw/petsard/main/demo/demo_utils.py"
     )
-    exec(urllib.request.urlopen(demo_utils_url).read().decode("utf-8"))
+    # Download and save to file instead of exec
+    demo_utils_content = urllib.request.urlopen(demo_utils_url).read().decode("utf-8")
+    with open("demo_utils.py", "w") as f:
+        f.write(demo_utils_content)
+    print("✅ demo_utils.py downloaded")
 
 else:
     # demo_utils.py search for local
@@ -333,14 +337,22 @@ class PETsARDSetup:
         Args:
             branch: GitHub branch name, defaults to "main" / GitHub 分支名稱，預設為 "main"
         """
-        # 確保 pip 已安裝
-        subprocess.run(
-            [sys.executable, "-m", "ensurepip"],
-            check=True,
-            capture_output=True,
-            text=True,
-        )
+        # 設定環境變數
         os.environ["PIP_DISABLE_PIP_VERSION_CHECK"] = "1"
+
+        # Colab 環境中 pip 已預先安裝，不需要 ensurepip
+        if not self.is_colab:
+            # 本地環境：確保 pip 已安裝
+            try:
+                subprocess.run(
+                    [sys.executable, "-m", "ensurepip"],
+                    check=True,
+                    capture_output=True,
+                    text=True,
+                )
+            except subprocess.CalledProcessError:
+                # 如果 ensurepip 失敗，假設 pip 已經安裝
+                pass
 
         if self.is_colab:
             # Colab: 從 GitHub 安裝

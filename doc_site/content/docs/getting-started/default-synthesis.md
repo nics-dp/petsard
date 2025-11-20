@@ -12,6 +12,7 @@ Current default synthesis uses built-in Gaussian Copula implementation.
 Click the below button to run this example in Colab:
 
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/nics-dp/petsard/blob/main/demo/getting-started/default-synthesis.ipynb)
+> **Note**: If using Colab, please see the [runtime setup guide](/petsard/docs/#colab-execution-guide).
 
 ```yaml
 Loader:
