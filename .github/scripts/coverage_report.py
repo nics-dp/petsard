@@ -4,9 +4,18 @@ Coverage Report Generator
 生成簡單易懂的測試覆蓋率報告
 """
 
+import logging
 import os
 import sys
 import xml.etree.ElementTree as ET
+
+# 設置 logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(levelname)s: %(message)s',
+    stream=sys.stderr
+)
+logger = logging.getLogger(__name__)
 
 
 def parse_coverage_xml(xml_file):
@@ -47,8 +56,11 @@ def parse_coverage_xml(xml_file):
             )
 
         return {"overall_coverage": overall_coverage, "packages": packages}
+    except ET.ParseError as e:
+        logger.error(f"Failed to parse coverage.xml: {e}")
+        return None
     except Exception as e:
-        print(f"Error parsing coverage.xml: {e}")
+        logger.error(f"Unexpected error parsing coverage.xml: {e}", exc_info=True)
         return None
 
 
@@ -133,12 +145,12 @@ def generate_markdown_report(coverage_data):
 def main():
     """主函數"""
     if len(sys.argv) != 2:
-        print("Usage: python coverage_report.py <coverage.xml>")
+        logger.error("Usage: python coverage_report.py <coverage.xml>")
         sys.exit(1)
 
     xml_file = sys.argv[1]
     if not os.path.exists(xml_file):
-        print(f"Error: {xml_file} not found")
+        logger.error(f"Coverage file not found: {xml_file}")
         sys.exit(1)
 
     coverage_data = parse_coverage_xml(xml_file)

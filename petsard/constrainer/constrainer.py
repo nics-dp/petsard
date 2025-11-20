@@ -1,15 +1,14 @@
+import logging
 import warnings
 
 import pandas as pd
 
 from petsard.constrainer.constrainer_base import BaseConstrainer
-from petsard.constrainer.field_combination_constrainer import (
-    FieldCombinationConstrainer,
-)
+from petsard.constrainer.field_combination_constrainer import \
+    FieldCombinationConstrainer
 from petsard.constrainer.field_constrainer import FieldConstrainer
-from petsard.constrainer.field_proportions_constrainer import (
-    FieldProportionsConstrainer,
-)
+from petsard.constrainer.field_proportions_constrainer import \
+    FieldProportionsConstrainer
 from petsard.constrainer.nan_group_constrainer import NaNGroupConstrainer
 
 
@@ -51,6 +50,7 @@ class Constrainer:
         self.config = config
         self.metadata = metadata
         self._constrainers = {}
+        self._logger = logging.getLogger(f"PETsARD.{self.__class__.__name__}")
         self._setup_constrainers()
 
         self.resample_trails = None
@@ -233,7 +233,7 @@ class Constrainer:
                 remain_rows = target_rows - result_df.shape[0]
 
             if verbose_step > 0 and self.resample_trails % verbose_step == 0:
-                print(
+                self._logger.info(
                     f"Trial {self.resample_trails}: Got {result_df.shape[0] if result_df is not None else 0} rows, need {remain_rows} more"
                 )
 

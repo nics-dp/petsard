@@ -38,7 +38,8 @@ Execution Errors (EXEC_*)
 ├── EXEC_001 (UnableToSynthesizeError)
 ├── EXEC_002 (UnableToEvaluateError)
 ├── EXEC_003 (UnsupportedMethodError)
-└── EXEC_004 (CustomMethodEvaluatorError)
+├── EXEC_004 (CustomMethodEvaluatorError)
+└── EXEC_005 (MissingDependencyError)
 
 Status Management Errors (STATUS_*)
 ├── STATUS_001 (SnapshotError)
@@ -144,6 +145,22 @@ Status Management Errors (STATUS_*)
 
 **Resolution**: Check custom evaluator implementation and confirm correct base class inheritance
 
+### EXEC_005
+**Name**: MissingDependencyError
+
+**Common Causes**: Method requires optional dependency package that is not installed
+
+**Resolution**: Install the required package (e.g., `pip install sdv`)
+
+**Example**:
+```python
+try:
+    synthesizer = Synthesizer(method="sdv-single_table-gaussiancopula")
+except MissingDependencyError as e:
+    print(f"Missing dependency: {e}")
+    print(f"Install command: {e.context.get('install_command')}")
+```
+
 ## Status Management Errors (STATUS_*)
 
 ### STATUS_001
@@ -160,9 +177,139 @@ Status Management Errors (STATUS_*)
 
 **Resolution**: Check timing record format and ensure START/END records are complete
 
+## Best Practices
+
+### Developer Guidelines
+
+When developing PETsARD or extensions, follow these principles:
+
+#### 1. Use Appropriate Custom Errors
+
+**❌ Wrong Approach**:
+```python
+except Exception as e:
+    print(f"Error: {e}")
+    return None
+```
+
+**✅ Correct Approach**:
+```python
+from petsard.exceptions import DataProcessingError
+import logging
+
+logger = logging.getLogger(__name__)
+
+try:
+    # Process data
+    data = process_data()
+except ValueError as e:
+    logger.error(f"Value conversion failed: {e}")
+    raise DataProcessingError(
+        message="Unable to process data",
+        error_code="DATA_002",
+        field_name=field_name,
+        suggestion="Please check if data format is correct"
+    ) from e
+```
+
+#### 2. Use Logging Instead of Print
+
+**❌ Wrong Approach**:
+```python
+print(f"Processing column: {col}")
+print(f"Error occurred: {e}")
+```
+
+**✅ Correct Approach**:
+```python
+import logging
+
+logger = logging.getLogger(__name__)
+
+logger.debug(f"Processing column: {col}")
+logger.error(f"Error occurred: {e}")
+logger.warning(f"Skipping invalid column: {col}")
+```
+
+#### 3. Catch Specific Exception Types
+
+**❌ Wrong Approach**:
+```python
+try:
+    result = risky_operation()
+except Exception as e:  # Too broad
+    handle_error(e)
+```
+
+**✅ Correct Approach**:
+```python
+try:
+    result = risky_operation()
+except (ValueError, KeyError, TypeError) as e:  # Specific types
+    logger.warning(f"Operation failed: {e}")
+    handle_error(e)
+except FileNotFoundError as e:  # File-related
+    raise UnableToLoadError(
+        message="Unable to load file",
+        filepath=filepath
+    ) from e
+```
+
+#### 4. Provide Useful Error Context
+
+**❌ Wrong Approach**:
+```python
+raise ConfigError("Invalid config")
+```
+
+**✅ Correct Approach**:
+```python
+raise ConfigError(
+    message="Invalid field value in configuration",
+    config_section="synthesizer",
+    invalid_field="sample_size",
+    provided_value=-100,
+    valid_values=["positive integer"],
+    suggestion="sample_size must be a positive integer"
+)
+```
+
+#### 5. Chain from Original Exception
+
+Use `from e` to preserve original error stack:
+
+```python
+try:
+    data = pd.read_csv(filepath)
+except FileNotFoundError as e:
+    raise UnableToLoadError(
+        message=f"File not found: {filepath}",
+        filepath=filepath
+    ) from e  # Preserve original error information
+```
+
+### Logging Level Guidelines
+
+- **DEBUG**: Detailed diagnostic information (variable values, execution flow)
+- **INFO**: General informational messages (operation completion, stage progress)
+- **WARNING**: Warning messages (recoverable errors, degraded processing)
+- **ERROR**: Error messages (operation failure but doesn't affect overall system)
+- **CRITICAL**: Critical errors (system cannot continue)
+
+### Error Message Writing Principles
+
+1. **Clearly describe the problem**: Explain what error occurred
+2. **Provide context**: Include relevant values, file paths, field names
+3. **Suggest solutions**: Tell users how to fix the issue
+4. **Use error codes**: Make it easy to find documentation and track issues
+
 ## Debugging and Help
 
 If encountering errors:
-1. Check error code against this guide for common causes and resolutions
-2. Refer to configuration guide to enable DEBUG logging, examine execution flow and TIMING records
-3. If issue persists, open a GitHub issue with error code, message, and log excerpts
+1. **Check error code**: Review this guide for common causes and resolutions
+2. **Examine logs**: Enable DEBUG logging to inspect execution flow and TIMING records
+3. **Seek help**: If issue persists, open an issue on [GitHub](https://github.com/nics-tw/PETsARD/issues) with:
+   - Error code and full error message
+   - Relevant configuration files or code snippets
+   - Log excerpts (DEBUG level)
+   - Python version and PETsARD version
