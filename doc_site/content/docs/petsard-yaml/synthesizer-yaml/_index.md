@@ -1,6 +1,9 @@
 ---
 title: "Synthesizer YAML"
-weight: 140
+type: docs
+weight: 650
+prev: docs/petsard-yaml/preprocessor-yaml
+next: docs/petsard-yaml/postprocessor-yaml
 ---
 
 The Synthesizer module generates synthetic data and supports various synthesis methods.

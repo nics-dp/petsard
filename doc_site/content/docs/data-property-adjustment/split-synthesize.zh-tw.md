@@ -1,6 +1,9 @@
 ---
 title: 拆分合成
-weight: 1
+type: docs
+weight: 510
+prev: docs/data-property-adjustment
+next: docs/data-property-adjustment/uniform-encoding
 ---
 
 高異質性資料是指在同一資料集中包含多種不同性質、特性差異顯著的資料子群。這些子群在統計分布、變數關係、資料密度等方面呈現明顯差異，使得單一合成器難以同時捕捉所有子群的特性。拆分合成（Split-Synthesize-Merge）是一種利用領域知識，將異質性資料預先分割為較為同質的子集，分別進行合成後再整合的策略。

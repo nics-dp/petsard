@@ -1,6 +1,9 @@
 ---
 title: "Data Utility Assessment"
-weight: 4
+type: docs
+weight: 694
+prev: docs/petsard-yaml/evaluator-yaml/fidelity
+next: docs/petsard-yaml/evaluator-yaml/custom_method
 ---
 
 Measure the performance of synthetic data in machine learning tasks to determine if it can effectively replace original data.

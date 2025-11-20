@@ -1,6 +1,9 @@
 ---
 title: 評測判讀：用途決定評測
-weight: 4
+type: docs
+weight: 400
+prev: docs/data-preparation
+next: docs/data-property-adjustment
 ---
 
 在完成資料準備後，如何評測合成資料的品質是確保其符合應用需求的關鍵步驟。評測策略應該根據合成資料的使用目的來決定，不同的應用場景需要不同的評測重點與標準。本章節將協助您根據資料用途，選擇適當的評測方法與參數設定。

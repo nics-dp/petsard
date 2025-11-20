@@ -1,6 +1,9 @@
 ---
 title: "Synthesizer YAML"
-weight: 140
+type: docs
+weight: 650
+prev: docs/petsard-yaml/preprocessor-yaml
+next: docs/petsard-yaml/postprocessor-yaml
 ---
 
 Synthesizer 模組負責生成合成資料，支援多種合成方法。

@@ -1,10 +1,10 @@
 ---
 title: 錯誤處理
 type: docs
-weight: 10
+weight: 800
+prev: docs/schema-yaml
+next: docs/glossary
 ---
-
-# PETsARD 錯誤處理指南
 
 PETsARD 使用結構化的錯誤代碼系統。所有錯誤提供錯誤代碼、上下文和解決建議。
 

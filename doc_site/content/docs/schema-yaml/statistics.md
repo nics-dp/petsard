@@ -1,6 +1,9 @@
 ---
 title: "Statistics"
-weight: 6
+type: docs
+weight: 760
+prev: docs/schema-yaml/logical-types
+next: docs/schema-yaml
 ---
 
 When `enable_stats: true` is set, the system automatically calculates and records field statistics for data quality analysis, synthetic data validation, and feature understanding. For large datasets (over 1 million rows), calculations can be time-consuming; use with caution.

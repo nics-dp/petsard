@@ -1,6 +1,9 @@
 ---
 title: "Outlier Handling"
-weight: 2
+type: docs
+weight: 642
+prev: docs/petsard-yaml/preprocessor-yaml/missing-handling
+next: docs/petsard-yaml/preprocessor-yaml/encoding
 ---
 
 Identifies and handles outliers in data.

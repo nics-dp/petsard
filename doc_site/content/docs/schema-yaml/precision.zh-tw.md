@@ -1,6 +1,9 @@
 ---
 title: "數值精度"
-weight: 4
+type: docs
+weight: 740
+prev: docs/schema-yaml/data-types
+next: docs/schema-yaml/logical-types
 ---
 
 PETsARD 會自動追蹤並保持數值欄位的精度（小數位數），在 Loader、Preprocessor、Postprocessor 階段自動套用四捨五入，確保合成資料與原始資料的精度一致。精度僅在輸出時套用，不影響模型訓練。

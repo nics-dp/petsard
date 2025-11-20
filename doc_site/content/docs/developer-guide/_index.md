@@ -1,19 +1,14 @@
 ---
 title: Developer Guide
 type: docs
-weight: 1400
-prev: docs/api
-next: docs/experimental-new-format
-sidebar:
-  open: false
+weight: 1100
+prev: docs/python-api
+next: docs/
 ---
 
 The PETsARD Developer Guide provides reference information for project development.
 
-## Data Loading
+## Related Topics
 
-Benchmark datasets are stored in AWS S3. The system automatically reads the list of available datasets from the configuration file.
-
-## Testing
-
-The test coverage document explains the project's test organization structure and detailed test cases.
+- [Benchmark Datasets](benchmark-datasets) - Available benchmark datasets and loading methods
+- [Test Coverage](test-coverage) - Test organization structure and detailed test cases

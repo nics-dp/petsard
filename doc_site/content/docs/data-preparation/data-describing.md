@@ -1,7 +1,7 @@
 ---
 title: Data Describing
 type: docs
-weight: 1
+weight: 310
 prev: docs/data-preparation
 next: docs/data-preparation/multi-table-relationships
 ---

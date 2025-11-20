@@ -1,6 +1,9 @@
 ---
 title: "Loader YAML"
-weight: 110
+type: docs
+weight: 620
+prev: docs/petsard-yaml/executor-yaml
+next: docs/petsard-yaml/splitter-yaml
 ---
 
 Loader 模組的 YAML 設定檔案格式。

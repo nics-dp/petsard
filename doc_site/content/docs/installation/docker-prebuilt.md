@@ -1,7 +1,7 @@
 ---
 title: Docker Prebuilt
 type: docs
-weight: 2
+weight: 210
 prev: docs/installation
 next: docs/installation/pypi-install
 ---

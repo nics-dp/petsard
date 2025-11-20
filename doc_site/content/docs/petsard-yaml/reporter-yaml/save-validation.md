@@ -1,6 +1,9 @@
 ---
 title: "Save Validation Results"
-weight: 4
+type: docs
+weight: 704
+prev: docs/petsard-yaml/reporter-yaml/save-schema
+next: docs/petsard-yaml/reporter-yaml/save-timing
 ---
 
 Use the `save_validation` method to export Constrainer validation results as CSV files, including summary statistics, violation statistics, and detailed violation records.

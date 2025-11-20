@@ -1,7 +1,7 @@
 ---
 title: 深度學習支援檢測
 type: docs
-weight: 6
+weight: 250
 prev: docs/installation/package-predownload
 next: docs/installation
 ---

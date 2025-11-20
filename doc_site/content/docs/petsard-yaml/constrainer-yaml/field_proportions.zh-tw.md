@@ -1,6 +1,9 @@
 ---
 title: "欄位比例"
-weight: 4
+type: docs
+weight: 674
+prev: docs/petsard-yaml/constrainer-yaml/field_combinations
+next: docs/petsard-yaml/constrainer-yaml
 ---
 
 在約束過濾過程中維護原始資料的分布比例。

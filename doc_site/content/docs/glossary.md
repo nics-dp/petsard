@@ -1,6 +1,9 @@
 ---
 title: "Glossary"
-weight: 999
+type: docs
+weight: 900
+prev: docs/error-handling
+next: docs/python-api
 ---
 
 Technical terms and definitions used in PETsARD documentation (alphabetically ordered).

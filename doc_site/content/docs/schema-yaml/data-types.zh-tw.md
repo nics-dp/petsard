@@ -1,6 +1,9 @@
 ---
 title: "資料型別"
-weight: 3
+type: docs
+weight: 730
+prev: docs/schema-yaml/attribute-parameters
+next: docs/schema-yaml/precision
 ---
 
 PETsARD 使用簡化的型別系統。

@@ -1,6 +1,9 @@
 ---
 title: "NaN Handling"
-weight: 1
+type: docs
+weight: 671
+prev: docs/petsard-yaml/constrainer-yaml
+next: docs/petsard-yaml/constrainer-yaml/field_constraints
 ---
 
 Define how to handle missing values when specific fields contain NaN.

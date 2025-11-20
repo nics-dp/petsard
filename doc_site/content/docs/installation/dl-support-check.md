@@ -1,7 +1,7 @@
 ---
 title: Deep Learning Support Check
 type: docs
-weight: 6
+weight: 250
 prev: docs/installation/package-predownload
 next: docs/installation
 ---

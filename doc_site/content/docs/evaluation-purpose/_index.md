@@ -1,6 +1,9 @@
 ---
 title: "Evaluation Interpretation: Purpose-Driven Assessment"
-weight: 4
+type: docs
+weight: 400
+prev: docs/data-preparation
+next: docs/data-property-adjustment
 ---
 
 After completing data preparation, evaluating the quality of synthetic data is a critical step to ensure it meets application requirements. Evaluation strategies should be determined based on the intended use of synthetic data, as different application scenarios require different evaluation focuses and standards. This chapter will help you select appropriate evaluation methods and parameter settings based on data usage.

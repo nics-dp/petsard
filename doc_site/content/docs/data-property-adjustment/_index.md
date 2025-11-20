@@ -1,9 +1,9 @@
 ---
 title: "Iterative Tuning: Data Property Adjustment"
 type: docs
-weight: 5
-prev: docs/best-practices
-next: docs/api
+weight: 500
+prev: docs/evaluation-purpose
+next: docs/petsard-yaml
 ---
 
 ## Overview
@@ -70,7 +70,7 @@ For categorical variables, use Uniform Encoding method to map discrete category 
 - Improve synthetic data fidelity (average improvement of 15-40%)
 - Reduce invalid or unreasonable synthetic samples
 
-**Detailed Explanation**: [Categorical Data: Uniform Encoding](categorical)
+**Detailed Explanation**: [Categorical Data: Uniform Encoding](uniform-encoding)
 
 ### 3. Long-Tailed Distribution: Logarithmic Transformation
 
@@ -106,7 +106,7 @@ For data containing multiple time points, use Time Anchoring method to transform
 - Improve synthesizer's learning efficiency and stability
 - Ensure business logic consistency
 
-**Detailed Explanation**: [Multi-Timestamp Data: Time Anchoring Scaling](multi-timestamp)
+**Detailed Explanation**: [Multi-Timestamp Data: Time Anchoring Scaling](time-anchoring)
 
 ## Selecting Appropriate Adjustment Methods
 

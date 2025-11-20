@@ -1,6 +1,9 @@
 ---
 title: Split-Synthesize-Merge
-weight: 1
+type: docs
+weight: 510
+prev: docs/data-property-adjustment
+next: docs/data-property-adjustment/uniform-encoding
 ---
 
 High heterogeneity data refers to datasets containing multiple subgroups with different characteristics and significant differences within the same dataset. These subgroups exhibit obvious differences in statistical distribution, variable relationships, and data density, making it difficult for a single synthesizer to simultaneously capture the characteristics of all subgroups. Split-Synthesize-Merge is a strategy that leverages domain knowledge to pre-split heterogeneous data into more homogeneous subsets, synthesize them separately, and then integrate the results.

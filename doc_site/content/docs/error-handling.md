@@ -1,10 +1,10 @@
 ---
 title: Error Handling
 type: docs
-weight: 10
+weight: 800
+prev: docs/schema-yaml
+next: docs/glossary
 ---
-
-# PETsARD Error Handling Guide
 
 PETsARD uses a structured error code system. All errors provide error codes, context, and resolution suggestions.
 

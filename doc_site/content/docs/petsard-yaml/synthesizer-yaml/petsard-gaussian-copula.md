@@ -1,6 +1,9 @@
 ---
 title: "PETsARD Gaussian Copula"
-weight: 1
+type: docs
+weight: 651
+prev: docs/petsard-yaml/synthesizer-yaml
+next: docs/petsard-yaml/synthesizer-yaml/custom-data
 math: true
 ---
 

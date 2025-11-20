@@ -1,6 +1,7 @@
 ---
 title: "Processor API"
-weight: 330
+type: docs
+weight: 1080
 ---
 
 Data processing module supporting both preprocessing and postprocessing operations.

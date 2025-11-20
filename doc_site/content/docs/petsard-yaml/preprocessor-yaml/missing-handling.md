@@ -1,6 +1,9 @@
 ---
 title: "Missing Value Handling"
-weight: 1
+type: docs
+weight: 641
+prev: docs/petsard-yaml/preprocessor-yaml
+next: docs/petsard-yaml/preprocessor-yaml/outlier-handling
 ---
 
 Handles missing values (NA/NaN) in data.

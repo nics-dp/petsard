@@ -1,7 +1,9 @@
 ---
 title: 以預設參數做資料合成
 type: docs
-weight: 7
+weight: 110
+prev: docs/getting-started
+next: docs/getting-started/default-synthesis-default-evaluation
 ---
 
 產生隱私強化合成資料的最簡單方式。

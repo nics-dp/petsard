@@ -1,6 +1,9 @@
 ---
 title: "自訂資料"
-weight: 122
+type: docs
+weight: 631
+prev: docs/petsard-yaml/splitter-yaml
+next: docs/petsard-yaml/splitter-yaml
 ---
 
 要使用來自外部來源的預分割資料，請使用 `custom_data` 方法。

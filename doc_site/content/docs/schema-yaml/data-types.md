@@ -1,6 +1,9 @@
 ---
 title: "Data Types"
-weight: 3
+type: docs
+weight: 730
+prev: docs/schema-yaml/attribute-parameters
+next: docs/schema-yaml/precision
 ---
 
 PETsARD uses a simplified type system.

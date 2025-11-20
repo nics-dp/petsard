@@ -1,9 +1,9 @@
 ---
 title: "Data Preparation: Data Governance Check"
 type: docs
-weight: 3
-prev: docs/getting-started
-next: docs/best-practices
+weight: 300
+prev: docs/installation
+next: docs/evaluation-purpose
 ---
 
 Choose appropriate preparation methods based on data structure and business requirements. We recommend starting with data profiling to understand data quality and characteristics before deciding on multi-table integration or constraint definitions.

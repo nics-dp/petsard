@@ -1,7 +1,9 @@
 ---
 title: Data Synthesis with Default Parameters
 type: docs
-weight: 7
+weight: 110
+prev: docs/getting-started
+next: docs/getting-started/default-synthesis-default-evaluation
 ---
 
 The simplest way to generate privacy-enhanced synthetic data.

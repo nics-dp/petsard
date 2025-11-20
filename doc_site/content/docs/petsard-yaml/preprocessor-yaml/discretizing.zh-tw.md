@@ -1,6 +1,9 @@
 ---
 title: "離散化"
-weight: 5
+type: docs
+weight: 645
+prev: docs/petsard-yaml/preprocessor-yaml/scaling
+next: docs/petsard-yaml/preprocessor-yaml
 ---
 
 將連續數值資料轉換為離散的類別或區間，與編碼（encoder）互斥使用。

@@ -1,6 +1,9 @@
 ---
 title: "欄位屬性參數"
-weight: 2
+type: docs
+weight: 720
+prev: docs/schema-yaml/architecture
+next: docs/schema-yaml/data-types
 ---
 
 欄位屬性（Attribute）的參數參考手冊。

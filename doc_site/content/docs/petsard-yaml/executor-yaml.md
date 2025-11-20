@@ -1,6 +1,9 @@
 ---
 title: "Executor YAML"
-weight: 50
+type: docs
+weight: 610
+prev: docs/petsard-yaml
+next: docs/petsard-yaml/loader-yaml
 ---
 
 YAML configuration file format for the Executor module, responsible for coordinating the entire PETsARD workflow execution.

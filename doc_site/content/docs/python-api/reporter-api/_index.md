@@ -1,6 +1,7 @@
 ---
 title: "Reporter API"
-weight: 360
+type: docs
+weight: 1130
 ---
 
 Report generation module that supports multiple report formats for output and file storage.

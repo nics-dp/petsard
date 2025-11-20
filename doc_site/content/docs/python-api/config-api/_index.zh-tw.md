@@ -1,6 +1,7 @@
 ---
 title: "Config API"
-weight: 60
+type: docs
+weight: 1020
 ---
 
 Config 是 PETsARD 的內部配置管理類別，負責解析配置字典並建立模組執行序列。

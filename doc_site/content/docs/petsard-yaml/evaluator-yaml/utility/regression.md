@@ -1,6 +1,9 @@
 ---
 title: "Regression Task"
+type: docs
 weight: 2
+prev: docs/petsard-yaml/evaluator-yaml/utility/classification
+next: docs/petsard-yaml/evaluator-yaml/utility/clustering
 ---
 
 Evaluate synthetic data utility for regression problems.

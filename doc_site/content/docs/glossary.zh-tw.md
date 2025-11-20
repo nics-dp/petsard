@@ -1,6 +1,9 @@
 ---
 title: "名詞定義"
-weight: 999
+type: docs
+weight: 900
+prev: docs/error-handling
+next: docs/python-api
 ---
 
 PETsARD 文件中的專有名詞與術語說明（按注音符號排序）。

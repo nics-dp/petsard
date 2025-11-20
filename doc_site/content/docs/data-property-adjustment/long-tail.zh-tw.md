@@ -1,6 +1,9 @@
 ---
 title: 對數轉換
-weight: 3
+type: docs
+weight: 530
+prev: docs/data-property-adjustment/uniform-encoding
+next: docs/data-property-adjustment/time-anchoring
 math: true
 ---
 

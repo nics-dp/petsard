@@ -1,6 +1,9 @@
 ---
 title: "Classification Task"
+type: docs
 weight: 1
+prev: docs/petsard-yaml/evaluator-yaml/utility
+next: docs/petsard-yaml/evaluator-yaml/utility/regression
 ---
 
 Evaluate synthetic data utility for classification problems.

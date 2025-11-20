@@ -1,6 +1,9 @@
 ---
 title: Protection Parameter Configuration
-weight: 1
+type: docs
+weight: 410
+prev: docs/evaluation-purpose
+next: docs/evaluation-purpose/fidelity-or-utility
 ---
 
 Privacy protection is the primary key to synthetic data quality assessment. Regardless of the intended use of synthetic data (data release or specific task modeling), it must ensure that it does not leak personally identifiable information from the original data. Before conducting fidelity or utility evaluations, privacy protection must first be confirmed to meet acceptable standards.

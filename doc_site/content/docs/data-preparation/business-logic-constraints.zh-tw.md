@@ -1,9 +1,9 @@
 ---
 title: 商業邏輯約束資料
 type: docs
-weight: 3
+weight: 330
 prev: docs/data-preparation/multi-table-relationships
-next: docs/best-practices
+next: docs/data-preparation
 ---
 
 適用於**需要確保業務規則**的情境。

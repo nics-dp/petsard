@@ -1,6 +1,9 @@
 ---
 title: "Data Validity Diagnosis"
-weight: 1
+type: docs
+weight: 691
+prev: docs/petsard-yaml/evaluator-yaml
+next: docs/petsard-yaml/evaluator-yaml/privacy
 ---
 
 Check whether synthetic data accurately reflects the basic characteristics and structure of the original data.

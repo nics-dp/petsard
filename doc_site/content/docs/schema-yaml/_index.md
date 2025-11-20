@@ -1,6 +1,9 @@
 ---
 title: "Schema YAML"
-weight: 200
+type: docs
+weight: 700
+prev: docs/petsard-yaml
+next: docs/error-handling
 ---
 
 YAML configuration format for data structure definition.

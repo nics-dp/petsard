@@ -1,7 +1,7 @@
 ---
 title: Multi-Table Relationships
 type: docs
-weight: 2
+weight: 320
 prev: docs/data-preparation/data-describing
 next: docs/data-preparation/business-logic-constraints
 ---

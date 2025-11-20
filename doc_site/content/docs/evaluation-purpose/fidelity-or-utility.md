@@ -1,6 +1,9 @@
 ---
 title: Fidelity or Utility
-weight: 2
+type: docs
+weight: 420
+prev: docs/evaluation-purpose/privacy-risk-estimation
+next: docs/evaluation-purpose/experiment-design-selection
 ---
 
 After confirming that privacy protection meets standards, the next step is to determine the evaluation focus based on the intended use of synthetic data. Different application scenarios have different quality requirements for synthetic data: when synthetic data will be publicly released or shared with multiple unspecified recipients, high fidelity should be pursued to maintain data versatility; while when synthetic data is used for specific machine learning tasks (such as classification, regression, clustering), high utility should be pursued to ensure task performance.

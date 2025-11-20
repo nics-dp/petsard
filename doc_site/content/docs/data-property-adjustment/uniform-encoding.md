@@ -1,6 +1,9 @@
 ---
 title: Uniform Encoding
-weight: 2
+type: docs
+weight: 520
+prev: docs/data-property-adjustment/split-synthesize
+next: docs/data-property-adjustment/long-tail
 ---
 
 Categorical variables are variables that can be divided into different categories or groups, where values represent some classification rather than measured numbers. These values are typically discrete, non-numerical labels, such as gender (male, female), blood type (A, B, AB, O), city names, or education level. Categorical variables can be nominal scale (unordered categories, such as colors) or ordinal scale (with natural ordering, such as education level).

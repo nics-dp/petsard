@@ -1,6 +1,7 @@
 ---
 title: "Processor API"
-weight: 330
+type: docs
+weight: 1080
 ---
 
 資料處理模組，支援前處理（preprocessing）和後處理（postprocessing）功能。

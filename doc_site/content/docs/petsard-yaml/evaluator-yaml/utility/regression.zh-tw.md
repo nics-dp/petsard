@@ -1,6 +1,9 @@
 ---
 title: "迴歸任務"
+type: docs
 weight: 2
+prev: docs/petsard-yaml/evaluator-yaml/utility/classification
+next: docs/petsard-yaml/evaluator-yaml/utility/clustering
 ---
 
 評估合成資料在迴歸問題上的實用性。

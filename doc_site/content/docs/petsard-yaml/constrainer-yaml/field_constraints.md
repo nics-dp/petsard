@@ -1,6 +1,9 @@
 ---
 title: "Field Constraints"
-weight: 2
+type: docs
+weight: 672
+prev: docs/petsard-yaml/constrainer-yaml/nan_groups
+next: docs/petsard-yaml/constrainer-yaml/field_combinations
 ---
 
 Define value domain constraints for individual fields using string expressions.

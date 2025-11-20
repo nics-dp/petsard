@@ -1,6 +1,7 @@
 ---
 title: "Config API"
-weight: 32
+type: docs
+weight: 1020
 ---
 
 Config is PETsARD's internal configuration management class, responsible for parsing configuration dictionaries and building module execution sequences.

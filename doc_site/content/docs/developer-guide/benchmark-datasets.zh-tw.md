@@ -1,8 +1,9 @@
 ---
 title: 基準資料集
 type: docs
-weight: 82
+weight: 1110
 prev: docs/developer-guide
+next: docs/developer-guide/test-coverage
 ---
 
 ## 儲存位置

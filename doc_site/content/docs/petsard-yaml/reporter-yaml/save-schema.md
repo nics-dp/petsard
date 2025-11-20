@@ -1,6 +1,9 @@
 ---
 title: "Save Schema"
-weight: 3
+type: docs
+weight: 703
+prev: docs/petsard-yaml/reporter-yaml/save-report
+next: docs/petsard-yaml/reporter-yaml/save-validation
 ---
 
 Use the `save_schema` method to export schema information from specified source modules to CSV (default) or YAML files.

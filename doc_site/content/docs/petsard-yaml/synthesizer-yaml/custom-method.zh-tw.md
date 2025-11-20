@@ -1,6 +1,9 @@
 ---
 title: "自訂合成方法"
-weight: 3
+type: docs
+weight: 653
+prev: docs/petsard-yaml/synthesizer-yaml/custom-data
+next: docs/petsard-yaml/synthesizer-yaml/custom-method
 ---
 
 要建立自己的合成器，需要實作一個含有三個必要方法的 Python 類別，並設定 YAML 檔案來使用它。

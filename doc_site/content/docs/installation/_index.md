@@ -1,9 +1,9 @@
 ---
 title: "Installation: Environment Check"
 type: docs
-weight: 2
-prev: docs
-next: docs/getting-started
+weight: 200
+prev: docs/getting-started
+next: docs/data-preparation
 ---
 
 Choose the appropriate installation method based on network connectivity and Docker support. Docker Prebuilt is recommended for consistent environments and simplified deployment. If deep learning features are needed, verify CUDA support.

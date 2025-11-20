@@ -1,6 +1,9 @@
 ---
 title: "PETsARD YAML"
-weight: 100
+type: docs
+weight: 600
+prev: docs/data-property-adjustment
+next: docs/schema-yaml
 ---
 
 ## Why Does PETsARD Use YAML?

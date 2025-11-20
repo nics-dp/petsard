@@ -1,6 +1,9 @@
 ---
 title: "Save Data"
-weight: 171
+type: docs
+weight: 701
+prev: docs/petsard-yaml/reporter-yaml
+next: docs/petsard-yaml/reporter-yaml/save-report
 ---
 
 Use the `save_data` method to save synthetic data or outputs from other modules as CSV files.

@@ -1,6 +1,9 @@
 ---
 title: "Attribute Parameters"
-weight: 2
+type: docs
+weight: 720
+prev: docs/schema-yaml/architecture
+next: docs/schema-yaml/data-types
 ---
 
 Parameter reference manual for Attribute (field properties).

@@ -1,6 +1,9 @@
 ---
 title: "儲存驗證結果"
-weight: 4
+type: docs
+weight: 704
+prev: docs/petsard-yaml/reporter-yaml/save-schema
+next: docs/petsard-yaml/reporter-yaml/save-timing
 ---
 
 使用 `save_validation` 方法將 Constrainer 的驗證結果匯出為 CSV 檔案，包含摘要統計、違規統計及詳細違規記錄。

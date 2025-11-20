@@ -1,6 +1,9 @@
 ---
 title: "欄位約束"
-weight: 2
+type: docs
+weight: 672
+prev: docs/petsard-yaml/constrainer-yaml/nan_groups
+next: docs/petsard-yaml/constrainer-yaml/field_combinations
 ---
 
 設定單一欄位的值域限制，使用字串表達式定義約束條件。

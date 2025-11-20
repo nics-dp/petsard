@@ -1,6 +1,9 @@
 ---
 title: "benchmark://"
-weight: 112
+type: docs
+weight: 621
+prev: docs/petsard-yaml/loader-yaml
+next: docs/petsard-yaml/loader-yaml
 ---
 
 Loader 支援使用 `benchmark://` 協議自動下載並載入基準資料集。

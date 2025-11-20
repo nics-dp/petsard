@@ -1,9 +1,9 @@
 ---
 title: 資料準備：資料治理檢查
 type: docs
-weight: 3
-prev: docs/getting-started
-next: docs/best-practices
+weight: 300
+prev: docs/installation
+next: docs/evaluation-purpose
 ---
 
 ## 資料治理檢查的重要性

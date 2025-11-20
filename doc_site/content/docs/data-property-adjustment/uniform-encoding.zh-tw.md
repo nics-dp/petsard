@@ -1,6 +1,9 @@
 ---
 title: 均勻編碼
-weight: 2
+type: docs
+weight: 520
+prev: docs/data-property-adjustment/split-synthesize
+next: docs/data-property-adjustment/long-tail
 ---
 
 類別變數（Categorical Variable）是指那些可分為不同類別或群組的變數，其值代表某種分類而非測量數值。這些值通常是離散的、非數值性質的標籤，如性別（男、女）、血型（A、B、AB、O）、城市名稱或教育程度等。類別變數可以是名義尺度（無序的類別，如顏色）或順序尺度（具有自然排序，如教育程度）。

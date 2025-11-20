@@ -1,6 +1,9 @@
 ---
 title: 保護力參數設定
-weight: 1
+type: docs
+weight: 410
+prev: docs/evaluation-purpose
+next: docs/evaluation-purpose/fidelity-or-utility
 ---
 
 隱私保護力是合成資料品質評估的首要關鍵。無論合成資料的用途為何（資料釋出或特定任務建模），都必須確保其不會洩漏原始資料中的個人隱私資訊。在進行保真度或實用性評測之前，必須先確認隱私保護力達到可接受的標準。

@@ -1,7 +1,7 @@
 ---
 title: 文件
 type: docs
-weight: 1
+weight: 0
 prev: docs/developer-guide
 next: docs/get-started
 ---

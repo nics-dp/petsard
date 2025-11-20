@@ -1,7 +1,7 @@
 ---
 title: Docker Offline Deployment
 type: docs
-weight: 4
+weight: 230
 prev: docs/installation/pypi-install
 next: docs/installation/package-predownload
 ---

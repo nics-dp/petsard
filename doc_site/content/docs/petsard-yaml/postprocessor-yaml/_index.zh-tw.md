@@ -1,6 +1,9 @@
 ---
 title: "Postprocessor YAML"
-weight: 150
+type: docs
+weight: 660
+prev: docs/petsard-yaml/synthesizer-yaml
+next: docs/petsard-yaml/constrainer-yaml
 ---
 
 Postprocessor 模組的 YAML 設定檔案格式，用於資料後處理（還原轉換）。

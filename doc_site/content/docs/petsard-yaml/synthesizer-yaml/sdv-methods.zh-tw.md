@@ -1,6 +1,9 @@
 ---
 title: "SDV 合成方法"
-weight: 5
+type: docs
+weight: 655
+prev: docs/petsard-yaml/synthesizer-yaml/sdv-custom-methods
+next: docs/petsard-yaml/synthesizer-yaml
 ---
 
 PETsARD 整合 [SDV (Synthetic Data Vault)](https://sdv.dev/) 套件，提供多種先進的合成資料生成演算法。
