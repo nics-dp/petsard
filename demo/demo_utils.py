@@ -362,7 +362,7 @@ class PETsARDSetup:
                     "-m",
                     "pip",
                     "install",
-                    f"git+https://github.com/nics-tw/petsard.git@{branch}#egg=petsard",
+                    f"git+https://github.com/nics-tw/petsard.git@{branch}#egg=petsard[all]",
                     "-q",
                 ],
                 check=True,
