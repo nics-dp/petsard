@@ -421,7 +421,6 @@ class Constrainer:
                         # Build rule name
                         if actions == "delete":
                             rule_name = f"{field_name}: delete"
-                            action_desc = "delete"
                         elif isinstance(actions, dict):
                             # May have multiple actions, but usually only one
                             action_keys = list(actions.keys())
@@ -435,11 +434,9 @@ class Constrainer:
                                         else ", ".join(target)
                                     )
                                     rule_name = f"{field_name}: erase -> {target_str}"
-                                    action_desc = f"erase -> {target_str}"
                                 elif action == "copy":
                                     target = actions[action]
                                     rule_name = f"{field_name}: copy <- {target}"
-                                    action_desc = f"copy <- {target}"
                                 elif action == "nan_if_condition":
                                     conditions = actions[action]
                                     cond_strs = [
@@ -449,18 +446,12 @@ class Constrainer:
                                         for k, v in conditions.items()
                                     ]
                                     rule_name = f"{field_name}: nan_if_condition ({', '.join(cond_strs)})"
-                                    action_desc = (
-                                        f"nan_if_condition ({', '.join(cond_strs)})"
-                                    )
                                 else:
                                     rule_name = f"{field_name}: {action}"
-                                    action_desc = action
                             else:
                                 rule_name = f"{field_name}: {', '.join(action_keys)}"
-                                action_desc = ", ".join(action_keys)
                         else:
                             rule_name = f"{field_name}: {actions}"
-                            action_desc = str(actions)
 
                         # Create temporary constrainer to handle only this rule
                         temp_constrainer = NaNGroupConstrainer({field_name: actions})
@@ -558,9 +549,6 @@ class Constrainer:
         # If detailed information is needed
         if return_details:
             # Only return violated data and their violation markers
-            violation_columns = [
-                col for col in result.columns if col.startswith("__violated_")
-            ]
             details_df = result[~result["__validation_passed__"]].copy()
 
             # Remove internal tracking field, keep only violation markers

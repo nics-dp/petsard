@@ -247,9 +247,8 @@ class ProcessorTransformRules:
         Returns:
             Transformed Attribute (new instance)
         """
-        # Determine if type has changed
+        # Determine output type
         output_type = rule.output_type if rule.output_type else attribute.type
-        type_changed = output_type != attribute.type
 
         # Copy and update type_attr
         type_attr = (attribute.type_attr or {}).copy()
@@ -296,9 +295,8 @@ class ProcessorTransformRules:
         Returns:
             Transformed Attribute (new instance)
         """
-        # Determine if type has changed
+        # Determine output type
         output_type = transform_info.get("output_type") or attribute.type
-        type_changed = output_type != attribute.type
 
         # Copy and update type_attr
         type_attr = (attribute.type_attr or {}).copy()

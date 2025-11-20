@@ -8,8 +8,11 @@ import pandas as pd
 import yaml
 
 from petsard.config_base import BaseConfig
-from petsard.exceptions import (ConfigError, UnableToFollowMetadataError,
-                                UnsupportedMethodError)
+from petsard.exceptions import (
+    ConfigError,
+    UnableToFollowMetadataError,
+    UnsupportedMethodError,
+)
 from petsard.metadater import Attribute, Schema, SchemaMetadater
 
 
@@ -406,8 +409,7 @@ class Loader:
         Returns:
             pd.DataFrame: Loaded dataframe
         """
-        from petsard.loader.loader_pandas import (LoaderPandasCsv,
-                                                  LoaderPandasExcel)
+        from petsard.loader.loader_pandas import LoaderPandasCsv, LoaderPandasExcel
 
         self._logger.debug("Reading data using pandas loader classes")
 

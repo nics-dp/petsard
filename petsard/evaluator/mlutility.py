@@ -6,11 +6,22 @@ from enum import Enum, auto
 import numpy as np
 import pandas as pd
 from sklearn.cluster import KMeans
-from sklearn.metrics import (accuracy_score, auc, confusion_matrix, f1_score,
-                             fbeta_score, matthews_corrcoef,
-                             mean_absolute_error, mean_squared_error,
-                             precision_recall_curve, precision_score, r2_score,
-                             recall_score, roc_auc_score, silhouette_score)
+from sklearn.metrics import (
+    accuracy_score,
+    auc,
+    confusion_matrix,
+    f1_score,
+    fbeta_score,
+    matthews_corrcoef,
+    mean_absolute_error,
+    mean_squared_error,
+    precision_recall_curve,
+    precision_score,
+    r2_score,
+    recall_score,
+    roc_auc_score,
+    silhouette_score,
+)
 from sklearn.preprocessing import LabelEncoder, OneHotEncoder, StandardScaler
 from xgboost import XGBClassifier, XGBRegressor
 

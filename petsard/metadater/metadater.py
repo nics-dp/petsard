@@ -867,7 +867,7 @@ class SchemaMetadater:
             mapping = {}
             duplicates = []
 
-            for key_node, value_node in node.value:
+            for key_node, _value_node in node.value:
                 # Get actual value of key
                 key = loader.construct_object(key_node, deep=deep)
                 if key in mapping:

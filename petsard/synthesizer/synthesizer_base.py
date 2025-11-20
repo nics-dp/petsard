@@ -166,7 +166,7 @@ class BaseSynthesizer(ABC):
                 if attr_type and ("float" in attr_type or "int" in attr_type):
                     # Use safe_round from utils for consistent rounding behavior
                     data_copy[attr_name] = data_copy[attr_name].apply(
-                        lambda x: safe_round(x, precision)
+                        lambda x, p=precision: safe_round(x, p)
                     )
 
                     self._logger.debug(

@@ -125,7 +125,7 @@ class SynthesizerConfig(BaseConfig):
                 package_name="sdv",
                 install_command="pip install 'sdv>=1.26.0,<2'",
                 method=self.method,
-            )
+            ) from None
 
 
 class Synthesizer:
@@ -424,7 +424,7 @@ class Synthesizer:
                         message=error_msg,
                         package_name="sdv",
                         install_command="pip install 'sdv>=1.26.0,<2'",
-                    )
+                    ) from e
             synthesizer_class = _SDVSingleTableSynthesizer
 
         return synthesizer_class

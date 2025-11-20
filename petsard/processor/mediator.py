@@ -8,8 +8,12 @@ from sklearn.neighbors import LocalOutlierFactor
 from petsard.exceptions import UnfittedError
 from petsard.processor.encoder import EncoderOneHot
 from petsard.processor.missing import MissingDrop
-from petsard.processor.outlier import (OutlierIQR, OutlierIsolationForest,
-                                       OutlierLOF, OutlierZScore)
+from petsard.processor.outlier import (
+    OutlierIQR,
+    OutlierIsolationForest,
+    OutlierLOF,
+    OutlierZScore,
+)
 from petsard.processor.scaler import ScalerTimeAnchor
 
 

@@ -140,15 +140,15 @@ class FieldProportionsConfig:
         # Check if field types are categorical variables
         # field_proportions only supports categorical variables, not continuous numerical or datetime fields
         unsupported_fields = []
-        for field in required_fields:
+        for field_name in required_fields:
             # Use metadata for type checking if available
             if self.metadata is not None:
                 # Find the attribute in metadata by accessing dict values
-                attribute = self.metadata.attributes.get(field)
+                attribute = self.metadata.attributes.get(field_name)
 
                 if attribute is None:
                     # Field not in metadata, fall back to dtype check
-                    dtype = data[field].dtype
+                    dtype = data[field_name].dtype
                     field_type = self._infer_type_from_dtype(dtype)
                 else:
                     # Infer type from attribute properties
@@ -157,19 +157,19 @@ class FieldProportionsConfig:
                 # Reject numeric and datetime types
                 if field_type in ["numerical", "datetime"]:
                     unsupported_fields.append(
-                        f"{field} (type: {field_type} [from metadata], unsupported)"
+                        f"{field_name} (type: {field_type} [from metadata], unsupported)"
                     )
             else:
                 # Fall back to DataFrame dtype checking
-                dtype = data[field].dtype
+                dtype = data[field_name].dtype
                 # Reject pure numerical (int, float) and datetime types
                 if pd.api.types.is_numeric_dtype(dtype):
                     unsupported_fields.append(
-                        f"{field} (type: {dtype}, numerical unsupported)"
+                        f"{field_name} (type: {dtype}, numerical unsupported)"
                     )
                 elif pd.api.types.is_datetime64_any_dtype(dtype):
                     unsupported_fields.append(
-                        f"{field} (type: {dtype}, datetime unsupported)"
+                        f"{field_name} (type: {dtype}, datetime unsupported)"
                     )
 
         if unsupported_fields:

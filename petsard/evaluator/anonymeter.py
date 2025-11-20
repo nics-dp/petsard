@@ -6,8 +6,11 @@ from enum import Enum, auto
 from typing import Any
 
 import pandas as pd
-from anonymeter.evaluators import (InferenceEvaluator, LinkabilityEvaluator,
-                                   SinglingOutEvaluator)
+from anonymeter.evaluators import (
+    InferenceEvaluator,
+    LinkabilityEvaluator,
+    SinglingOutEvaluator,
+)
 
 from petsard.config_base import BaseConfig
 from petsard.evaluator.evaluator_base import BaseEvaluator

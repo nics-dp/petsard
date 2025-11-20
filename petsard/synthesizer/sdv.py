@@ -54,8 +54,12 @@ from typing import Any
 import pandas as pd
 from scipy.stats._warnings_errors import FitError
 from sdv.metadata import Metadata as SDV_Metadata
-from sdv.single_table import (CopulaGANSynthesizer, CTGANSynthesizer,
-                              GaussianCopulaSynthesizer, TVAESynthesizer)
+from sdv.single_table import (
+    CopulaGANSynthesizer,
+    CTGANSynthesizer,
+    GaussianCopulaSynthesizer,
+    TVAESynthesizer,
+)
 from sdv.single_table.base import BaseSingleTableSynthesizer
 
 from petsard.exceptions import UnableToSynthesizeError, UnsupportedMethodError

@@ -209,7 +209,7 @@ class ReporterSaveValidation(BaseReporter):
         # For each violation marker column, extract violated rows
         for violated_col in violated_columns:
             # Get rows that violated this rule
-            mask = violation_details[violated_col] == True
+            mask = violation_details[violated_col]
             violated_rows = violation_details[mask].copy()
 
             if len(violated_rows) == 0:

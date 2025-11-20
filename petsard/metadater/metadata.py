@@ -100,14 +100,14 @@ class Attribute:
         # Reject type: category
         if self.type == "category":
             raise MetadataError(
-                f"'type: category' is not allowed. Use 'category: true' or 'type_attr.category: true' to mark categorical data.",
+                "'type: category' is not allowed. Use 'category: true' or 'type_attr.category: true' to mark categorical data.",
                 field_name=self.name
             )
 
         # Reject logical_type: category
         if self.logical_type == "category":
             raise MetadataError(
-                f"'logical_type: category' is not allowed. Use 'category: true' or 'type_attr.category: true' to mark categorical data.",
+                "'logical_type: category' is not allowed. Use 'category: true' or 'type_attr.category: true' to mark categorical data.",
                 field_name=self.name
             )
 

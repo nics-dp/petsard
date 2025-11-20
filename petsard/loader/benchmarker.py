@@ -9,8 +9,11 @@ from pathlib import Path
 import yaml
 
 from petsard.config_base import BaseConfig
-from petsard.exceptions import (BenchmarkDatasetsError, ConfigError,
-                                UnsupportedMethodError)
+from petsard.exceptions import (
+    BenchmarkDatasetsError,
+    ConfigError,
+    UnsupportedMethodError,
+)
 
 
 @dataclass

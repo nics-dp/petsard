@@ -6,24 +6,26 @@ from typing import Any
 import pandas as pd
 
 from petsard.config_base import BaseConfig
-from petsard.evaluator.data_describer_base import (DataDescriberColNA,
-                                                   DataDescriberColumnCount,
-                                                   DataDescriberCorr,
-                                                   DataDescriberCov,
-                                                   DataDescriberGlobalNA,
-                                                   DataDescriberKurtosis,
-                                                   DataDescriberMax,
-                                                   DataDescriberMean,
-                                                   DataDescriberMedian,
-                                                   DataDescriberMin,
-                                                   DataDescriberNUnique,
-                                                   DataDescriberPercentile,
-                                                   DataDescriberQ1,
-                                                   DataDescriberQ3,
-                                                   DataDescriberRowCount,
-                                                   DataDescriberSkew,
-                                                   DataDescriberStd,
-                                                   DataDescriberVar)
+from petsard.evaluator.data_describer_base import (
+    DataDescriberColNA,
+    DataDescriberColumnCount,
+    DataDescriberCorr,
+    DataDescriberCov,
+    DataDescriberGlobalNA,
+    DataDescriberKurtosis,
+    DataDescriberMax,
+    DataDescriberMean,
+    DataDescriberMedian,
+    DataDescriberMin,
+    DataDescriberNUnique,
+    DataDescriberPercentile,
+    DataDescriberQ1,
+    DataDescriberQ3,
+    DataDescriberRowCount,
+    DataDescriberSkew,
+    DataDescriberStd,
+    DataDescriberVar,
+)
 from petsard.evaluator.evaluator_base import BaseEvaluator
 from petsard.exceptions import ConfigError, UnsupportedMethodError
 from petsard.utils import safe_round

@@ -81,7 +81,7 @@ class BaseAdapter:
                 if attr.type and any(t in attr.type for t in ["float", "int"]):
                     # Apply safe_round to entire column
                     data[col_name] = data[col_name].apply(
-                        lambda x: safe_round(x, precision)
+                        lambda x, p=precision: safe_round(x, p)
                     )
                     precision_applied_count += 1
                     self._logger.debug(
@@ -154,10 +154,8 @@ class BaseAdapter:
         if not is_benchmark:
             return False, protocol_value, None
 
-        from petsard.exceptions import (BenchmarkDatasetsError,
-                                        UnsupportedMethodError)
-        from petsard.loader.benchmarker import (BenchmarkerConfig,
-                                                BenchmarkerRequests)
+        from petsard.exceptions import BenchmarkDatasetsError, UnsupportedMethodError
+        from petsard.loader.benchmarker import BenchmarkerConfig, BenchmarkerRequests
 
         benchmark_name = re.sub(
             r"^benchmark://", "", protocol_value, flags=re.IGNORECASE
@@ -1435,7 +1433,7 @@ class ConstrainerAdapter(BaseAdapter):
 
             if yaml_path is None:
                 from petsard.exceptions import UnableToLoadError
-                
+
                 self._logger.error(f"Could not find constraints file: {constraints_yaml}")
                 raise UnableToLoadError(
                     f"Could not find {constraints_yaml} in current directory or sys.path",

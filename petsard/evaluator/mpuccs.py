@@ -753,9 +753,6 @@ class MPUCCs(BaseEvaluator):
                     "field_decay_factor", self.DEFAULT_FIELD_DECAY_FACTOR
                 ) ** (combo_size - 1)
 
-            # total_weighted now only equals field_weighted
-            total_weighted = field_weighted
-
             # Initialize tree record with simplified structure
             tree_record = {
                 "check_order": len(tree_results) + 1,  # Check sequence
@@ -1005,42 +1002,13 @@ class MPUCCs(BaseEvaluator):
             total_identified / total_syn_records if total_syn_records > 0 else 0.0
         )
 
-        # Calculate weighted identification rate if using field decay
-        if self.config.get("field_decay_factor", 0.5) != 0.5:
-            # Only calculate if non-default decay factor
-            total_weighted_identified = 0
-            for result in tree_results:
-                # Recalculate from stored values if needed
-                if "weighted_collision" in result:
-                    total_weighted_identified += result["weighted_collision"]
-                elif "field_weight" in result:
-                    total_weighted_identified += (
-                        result["mpuccs_collision_cnt"] * result["field_weight"]
-                    )
-                else:
-                    # Fallback: use unweighted count
-                    total_weighted_identified += result["mpuccs_collision_cnt"]
-        else:
-            # Use unweighted count when decay factor is default
-            total_weighted_identified = sum(
-                result["mpuccs_collision_cnt"] for result in tree_results
-            )
-        weighted_identification_rate = (
-            total_weighted_identified / total_syn_records
-            if total_syn_records > 0
-            else 0.0
-        )
-
         # Calculate main protection
         main_protection = 1.0 - identification_rate
-        weighted_main_protection = 1.0 - weighted_identification_rate
 
         # Initialize protection metrics
         overall_baseline_protection = None
         overall_protection = None
-        weighted_overall_protection = None
         privacy_risk_score = identification_rate  # Default to identification rate
-        weighted_privacy_risk_score = weighted_identification_rate
         baseline_protections = {}
 
         if self.config.get("calculate_baseline", True):
@@ -1085,13 +1053,9 @@ class MPUCCs(BaseEvaluator):
             overall_protection = self._calculate_overall_protection(
                 main_protection, overall_baseline_protection
             )
-            weighted_overall_protection = self._calculate_overall_protection(
-                weighted_main_protection, overall_baseline_protection
-            )
 
             # Privacy risk score (inverted from protection)
             privacy_risk_score = 1.0 - overall_protection
-            weighted_privacy_risk_score = 1.0 - weighted_overall_protection
 
         # Build global results dictionary - Simplified Plan B with risk score first
         global_dict = {}
