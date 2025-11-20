@@ -546,25 +546,25 @@ class AttributeMetadater:
 
     @classmethod
     def _detect_constant_column(cls, data: pd.Series) -> bool:
-        """檢測欄位是否所有值都相同（constant column）
+        """Detect if a field has all identical values (constant column)
 
         Args:
-            data: 資料 Series
+            data: Data Series
 
         Returns:
-            bool: 如果所有非 NA 值都相同則返回 True
+            bool: True if all non-NA values are identical
         """
-        # 移除 NA 值
+        # Remove NA values
         non_na_data = data.dropna()
 
-        # 如果所有值都是 NA，不視為 constant
+        # If all values are NA, not considered constant
         if len(non_na_data) == 0:
             return False
 
-        # 檢查 unique 值的數量
+        # Check number of unique values
         unique_count = non_na_data.nunique()
 
-        # 如果只有一個唯一值，則為 constant column
+        # If only one unique value, it's a constant column
         return unique_count == 1
 
 

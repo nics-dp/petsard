@@ -134,11 +134,11 @@ class BaseAdapter:
         self, protocol_value: str, value_type: str = "filepath"
     ) -> tuple[bool, str, object]:
         """
-        統一處理 benchmark:// 協議的下載邏輯
+        Unified handling of benchmark:// protocol download logic
 
         Args:
-            protocol_value: 原始協議字串 (e.g., "benchmark://adult")
-            value_type: 值類型，"filepath" 或 "schema"
+            protocol_value: Original protocol string (e.g., "benchmark://adult")
+            value_type: Value type, either "filepath" or "schema"
 
         Returns:
             tuple: (is_benchmark, local_path, benchmarker_config)
@@ -154,8 +154,10 @@ class BaseAdapter:
         if not is_benchmark:
             return False, protocol_value, None
 
-        from petsard.exceptions import BenchmarkDatasetsError, UnsupportedMethodError
-        from petsard.loader.benchmarker import BenchmarkerConfig, BenchmarkerRequests
+        from petsard.exceptions import (BenchmarkDatasetsError,
+                                        UnsupportedMethodError)
+        from petsard.loader.benchmarker import (BenchmarkerConfig,
+                                                BenchmarkerRequests)
 
         benchmark_name = re.sub(
             r"^benchmark://", "", protocol_value, flags=re.IGNORECASE
@@ -213,18 +215,18 @@ class BaseAdapter:
         self, status, source_spec: str, key_aliases: dict | None = None
     ) -> pd.DataFrame:
         """
-        統一的資料來源解析邏輯，支援 "Module.key" 格式
+        Unified data source resolution logic, supports "Module.key" format
 
         Args:
-            status: Status 物件
-            source_spec: 資料來源規格 (e.g., "Loader" or "Splitter.train")
-            key_aliases: 別名映射字典 (e.g., {"ori": "train", "control": "validation"})
+            status: Status object
+            source_spec: Data source specification (e.g., "Loader" or "Splitter.train")
+            key_aliases: Alias mapping dictionary (e.g., {"ori": "train", "control": "validation"})
 
         Returns:
-            pd.DataFrame: 解析後的資料
+            pd.DataFrame: Resolved data
 
         Raises:
-            ConfigError: 當找不到指定的資料來源時
+            ConfigError: When the specified data source cannot be found
         """
         if key_aliases is None:
             key_aliases = {}
@@ -285,14 +287,14 @@ class BaseAdapter:
 
     def _get_metadata_with_priority(self, status, priority: list[str]) -> Schema | None:
         """
-        按優先順序獲取 metadata
+        Get metadata by priority order
 
         Args:
-            status: Status 物件
-            priority: 模組名稱的優先順序列表 (e.g., ["Loader", "Splitter", "Preprocessor"])
+            status: Status object
+            priority: Priority list of module names (e.g., ["Loader", "Splitter", "Preprocessor"])
 
         Returns:
-            Schema | None: 找到的 metadata，如果都找不到則回傳 None
+            Schema | None: Found metadata, or None if not found in any module
         """
         for module in priority:
             if module in status.status:
@@ -309,24 +311,24 @@ class BaseAdapter:
 
     def _safe_copy(self, data):
         """
-        統一的拷貝策略，根據資料類型決定拷貝方法
+        Unified copy strategy, determines copy method based on data type
 
         Args:
-            data: 要拷貝的資料
+            data: Data to copy
 
         Returns:
-            拷貝後的資料
+            Copied data
         """
         if data is None:
             return None
         elif isinstance(data, pd.DataFrame):
-            # DataFrame 的 copy() 通常足夠且較快
+            # DataFrame's copy() is usually sufficient and faster
             return data.copy()
         elif isinstance(data, dict):
-            # dict 可能包含 DataFrame，需要深拷貝
+            # dict may contain DataFrame, needs deep copy
             return deepcopy(data)
         else:
-            # 其他複雜結構使用深拷貝
+            # Other complex structures use deep copy
             return deepcopy(data)
 
     def run(self, input: dict) -> None:

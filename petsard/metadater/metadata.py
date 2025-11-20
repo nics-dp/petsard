@@ -35,7 +35,7 @@ class Attribute:
     default_value: Any = None
 
     # Special data characteristics
-    is_constant: bool = False  # 標記所有值都相同的欄位
+    is_constant: bool = False  # Mark fields where all values are identical
 
     # Constraints
     constraints: dict[str, Any] | None = None

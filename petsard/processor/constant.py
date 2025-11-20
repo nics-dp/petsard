@@ -1,9 +1,3 @@
-"""Constant column processor
-
-處理所有值都相同的欄位（constant columns）。
-這類欄位在合成資料生成時可能導致某些演算法（如 Copula）出現錯誤。
-"""
-
 from __future__ import annotations
 
 from typing import Any
@@ -14,39 +8,39 @@ from petsard.exceptions import UnfittedError
 
 
 class ConstantProcessor:
-    """處理 constant columns 的 processor
+    """Processor for handling constant columns
 
-    此 processor 會：
-    1. 在 fit() 時記錄 constant 欄位的值
-    2. 在 transform() 時將 constant 欄位移除（避免影響合成器）
-    3. 在 inverse_transform() 時將 constant 欄位還原
+    This processor:
+    1. Records constant field values during fit()
+    2. Removes constant fields during transform() (to avoid affecting synthesizers)
+    3. Restores constant fields during inverse_transform()
 
-    這是一個特殊的 processor，總是在所有其他 processor 之前執行。
+    This is a special processor that always executes before all other processors.
     """
 
     def __init__(self) -> None:
-        """初始化 ConstantProcessor"""
+        """Initialize ConstantProcessor"""
         self._is_fitted: bool = False
-        self._constant_columns: dict[str, Any] = {}  # 記錄 constant 欄位的值
-        self._original_columns: list[str] = []  # 記錄原始欄位順序
+        self._constant_columns: dict[str, Any] = {}  # Record constant field values
+        self._original_columns: list[str] = []  # Record original field order
 
     def fit(self, data: pd.DataFrame, metadata: Any) -> None:
         """Fit the processor
 
         Args:
-            data: 訓練資料
-            metadata: Schema metadata，包含 is_constant 標記
+            data: Training data
+            metadata: Schema metadata containing is_constant flag
         """
         self._constant_columns = {}
         self._original_columns = list(data.columns)
 
-        # 檢查每個欄位是否為 constant
+        # Check if each field is constant
         for col_name in data.columns:
-            # 從 metadata 獲取 is_constant 標記
+            # Get is_constant flag from metadata
             if hasattr(metadata, "attributes") and col_name in metadata.attributes:
                 attribute = metadata.attributes[col_name]
                 if hasattr(attribute, "is_constant") and attribute.is_constant:
-                    # 記錄該欄位的 constant 值
+                    # Record the constant value of this field
                     non_na_values = data[col_name].dropna()
                     if len(non_na_values) > 0:
                         self._constant_columns[col_name] = non_na_values.iloc[0]
@@ -54,18 +48,18 @@ class ConstantProcessor:
         self._is_fitted = True
 
     def transform(self, data: pd.DataFrame) -> pd.DataFrame:
-        """Transform the data (移除 constant columns)
+        """Transform the data (remove constant columns)
 
         Args:
-            data: 要轉換的資料
+            data: Data to transform
 
         Returns:
-            移除 constant columns 後的資料
+            Data after removing constant columns
         """
         if not self._is_fitted:
             raise UnfittedError("ConstantProcessor must be fitted before transform")
 
-        # 移除 constant columns
+        # Remove constant columns
         if self._constant_columns:
             remaining_cols = [
                 col for col in data.columns if col not in self._constant_columns
@@ -75,33 +69,33 @@ class ConstantProcessor:
         return data.copy()
 
     def inverse_transform(self, data: pd.DataFrame) -> pd.DataFrame:
-        """Inverse transform the data (還原 constant columns)
+        """Inverse transform the data (restore constant columns)
 
         Args:
-            data: 要逆轉換的資料
+            data: Data to inverse transform
 
         Returns:
-            還原 constant columns 後的資料
+            Data after restoring constant columns
         """
         if not self._is_fitted:
             raise UnfittedError(
                 "ConstantProcessor must be fitted before inverse_transform"
             )
 
-        # 還原 constant columns
+        # Restore constant columns
         if self._constant_columns:
             result = data.copy()
 
-            # 將 constant columns 加回去
+            # Add constant columns back
             for col_name, const_value in self._constant_columns.items():
                 result[col_name] = const_value
 
-            # 恢復原始欄位順序
-            # 只保留存在的欄位（某些欄位可能在處理過程中被移除）
+            # Restore original field order
+            # Only keep existing fields (some fields may have been removed during processing)
             final_columns = [
                 col for col in self._original_columns if col in result.columns
             ]
-            # 加上新增的欄位（如果有的話）
+            # Add new fields (if any)
             new_columns = [col for col in result.columns if col not in final_columns]
             result = result[final_columns + new_columns]
 
@@ -116,5 +110,5 @@ class ConstantProcessor:
 
     @property
     def constant_columns(self) -> dict[str, Any]:
-        """獲取 constant columns 及其值"""
+        """Get constant columns and their values"""
         return self._constant_columns.copy()

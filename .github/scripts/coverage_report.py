@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Coverage Report Generator
-生成簡單易懂的測試覆蓋率報告
+Generate clear and understandable test coverage reports
 """
 
 import logging
@@ -9,7 +9,7 @@ import os
 import sys
 import xml.etree.ElementTree as ET
 
-# 設置 logging
+# Setup logging
 logging.basicConfig(
     level=logging.INFO,
     format='%(levelname)s: %(message)s',
@@ -19,23 +19,23 @@ logger = logging.getLogger(__name__)
 
 
 def parse_coverage_xml(xml_file):
-    """解析 coverage.xml 文件"""
+    """Parse coverage.xml file"""
     try:
         tree = ET.parse(xml_file)
         root = tree.getroot()
 
-        # 獲取整體覆蓋率
+        # Get overall coverage
         line_rate = float(root.attrib.get("line-rate", 0))
         overall_coverage = line_rate * 100
 
-        # 獲取各個包的覆蓋率
+        # Get coverage for each package
         packages = []
         for package in root.findall(".//package"):
             package_name = package.attrib.get("name", "Unknown")
             package_line_rate = float(package.attrib.get("line-rate", 0))
             package_coverage = package_line_rate * 100
 
-            # 獲取類別覆蓋率
+            # Get class coverage
             classes = []
             for cls in package.findall(".//class"):
                 class_name = cls.attrib.get("name", "Unknown")
@@ -65,54 +65,54 @@ def parse_coverage_xml(xml_file):
 
 
 def get_coverage_grade(coverage):
-    """根據覆蓋率返回等級"""
+    """Return grade based on coverage percentage"""
     if coverage >= 90:
-        return "🎉 優秀 (Excellent)", "green"
+        return "🎉 Excellent", "green"
     elif coverage >= 80:
-        return "✅ 良好 (Good)", "yellow"
+        return "✅ Good", "yellow"
     elif coverage >= 70:
-        return "⚠️ 尚可 (Fair)", "orange"
+        return "⚠️ Fair", "orange"
     else:
-        return "❌ 需改進 (Needs Improvement)", "red"
+        return "❌ Needs Improvement", "red"
 
 
 def generate_markdown_report(coverage_data):
-    """生成 Markdown 格式的覆蓋率報告"""
+    """Generate Markdown format coverage report"""
     if not coverage_data:
-        return "❌ 無法生成覆蓋率報告 (Unable to generate coverage report)"
+        return "❌ Unable to generate coverage report"
 
     overall_coverage = coverage_data["overall_coverage"]
     grade, color = get_coverage_grade(overall_coverage)
 
     report = []
-    report.append("## 📊 測試覆蓋率報告 Test Coverage Report")
+    report.append("## 📊 Test Coverage Report")
     report.append("")
-    report.append("### 🎯 整體覆蓋率 Overall Coverage")
+    report.append("### 🎯 Overall Coverage")
     report.append(f"**{overall_coverage:.1f}%** - {grade}")
     report.append("")
 
-    # 覆蓋率解讀
-    report.append("### 📖 覆蓋率解讀 Coverage Explanation")
-    report.append("- **90%+**: 🎉 優秀 - 測試覆蓋非常完整")
-    report.append("- **80-89%**: ✅ 良好 - 測試覆蓋良好，可考慮增加邊界測試")
-    report.append("- **70-79%**: ⚠️ 尚可 - 建議增加更多測試案例")
-    report.append("- **<70%**: ❌ 需改進 - 強烈建議增加測試覆蓋")
+    # Coverage explanation
+    report.append("### 📖 Coverage Explanation")
+    report.append("- **90%+**: 🎉 Excellent - Very comprehensive test coverage")
+    report.append("- **80-89%**: ✅ Good - Good test coverage, consider adding boundary tests")
+    report.append("- **70-79%**: ⚠️ Fair - Recommend adding more test cases")
+    report.append("- **<70%**: ❌ Needs Improvement - Strongly recommend increasing test coverage")
     report.append("")
 
-    # 模組詳細覆蓋率
+    # Module coverage details
     if coverage_data["packages"]:
-        report.append("### 📁 模組覆蓋率詳情 Module Coverage Details")
+        report.append("### 📁 Module Coverage Details")
         report.append("")
 
         for package in coverage_data["packages"]:
             package_grade, _ = get_coverage_grade(package["coverage"])
             report.append(f"#### 📦 {package['name']}")
-            report.append(f"**覆蓋率**: {package['coverage']:.1f}% - {package_grade}")
+            report.append(f"**Coverage**: {package['coverage']:.1f}% - {package_grade}")
             report.append("")
 
             if package["classes"]:
-                report.append("| 文件 File | 覆蓋率 Coverage | 狀態 Status |")
-                report.append("|-----------|----------------|-------------|")
+                report.append("| File | Coverage | Status |")
+                report.append("|------|----------|--------|")
 
                 for cls in package["classes"]:
                     filename = os.path.basename(cls["filename"])
@@ -123,27 +123,27 @@ def generate_markdown_report(coverage_data):
 
                 report.append("")
 
-    # 改進建議
+    # Improvement suggestions
     if overall_coverage < 80:
-        report.append("### 💡 改進建議 Improvement Suggestions")
+        report.append("### 💡 Improvement Suggestions")
         report.append("")
         if overall_coverage < 70:
-            report.append("- 🚨 **緊急**: 覆蓋率過低，請優先增加基本功能測試")
-            report.append("- 📝 建議為每個公開方法編寫至少一個測試案例")
+            report.append("- 🚨 **Urgent**: Coverage too low, prioritize adding basic functionality tests")
+            report.append("- 📝 Recommend writing at least one test case for each public method")
             report.append(
-                "- 🔍 使用 `pytest --cov-report=html` 生成詳細報告查看未覆蓋代碼"
+                "- 🔍 Use `pytest --cov-report=html` to generate detailed report and view uncovered code"
             )
         else:
-            report.append("- 📈 建議增加邊界條件和異常情況的測試")
-            report.append("- 🧪 考慮增加整合測試覆蓋更多使用場景")
-            report.append("- 🎯 專注於提升核心模組的測試覆蓋率")
+            report.append("- 📈 Recommend adding tests for boundary conditions and exceptional cases")
+            report.append("- 🧪 Consider adding integration tests to cover more use cases")
+            report.append("- 🎯 Focus on improving test coverage for core modules")
         report.append("")
 
     return "\n".join(report)
 
 
 def main():
-    """主函數"""
+    """Main function"""
     if len(sys.argv) != 2:
         logger.error("Usage: python coverage_report.py <coverage.xml>")
         sys.exit(1)

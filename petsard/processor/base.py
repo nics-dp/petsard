@@ -11,40 +11,18 @@ from petsard.exceptions import ConfigError, UnfittedError
 from petsard.metadater.metadata import Schema
 from petsard.processor.constant import ConstantProcessor
 from petsard.processor.discretizing import DiscretizingKBins
-from petsard.processor.encoder import (
-    EncoderDateDiff,
-    EncoderLabel,
-    EncoderOneHot,
-    EncoderUniform,
-)
-from petsard.processor.mediator import (
-    Mediator,
-    MediatorEncoder,
-    MediatorMissing,
-    MediatorOutlier,
-    MediatorScaler,
-)
-from petsard.processor.missing import (
-    MissingDrop,
-    MissingMean,
-    MissingMedian,
-    MissingMode,
-    MissingSimple,
-)
-from petsard.processor.outlier import (
-    OutlierIQR,
-    OutlierIsolationForest,
-    OutlierLOF,
-    OutlierZScore,
-)
-from petsard.processor.scaler import (
-    ScalerLog,
-    ScalerLog1p,
-    ScalerMinMax,
-    ScalerStandard,
-    ScalerTimeAnchor,
-    ScalerZeroCenter,
-)
+from petsard.processor.encoder import (EncoderDateDiff, EncoderLabel,
+                                       EncoderOneHot, EncoderUniform)
+from petsard.processor.mediator import (Mediator, MediatorEncoder,
+                                        MediatorMissing, MediatorOutlier,
+                                        MediatorScaler)
+from petsard.processor.missing import (MissingDrop, MissingMean, MissingMedian,
+                                       MissingMode, MissingSimple)
+from petsard.processor.outlier import (OutlierIQR, OutlierIsolationForest,
+                                       OutlierLOF, OutlierZScore)
+from petsard.processor.scaler import (ScalerLog, ScalerLog1p, ScalerMinMax,
+                                      ScalerStandard, ScalerTimeAnchor,
+                                      ScalerZeroCenter)
 
 
 class DefaultProcessorMap:
@@ -510,7 +488,7 @@ class Processor:
         for processor in self._fitting_sequence:
             if isinstance(processor, str):
                 for col, obj in self._config[processor].items():
-                    # Skip constant columns (已被 ConstantProcessor 移除)
+                    # Skip constant columns (removed by ConstantProcessor)
                     if col not in data.columns:
                         self.logger.debug(
                             f"Skipping {processor} for constant column '{col}'"
@@ -686,7 +664,7 @@ class Processor:
                 self.logger.debug(f"Executing {processor} processing")
 
                 for col, obj in self._config[processor].items():
-                    # Skip constant columns (已被 ConstantProcessor 移除)
+                    # Skip constant columns (removed by ConstantProcessor)
                     if col not in self.transformed.columns:
                         self.logger.debug(f"  > Skipping constant column '{col}'")
                         continue

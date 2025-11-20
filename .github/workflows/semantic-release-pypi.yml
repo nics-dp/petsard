@@ -15,46 +15,38 @@ jobs:
     name: Semantic Release
     runs-on: ubuntu-latest
     steps:
-      # 檢出指定分支的程式碼
       # Checkout the repository code (v10.5.0+ automatically handles repository un-shallowing)
       - name: Setup | Checkout Repository on Release Branch
         uses: actions/checkout@v5
         with:
           ref: ${{ github.ref_name }}
-          # 允許 semantic-release 提交版本更新
           # Allow semantic-release to commit version updates
           token: ${{ secrets.MATHEME_JUSTYN_SEMANTIC }}
 
-      # 強制重設本地分支到觸發工作流程的確切提交
       # Force reset local branch to the exact commit that triggered the workflow
       - name: Setup | Force release branch to be at workflow sha
         run: |
           git reset --hard ${{ github.sha }}
 
-      # 安裝 uv 工具
       # Install uv tool
       - name: Setup | Install uv
         uses: astral-sh/setup-uv@v7
         with:
           enable-cache: false
 
-      # 執行語意版本分析，自動決定版本號並建立標籤
       # Execute semantic version analysis, automatically determine version and create tags
       # v10.5.0+ includes automatic repository un-shallowing and upstream version checking
       - name: Action | Semantic Version Release
         id: release
         uses: python-semantic-release/python-semantic-release@v10.5.2
         with:
-          github_token: ${{ secrets.MATHEME_JUSTYN_SEMANTIC }}  # 使用你的正確 token 名稱
+          github_token: ${{ secrets.MATHEME_JUSTYN_SEMANTIC }}
 
-      # 使用 uv 建置 Python 套件發布檔案
       # Build Python package distribution files using uv
-      # semantic-release 已經更新了 pyproject.toml 並提交，無需手動更新
       # semantic-release has already updated pyproject.toml and committed it
       - name: Publish | Build package with uv
         if: steps.release.outputs.released == 'true'
         run: |
-          # 驗證版本號與標籤一致
           # Verify version matches the tag
           TAG_VERSION="${{ steps.release.outputs.tag }}"
           VERSION="${TAG_VERSION#v}"
@@ -69,11 +61,9 @@ jobs:
             exit 1
           fi
 
-          # 使用 --no-sources 確保建置時不使用 tool.uv.sources 設定，提升相容性
           # Use --no-sources to ensure build compatibility without tool.uv.sources
           uv build --no-sources
 
-      # 發布套件到 TestPyPI 測試環境（僅限 dev 分支）
       # Publish package to TestPyPI testing environment (dev branch only)
       - name: Publish | Upload package to TestPyPI (dev branch)
         uses: pypa/gh-action-pypi-publish@v1.13.0
@@ -84,7 +74,6 @@ jobs:
           skip-existing: true
           attestations: true
 
-      # 發布套件到正式 PyPI 環境（僅限 main 分支）
       # Publish package to official PyPI environment (main branch only)
       - name: Publish | Upload package to PyPI (main branch)
         uses: pypa/gh-action-pypi-publish@v1.13.0
@@ -94,7 +83,6 @@ jobs:
           skip-existing: true
           attestations: true
 
-      # 上傳構建檔案到 GitHub Releases 作為發布資產
       # Upload built files to GitHub Releases as release assets
       - name: Publish | Upload to GitHub Release Assets
         uses: python-semantic-release/publish-action@v10.5.2
