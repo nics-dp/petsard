@@ -36,8 +36,6 @@ PETsARD 採用模組化設計，透過 YAML 描述資料處理流程。系統整
   - 里程碑文件包含了 `PETsARD` 最新版本的詳細資訊。
 - [Release Note](https://github.com/nics-dp/petsard/releases)
   - 發佈通知提供 `PETsARD` 每個版本的變更內容。
-- [CHANGELOG.md](https://github.com/nics-dp/petsard/blob/main/CHANGELOG.md)
-  - 更新日誌提供 `PETsARD` 隨時間演進的所有變更。
 
 ## 開源
 

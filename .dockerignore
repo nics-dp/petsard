@@ -105,4 +105,4 @@ module_functional_designs/
 # - petsard/ (主要套件)
 # - demo/ (範例)
 # - pyproject.toml (專案設定與依賴)
-# - README.md, LICENSE, CHANGELOG.md (文件)
+# - README.md, LICENSE (文件)

@@ -305,35 +305,6 @@ match = "dev"             # Branch matching pattern / 分支匹配模式
 prerelease = true         # Create pre-release versions / 建立預發布版本
 prerelease_token = "rc"   # Pre-release token (generates PEP 440 compliant 1.7.0rc1 format) / 預發布標記（將生成符合 PEP 440 的 1.7.0rc1 格式）
 
-# Changelog generation configuration
-# 變更日誌生成設定
-[tool.semantic_release.changelog]
-template_dir = ".release/changelog-templates"  # Changelog template directory / 變更日誌模板目錄
-exclude_commit_patterns = []    # Excluded commit patterns / 排除的提交模式
-mode = "update"                 # Update mode / 更新模式
-insertion_flag = "<!-- version list -->"  # Insertion flag / 插入標記
-
-[tool.semantic_release.changelog.default_templates]
-changelog_file = "CHANGELOG.md"  # Changelog file path / 變更日誌檔案路徑
-output_format = "md"             # Output format / 輸出格式
-mask_initial_release = true      # Mask initial release / 遮蔽初始發佈
-
-# Template engine configuration
-# 模板引擎設定
-[tool.semantic_release.changelog.environment]
-block_start_string = "{%"         # Template block start symbol / 模板區塊起始符號
-block_end_string = "%}"           # Template block end symbol / 模板區塊結束符號
-variable_start_string = "{{"      # Variable start symbol / 變數起始符號
-variable_end_string = "}}"        # Variable end symbol / 變數結束符號
-comment_start_string = "{#"       # Comment start symbol / 註解起始符號
-comment_end_string = "#}"         # Comment end symbol / 註解結束符號
-trim_blocks = false               # Remove trailing newlines / 是否移除尾隨換行
-lstrip_blocks = false             # Remove leading whitespace / 是否移除前導空白
-newline_sequence = "\n"           # Newline character / 換行符號
-keep_trailing_newline = false     # Keep trailing newline / 保留尾隨換行
-extensions = []                   # Additional template extensions / 附加模板擴展
-autoescape = true                 # Auto-escape variables / 自動轉義變數
-
 # Commit author configuration
 # 提交作者設定
 [tool.semantic_release.commit_author]
