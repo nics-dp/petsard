@@ -2,7 +2,49 @@
 
 <!-- version list -->
 
-## v1.10.0 (2025-11-20)
+## v1.10.1-rc.6 (2025-11-20)
+
+
+## v1.10.1-rc.5 (2025-11-20)
+
+
+## v1.10.1-rc.4 (2025-11-20)
+
+
+## v1.10.1-rc.3 (2025-11-20)
+
+
+## v1.10.1-rc.2 (2025-11-20)
+
+### Bug Fixes
+
+- **demo**: Resolve Colab execution errors and update docs
+  ([`319aedc`](https://github.com/nics-dp/petsard/commit/319aedc7a549a4c12465f40035799c17265ad4a5))
+
+
+## v1.10.1-rc.1 (2025-11-20)
+
+
+## v1.10.0-rc.5 (2025-11-20)
+
+### Bug Fixes
+
+- **ci**: Allow cleanup step to fail if package doesn't exist
+  ([`012f4f5`](https://github.com/nics-dp/petsard/commit/012f4f57d37e00942eedf06c7ff25d10b6694851))
+
+
+## v1.10.0-rc.4 (2025-11-20)
+
+### Bug Fixes
+
+- Correct repository check in image-publish workflow
+  ([`5a97897`](https://github.com/nics-dp/petsard/commit/5a97897a045f5746d5a0c6fc49b3fc43261d9042))
+
+- Correct repository URLs in pyproject.toml
+  ([`d4a0a33`](https://github.com/nics-dp/petsard/commit/d4a0a33c414ef1557ed94421171e1c67db1fe7d7))
+
+- **ci**: Always build and publish packages on branch push
+  ([`a2dfe50`](https://github.com/nics-dp/petsard/commit/a2dfe5023c37395b7943190d3affda2532a005e5))
 
 
 ## v1.10.0-rc.3 (2025-11-20)

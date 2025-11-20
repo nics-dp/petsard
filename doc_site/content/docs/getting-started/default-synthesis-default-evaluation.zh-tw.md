@@ -12,6 +12,7 @@ next: docs/getting-started/external-synthesis-default-evaluation
 請點擊下方按鈕在 Colab 中執行範例：
 
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/nics-dp/petsard/blob/main/demo/getting-started/default-synthesis-default-evaluation.ipynb)
+> **注意**：使用 Colab 請參考[執行環境設定](/petsard/docs/#colab-執行說明)。
 
 ```yaml
 Loader:

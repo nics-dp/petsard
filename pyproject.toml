@@ -37,9 +37,9 @@ requires-python = ">=3.10,<3.12" # Python 3.12 is currently limited due to anony
 dependencies = []
 
 [project.urls]
-Repository = "https://github.com/nics-tw/petsard"
-Documentation = "https://nics-tw.github.io/petsard/"
-"Bug Tracker" = "https://github.com/nics-tw/petsard/issues"
+Repository = "https://github.com/nics-dp/petsard"
+Documentation = "https://nics-dp.github.io/petsard/"
+"Bug Tracker" = "https://github.com/nics-dp/petsard/issues"
 
 # Dependency Groups Configuration
 # 依賴群組設定
@@ -212,14 +212,51 @@ ds = [
     "jupyterlab>=4.4.7,<5",
     "notebook>=7.4.5,<8",
 ]
-# Full functionality (Jupyter + Excel)
-# 完整功能（Jupyter + Excel）
+# Full functionality (all core dependencies + Jupyter + Excel)
+# 完整功能（所有核心依賴 + Jupyter + Excel）
 all = [
+    # Core dependencies from dependency-groups / 來自 dependency-groups 的核心依賴
+    # base-common
+    "numpy>=1.26.4,<2",
+    "pytz>=2025.2",
+    "tzdata>=2025.2",
+    # exec
+    "pandas>=2.3.2,<3",
+    "pyyaml>=6.0.2,<7",
+    "python-dateutil>=2.9.0.post0,<3",
+    # load-benchmark
+    "requests>=2.32.5,<3",
+    # eval
+    "anonymeter>=1.0.0,<2",
+    "sdmetrics>=0.23.0,<1",
+    "xgboost>=3.0.5",
+    "imblearn>=0.0",
+    "scikit-learn>=1.7.1,<2",
+    "joblib>=1.5.2,<2",
+    "numba>=0.61.2,<1",
+    "plotly>=6.3.0,<7",
+    "scipy>=1.15.3,<2 ; python_full_version < '3.11'",
+    "scipy>=1.16.0,<2 ; python_full_version >= '3.11'",
+    # syn (PyTorch and dependencies)
+    "torch>=2.8.0,<3",
+    "fsspec>=2025.9.0",
+    "jinja2>=3.1.6,<4",
+    "networkx>=3.4.2,<3.5 ; python_full_version < '3.11'",
+    "networkx>=3.5,<4 ; python_full_version >= '3.11'",
+    "sympy>=1.14.0,<2",
+    # Jupyter
     "ipykernel>=7.1.0,<8",
     "ipython>=8.3.0,<9 ; python_full_version < '3.11'",
     "ipython>=9.4.0,<10 ; python_full_version >= '3.11'",
     "jupyterlab>=4.4.7,<5",
     "notebook>=7.4.5,<8",
+    "pyzmq>=27.0.2,<28",
+    "debugpy>=1.8.16,<2",
+    "decorator>=5.2.1,<6",
+    "ipython-pygments-lexers>=1.1.1,<2 ; python_version >= '3.11'",
+    "prompt-toolkit>=3.0.52,<4",
+    "psutil>=7.0.0,<8",
+    # Excel
     "openpyxl>=3.1.5,<4",
 ]
 # Development tools (minimal list, use dependency-groups dev for full set)

@@ -13,6 +13,7 @@ YAML configuration file format for the Describer module. Provides statistical de
 Click the button below to run the example in Colab:
 
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/nics-tw/petsard/blob/main/demo/petsard-yaml/describer-yaml/describer.ipynb)
+> **Note**: If using Colab, please see the [runtime setup guide](/petsard/docs/#colab-execution-guide).
 
 ### Single Dataset Description (describe mode)
 

@@ -13,6 +13,7 @@ Use the `save_data` method to save synthetic data or outputs from other modules 
 Click the below button to run this example in Colab:
 
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/nics-tw/petsard/blob/main/demo/petsard-yaml/reporter-yaml/reporter_save-data.ipynb)
+> **Note**: If using Colab, please see the [runtime setup guide](/petsard/docs/#colab-execution-guide).
 
 ```yaml
 Loader:

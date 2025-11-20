@@ -19,7 +19,7 @@ env:
 jobs:
   build:
     runs-on: ubuntu-latest
-    if: github.repository == 'nics-tw/petsard' && (github.event_name == 'push' && startsWith(github.ref, 'refs/tags/') || github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success' || github.event_name == 'workflow_dispatch')
+    if: github.repository == 'nics-dp/petsard' && (github.event_name == 'push' && startsWith(github.ref, 'refs/tags/') || github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success' || github.event_name == 'workflow_dispatch')
     permissions:
       contents: read
       packages: write
@@ -40,6 +40,7 @@ jobs:
           swap-storage: false
 
       - name: Cleanup untagged images
+        continue-on-error: true
         uses: actions/delete-package-versions@v5
         with:
           package-name: "petsard"

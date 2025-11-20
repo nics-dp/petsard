@@ -43,31 +43,21 @@ jobs:
           github_token: ${{ secrets.MATHEME_JUSTYN_SEMANTIC }}
 
       # Build Python package distribution files using uv
-      # semantic-release has already updated pyproject.toml and committed it
+      # Always build on every push to allow continuous deployment
       - name: Publish | Build package with uv
-        if: steps.release.outputs.released == 'true'
         run: |
-          # Verify version matches the tag
-          TAG_VERSION="${{ steps.release.outputs.tag }}"
-          VERSION="${TAG_VERSION#v}"
+          # Get current version from pyproject.toml
           CURRENT_VERSION=$(grep '^version = ' pyproject.toml | sed 's/version = "\(.*\)".*/\1/')
-
-          echo "Tag version: $VERSION"
-          echo "pyproject.toml version: $CURRENT_VERSION"
-
-          if [ "$VERSION" != "$CURRENT_VERSION" ]; then
-            echo "⚠️  Warning: Version mismatch detected!"
-            echo "This should not happen if semantic-release is working correctly."
-            exit 1
-          fi
-
+          echo "Building version: $CURRENT_VERSION"
+          
           # Use --no-sources to ensure build compatibility without tool.uv.sources
           uv build --no-sources
 
       # Publish package to TestPyPI testing environment (dev branch only)
+      # Always publish on dev branch push, skip-existing handles duplicate versions
       - name: Publish | Upload package to TestPyPI (dev branch)
         uses: pypa/gh-action-pypi-publish@v1.13.0
-        if: steps.release.outputs.released == 'true' && github.ref_name == 'dev'
+        if: github.ref_name == 'dev'
         with:
           repository-url: https://test.pypi.org/legacy/
           password: ${{ secrets.TESTPYPI_API_TOKEN }}
@@ -75,9 +65,10 @@ jobs:
           attestations: true
 
       # Publish package to official PyPI environment (main branch only)
+      # Always publish on main branch push, skip-existing handles duplicate versions
       - name: Publish | Upload package to PyPI (main branch)
         uses: pypa/gh-action-pypi-publish@v1.13.0
-        if: steps.release.outputs.released == 'true' && github.ref_name == 'main'
+        if: github.ref_name == 'main'
         with:
           password: ${{ secrets.PYPI_API_TOKEN }}
           skip-existing: true

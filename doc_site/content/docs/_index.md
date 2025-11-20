@@ -30,6 +30,14 @@ For quick start, we provide comprehensive [Installation](installation) and [Best
 
 <p align="center"><img src="/petsard/images/best-practice.zh-tw.png"></p>
 
+## Colab Execution Guide
+
+Colab's default Python version is now 3.12.12 (2025.10), but PETsARD currently only supports Python 3.10 and 3.11. If you want to run PETsARD on Colab, please change the Runtime type to Python 3.11.13 (2025.07) as shown below:
+
+![How to Change Colab Runtime Version](/images/colab-change-runtime.png)
+
+For detailed Colab runtime version information, please refer to: https://github.com/googlecolab/backend-info#202507
+
 ## Release History
 
 - [Milestone](https://github.com/nics-dp/PETsARD/releases/latest)

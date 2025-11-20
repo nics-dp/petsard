@@ -13,6 +13,7 @@ next: docs/petsard-yaml/preprocessor-yaml/encoding
 點擊下方按鈕在 Colab 中執行完整範例：
 
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/nics-tw/petsard/blob/main/demo/petsard-yaml/preprocessor-yaml/preprocessor_outlier-handling.ipynb)
+> **注意**：使用 Colab 請參考[執行環境設定](/petsard/docs/#colab-執行說明)。
 
 ### 範例 1：欄位特定離群值方法
 

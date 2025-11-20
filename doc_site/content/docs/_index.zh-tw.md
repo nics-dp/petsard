@@ -30,6 +30,14 @@ PETsARD 採用模組化設計，透過 YAML 描述資料處理流程。系統整
 
 <p align="center"><img src="/petsard/images/best-practice.zh-tw.png"></p>
 
+## Colab 執行說明
+
+Colab 目前預設的版本已經到 Python 3.12.12 (2025.10)，但 PETsARD 目前僅支援 Python 3.10 和 3.11。如果你想在 Colab 上執行 PETsARD，請依照下圖將 Runtime type 改成 Python 3.11.13 (2025.07)：
+
+![如何更改 Colab Runtime Version](/images/colab-change-runtime.png)
+
+詳細的 Colab runtime 版本資訊請參考：https://github.com/googlecolab/backend-info#202507
+
 ## 版本紀錄
 
 - [Milestone](https://github.com/nics-dp/PETsARD/releases/latest)

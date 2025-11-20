@@ -13,6 +13,7 @@ Define how to handle missing values when specific fields contain NaN.
 Click the button below to run examples in Colab:
 
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/nics-tw/petsard/blob/main/demo/petsard-yaml/constrainer-yaml/constrainer_nan_groups.ipynb)
+> **Note**: If using Colab, please see the [runtime setup guide](/petsard/docs/#colab-execution-guide).
 
 ```yaml
 nan_groups:

@@ -22,6 +22,7 @@ next: docs/petsard-yaml/constrainer-yaml
 請點擊下方按鈕在 Colab 中執行範例：
 
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/nics-tw/petsard/blob/main/demo/petsard-yaml/constrainer-yaml/constrainer_field_proportions.ipynb)
+> **注意**：使用 Colab 請參考[執行環境設定](/petsard/docs/#colab-執行說明)。
 
 ```yaml
 field_proportions:
