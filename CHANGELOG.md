@@ -2,6 +2,14 @@
 
 <!-- version list -->
 
+## v1.10.1-rc.2 (2025-11-20)
+
+### Bug Fixes
+
+- **demo**: Resolve Colab execution errors and update docs
+  ([`319aedc`](https://github.com/nics-dp/petsard/commit/319aedc7a549a4c12465f40035799c17265ad4a5))
+
+
 ## v1.10.1-rc.1 (2025-11-20)
 
 
