@@ -40,6 +40,7 @@ jobs:
           swap-storage: false
 
       - name: Cleanup untagged images
+        continue-on-error: true
         uses: actions/delete-package-versions@v5
         with:
           package-name: "petsard"
