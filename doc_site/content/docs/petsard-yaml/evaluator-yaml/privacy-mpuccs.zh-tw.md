@@ -1,6 +1,9 @@
 ---
 title: "mpUCCs 隱私風險評估（實驗性功能）"
-weight: 6
+type: docs
+weight: 696
+prev: docs/petsard-yaml/evaluator-yaml/utility
+next: docs/petsard-yaml/evaluator-yaml/privacy-mpuccs
 ---
 
 {{< callout type="warning" >}}

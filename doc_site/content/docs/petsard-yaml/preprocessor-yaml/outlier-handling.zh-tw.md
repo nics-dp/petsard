@@ -1,6 +1,9 @@
 ---
 title: "離群值處理"
-weight: 2
+type: docs
+weight: 642
+prev: docs/petsard-yaml/preprocessor-yaml/missing-handling
+next: docs/petsard-yaml/preprocessor-yaml/encoding
 ---
 
 識別並處理資料中的離群值（Outliers）。

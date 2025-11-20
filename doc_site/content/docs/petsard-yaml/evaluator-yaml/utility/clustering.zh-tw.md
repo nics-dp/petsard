@@ -1,6 +1,9 @@
 ---
 title: "聚類任務"
+type: docs
 weight: 3
+prev: docs/petsard-yaml/evaluator-yaml/utility/regression
+next: docs/petsard-yaml/evaluator-yaml/utility
 ---
 
 評估合成資料在無監督聚類問題上的實用性。

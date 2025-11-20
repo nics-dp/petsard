@@ -1,6 +1,7 @@
 ---
 title: "Status API"
-weight: 70
+type: docs
+weight: 1030
 ---
 
 Status 是 PETsARD 的內部狀態管理模組，負責追蹤工作流程執行、儲存結果、管理詮釋資料（Schema），並建立執行快照。

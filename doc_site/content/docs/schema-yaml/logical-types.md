@@ -1,6 +1,9 @@
 ---
 title: "Logical Types"
-weight: 5
+type: docs
+weight: 750
+prev: docs/schema-yaml/precision
+next: docs/schema-yaml/statistics
 ---
 
 Logical Type is a declarative attribute for annotating field semantics without changing the underlying data type.

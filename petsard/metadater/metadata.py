@@ -4,6 +4,7 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Any
 
+from petsard.exceptions import MetadataError
 from petsard.metadater.stats import DatasetsStats, FieldStats, TableStats
 
 
@@ -34,7 +35,7 @@ class Attribute:
     default_value: Any = None
 
     # Special data characteristics
-    is_constant: bool = False  # 標記所有值都相同的欄位
+    is_constant: bool = False  # Mark fields where all values are identical
 
     # Constraints
     constraints: dict[str, Any] | None = None
@@ -58,9 +59,10 @@ class Attribute:
         # category
         if self.category is not None:
             if "category" in self.type_attr:
-                raise ValueError(
+                raise MetadataError(
                     f"Field '{self.name}' has category defined in both top-level and type_attr. "
-                    f"Please define it in only one place."
+                    f"Please define it in only one place.",
+                    field_name=self.name
                 )
             self.type_attr["category"] = self.category
         # Ensure category has default value
@@ -70,9 +72,10 @@ class Attribute:
         # nullable
         if self.nullable is not None:
             if "nullable" in self.type_attr:
-                raise ValueError(
+                raise MetadataError(
                     f"Field '{self.name}' has nullable defined in both top-level and type_attr. "
-                    f"Please define it in only one place."
+                    f"Please define it in only one place.",
+                    field_name=self.name
                 )
             self.type_attr["nullable"] = self.nullable
         # Ensure nullable has default value
@@ -82,9 +85,10 @@ class Attribute:
         # precision (existing, but also add check)
         if self.precision is not None:
             if "precision" in self.type_attr:
-                raise ValueError(
+                raise MetadataError(
                     f"Field '{self.name}' has precision defined in both top-level and type_attr. "
-                    f"Please define it in only one place."
+                    f"Please define it in only one place.",
+                    field_name=self.name
                 )
             self.type_attr["precision"] = self.precision
 
@@ -95,16 +99,16 @@ class Attribute:
 
         # Reject type: category
         if self.type == "category":
-            raise ValueError(
-                f"'type: category' is not allowed. Use 'category: true' or 'type_attr.category: true' to mark categorical data. "
-                f"\nField: {self.name}"
+            raise MetadataError(
+                "'type: category' is not allowed. Use 'category: true' or 'type_attr.category: true' to mark categorical data.",
+                field_name=self.name
             )
 
         # Reject logical_type: category
         if self.logical_type == "category":
-            raise ValueError(
-                f"'logical_type: category' is not allowed. Use 'category: true' or 'type_attr.category: true' to mark categorical data. "
-                f"\nField: {self.name}"
+            raise MetadataError(
+                "'logical_type: category' is not allowed. Use 'category: true' or 'type_attr.category: true' to mark categorical data.",
+                field_name=self.name
             )
 
 

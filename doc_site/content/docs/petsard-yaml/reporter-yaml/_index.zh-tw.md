@@ -1,6 +1,9 @@
 ---
 title: "Reporter YAML"
-weight: 190
+type: docs
+weight: 700
+prev: docs/petsard-yaml/evaluator-yaml
+next: docs/petsard-yaml
 ---
 
 Reporter 模組負責輸出實驗結果，支援資料儲存、評估報告和時間記錄等多種報告格式。

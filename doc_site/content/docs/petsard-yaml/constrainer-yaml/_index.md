@@ -1,6 +1,9 @@
 ---
 title: "Constrainer YAML"
-weight: 160
+type: docs
+weight: 670
+prev: docs/petsard-yaml/postprocessor-yaml
+next: docs/petsard-yaml/describer-yaml
 ---
 
 Data constraints are a sophisticated mechanism for fine-grained control of synthetic data quality and consistency, enabling users to define acceptable data ranges through multi-layered rules. `PETsARD` provides four primary constraint types: NaN group constraints, field constraints, field combination constraints, and field proportion constraints. These constraints work together to ensure that generated synthetic data not only faithfully preserves statistical properties of the original data, but also conforms to specific domain logic and business requirements.
@@ -134,7 +137,7 @@ field_proportions:      # Field proportion maintenance, default none
 **Field value pairing relationships, default none**
 
 - **Education-Income Pairing Rules**
-  - 🌐 **English**: 
+  - 🌐 **English**:
     - Doctorate education can only have >50K income
     - Masters education can have >50K or <=50K income
   - 🇹🇼 **繁體中文**:

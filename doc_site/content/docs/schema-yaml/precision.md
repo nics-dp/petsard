@@ -1,6 +1,9 @@
 ---
 title: "Numeric Precision"
-weight: 4
+type: docs
+weight: 740
+prev: docs/schema-yaml/data-types
+next: docs/schema-yaml/logical-types
 ---
 
 PETsARD automatically tracks and maintains the precision (decimal places) of numeric fields, applying rounding in Loader, Preprocessor, and Postprocessor stages to ensure synthetic data matches the original data's precision. Precision is only applied at output and doesn't affect model training.

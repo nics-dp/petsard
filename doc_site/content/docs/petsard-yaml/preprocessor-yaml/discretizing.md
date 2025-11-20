@@ -1,6 +1,9 @@
 ---
 title: "Discretizing"
-weight: 5
+type: docs
+weight: 645
+prev: docs/petsard-yaml/preprocessor-yaml/scaling
+next: docs/petsard-yaml/preprocessor-yaml
 ---
 
 Converts continuous numerical data into discrete categories or intervals, mutually exclusive with encoding (encoder).

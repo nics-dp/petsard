@@ -1,9 +1,9 @@
 ---
 title: 反覆調校：資料屬性調整
 type: docs
-weight: 5
-prev: docs/best-practices
-next: docs/api
+weight: 500
+prev: docs/evaluation-purpose
+next: docs/petsard-yaml
 ---
 
 ## 概述
@@ -70,7 +70,7 @@ next: docs/api
 - 提升合成資料的保真度（平均提升 15-40%）
 - 減少無效或不合理的合成樣本
 
-**詳細說明**：[類別資料：均勻編碼](categorical)
+**詳細說明**：[類別資料：均勻編碼](uniform-encoding)
 
 ### 三、長尾分佈：對數轉換
 
@@ -106,7 +106,7 @@ next: docs/api
 - 提升合成器的學習效率與穩定性
 - 確保業務邏輯的一致性
 
-**詳細說明**：[多時間點資料：時間定錨縮放](multi-timestamp)
+**詳細說明**：[多時間點資料：時間定錨縮放](time-anchoring)
 
 ## 選擇適當的調整方法
 

@@ -1,6 +1,7 @@
 ---
 title: "load_external_module()"
-weight: 91
+type: docs
+weight: 1150
 ---
 
 **Module**: `petsard.utils`

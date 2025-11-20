@@ -1,6 +1,9 @@
 ---
 title: Experiment Design Selection
-weight: 3
+type: docs
+weight: 430
+prev: docs/evaluation-purpose/fidelity-or-utility
+next: docs/evaluation-purpose
 ---
 
 When synthetic data is used for specific machine learning tasks, experiment design determines how to train and evaluate models to assess the utility of synthetic data. Different experiment designs answer different questions and are suitable for different application scenarios.

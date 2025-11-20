@@ -1,6 +1,9 @@
 ---
 title: "縮放"
-weight: 4
+type: docs
+weight: 644
+prev: docs/petsard-yaml/preprocessor-yaml/encoding
+next: docs/petsard-yaml/preprocessor-yaml/discretizing
 ---
 
 將數值資料正規化到特定範圍或分布，以改善機器學習演算法的效能。

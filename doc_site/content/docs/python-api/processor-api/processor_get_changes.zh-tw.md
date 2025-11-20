@@ -119,7 +119,7 @@ changes = processor.get_changes()
 
 # 檢查 age 是否使用中位數填補
 age_missing = changes[
-    (changes['col'] == 'age') & 
+    (changes['col'] == 'age') &
     (changes['processor'] == 'missing')
 ]
 assert 'Median' in age_missing['current'].values[0]

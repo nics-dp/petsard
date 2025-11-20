@@ -1,15 +1,14 @@
+import logging
 import warnings
 
 import pandas as pd
 
 from petsard.constrainer.constrainer_base import BaseConstrainer
-from petsard.constrainer.field_combination_constrainer import (
-    FieldCombinationConstrainer,
-)
+from petsard.constrainer.field_combination_constrainer import \
+    FieldCombinationConstrainer
 from petsard.constrainer.field_constrainer import FieldConstrainer
-from petsard.constrainer.field_proportions_constrainer import (
-    FieldProportionsConstrainer,
-)
+from petsard.constrainer.field_proportions_constrainer import \
+    FieldProportionsConstrainer
 from petsard.constrainer.nan_group_constrainer import NaNGroupConstrainer
 
 
@@ -51,6 +50,7 @@ class Constrainer:
         self.config = config
         self.metadata = metadata
         self._constrainers = {}
+        self._logger = logging.getLogger(f"PETsARD.{self.__class__.__name__}")
         self._setup_constrainers()
 
         self.resample_trails = None
@@ -233,7 +233,7 @@ class Constrainer:
                 remain_rows = target_rows - result_df.shape[0]
 
             if verbose_step > 0 and self.resample_trails % verbose_step == 0:
-                print(
+                self._logger.info(
                     f"Trial {self.resample_trails}: Got {result_df.shape[0] if result_df is not None else 0} rows, need {remain_rows} more"
                 )
 
@@ -421,7 +421,6 @@ class Constrainer:
                         # Build rule name
                         if actions == "delete":
                             rule_name = f"{field_name}: delete"
-                            action_desc = "delete"
                         elif isinstance(actions, dict):
                             # May have multiple actions, but usually only one
                             action_keys = list(actions.keys())
@@ -435,11 +434,9 @@ class Constrainer:
                                         else ", ".join(target)
                                     )
                                     rule_name = f"{field_name}: erase -> {target_str}"
-                                    action_desc = f"erase -> {target_str}"
                                 elif action == "copy":
                                     target = actions[action]
                                     rule_name = f"{field_name}: copy <- {target}"
-                                    action_desc = f"copy <- {target}"
                                 elif action == "nan_if_condition":
                                     conditions = actions[action]
                                     cond_strs = [
@@ -449,18 +446,12 @@ class Constrainer:
                                         for k, v in conditions.items()
                                     ]
                                     rule_name = f"{field_name}: nan_if_condition ({', '.join(cond_strs)})"
-                                    action_desc = (
-                                        f"nan_if_condition ({', '.join(cond_strs)})"
-                                    )
                                 else:
                                     rule_name = f"{field_name}: {action}"
-                                    action_desc = action
                             else:
                                 rule_name = f"{field_name}: {', '.join(action_keys)}"
-                                action_desc = ", ".join(action_keys)
                         else:
                             rule_name = f"{field_name}: {actions}"
-                            action_desc = str(actions)
 
                         # Create temporary constrainer to handle only this rule
                         temp_constrainer = NaNGroupConstrainer({field_name: actions})
@@ -558,9 +549,6 @@ class Constrainer:
         # If detailed information is needed
         if return_details:
             # Only return violated data and their violation markers
-            violation_columns = [
-                col for col in result.columns if col.startswith("__violated_")
-            ]
             details_df = result[~result["__validation_passed__"]].copy()
 
             # Remove internal tracking field, keep only violation markers

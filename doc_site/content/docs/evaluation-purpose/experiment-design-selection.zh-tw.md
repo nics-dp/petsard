@@ -1,6 +1,9 @@
 ---
 title: 實驗設計挑選
-weight: 3
+type: docs
+weight: 430
+prev: docs/evaluation-purpose/fidelity-or-utility
+next: docs/evaluation-purpose
 ---
 
 當合成資料用於特定機器學習任務時，實驗設計 (Experiment Design) 決定了如何訓練和評估模型以評估合成資料的實用性。不同的實驗設計回答不同的問題，適用於不同的應用情境。

@@ -160,7 +160,7 @@ class DataDescriberConfig(BaseConfig):
     def update_data(self, data: dict[str, pd.DataFrame]) -> None:
         error_msg: str | None = None
 
-        self._logger.info(
+        self._logger.debug(
             f"Updating data with {len(self.REQUIRED_INPUT_KEYS)} required keys"
         )
 
@@ -295,7 +295,7 @@ class DescriberDescribe(BaseEvaluator):
             (dict[str, pd.DataFrame]): The describe result
         """
         error_msg: str = None
-        self._logger.info(
+        self._logger.debug(
             f"Starting evaluation with {len(self.desc_config.describe_method)} statistical methods"
         )
         self.desc_config.update_data(data)
@@ -304,7 +304,7 @@ class DescriberDescribe(BaseEvaluator):
         temp_desc_result: dict[str, list[Any]] = {}
         granularity: str = None
         for method in self.desc_config.describe_method:
-            self._logger.info(f"Describing data with method: {method}")
+            self._logger.debug(f"Describing data with method: {method}")
 
             try:
                 granularity = self.EXEC_GRANULARITY_MAP[method]

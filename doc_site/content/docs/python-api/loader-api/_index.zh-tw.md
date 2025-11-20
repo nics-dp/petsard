@@ -1,6 +1,7 @@
 ---
 title: "Loader API"
-weight: 310
+type: docs
+weight: 1040
 ---
 
 資料載入模組，支援多種檔案格式的資料載入。

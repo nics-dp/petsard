@@ -1,6 +1,7 @@
 ---
 title: "Constrainer API"
-weight: 350
+type: docs
+weight: 1100
 ---
 
 Synthetic data constraint processing module.

@@ -81,7 +81,7 @@ class BaseAdapter:
                 if attr.type and any(t in attr.type for t in ["float", "int"]):
                     # Apply safe_round to entire column
                     data[col_name] = data[col_name].apply(
-                        lambda x: safe_round(x, precision)
+                        lambda x, p=precision: safe_round(x, p)
                     )
                     precision_applied_count += 1
                     self._logger.debug(
@@ -89,8 +89,8 @@ class BaseAdapter:
                     )
 
         if precision_applied_count > 0:
-            self._logger.info(
-                f"✓ Applied precision rounding to {precision_applied_count} columns in {context}"
+            self._logger.debug(
+                f"Applied precision rounding to {precision_applied_count} columns in {context}"
             )
 
     def _update_schema_stats(
@@ -124,8 +124,8 @@ class BaseAdapter:
             description=schema.description,
         )
 
-        self._logger.info(
-            f"✓ Updated statistics for {len(updated_schema.attributes)} attributes in {context}"
+        self._logger.debug(
+            f"Updated statistics for {len(updated_schema.attributes)} attributes in {context}"
         )
 
         return updated_schema
@@ -134,11 +134,11 @@ class BaseAdapter:
         self, protocol_value: str, value_type: str = "filepath"
     ) -> tuple[bool, str, object]:
         """
-        統一處理 benchmark:// 協議的下載邏輯
+        Unified handling of benchmark:// protocol download logic
 
         Args:
-            protocol_value: 原始協議字串 (e.g., "benchmark://adult")
-            value_type: 值類型，"filepath" 或 "schema"
+            protocol_value: Original protocol string (e.g., "benchmark://adult")
+            value_type: Value type, either "filepath" or "schema"
 
         Returns:
             tuple: (is_benchmark, local_path, benchmarker_config)
@@ -154,14 +154,16 @@ class BaseAdapter:
         if not is_benchmark:
             return False, protocol_value, None
 
-        from petsard.exceptions import BenchmarkDatasetsError, UnsupportedMethodError
-        from petsard.loader.benchmarker import BenchmarkerConfig, BenchmarkerRequests
+        from petsard.exceptions import (BenchmarkDatasetsError,
+                                        UnsupportedMethodError)
+        from petsard.loader.benchmarker import (BenchmarkerConfig,
+                                                BenchmarkerRequests)
 
         benchmark_name = re.sub(
             r"^benchmark://", "", protocol_value, flags=re.IGNORECASE
         ).lower()
 
-        self._logger.info(
+        self._logger.debug(
             f"Detected benchmark protocol for {value_type}: {benchmark_name}"
         )
 
@@ -213,18 +215,18 @@ class BaseAdapter:
         self, status, source_spec: str, key_aliases: dict | None = None
     ) -> pd.DataFrame:
         """
-        統一的資料來源解析邏輯，支援 "Module.key" 格式
+        Unified data source resolution logic, supports "Module.key" format
 
         Args:
-            status: Status 物件
-            source_spec: 資料來源規格 (e.g., "Loader" or "Splitter.train")
-            key_aliases: 別名映射字典 (e.g., {"ori": "train", "control": "validation"})
+            status: Status object
+            source_spec: Data source specification (e.g., "Loader" or "Splitter.train")
+            key_aliases: Alias mapping dictionary (e.g., {"ori": "train", "control": "validation"})
 
         Returns:
-            pd.DataFrame: 解析後的資料
+            pd.DataFrame: Resolved data
 
         Raises:
-            ConfigError: 當找不到指定的資料來源時
+            ConfigError: When the specified data source cannot be found
         """
         if key_aliases is None:
             key_aliases = {}
@@ -285,14 +287,14 @@ class BaseAdapter:
 
     def _get_metadata_with_priority(self, status, priority: list[str]) -> Schema | None:
         """
-        按優先順序獲取 metadata
+        Get metadata by priority order
 
         Args:
-            status: Status 物件
-            priority: 模組名稱的優先順序列表 (e.g., ["Loader", "Splitter", "Preprocessor"])
+            status: Status object
+            priority: Priority list of module names (e.g., ["Loader", "Splitter", "Preprocessor"])
 
         Returns:
-            Schema | None: 找到的 metadata，如果都找不到則回傳 None
+            Schema | None: Found metadata, or None if not found in any module
         """
         for module in priority:
             if module in status.status:
@@ -309,24 +311,24 @@ class BaseAdapter:
 
     def _safe_copy(self, data):
         """
-        統一的拷貝策略，根據資料類型決定拷貝方法
+        Unified copy strategy, determines copy method based on data type
 
         Args:
-            data: 要拷貝的資料
+            data: Data to copy
 
         Returns:
-            拷貝後的資料
+            Copied data
         """
         if data is None:
             return None
         elif isinstance(data, pd.DataFrame):
-            # DataFrame 的 copy() 通常足夠且較快
+            # DataFrame's copy() is usually sufficient and faster
             return data.copy()
         elif isinstance(data, dict):
-            # dict 可能包含 DataFrame，需要深拷貝
+            # dict may contain DataFrame, needs deep copy
             return deepcopy(data)
         else:
-            # 其他複雜結構使用深拷貝
+            # Other complex structures use deep copy
             return deepcopy(data)
 
     def run(self, input: dict) -> None:
@@ -338,7 +340,7 @@ class BaseAdapter:
                 See self.set_input() for more details.
         """
         start_time: time = time.time()
-        self._logger.info(f"TIMING_START|{self.module_name}|run|{start_time}")
+        self._logger.debug(f"TIMING_START|{self.module_name}|run|{start_time}")
         self._logger.info(f"Starting {self.module_name} execution")
 
         try:
@@ -347,7 +349,7 @@ class BaseAdapter:
             elapsed_time: time = time.time() - start_time
             formatted_elapsed_time: str = str(timedelta(seconds=round(elapsed_time)))
 
-            self._logger.info(
+            self._logger.debug(
                 f"TIMING_END|{self.module_name}|run|{time.time()}|{elapsed_time}"
             )
             self._logger.info(
@@ -356,7 +358,7 @@ class BaseAdapter:
             )
         except Exception as e:
             elapsed_time: time = time.time() - start_time
-            self._logger.error(
+            self._logger.debug(
                 f"TIMING_ERROR|{self.module_name}|run|{time.time()}|{elapsed_time}|{str(e)}"
             )
             raise
@@ -853,10 +855,10 @@ class PreprocessorAdapter(BaseAdapter):
             method = outlier_config.lower()
             # Only allow global methods in simplified format
             if method in ["outlier_isolationforest", "outlier_lof"]:
-                self._logger.info(
-                    f"✓ Detected simplified global outlier config: {method}"
+                self._logger.debug(
+                    f"Detected simplified global outlier config: {method}"
                 )
-                self._logger.info(f"  Will apply {method} to ALL numerical columns")
+                self._logger.debug(f"Will apply {method} to ALL numerical columns")
                 # Convert to dict format with special key
                 self._config["outlier"] = {"__global__": outlier_config}
             else:
@@ -893,14 +895,14 @@ class PreprocessorAdapter(BaseAdapter):
         # Check if it's the simplified format with __global__ key
         if isinstance(outlier_config, dict) and "__global__" in outlier_config:
             global_method = outlier_config["__global__"]
-            self._logger.info(
-                f"✓ Expanding global outlier config: {global_method} to all numerical columns"
+            self._logger.debug(
+                f"Expanding global outlier config: {global_method} to all numerical columns"
             )
 
             # Identify numerical columns
             numerical_cols = data.select_dtypes(include=["number"]).columns.tolist()
-            self._logger.info(
-                f"  Found {len(numerical_cols)} numerical columns: {numerical_cols}"
+            self._logger.debug(
+                f"Found {len(numerical_cols)} numerical columns: {numerical_cols}"
             )
 
             # Create expanded config
@@ -1220,7 +1222,7 @@ class PostprocessorAdapter(BaseAdapter):
                 self.data_postproc = SchemaMetadater.align(
                     input["original_schema"], self.data_postproc
                 )
-                self._logger.info("✓ Successfully restored dtypes after postprocessing")
+                self._logger.debug("Successfully restored dtypes after postprocessing")
             except Exception as e:
                 self._logger.warning(
                     f"Failed to restore dtypes from original schema: {e}"
@@ -1262,8 +1264,8 @@ class PostprocessorAdapter(BaseAdapter):
             preprocessor_input_schema = status.get_preprocessor_input_schema()
             if preprocessor_input_schema:
                 self.input["original_schema"] = preprocessor_input_schema
-                self._logger.info(
-                    "✓ Using remembered Preprocessor input Schema for dtype restoration"
+                self._logger.debug(
+                    "Using remembered Preprocessor input Schema for dtype restoration"
                 )
             # Fallback to Loader/Splitter schema if preprocessor input schema not available
             elif "Loader" in status.status:
@@ -1412,7 +1414,7 @@ class ConstrainerAdapter(BaseAdapter):
 
             import yaml
 
-            self._logger.info(f"Loading constraints from YAML file: {constraints_yaml}")
+            self._logger.debug(f"Loading constraints from YAML file: {constraints_yaml}")
 
             # Try to find the file in multiple locations
             yaml_path = None
@@ -1426,14 +1428,18 @@ class ConstrainerAdapter(BaseAdapter):
                     candidate = Path(search_dir) / constraints_yaml
                     if candidate.exists():
                         yaml_path = candidate
-                        self._logger.info(
+                        self._logger.debug(
                             f"Found constraints file in sys.path: {yaml_path}"
                         )
                         break
 
             if yaml_path is None:
-                raise FileNotFoundError(
-                    f"Could not find {constraints_yaml} in current directory or sys.path"
+                from petsard.exceptions import UnableToLoadError
+
+                self._logger.error(f"Could not find constraints file: {constraints_yaml}")
+                raise UnableToLoadError(
+                    f"Could not find {constraints_yaml} in current directory or sys.path",
+                    filepath=constraints_yaml
                 )
 
             try:
@@ -1733,7 +1739,7 @@ class ConstrainerAdapter(BaseAdapter):
 
         # If source is specified, use data from specified source
         if self.source is not None:
-            self._logger.info(f"Using specified sources: {self.source}")
+            self._logger.debug(f"Using specified sources: {self.source}")
             self.input["data"] = {}
             self.input["source_names"] = {}
 
@@ -1879,8 +1885,8 @@ class EvaluatorAdapter(BaseAdapter):
                     self._logger.debug(f"Aligning data type for '{key}' data")
                     try:
                         aligned_data[key] = SchemaMetadater.align(input["schema"], df)
-                        self._logger.info(
-                            f"✓ Successfully aligned '{key}' data to schema"
+                        self._logger.debug(
+                            f"Successfully aligned '{key}' data to schema"
                         )
                     except Exception as e:
                         self._logger.warning(
@@ -1931,8 +1937,8 @@ class EvaluatorAdapter(BaseAdapter):
                                         f"Could not convert '{key}' column '{col}' from {current_dtype} to {ref_dtype}: {e}"
                                     )
 
-                self._logger.info(
-                    "✓ Harmonized dtypes across all datasets for evaluation"
+                self._logger.debug(
+                    "Harmonized dtypes across all datasets for evaluation"
                 )
 
         self.evaluator.create()
@@ -2027,13 +2033,13 @@ class DescriberAdapter(BaseAdapter):
             # Dict format (for explicitly specifying comparison targets)
             # Example: {"base": "Splitter.train", "target": "Synthesizer"}
             # Or backward compatible: {"ori": "Splitter.train", "syn": "Synthesizer"}
-            self._logger.info(f"Using explicit source mapping: {self.source}")
+            self._logger.debug(f"Using explicit source mapping: {self.source}")
         elif isinstance(self.source, list):
             # Convert list format to dict format
             if len(self.source) == 2:
                 # For compare mode, convert list to dict
                 self.source = {"base": self.source[0], "target": self.source[1]}
-                self._logger.info(f"Converted list format to dict: {self.source}")
+                self._logger.debug(f"Converted list format to dict: {self.source}")
             elif len(self.source) == 1:
                 # For describe mode, keep as single-element list
                 pass
@@ -2067,7 +2073,7 @@ class DescriberAdapter(BaseAdapter):
             if source_count == 1:
                 config["mode"] = "describe"
                 config["method"] = "describe"  # Set actual method
-                self._logger.info(
+                self._logger.debug(
                     f"Default method resolved to: describe (1 source: {self.source})"
                 )
             elif source_count == 2:
@@ -2075,7 +2081,7 @@ class DescriberAdapter(BaseAdapter):
                 config["method"] = (
                     "describe"  # Describer internally still uses describe
                 )
-                self._logger.info(
+                self._logger.debug(
                     f"Default method resolved to: compare (2 sources: {self.source})"
                 )
             else:
@@ -2272,10 +2278,10 @@ class DescriberAdapter(BaseAdapter):
             # Support backward compatibility: if using ori/syn, map to base/target
             if "ori" in source_mapping and "base" not in source_mapping:
                 source_mapping["base"] = source_mapping.pop("ori")
-                self._logger.info("Mapped 'ori' to 'base' for backward compatibility")
+                self._logger.debug("Mapped 'ori' to 'base' for backward compatibility")
             if "syn" in source_mapping and "target" not in source_mapping:
                 source_mapping["target"] = source_mapping.pop("syn")
-                self._logger.info("Mapped 'syn' to 'target' for backward compatibility")
+                self._logger.debug("Mapped 'syn' to 'target' for backward compatibility")
 
             # Validate required keys
             if "base" not in source_mapping or "target" not in source_mapping:

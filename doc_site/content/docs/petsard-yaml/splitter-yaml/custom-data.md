@@ -1,6 +1,9 @@
 ---
 title: "Custom Data"
-weight: 122
+type: docs
+weight: 631
+prev: docs/petsard-yaml/splitter-yaml
+next: docs/petsard-yaml/splitter-yaml
 ---
 
 To use pre-split data from external sources, use the `custom_data` method.

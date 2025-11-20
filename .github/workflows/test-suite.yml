@@ -85,7 +85,7 @@ jobs:
 
           report = []
           report.append("## 🧪 Test Report\n")
-          
+
           # === Ruff Results ===
           ruff_file = Path("ruff.json")
           if ruff_file.exists() and ruff_file.stat().st_size > 0:
@@ -95,7 +95,7 @@ jobs:
 
                   if ruff_data:
                       report.append(f"### ⚠️ Code Quality ({len(ruff_data)} issues)\n")
-                      
+
                       # Group by file
                       by_file = {}
                       for issue in ruff_data[:20]:  # Show max 20
@@ -114,12 +114,12 @@ jobs:
 
                       if len(ruff_data) > 20:
                           report.append(f"\n*...{len(ruff_data) - 20} more issues*\n")
-                      else:
-                          report.append("### ✅ Code Quality Passed\n")
-                  except Exception as e:
-                      report.append(f"### ⚠️ Unable to parse Ruff results: {e}\n")
-              else:
-                  report.append("### ✅ Code Quality Passed\n")
+                  else:
+                      report.append("### ✅ Code Quality Passed\n")
+              except Exception as e:
+                  report.append(f"### ⚠️ Unable to parse Ruff results: {e}\n")
+          else:
+              report.append("### ✅ Code Quality Passed\n")
 
           report.append("\n---\n\n")
 
@@ -143,14 +143,14 @@ jobs:
                       report.append(f"### ✅ Tests Passed ({passed}/{total})\n\n")
                   else:
                       report.append(f"### ❌ Tests Failed ({passed}/{total} passed)\n\n")
-                  
+
                   # Coverage
                   if coverage_file.exists():
                       with open("coverage.json") as f:
                           cov_data = json.load(f)
                       coverage = cov_data.get('totals', {}).get('percent_covered', 0)
                       report.append(f"**Coverage**: {coverage:.1f}%\n\n")
-                  
+
                   # Failed tests
                   if failures + errors > 0:
                       report.append(f"**Failed Tests**:\n\n")
@@ -173,12 +173,12 @@ jobs:
                   # Skipped tests
                   if skipped > 0:
                       report.append(f"**Skipped**: {skipped} tests\n\n")
-                      
+
               except Exception as e:
                   report.append(f"### ⚠️ Unable to parse test results: {e}\n\n")
           else:
               report.append("### ❌ Test results not found\n\n")
-          
+
           # === Detailed Output ===
           pytest_log = Path("pytest.log")
           if pytest_log.exists():
@@ -214,7 +214,7 @@ jobs:
             const botComment = comments.find(c =>
               c.user.type === 'Bot' && c.body.includes('🧪 Test Report')
             );
-            
+
             const body = `## 🧪 Test Report (Python ${{ matrix.python-version }})\n\n${report}\n\n---\n*Updated at ${new Date().toISOString()}*`;
 
             if (botComment) {

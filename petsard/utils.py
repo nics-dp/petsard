@@ -6,7 +6,7 @@ import sys
 from decimal import Decimal
 from typing import Any, TypeVar, overload
 
-from petsard.exceptions import ConfigError
+from petsard.exceptions import ConfigError, UnableToLoadError
 
 # Define generic type variable to maintain input/output type consistency
 T = TypeVar("T", int, float, Decimal, None)
@@ -127,7 +127,7 @@ def _resolve_module_path(
         f"{searched_locations}"
     )
     logger.error(error_msg)
-    raise FileNotFoundError(error_msg)
+    raise UnableToLoadError(error_msg, filepath=module_path)
 
 
 def load_external_module(
@@ -164,7 +164,7 @@ def load_external_module(
     if not os.path.isfile(resolved_path):
         error_msg = f"The module file '{resolved_path}' does not exist."
         logger.error(error_msg)
-        raise FileNotFoundError(error_msg)
+        raise UnableToLoadError(error_msg, filepath=resolved_path)
 
     # Get module name from file path
     module_name = os.path.splitext(os.path.basename(resolved_path))[0]

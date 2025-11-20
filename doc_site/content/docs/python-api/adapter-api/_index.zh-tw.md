@@ -1,6 +1,7 @@
 ---
 title: "Adapter API"
-weight: 390
+type: docs
+weight: 1140
 ---
 
 ## 概述

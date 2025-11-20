@@ -1,6 +1,9 @@
 ---
 title: "Data Fidelity Assessment"
-weight: 3
+type: docs
+weight: 693
+prev: docs/petsard-yaml/evaluator-yaml/privacy
+next: docs/petsard-yaml/evaluator-yaml/utility
 ---
 
 Measure the similarity between synthetic and original data, evaluating the preservation of data distributions and variable relationships.

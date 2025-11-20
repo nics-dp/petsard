@@ -1,6 +1,9 @@
 ---
 title: "Describer YAML"
-weight: 170
+type: docs
+weight: 680
+prev: docs/petsard-yaml/constraints-yaml
+next: docs/petsard-yaml/evaluator-yaml
 ---
 
 YAML configuration file format for the Describer module. Provides statistical description and comparison functionality for datasets.

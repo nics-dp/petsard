@@ -1,6 +1,9 @@
 ---
 title: "Describer YAML"
-weight: 170
+type: docs
+weight: 680
+prev: docs/petsard-yaml/constraints-yaml
+next: docs/petsard-yaml/evaluator-yaml
 ---
 
 Describer 模組的 YAML 設定檔案格式。提供資料集的統計描述與比較功能。

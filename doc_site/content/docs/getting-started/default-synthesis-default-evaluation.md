@@ -1,7 +1,9 @@
 ---
 title: Data Synthesis and Evaluation with Default Parameters
 type: docs
-weight: 8
+weight: 120
+prev: docs/getting-started/default-synthesis
+next: docs/getting-started/external-synthesis-default-evaluation
 ---
 
 Default synthesis with default evaluation.

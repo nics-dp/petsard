@@ -1,7 +1,9 @@
 ---
 title: 以預設參數做資料合成與資料評測
 type: docs
-weight: 8
+weight: 120
+prev: docs/getting-started/default-synthesis
+next: docs/getting-started/external-synthesis-default-evaluation
 ---
 
 使用預設方式進行合成與評測。

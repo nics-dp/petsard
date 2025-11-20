@@ -108,7 +108,7 @@ class MPUCCs(BaseEvaluator):
                         decimal_places = len(str_value.split(".")[1])
                         min_precision = max(min_precision, decimal_places)
 
-                self._logger.info(
+                self._logger.debug(
                     f"Field {col} detected numeric precision: 10^-{min_precision}"
                 )
 
@@ -183,7 +183,7 @@ class MPUCCs(BaseEvaluator):
                         ):
                             min_precision = "H"
 
-                self._logger.info(
+                self._logger.debug(
                     f"Field {col} detected datetime precision: {min_precision}"
                 )
 
@@ -753,9 +753,6 @@ class MPUCCs(BaseEvaluator):
                     "field_decay_factor", self.DEFAULT_FIELD_DECAY_FACTOR
                 ) ** (combo_size - 1)
 
-            # total_weighted now only equals field_weighted
-            total_weighted = field_weighted
-
             # Initialize tree record with simplified structure
             tree_record = {
                 "check_order": len(tree_results) + 1,  # Check sequence
@@ -951,7 +948,7 @@ class MPUCCs(BaseEvaluator):
                 # Apply numeric precision
                 ori_data = self._apply_numeric_precision(ori_data, detected_precision)
                 syn_data = self._apply_numeric_precision(syn_data, detected_precision)
-                self._logger.info("Applied numeric precision rounding")
+                self._logger.debug("Applied numeric precision rounding")
         else:
             # Use specified numeric precision
             precision = self.config["numeric_precision"]
@@ -977,7 +974,7 @@ class MPUCCs(BaseEvaluator):
                 syn_data = self._apply_datetime_precision(
                     syn_data, detected_dt_precision
                 )
-                self._logger.info("Applied datetime precision rounding")
+                self._logger.debug("Applied datetime precision rounding")
         else:
             # Use specified datetime precision
             precision = self.config["datetime_precision"]
@@ -991,7 +988,7 @@ class MPUCCs(BaseEvaluator):
 
         # Get columns sorted by cardinality
         sorted_columns = self._get_sorted_columns_by_cardinality(syn_data)
-        self._logger.info(f"Field processing order (by cardinality): {sorted_columns}")
+        self._logger.debug(f"Field processing order (by cardinality): {sorted_columns}")
 
         # Progressive field search
         details_results, identified_indices, iteration_count, tree_results = (
@@ -1005,42 +1002,13 @@ class MPUCCs(BaseEvaluator):
             total_identified / total_syn_records if total_syn_records > 0 else 0.0
         )
 
-        # Calculate weighted identification rate if using field decay
-        if self.config.get("field_decay_factor", 0.5) != 0.5:
-            # Only calculate if non-default decay factor
-            total_weighted_identified = 0
-            for result in tree_results:
-                # Recalculate from stored values if needed
-                if "weighted_collision" in result:
-                    total_weighted_identified += result["weighted_collision"]
-                elif "field_weight" in result:
-                    total_weighted_identified += (
-                        result["mpuccs_collision_cnt"] * result["field_weight"]
-                    )
-                else:
-                    # Fallback: use unweighted count
-                    total_weighted_identified += result["mpuccs_collision_cnt"]
-        else:
-            # Use unweighted count when decay factor is default
-            total_weighted_identified = sum(
-                result["mpuccs_collision_cnt"] for result in tree_results
-            )
-        weighted_identification_rate = (
-            total_weighted_identified / total_syn_records
-            if total_syn_records > 0
-            else 0.0
-        )
-
         # Calculate main protection
         main_protection = 1.0 - identification_rate
-        weighted_main_protection = 1.0 - weighted_identification_rate
 
         # Initialize protection metrics
         overall_baseline_protection = None
         overall_protection = None
-        weighted_overall_protection = None
         privacy_risk_score = identification_rate  # Default to identification rate
-        weighted_privacy_risk_score = weighted_identification_rate
         baseline_protections = {}
 
         if self.config.get("calculate_baseline", True):
@@ -1085,13 +1053,9 @@ class MPUCCs(BaseEvaluator):
             overall_protection = self._calculate_overall_protection(
                 main_protection, overall_baseline_protection
             )
-            weighted_overall_protection = self._calculate_overall_protection(
-                weighted_main_protection, overall_baseline_protection
-            )
 
             # Privacy risk score (inverted from protection)
             privacy_risk_score = 1.0 - overall_protection
-            weighted_privacy_risk_score = 1.0 - weighted_overall_protection
 
         # Build global results dictionary - Simplified Plan B with risk score first
         global_dict = {}

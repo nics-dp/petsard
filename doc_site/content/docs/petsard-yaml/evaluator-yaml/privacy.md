@@ -1,6 +1,9 @@
 ---
 title: "Privacy Protection Assessment"
-weight: 2
+type: docs
+weight: 692
+prev: docs/petsard-yaml/evaluator-yaml/diagnostic
+next: docs/petsard-yaml/evaluator-yaml/fidelity
 ---
 
 Evaluate the privacy protection level of processed data by simulating three privacy attack scenarios. The evaluation uses Anonymeter, a Python library developed by [Statice](https://www.statice.ai/) that implements the anonymization evaluation standards proposed by the Article 29 Working Party (WP29) of EU Data Protection Directive in 2014 and received endorsement from the French Data Protection Authority (CNIL) in 2023.

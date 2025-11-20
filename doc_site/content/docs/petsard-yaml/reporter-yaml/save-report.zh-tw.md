@@ -1,6 +1,9 @@
 ---
 title: "產生評估報告"
-weight: 2
+type: docs
+weight: 702
+prev: docs/petsard-yaml/reporter-yaml/save-data
+next: docs/petsard-yaml/reporter-yaml/save-validation
 ---
 
 使用 `save_report` 方法產生評估結果報告，支援多種粒度層級。

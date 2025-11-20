@@ -1,9 +1,9 @@
 ---
 title: Business Logic Constraints
 type: docs
-weight: 3
+weight: 330
 prev: docs/data-preparation/multi-table-relationships
-next: docs/best-practices
+next: docs/data-preparation
 ---
 
 Applicable when **business rules need to be ensured**.
@@ -110,7 +110,7 @@ Define valid pairings between field values (allowlist).
 
 **Application Status and Approved Amount Pairing**
 ```yaml
-- 
+-
   - latest_apply_status: latest_apply_amount_approved
   - approved: [1000000, 5000000, 10000000, 20000000]
     rejected: ["pd.NA"]

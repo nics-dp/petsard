@@ -348,7 +348,7 @@ class FieldConstrainer(BaseConstrainer):
                 date_str = date_match.group(1)
                 return pd.Timestamp(date_str), involved_columns
             except Exception as e:
-                print(f"Date parsing error: {e}")
+                self._logger.error(f"Date parsing error: {e}")
                 return None, involved_columns
 
         # Handle string literals (text within quotes)
@@ -464,7 +464,7 @@ class FieldConstrainer(BaseConstrainer):
 
             return result
         except Exception as e:
-            print(f"Comparison failed: {e}")
+            self._logger.error(f"Comparison failed: {e}")
             warnings.warn(
                 f"Warning: Comparison operation failed '{str(e)}'", stacklevel=2
             )

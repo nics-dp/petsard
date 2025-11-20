@@ -1,9 +1,9 @@
-# Git 相關
+# Git related Git 相關
 .git
 .gitignore
 .github/
 
-# Python 相關
+# Python related Python 相關
 __pycache__/
 *.py[cod]
 *$py.class
@@ -26,7 +26,7 @@ wheels/
 *.egg
 MANIFEST
 
-# 虛擬環境
+# Virtual environments 虛擬環境
 .env
 .venv
 env/
@@ -36,14 +36,14 @@ env.bak/
 venv.bak/
 .conda/
 
-# IDE 相關
+# IDE related IDE 相關
 .vscode/
 .idea/
 *.swp
 *.swo
 *~
 
-# 測試相關
+# Testing related 測試相關
 .tox/
 .coverage
 .pytest_cache/
@@ -53,17 +53,17 @@ coverage.xml
 *.cover
 .hypothesis/
 
-# 文件網站
+# Documentation sites 文件網站
 doc_site/
 docs/
 
-# 開發工具
+# Development tools 開發工具
 .ruff_cache/
 .mypy_cache/
 .dmypy.json
 dmypy.json
 
-# 作業系統相關
+# OS related 作業系統相關
 .DS_Store
 .DS_Store?
 ._*
@@ -72,37 +72,36 @@ dmypy.json
 ehthumbs.db
 Thumbs.db
 
-# 日誌檔案
+# Log files 日誌檔案
 *.log
 
-# 臨時檔案
+# Temporary files 臨時檔案
 *.tmp
 *.temp
 
-# 備份檔案
+# Backup files 備份檔案
 *.bak
 *.backup
 
-# 壓縮檔案
+# Compressed files 壓縮檔案
 *.zip
 *.tar.gz
 *.rar
 
-# 本地設定檔案
+# Local configuration files 本地設定檔案
 .env.local
 .env.development.local
 .env.test.local
 .env.production.local
 
-# 專案特定排除
+# Project specific exclusions 專案特定排除
 templates
 scripts/
 tests/
 module_functional_designs/
 
-# 保留重要檔案的註解
-# 包含的重要檔案：
-# - petsard/ (主要套件)
-# - demo/ (範例)
-# - pyproject.toml (專案設定與依賴)
-# - README.md, LICENSE, CHANGELOG.md (文件)
+# Important files included 包含的重要檔案:
+# - petsard/ (main package 主要套件)
+# - demo/ (examples 範例)
+# - pyproject.toml (project configuration and dependencies 專案設定與依賴)
+# - README.md, LICENSE (documentation 文件)

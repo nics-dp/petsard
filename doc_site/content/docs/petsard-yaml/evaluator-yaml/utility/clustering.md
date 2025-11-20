@@ -1,6 +1,9 @@
 ---
 title: "Clustering Task"
+type: docs
 weight: 3
+prev: docs/petsard-yaml/evaluator-yaml/utility/regression
+next: docs/petsard-yaml/evaluator-yaml/utility
 ---
 
 Evaluate synthetic data utility for unsupervised clustering problems.

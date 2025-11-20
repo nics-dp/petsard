@@ -1,6 +1,9 @@
 ---
 title: "統計資訊"
-weight: 6
+type: docs
+weight: 760
+prev: docs/schema-yaml/logical-types
+next: docs/schema-yaml
 ---
 
 設定 `enable_stats: true` 時，系統會自動計算並記錄欄位的統計資訊，用於資料品質分析、合成資料驗證和欄位特徵理解。大型資料集（超過 100 萬列）計算會較耗時，建議謹慎使用。

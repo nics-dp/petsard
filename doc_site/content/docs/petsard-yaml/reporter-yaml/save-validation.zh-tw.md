@@ -1,6 +1,9 @@
 ---
 title: "儲存驗證結果"
-weight: 4
+type: docs
+weight: 704
+prev: docs/petsard-yaml/reporter-yaml/save-schema
+next: docs/petsard-yaml/reporter-yaml/save-timing
 ---
 
 使用 `save_validation` 方法將 Constrainer 的驗證結果匯出為 CSV 檔案，包含摘要統計、違規統計及詳細違規記錄。
@@ -191,7 +194,7 @@ Reporter:
 
 ### Q: 詳細違規記錄太多，會影響效能嗎？
 
-**A:** 
+**A:**
 - 系統會自動限制每條規則最多輸出 10 筆違規範例
 - 如果不需要詳細記錄，可設定 `include_details: false` 以節省空間
 - 摘要和統計檔案始終會產生，不受此設定影響

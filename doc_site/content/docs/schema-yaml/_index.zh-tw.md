@@ -1,6 +1,9 @@
 ---
 title: "Schema YAML"
-weight: 200
+type: docs
+weight: 700
+prev: docs/petsard-yaml
+next: docs/error-handling
 ---
 
 資料結構定義的 YAML 設定格式（Schema YAML）。

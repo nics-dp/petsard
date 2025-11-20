@@ -1,6 +1,7 @@
 ---
 title: "Loader API"
-weight: 310
+type: docs
+weight: 1040
 ---
 
 Data loading module that supports various file formats.

@@ -150,7 +150,7 @@ class TestStatusTiming:
         """設定測試環境"""
         config_dict = {
             "Loader": {"data": {"filepath": "benchmark://adult-income"}},
-            "Synthesizer": {"synth": {"method": "sdv", "model": "GaussianCopula"}},
+            "Synthesizer": {"synth": {"method": "petsard-gaussian_copula", "model": "GaussianCopula"}},
         }
         self.config = Config(config_dict)
         self.status = Status(self.config)

@@ -1,6 +1,9 @@
 ---
 title: Logarithmic Transformation
-weight: 33
+type: docs
+weight: 530
+prev: docs/data-property-adjustment/uniform-encoding
+next: docs/data-property-adjustment/time-anchoring
 math: true
 ---
 

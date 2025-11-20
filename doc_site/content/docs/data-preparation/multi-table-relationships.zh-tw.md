@@ -1,7 +1,7 @@
 ---
 title: 多表格關聯資料
 type: docs
-weight: 2
+weight: 320
 prev: docs/data-preparation/data-describing
 next: docs/data-preparation/business-logic-constraints
 ---
@@ -238,7 +238,7 @@ latest_tracking AS (
            ROW_NUMBER() OVER (PARTITION BY application_id ORDER BY tracking_date DESC) as rn
     FROM tracking
 )
-SELECT 
+SELECT
     c.*,
     fa.* AS first_apply_,
     la.* AS latest_apply_,

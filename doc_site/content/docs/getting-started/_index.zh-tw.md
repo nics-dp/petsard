@@ -1,7 +1,9 @@
 ---
 title: 快速入門
 type: docs
-weight: 1
+weight: 100
+prev: docs/
+next: docs/installation
 ---
 
 PETsARD 的目標客群為任何資料使用者，這代表我們不預期使用者需要具備工程知識，特別是 Python 程式能力。使用者僅需要使用以下三行 Python 程式碼，便可專注於設定檔的編寫：

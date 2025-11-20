@@ -1,6 +1,9 @@
 ---
 title: "Synthesizer YAML"
-weight: 140
+type: docs
+weight: 650
+prev: docs/petsard-yaml/preprocessor-yaml
+next: docs/petsard-yaml/postprocessor-yaml
 ---
 
 The Synthesizer module generates synthetic data and supports various synthesis methods.
@@ -48,7 +51,7 @@ For `custom_method` configuration, please refer to the "Custom Synthesis Method"
 
 - **method** (`string`)
   - Synthesis Methods
-  - When using `method: default`, it automatically uses the SDV GaussianCopula method as the default synthesis method.
+  - When using `method: default`, it automatically uses the PETsARD built-in Gaussian Copula method as the default synthesis method.
 
 ### Supported Synthesis Methods
 
@@ -57,9 +60,9 @@ This module supports the following four ways to generate or load synthetic data:
 1. **[PETsARD Built-in Methods](petsard-gaussian-copula)**
    - `petsard-gaussian-copula`: High-performance Gaussian Copula synthesizer using Numba JIT and PyTorch
 
-2. **[SDV Integration Methods](sdv-methods)**
-   - **[Built-in Integration](sdv-methods)**: Quick way to use SDV with default parameters (planned for deprecation)
-   - **[SDV Custom Methods](sdv-custom-methods)**: Use `custom_method` to flexibly control all parameters of SDV methods
+2. **[SDV Integration Methods](sdv-methods)** (Optional Feature)
+   - **[Built-in Integration](sdv-methods)**: Quick way to use SDV with default parameters (requires separate installation, for reference only)
+   - **[SDV Custom Methods](sdv-custom-methods)**: Use `custom_method` to flexibly control all parameters of SDV methods (requires separate installation, for reference only)
 
 3. **[Custom Synthesis Methods](custom-method)**
    - Use `custom_method` to integrate your own synthesis algorithms

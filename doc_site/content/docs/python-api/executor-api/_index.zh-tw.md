@@ -1,6 +1,7 @@
 ---
 title: "Executor API"
-weight: 50
+type: docs
+weight: 1010
 ---
 
 Executor 是 PETsARD 的核心編排模組，負責解析配置、依序執行工作流程模組，並提供結果存取介面。

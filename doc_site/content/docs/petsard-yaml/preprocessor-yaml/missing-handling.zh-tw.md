@@ -1,6 +1,9 @@
 ---
 title: "遺失值處理"
-weight: 1
+type: docs
+weight: 641
+prev: docs/petsard-yaml/preprocessor-yaml
+next: docs/petsard-yaml/preprocessor-yaml/outlier-handling
 ---
 
 處理資料中的遺失值（NA/NaN）。

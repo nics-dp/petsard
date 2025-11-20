@@ -1,6 +1,9 @@
 ---
 title: "Preprocessor YAML"
-weight: 130
+type: docs
+weight: 640
+prev: docs/petsard-yaml/splitter-yaml
+next: docs/petsard-yaml/synthesizer-yaml
 ---
 
 YAML configuration file format for the Preprocessor module, used for data preprocessing.

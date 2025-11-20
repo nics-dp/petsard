@@ -1,9 +1,9 @@
 ---
 title: PyPI 安裝
 type: docs
-weight: 3
+weight: 220
 prev: docs/installation/docker-prebuilt
-next: docs/installation/docker-offline-deployment
+next: docs/installation/docker-prebuilt
 ---
 
 適用於**有網路連線**但**不支援 Docker** 的環境。

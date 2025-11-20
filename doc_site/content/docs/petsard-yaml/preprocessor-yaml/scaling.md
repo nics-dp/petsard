@@ -1,6 +1,9 @@
 ---
 title: "Scaling"
-weight: 4
+type: docs
+weight: 644
+prev: docs/petsard-yaml/preprocessor-yaml/encoding
+next: docs/petsard-yaml/preprocessor-yaml/discretizing
 ---
 
 Normalizes numerical data to a specific range or distribution to improve machine learning algorithm performance.

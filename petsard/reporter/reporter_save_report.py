@@ -299,7 +299,7 @@ class ReporterSaveReport(BaseReporter):
         if "warnings" in reporter:
             import logging
 
-            logger = logging.getLogger(f"PETsARD.{__name__}")
+            logger = logging.getLogger(f"PETsARD.{__name__.split('.')[-1]}")
             logger.warning(
                 "No CSV file will be saved. "
                 "This warning can be ignored "
@@ -342,7 +342,7 @@ class ReporterSaveReport(BaseReporter):
             if "warnings" in report_data:
                 import logging
 
-                logger = logging.getLogger(f"PETsARD.{__name__}")
+                logger = logging.getLogger(f"PETsARD.{__name__.split('.')[-1]}")
                 logger.warning(
                     f"No CSV file will be saved for {eval_expt_name}. "
                     "This warning can be ignored "
@@ -679,7 +679,7 @@ class ReporterSaveReport(BaseReporter):
         """Log warning when report data is missing."""
         import logging
 
-        logger = logging.getLogger(f"PETsARD.{__name__}")
+        logger = logging.getLogger(f"PETsARD.{__name__.split('.')[-1]}")
         eval_name = convert_eval_expt_name_to_tuple(full_expt_tuple[-1])[0]
         logger.warning(
             f"No {granularity} granularity report found "
@@ -964,7 +964,7 @@ class ReporterSaveReport(BaseReporter):
         """Log warning for data type mismatches."""
         import logging
 
-        logger = logging.getLogger(f"PETsARD.{__name__}")
+        logger = logging.getLogger(f"PETsARD.{__name__.split('.')[-1]}")
         logger.warning(
             f"Column '{column}' has different dtypes in "
             f"'{name1}' ({dtype1}) and '{name2}' ({dtype2}). "

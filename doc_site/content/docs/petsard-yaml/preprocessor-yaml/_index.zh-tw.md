@@ -1,6 +1,9 @@
 ---
 title: "Preprocessor YAML"
-weight: 130
+type: docs
+weight: 640
+prev: docs/petsard-yaml/splitter-yaml
+next: docs/petsard-yaml/synthesizer-yaml
 ---
 
 Preprocessor 模組的 YAML 設定檔案格式，用於資料前處理。

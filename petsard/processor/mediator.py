@@ -535,7 +535,7 @@ class MediatorScaler(Mediator):
 
             # Handle multi-reference mode
             if isinstance(ref_col, list):
-                self.logger.info(
+                self.logger.debug(
                     f"Processing TimeAnchor: anchor '{col}' stays as datetime, "
                     f"transforming {len(ref_col)} reference columns to time differences"
                 )

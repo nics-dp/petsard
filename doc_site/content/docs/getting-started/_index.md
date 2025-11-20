@@ -1,7 +1,9 @@
 ---
 title: Getting Started
 type: docs
-weight: 1
+weight: 100
+prev: docs/
+next: docs/installation
 ---
 
 

@@ -1,6 +1,9 @@
 ---
 title: "Evaluator YAML"
-weight: 180
+type: docs
+weight: 690
+prev: docs/petsard-yaml/describer-yaml
+next: docs/petsard-yaml/reporter-yaml
 ---
 
 Evaluator 模組的 YAML 設定檔案格式。

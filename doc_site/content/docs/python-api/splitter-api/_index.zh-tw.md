@@ -1,6 +1,7 @@
 ---
 title: "Splitter API"
-weight: 330
+type: docs
+weight: 1070
 ---
 
 資料分割模組，用於建立訓練集和驗證集，具備重疊控制功能。
@@ -17,7 +18,7 @@ weight: 330
 > - `*--`：組合關係
 > - `..>`：相依關係
 
-## 基本使用 
+## 基本使用
 
 ```python
 from petsard import Splitter

@@ -1,38 +1,10 @@
 ---
 title: "Python API"
-weight: 300
+type: docs
+weight: 1000
+prev: docs/glossary
+next: docs/developer-guide
 ---
-
-<!--
-Documentation Writing Principles (for roo code reference):
-
-### Python API Documentation
-- Target **Python developers** as the primary audience
-- Provide complete class and method references
-- Include practical code examples
-- **YAML users should prioritize YAML documentation**
-
-### Documentation Standards
-
-#### Avoid Cross-Links
-- **Do not use internal links**: Avoid cross-page links as document structure may change
-- **Self-contained**: Each page should contain complete information without depending on other pages
-
-#### Use Bullet Points Instead of Multi-level Headings
-- **Simplify hierarchy**: Use bullet format for parameter descriptions, avoid excessive heading levels
-- **Improve readability**: Use bullets and indentation to express structure for cleaner, more readable documentation
-- **Reduce whitespace**: Avoid large amounts of whitespace from individual parameter headings
-
-#### Option Description Principles
-- **YAML first**: All configuration options and detailed descriptions are in YAML documentation
-- **Complete descriptions**: Each parameter should include type, default value, examples
-- **Avoid duplication**: Maintain detailed descriptions only in YAML documentation, not in Python API
-
-#### Structured Information
-- **From simple to advanced**: Progress from basic usage to advanced options
-- **Complete examples**: Provide multiple examples from simple to complex
-- **Practice-oriented**: Start from actual use cases
--->
 
 Documentation of PETsARD's Python API.
 

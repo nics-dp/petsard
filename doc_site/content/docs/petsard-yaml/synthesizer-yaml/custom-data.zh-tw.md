@@ -1,6 +1,9 @@
 ---
 title: "自訂資料"
-weight: 2
+type: docs
+weight: 652
+prev: docs/petsard-yaml/synthesizer-yaml/petsard-gaussian-copula
+next: docs/petsard-yaml/synthesizer-yaml/custom-method
 ---
 
 要評測由外部工具生成的合成資料，請使用 `custom_data` 方法。

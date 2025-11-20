@@ -1,7 +1,7 @@
 ---
 title: 關於
 type: about
-weight: 99
+weight: 9999
 prev: docs
 next: index
 ---

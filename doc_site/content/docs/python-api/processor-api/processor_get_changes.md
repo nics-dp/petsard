@@ -119,7 +119,7 @@ changes = processor.get_changes()
 
 # Check if age uses median imputation
 age_missing = changes[
-    (changes['col'] == 'age') & 
+    (changes['col'] == 'age') &
     (changes['processor'] == 'missing')
 ]
 assert 'Median' in age_missing['current'].values[0]

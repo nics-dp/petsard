@@ -1,6 +1,9 @@
 ---
 title: "Custom Evaluation Method"
-weight: 5
+type: docs
+weight: 695
+prev: docs/petsard-yaml/evaluator-yaml/utility
+next: docs/petsard-yaml/evaluator-yaml/privacy-mpuccs
 ---
 
 To create your own evaluator, you need to implement a Python class with required attributes and methods, and configure a YAML file to use it.

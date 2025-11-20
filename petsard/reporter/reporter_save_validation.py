@@ -62,7 +62,7 @@ class ReporterSaveValidation(BaseReporter):
             if not self._validate_input_structure(validation_result):
                 import logging
 
-                logger = logging.getLogger(f"PETsARD.{__name__}")
+                logger = logging.getLogger(f"PETsARD.{__name__.split('.')[-1]}")
                 logger.warning(f"Skipping invalid validation result for key: {key}")
                 continue
 
@@ -209,7 +209,7 @@ class ReporterSaveValidation(BaseReporter):
         # For each violation marker column, extract violated rows
         for violated_col in violated_columns:
             # Get rows that violated this rule
-            mask = violation_details[violated_col] == True
+            mask = violation_details[violated_col]
             violated_rows = violation_details[mask].copy()
 
             if len(violated_rows) == 0:
@@ -407,7 +407,7 @@ class ReporterSaveValidation(BaseReporter):
         """
         import logging
 
-        logger = logging.getLogger(f"PETsARD.{__name__}")
+        logger = logging.getLogger(f"PETsARD.{__name__.split('.')[-1]}")
 
         # Save summary data
         if "summary" in result_data:

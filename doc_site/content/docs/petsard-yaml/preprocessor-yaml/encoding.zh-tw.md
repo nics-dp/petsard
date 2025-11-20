@@ -1,6 +1,9 @@
 ---
 title: "編碼"
-weight: 3
+type: docs
+weight: 643
+prev: docs/petsard-yaml/preprocessor-yaml/outlier-handling
+next: docs/petsard-yaml/preprocessor-yaml/scaling
 ---
 
 將類別變數轉換為數值格式，以便機器學習演算法處理。

@@ -1,6 +1,7 @@
 ---
 title: "Config API"
-weight: 60
+type: docs
+weight: 1020
 ---
 
 Config 是 PETsARD 的內部配置管理類別，負責解析配置字典並建立模組執行序列。
@@ -111,7 +112,7 @@ config_dict = {
 Config 會自動按照正確順序安排模組：
 
 ```
-Loader → Preprocessor → Splitter → Synthesizer → 
+Loader → Preprocessor → Splitter → Synthesizer →
 Postprocessor → Constrainer → Evaluator → Reporter
 ```
 

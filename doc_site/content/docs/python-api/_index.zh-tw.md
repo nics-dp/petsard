@@ -1,23 +1,10 @@
 ---
 title: "Python API"
-weight: 300
+type: docs
+weight: 1000
+prev: docs/glossary
+next: docs/developer-guide
 ---
-
-<!--
-文件編寫原則（給 roo code 參考）：
-
-### Python API 精簡說明
-- 僅說明**最高層級的公開方法**
-- 提供方法的**參數名稱和型別**
-- **僅供開發人員紀錄使用**
-- 具體配置選項請參考 YAML 文件
-- **使用者應優先查閱 YAML 文件**
-
-### 參數說明格式
-- **不使用表格**：參數和返回值說明使用列點方式
-- **型別標註**：清楚標示參數型別
-- **說明簡潔**：每個參數一行說明
--->
 
 PETsARD 的 Python API 文件。
 

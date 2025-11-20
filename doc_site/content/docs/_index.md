@@ -1,7 +1,7 @@
 ---
 title: Docs
 type: docs
-weight: 1
+weight: 0
 prev: docs/developer-guide
 next: docs/get-started
 ---
@@ -36,8 +36,6 @@ For quick start, we provide comprehensive [Installation](installation) and [Best
   - The Milestone document provide detailed information about the latest version of `PETsARD`.
 - [Release Note](https://github.com/nics-dp/petsard/releases)
   - Release note provides information of each version of `PETsARD`.
-- [CHANGELOG.md](https://github.com/nics-dp/petsard/blob/main/CHANGELOG.md)
-  - Changelog provides evolution of the `PETsARD` over time.
 
 ## Contributing
 

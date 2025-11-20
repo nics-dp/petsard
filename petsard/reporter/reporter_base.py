@@ -451,7 +451,7 @@ class BaseReporter(ABC):
         """
         import logging
 
-        logger = logging.getLogger(f"PETsARD.{__name__}")
+        logger = logging.getLogger("PETsARD.reporter_base")
         keys_to_remove = []
 
         for idx, value in data.items():
@@ -631,6 +631,6 @@ class BaseReporter(ABC):
         """
         import logging
 
-        logger = logging.getLogger(f"PETsARD.{__name__}")
+        logger = logging.getLogger("PETsARD.reporter_base")
         logger.info(f"Saving report to {full_output}.csv")
         data.to_csv(path_or_buf=f"{full_output}.csv", index=False, encoding="utf-8")

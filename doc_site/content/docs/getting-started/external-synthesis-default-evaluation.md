@@ -1,7 +1,9 @@
 ---
 title: Evaluation of External Synthetic Data with Default Parameters
 type: docs
-weight: 9
+weight: 130
+prev: docs/getting-started/default-synthesis-default-evaluation
+next: docs/getting-started
 ---
 
 External synthesis with default evaluation.

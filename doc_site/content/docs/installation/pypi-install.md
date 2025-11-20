@@ -1,9 +1,9 @@
 ---
 title: PyPI Install
 type: docs
-weight: 3
+weight: 220
 prev: docs/installation/docker-prebuilt
-next: docs/installation/docker-offline-deployment
+next: docs/installation/docker-prebuilt
 ---
 
 Suitable for environments **with network connection** but **without Docker support**.

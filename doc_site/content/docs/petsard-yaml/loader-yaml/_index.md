@@ -1,6 +1,9 @@
 ---
 title: "Loader YAML"
-weight: 110
+type: docs
+weight: 620
+prev: docs/petsard-yaml/executor-yaml
+next: docs/petsard-yaml/splitter-yaml
 ---
 
 YAML configuration file format for the Loader module.

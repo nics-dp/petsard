@@ -1,6 +1,9 @@
 ---
 title: "邏輯型別"
-weight: 5
+type: docs
+weight: 750
+prev: docs/schema-yaml/precision
+next: docs/schema-yaml/statistics
 ---
 
 邏輯型別（Logical Type）是用於標註欄位語義的宣告性屬性，不改變底層資料型別。

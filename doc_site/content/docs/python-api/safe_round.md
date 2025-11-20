@@ -1,6 +1,7 @@
 ---
 title: "safe_round()"
-weight: 90
+type: docs
+weight: 1160
 ---
 
 **Module**: `petsard.utils`

@@ -1,6 +1,7 @@
 ---
 title: "Executor API"
-weight: 31
+type: docs
+weight: 1010
 ---
 
 Executor is PETsARD's core orchestration module, responsible for parsing configuration, executing workflow modules in sequence, and providing result access.

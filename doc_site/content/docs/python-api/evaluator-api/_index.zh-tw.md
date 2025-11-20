@@ -1,6 +1,7 @@
 ---
 title: "Evaluator API"
-weight: 360
+type: docs
+weight: 1120
 ---
 
 合成資料品質評測模組，提供隱私風險度量、資料品質評測及機器學習效用分析。

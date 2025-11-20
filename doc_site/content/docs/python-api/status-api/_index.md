@@ -1,6 +1,7 @@
 ---
 title: "Status API"
-weight: 33
+type: docs
+weight: 1030
 ---
 
 Status is PETsARD's internal state management module, responsible for tracking workflow execution, storing results, managing metadata (Schema), and creating execution snapshots.

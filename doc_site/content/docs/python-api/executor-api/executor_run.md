@@ -325,7 +325,7 @@ Loading module: Loader
 Executing: Loader[load_data]
   ✓ Completed in 0.5s
 
-Loading module: Synthesizer  
+Loading module: Synthesizer
 Executing: Synthesizer[generate]
   ✓ Completed in 15.3s
 

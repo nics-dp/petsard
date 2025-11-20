@@ -1,6 +1,9 @@
 ---
 title: "benchmark://"
-weight: 112
+type: docs
+weight: 621
+prev: docs/petsard-yaml/loader-yaml
+next: docs/petsard-yaml/loader-yaml
 ---
 
 Loader supports using the `benchmark://` protocol to automatically download and load benchmark datasets.

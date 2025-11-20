@@ -1,9 +1,9 @@
 ---
 title: 安裝指引：執行環境檢查
 type: docs
-weight: 2
-prev: docs
-next: docs/getting-started
+weight: 200
+prev: docs/getting-started
+next: docs/data-preparation
 ---
 
 根據網路連線狀態與 Docker 支援情況選擇適合的安裝方式。推薦使用 Docker 預建方案，可確保環境一致性並簡化部署流程。若需深度學習功能，請確認 CUDA 支援。

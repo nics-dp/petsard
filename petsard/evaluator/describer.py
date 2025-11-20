@@ -145,7 +145,7 @@ class DescriberConfig(EvaluatorConfig):
             if self.method_code == DescriberMethodMap.DEFAULT
             else self.method
         )
-        self._logger.info(
+        self._logger.debug(
             f"DescriberConfig initialized with method: {self.method}, eval_method: {self.eval_method}"
         )
 

@@ -1,6 +1,9 @@
 ---
 title: "分類任務"
+type: docs
 weight: 1
+prev: docs/petsard-yaml/evaluator-yaml/utility
+next: docs/petsard-yaml/evaluator-yaml/utility/regression
 ---
 
 評估合成資料在分類問題上的實用性。

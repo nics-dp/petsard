@@ -1,7 +1,7 @@
 ---
 title: 資料描述統計
 type: docs
-weight: 1
+weight: 310
 prev: docs/data-preparation
 next: docs/data-preparation/multi-table-relationships
 ---

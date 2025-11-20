@@ -1,6 +1,9 @@
 ---
 title: "架構說明"
-weight: 1
+type: docs
+weight: 710
+prev: docs/schema-yaml
+next: docs/schema-yaml/attribute-parameters
 ---
 
 Schema 採用三層架構來描述資料結構。

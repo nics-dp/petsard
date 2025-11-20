@@ -1,6 +1,7 @@
 ---
 title: "Metadater API"
-weight: 320
+type: docs
+weight: 1060
 ---
 
 Data structure metadata manager, providing metadata definition, inference, comparison, and alignment functionality for datasets.

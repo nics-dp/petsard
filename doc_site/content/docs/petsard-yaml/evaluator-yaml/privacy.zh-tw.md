@@ -1,6 +1,9 @@
 ---
 title: "隱私保護力評測"
-weight: 2
+type: docs
+weight: 692
+prev: docs/petsard-yaml/evaluator-yaml/diagnostic
+next: docs/petsard-yaml/evaluator-yaml/fidelity
 ---
 
 評測資料處理後的隱私保護程度，模擬三種隱私攻擊情境。評測工具使用 Anonymeter，這是一套由 [Statice](https://www.statice.ai/) 開發的 Python 函式庫，專門用於評估合成表格資料的隱私風險。此工具實作了歐盟個人資料保護指令第29條工作小組 (WP29) 於 2014 年提出的匿名化技術評估標準，並於 2023 年獲得法國國家資訊自由委員會 (CNIL) 的認可。

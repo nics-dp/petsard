@@ -1,6 +1,9 @@
 ---
 title: "Encoding"
-weight: 3
+type: docs
+weight: 643
+prev: docs/petsard-yaml/preprocessor-yaml/outlier-handling
+next: docs/petsard-yaml/preprocessor-yaml/scaling
 ---
 
 Converts categorical variables into numerical format for machine learning algorithms to process.

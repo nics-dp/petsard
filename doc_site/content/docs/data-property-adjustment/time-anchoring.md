@@ -1,6 +1,9 @@
 ---
 title: Time Anchoring Scaling
-weight: 4
+type: docs
+weight: 540
+prev: docs/data-property-adjustment/long-tail
+next: docs/data-property-adjustment
 ---
 
 Multi-timestamp data refers to recording multiple key time nodes with clear temporal relationships within the same business process or entity lifecycle. Unlike time series data, multi-timestamp data are not equally-spaced observations but represent important milestones in business processes. The core characteristics of this type of data lie in the clear business logic and dependency relationships between time points, each time point represents a key event in the business process, the existence or absence of time points itself has business implications, and the intervals between time points reflect business patterns and individual differences. Typical application scenarios include enterprise data (establishment date → first financing application → approval date → latest tracking date), customer journey (registration date → first purchase → membership upgrade → last activity date), and medical records (first visit → diagnosis confirmation → treatment start → follow-up examination).

@@ -1,6 +1,7 @@
 ---
 title: "Describer API"
-weight: 350
+type: docs
+weight: 1110
 ---
 
 資料描述模組，提供資料集的統計摘要與洞察分析。

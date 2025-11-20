@@ -1,6 +1,9 @@
 ---
 title: "Postprocessor YAML"
-weight: 150
+type: docs
+weight: 660
+prev: docs/petsard-yaml/synthesizer-yaml
+next: docs/petsard-yaml/constrainer-yaml
 ---
 
 YAML configuration file format for the Postprocessor module, used for data postprocessing (inverse transformation).

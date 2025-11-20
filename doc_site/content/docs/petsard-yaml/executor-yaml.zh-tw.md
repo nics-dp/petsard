@@ -1,6 +1,9 @@
 ---
 title: "Executor YAML"
-weight: 50
+type: docs
+weight: 610
+prev: docs/petsard-yaml
+next: docs/petsard-yaml/loader-yaml
 ---
 
 Executor 模組的 YAML 設定檔案格式，負責協調整個 PETsARD 工作流程的執行。

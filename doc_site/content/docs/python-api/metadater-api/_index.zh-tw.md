@@ -1,6 +1,7 @@
 ---
 title: "Metadater API"
-weight: 320
+type: docs
+weight: 1060
 ---
 
 資料結構描述管理器，提供資料集的詮釋資料（Metadata）定義、推斷、比較與對齊功能。

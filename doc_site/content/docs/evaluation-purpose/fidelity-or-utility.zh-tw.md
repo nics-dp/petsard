@@ -1,6 +1,9 @@
 ---
 title: 保真度或實用性
-weight: 2
+type: docs
+weight: 420
+prev: docs/evaluation-purpose/privacy-risk-estimation
+next: docs/evaluation-purpose/experiment-design-selection
 ---
 
 在確認隱私保護力達標後，下一步是根據合成資料的使用目的來決定評測重點。不同的應用情境對合成資料的品質要求不同：當合成資料將對外公開或分享給多個不特定用途的接收方時，應追求高保真度以保持資料的通用價值；而當合成資料用於特定機器學習任務（如分類、迴歸、聚類）時，則應追求高實用性以確保任務表現。

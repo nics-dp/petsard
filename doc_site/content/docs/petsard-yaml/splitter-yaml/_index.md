@@ -1,6 +1,9 @@
 ---
 title: "Splitter YAML"
-weight: 120
+type: docs
+weight: 630
+prev: docs/petsard-yaml/loader-yaml
+next: docs/petsard-yaml/preprocessor-yaml
 ---
 
 YAML configuration format for the Splitter module.

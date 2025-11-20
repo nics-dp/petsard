@@ -1,6 +1,9 @@
 ---
 title: "Architecture"
-weight: 1
+type: docs
+weight: 710
+prev: docs/schema-yaml
+next: docs/schema-yaml/attribute-parameters
 ---
 
 Schema adopts a three-layer architecture to describe data structure.
