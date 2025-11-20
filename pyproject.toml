@@ -37,9 +37,9 @@ requires-python = ">=3.10,<3.12" # Python 3.12 is currently limited due to anony
 dependencies = []
 
 [project.urls]
-Repository = "https://github.com/nics-tw/petsard"
-Documentation = "https://nics-tw.github.io/petsard/"
-"Bug Tracker" = "https://github.com/nics-tw/petsard/issues"
+Repository = "https://github.com/nics-dp/petsard"
+Documentation = "https://nics-dp.github.io/petsard/"
+"Bug Tracker" = "https://github.com/nics-dp/petsard/issues"
 
 # Dependency Groups Configuration
 # 依賴群組設定
