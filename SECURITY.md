@@ -7,15 +7,15 @@ The following versions of PETsARD are currently supported with security updates:
 以下版本的 PETsARD 目前支援安全性更新：
 
 | Version 版本 | Supported 支援狀態 |
-| ------- | ------------------ |
-| 1.8.1+   | :white_check_mark: |
-| < 1.8.1   | :x: |
+| ------------ | ------------------ |
+| 1.9.0+       | :white_check_mark: |
+| < 1.9.0      | :x:                |
 
 ## Reporting a Vulnerability 回報安全漏洞
 
-If you discover a security vulnerability in this project, please report it responsibly:
+If you discover a security vulnerability in this project, please report it responsibly via GitHub Issues.
 
-如果您發現此專案中的安全漏洞，歡迎透過 GitHub Issues 回報：
+如果您發現此專案中的安全漏洞，歡迎透過 GitHub Issues 回報。
 
 ### What to Include 應包含的資訊
 

@@ -114,12 +114,12 @@ jobs:
 
                       if len(ruff_data) > 20:
                           report.append(f"\n*...{len(ruff_data) - 20} more issues*\n")
-                      else:
-                          report.append("### ✅ Code Quality Passed\n")
-                  except Exception as e:
-                      report.append(f"### ⚠️ Unable to parse Ruff results: {e}\n")
-              else:
-                  report.append("### ✅ Code Quality Passed\n")
+                  else:
+                      report.append("### ✅ Code Quality Passed\n")
+              except Exception as e:
+                  report.append(f"### ⚠️ Unable to parse Ruff results: {e}\n")
+          else:
+              report.append("### ✅ Code Quality Passed\n")
 
           report.append("\n---\n\n")
 
