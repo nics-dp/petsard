@@ -17,7 +17,7 @@ jobs:
     steps:
       # Checkout the repository code (v10.5.0+ automatically handles repository un-shallowing)
       - name: Setup | Checkout Repository on Release Branch
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           ref: ${{ github.ref_name }}
           # Allow semantic-release to commit version updates
