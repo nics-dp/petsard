@@ -17,7 +17,7 @@ jobs:
     steps:
       # Checkout the repository code (v10.5.0+ automatically handles repository un-shallowing)
       - name: Setup | Checkout Repository on Release Branch
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
         with:
           ref: ${{ github.ref_name }}
           # Allow semantic-release to commit version updates
@@ -56,7 +56,7 @@ jobs:
       # Publish package to TestPyPI testing environment (dev branch only)
       # Always publish on dev branch push, skip-existing handles duplicate versions
       - name: Publish | Upload package to TestPyPI (dev branch)
-        uses: pypa/gh-action-pypi-publish@ed0c53931b1dc9bd32cbe73a98c7f6766f8a527e # v1.13.0
+        uses: pypa/gh-action-pypi-publish@cef221092ed1bacb1cc03d23a2d87d1d172e277b # v1.14.0
         if: github.ref_name == 'dev'
         with:
           repository-url: https://test.pypi.org/legacy/
@@ -67,7 +67,7 @@ jobs:
       # Publish package to official PyPI environment (main branch only)
       # Always publish on main branch push, skip-existing handles duplicate versions
       - name: Publish | Upload package to PyPI (main branch)
-        uses: pypa/gh-action-pypi-publish@ed0c53931b1dc9bd32cbe73a98c7f6766f8a527e # v1.13.0
+        uses: pypa/gh-action-pypi-publish@cef221092ed1bacb1cc03d23a2d87d1d172e277b # v1.14.0
         if: github.ref_name == 'main'
         with:
           password: ${{ secrets.PYPI_API_TOKEN }}
