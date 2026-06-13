@@ -2,9 +2,122 @@
 
 <!-- version list -->
 
+## v1.10.2-rc.1 (2026-06-13)
+
+### Bug Fixes
+
+- **ci**: Address copilot review on release workflow
+  ([#1000](https://github.com/nics-dp/petsard/pull/1000),
+  [`3d5a843`](https://github.com/nics-dp/petsard/commit/3d5a843775a17512c916cf9ed8983e8d92b5129d))
+
+- **ci**: Pin trivy-action to existing v0.36.0 tag
+  ([#989](https://github.com/nics-dp/petsard/pull/989),
+  [`8b789f2`](https://github.com/nics-dp/petsard/commit/8b789f2f270e4ef5275b6de7864466ca593799fb))
+
+- **ci**: Pin trivy-action to existing v0.36.0 tag
+  ([#986](https://github.com/nics-dp/petsard/pull/986),
+  [`6fea281`](https://github.com/nics-dp/petsard/commit/6fea281bab6c28deaa82bdb0906b5d8984c7a66d))
+
+- **ci**: Serialize releases and skip self-triggered version commit
+  ([#1000](https://github.com/nics-dp/petsard/pull/1000),
+  [`3d5a843`](https://github.com/nics-dp/petsard/commit/3d5a843775a17512c916cf9ed8983e8d92b5129d))
+
+- **ci**: Use github app token for semantic-release push
+  ([#1000](https://github.com/nics-dp/petsard/pull/1000),
+  [`3d5a843`](https://github.com/nics-dp/petsard/commit/3d5a843775a17512c916cf9ed8983e8d92b5129d))
+
+- **deps**: Bump 12 vulnerable dependencies to patched versions
+  ([#989](https://github.com/nics-dp/petsard/pull/989),
+  [`8b789f2`](https://github.com/nics-dp/petsard/commit/8b789f2f270e4ef5275b6de7864466ca593799fb))
+
+- **deps**: Bump 12 vulnerable dependencies to patched versions
+  ([#986](https://github.com/nics-dp/petsard/pull/986),
+  [`6fea281`](https://github.com/nics-dp/petsard/commit/6fea281bab6c28deaa82bdb0906b5d8984c7a66d))
+
+- **deps**: Bump gitpython and pip to patched versions
+  ([#989](https://github.com/nics-dp/petsard/pull/989),
+  [`8b789f2`](https://github.com/nics-dp/petsard/commit/8b789f2f270e4ef5275b6de7864466ca593799fb))
+
+- **deps**: Patch remaining gitpython and pip CVEs
+  ([#989](https://github.com/nics-dp/petsard/pull/989),
+  [`8b789f2`](https://github.com/nics-dp/petsard/commit/8b789f2f270e4ef5275b6de7864466ca593799fb))
+
+- **deps,ci**: Patch 25 CVEs, repair + harden vulnerability-scan CI
+  ([#989](https://github.com/nics-dp/petsard/pull/989),
+  [`8b789f2`](https://github.com/nics-dp/petsard/commit/8b789f2f270e4ef5275b6de7864466ca593799fb))
+
+- **deps,ci**: Patch 25 CVEs, repair + harden vulnerability-scan CI
+  ([#986](https://github.com/nics-dp/petsard/pull/986),
+  [`6fea281`](https://github.com/nics-dp/petsard/commit/6fea281bab6c28deaa82bdb0906b5d8984c7a66d))
+
+### Chores
+
+- Integrate dev into main — CI security hardening & dependency CVE patches
+  ([#986](https://github.com/nics-dp/petsard/pull/986),
+  [`6fea281`](https://github.com/nics-dp/petsard/commit/6fea281bab6c28deaa82bdb0906b5d8984c7a66d))
+
+- **ci**: Pin all actions to commit SHA and add least-privilege permissions
+  ([#989](https://github.com/nics-dp/petsard/pull/989),
+  [`8b789f2`](https://github.com/nics-dp/petsard/commit/8b789f2f270e4ef5275b6de7864466ca593799fb))
+
+- **ci**: Pin all actions to commit SHA and add least-privilege permissions
+  ([#986](https://github.com/nics-dp/petsard/pull/986),
+  [`6fea281`](https://github.com/nics-dp/petsard/commit/6fea281bab6c28deaa82bdb0906b5d8984c7a66d))
+
+- **ci.deps**: Bump actions/cache from 4 to 5 ([#989](https://github.com/nics-dp/petsard/pull/989),
+  [`8b789f2`](https://github.com/nics-dp/petsard/commit/8b789f2f270e4ef5275b6de7864466ca593799fb))
+
+- **ci.deps**: Bump actions/cache from 4 to 5 ([#986](https://github.com/nics-dp/petsard/pull/986),
+  [`6fea281`](https://github.com/nics-dp/petsard/commit/6fea281bab6c28deaa82bdb0906b5d8984c7a66d))
+
+- **ci.deps**: Bump actions/checkout from 5 to 6
+  ([#989](https://github.com/nics-dp/petsard/pull/989),
+  [`8b789f2`](https://github.com/nics-dp/petsard/commit/8b789f2f270e4ef5275b6de7864466ca593799fb))
+
+- **ci.deps**: Bump actions/checkout from 5 to 6
+  ([#986](https://github.com/nics-dp/petsard/pull/986),
+  [`6fea281`](https://github.com/nics-dp/petsard/commit/6fea281bab6c28deaa82bdb0906b5d8984c7a66d))
+
+- **ci.deps**: Bump actions/upload-artifact from 5 to 6
+  ([#989](https://github.com/nics-dp/petsard/pull/989),
+  [`8b789f2`](https://github.com/nics-dp/petsard/commit/8b789f2f270e4ef5275b6de7864466ca593799fb))
+
+- **ci.deps**: Bump actions/upload-artifact from 5 to 6
+  ([#986](https://github.com/nics-dp/petsard/pull/986),
+  [`6fea281`](https://github.com/nics-dp/petsard/commit/6fea281bab6c28deaa82bdb0906b5d8984c7a66d))
+
+- **ci.deps**: Bump the actions-dependencies group across 1 directory with 3 updates
+  ([#989](https://github.com/nics-dp/petsard/pull/989),
+  [`8b789f2`](https://github.com/nics-dp/petsard/commit/8b789f2f270e4ef5275b6de7864466ca593799fb))
+
+- **ci.deps**: Bump the actions-dependencies group across 1 directory with 3 updates
+  ([#986](https://github.com/nics-dp/petsard/pull/986),
+  [`6fea281`](https://github.com/nics-dp/petsard/commit/6fea281bab6c28deaa82bdb0906b5d8984c7a66d))
+
+- **deps**: Bump aquasecurity/trivy-action ([#989](https://github.com/nics-dp/petsard/pull/989),
+  [`8b789f2`](https://github.com/nics-dp/petsard/commit/8b789f2f270e4ef5275b6de7864466ca593799fb))
+
+- **deps**: Bump aquasecurity/trivy-action ([#986](https://github.com/nics-dp/petsard/pull/986),
+  [`6fea281`](https://github.com/nics-dp/petsard/commit/6fea281bab6c28deaa82bdb0906b5d8984c7a66d))
+
+- **deps**: Bump aquasecurity/trivy-action from 0.33.1 to 0.34.0 in /.github/workflows in the
+  github_actions group across 1 directory ([#989](https://github.com/nics-dp/petsard/pull/989),
+  [`8b789f2`](https://github.com/nics-dp/petsard/commit/8b789f2f270e4ef5275b6de7864466ca593799fb))
+
+- **deps**: Bump aquasecurity/trivy-action from 0.33.1 to 0.34.0 in /.github/workflows in the
+  github_actions group across 1 directory ([#986](https://github.com/nics-dp/petsard/pull/986),
+  [`6fea281`](https://github.com/nics-dp/petsard/commit/6fea281bab6c28deaa82bdb0906b5d8984c7a66d))
+
+- **github**: Add CODEOWNERS ([#989](https://github.com/nics-dp/petsard/pull/989),
+  [`8b789f2`](https://github.com/nics-dp/petsard/commit/8b789f2f270e4ef5275b6de7864466ca593799fb))
+
+- **github**: Add CODEOWNERS ([#986](https://github.com/nics-dp/petsard/pull/986),
+  [`6fea281`](https://github.com/nics-dp/petsard/commit/6fea281bab6c28deaa82bdb0906b5d8984c7a66d))
+
+
 ## v1.10.1 (2025-11-20)
 
-
+- No changes since v1.10.1-rc.6.
 ## v1.10.1-rc.6 (2025-11-20)
 
 
