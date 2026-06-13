@@ -7,7 +7,7 @@ on:
       - dev
 
 permissions:
-  contents: write
+  contents: read # repo writes go through the GitHub App token, not GITHUB_TOKEN
   id-token: write
   issues: write # allow the failure-alert step to open a tracking issue
 
@@ -33,7 +33,7 @@ jobs:
         env:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
         run: |
-          echo "id=$(gh api "/users/${{ steps.app-token.outputs.app-slug }}[bot]" --jq .id)" >> "$GITHUB_OUTPUT"
+          echo "id=$(gh api '/users/${{ steps.app-token.outputs.app-slug }}[bot]' --jq .id)" >> "$GITHUB_OUTPUT"
 
       # Checkout the repository code (v10.5.0+ automatically handles repository un-shallowing)
       - name: Setup | Checkout Repository on Release Branch
@@ -118,7 +118,7 @@ jobs:
         run: |
           title="release workflow failed on ${{ github.ref_name }}"
           # Comment on an existing open issue with this title, otherwise open a new one
-          existing=$(gh issue list --state open --search "in:title $title" --json number --jq '.[0].number')
+          existing=$(gh issue list --state open --search "in:title $title" --json number --jq '.[0].number // empty')
           if [ -n "$existing" ]; then
             gh issue comment "$existing" --body "Release run failed again: $RUN_URL (sha ${{ github.sha }})"
           else
