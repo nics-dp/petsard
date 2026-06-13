@@ -9,19 +9,45 @@ on:
 permissions:
   contents: write
   id-token: write
+  issues: write # allow the failure-alert step to open a tracking issue
 
 jobs:
   release:
     name: Semantic Release
     runs-on: ubuntu-latest
     steps:
+      # Mint a short-lived GitHub App installation token. The release identity must be
+      # a bypass actor on the main/dev rulesets so semantic-release can push the
+      # version-bump commit (rulesets enforce pull_request + required_signatures).
+      # See: https://github.com/nics-dp/petsard/issues/999
+      - name: Setup | Generate GitHub App token
+        id: app-token
+        uses: actions/create-github-app-token@fee1f7d63c2ff003460e3d139729b119787bc349 # v2.2.2
+        with:
+          app-id: ${{ secrets.RELEASE_APP_ID }}
+          private-key: ${{ secrets.RELEASE_APP_PRIVATE_KEY }}
+
+      # Attribute the version-bump commit to the App's bot identity
+      - name: Setup | Resolve App bot user id
+        id: app-user
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+        run: |
+          echo "id=$(gh api "/users/${{ steps.app-token.outputs.app-slug }}[bot]" --jq .id)" >> "$GITHUB_OUTPUT"
+
       # Checkout the repository code (v10.5.0+ automatically handles repository un-shallowing)
       - name: Setup | Checkout Repository on Release Branch
         uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
         with:
           ref: ${{ github.ref_name }}
-          # Allow semantic-release to commit version updates
-          token: ${{ secrets.MATHEME_JUSTYN_SEMANTIC }}
+          # App token lets semantic-release push version updates (bypass actor on the ruleset)
+          token: ${{ steps.app-token.outputs.token }}
+
+      # Configure git so the version-bump commit is attributed to the App bot
+      - name: Setup | Configure git identity
+        run: |
+          git config user.name '${{ steps.app-token.outputs.app-slug }}[bot]'
+          git config user.email '${{ steps.app-user.outputs.id }}+${{ steps.app-token.outputs.app-slug }}[bot]@users.noreply.github.com'
 
       # Force reset local branch to the exact commit that triggered the workflow
       - name: Setup | Force release branch to be at workflow sha
@@ -40,7 +66,7 @@ jobs:
         id: release
         uses: python-semantic-release/python-semantic-release@350c48fcb3ffcdfd2e0a235206bc2ecea6b69df0 # v10.5.3
         with:
-          github_token: ${{ secrets.MATHEME_JUSTYN_SEMANTIC }}
+          github_token: ${{ steps.app-token.outputs.token }}
 
       # Build Python package distribution files using uv
       # Always build on every push to allow continuous deployment
@@ -79,5 +105,29 @@ jobs:
         uses: python-semantic-release/publish-action@310a9983a0ae878b29f3aac778d7c77c1db27378 # v10.5.3
         if: steps.release.outputs.released == 'true'
         with:
-          github_token: ${{ secrets.WORKFLOW_TOKEN_CLASSICAL }}
+          github_token: ${{ steps.app-token.outputs.token }}
           tag: ${{ steps.release.outputs.tag }}
+
+      # Surface release failures loudly so they are not silently ignored
+      # (this workflow has no required status check gating merges).
+      - name: Notify | Open tracking issue on failure
+        if: failure()
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          title="release workflow failed on ${{ github.ref_name }}"
+          # Comment on an existing open issue with this title, otherwise open a new one
+          existing=$(gh issue list --state open --search "in:title $title" --json number --jq '.[0].number')
+          if [ -n "$existing" ]; then
+            gh issue comment "$existing" --body "Release run failed again: $RUN_URL (sha ${{ github.sha }})"
+          else
+            gh issue create --label ci --label bug \
+              --title "$title" \
+              --body "Semantic Release / PyPI publish failed on \`${{ github.ref_name }}\`.
+
+          Run: $RUN_URL
+          Commit: ${{ github.sha }}
+
+          See #999 for the App-token / ruleset-bypass setup this depends on."
+          fi
