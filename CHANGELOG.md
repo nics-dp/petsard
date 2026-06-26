@@ -2,6 +2,19 @@
 
 <!-- version list -->
 
+## v1.10.2-rc.2 (2026-06-26)
+
+### Chores
+
+- **ci.deps**: Bump actions/cache from 5.0.5 to 6.0.0
+  ([#1019](https://github.com/nics-dp/petsard/pull/1019),
+  [`6b348ee`](https://github.com/nics-dp/petsard/commit/6b348ee7a4110dd26c6a8cd6bc28f308c33e9ff9))
+
+- **ci.deps**: Bump the actions-dependencies group with 2 updates
+  ([#1018](https://github.com/nics-dp/petsard/pull/1018),
+  [`adca6e0`](https://github.com/nics-dp/petsard/commit/adca6e0858c79b9b41e52508e446af763e45a2c2))
+
+
 ## v1.10.2-rc.1 (2026-06-13)
 
 ### Bug Fixes
